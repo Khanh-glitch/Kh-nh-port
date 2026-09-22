@@ -1,4 +1,4 @@
-[gd_scene load_steps=49 format=3]
+[gd_scene load_steps=50 format=3]
 
 [ext_resource type="Script" path="res://scripts/kit_instance.gd" id="1_kit_instance"]
 [ext_resource type="PackedScene" path="res://assets/3d/room-showcase/core/display.glb" id="2_display"]
@@ -216,6 +216,9 @@ size = Vector3(0.05, 2.18, 0.05)
 [sub_resource type="BoxMesh" id="Box_StandFoot"]
 size = Vector3(0.46, 0.04, 0.46)
 
+[sub_resource type="BoxMesh" id="Box_StandArm"]
+size = Vector3(0.5, 0.045, 0.045)
+
 [node name="RoomStudy_B_DiagonalStudio" type="Node3D"]
 
 [node name="RoomShell" type="Node3D" parent="."]
@@ -381,7 +384,7 @@ script = ExtResource("1_kit_instance")
 kit_id = "speaker-small"
 
 [node name="SpeakerBack" parent="Studio" instance=ExtResource("10_speaker_small")]
-position = Vector3(-2.612101234, 0.88, -0.88667888)
+position = Vector3(-2.612101234, 0.88, -0.78667888)
 rotation_degrees = Vector3(0, 52, 0)
 scale = Vector3(1.141017504, 1.141017504, 1.141017504)
 script = ExtResource("1_kit_instance")
@@ -404,15 +407,20 @@ position = Vector3(-1.98, 0.02, 1.98)
 mesh = SubResource("Box_StandFoot")
 surface_material_override/0 = SubResource("mat_metal_dark")
 
+[node name="StandArm" type="MeshInstance3D" parent="Lighting"]
+position = Vector3(-1.75, 2.14, 1.98)
+mesh = SubResource("Box_StandArm")
+surface_material_override/0 = SubResource("mat_metal_dark")
+
 [node name="SpotFixture" parent="Lighting" instance=ExtResource("11_spotlight")]
-position = Vector3(-2.108426995, 2.042531125, 2.067096817)
+position = Vector3(-1.688426995, 2.022531125, 2.087096817)
 rotation_degrees = Vector3(-34, 124, 0)
 scale = Vector3(0.697399234, 0.697399234, 0.697399234)
 script = ExtResource("1_kit_instance")
 kit_id = "spotlight"
 
 [node name="SpotKey" type="SpotLight3D" parent="Lighting"]
-position = Vector3(-1.86, 2.1, 1.88)
+position = Vector3(-1.46, 2.04, 1.9)
 rotation_degrees = Vector3(-30, 122, 0)
 light_color = Color(1, 0.878, 0.714, 1)
 light_energy = 11

@@ -42,8 +42,8 @@ func _unhandled_input(event: InputEvent) -> void:
 func _load(index: int) -> void:
 	_index = index
 	if is_instance_valid(_current):
-		_current.queue_free()
 		remove_child(_current)
+		_current.queue_free()
 	var packed: PackedScene = load(STUDIES[_index]["scene"])
 	_current = packed.instantiate()
 	add_child(_current)

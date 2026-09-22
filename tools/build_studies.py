@@ -306,11 +306,11 @@ def study_a():
     # --- the wall itself: one continuous production surface -----------------
     # A shallow plinth/shelf runs the full width, tying desk and storage into
     # one horizontal gesture rather than separate furniture islands.
-    st.box("WallShelf", "WorkWall", (4.3, 0.06, 0.28), (-0.15, 1.62, wall_z + 0.14),
+    st.box("WallShelf", "WorkWall", (2.6, 0.06, 0.28), (-1.00, 1.62, wall_z + 0.14),
            "mat_desk_top")
     st.box("WallShelfBracketL", "WorkWall", (0.04, 0.22, 0.2), (-1.95, 1.50, wall_z + 0.12),
            "mat_metal_dark")
-    st.box("WallShelfBracketR", "WorkWall", (0.04, 0.22, 0.2), (1.55, 1.50, wall_z + 0.12),
+    st.box("WallShelfBracketR", "WorkWall", (0.04, 0.22, 0.2), (0.06, 1.50, wall_z + 0.12),
            "mat_metal_dark")
 
     # Desk pushed against the wall, off-centre so the composition is asymmetric.
@@ -332,7 +332,7 @@ def study_a():
     sheets = [
         (-2.02, 1.98, 0.30, 0.40, -2.5, "mat_surface_print"),
         (-1.70, 2.04, 0.22, 0.30, 1.8, "mat_paper"),
-        (-1.80, 1.66, 0.26, 0.20, -0.8, "mat_paper_warm"),
+        (-1.80, 1.78, 0.26, 0.20, -0.8, "mat_paper_warm"),
         (0.26, 2.18, 0.42, 0.30, 1.2, "mat_surface_secondary"),
         (0.30, 1.80, 0.20, 0.26, -1.6, "mat_paper"),
     ]
@@ -349,13 +349,13 @@ def study_a():
     st.kit("Headphones", "WorkWall", "headphones", fit_scale("headphones", "x", 0.20),
            rot=(0, 24, 0), anchor=("center", "min", "center"), at=(0.30, y, wall_z + 0.52))
     st.kit("BooksDesk", "WorkWall", "books", fit_scale("books", "x", 0.26),
-           rot=(0, -8, 0), anchor=("center", "min", "center"), at=(-1.72, y, wall_z + 0.46))
+           rot=(0, -8, 0), anchor=("center", "min", "center"), at=(-1.80, y, wall_z + 0.46))
     st.kit("CircuitBoard", "WorkWall", "circuit-board", fit_scale("circuit-board", "x", 0.30),
-           rot=(-90, 14, 0), anchor=("center", "min", "center"), at=(-1.28, y, wall_z + 0.56))
+           rot=(-90, 14, 0), anchor=("center", "min", "center"), at=(-1.45, y, wall_z + 0.56))
 
     # Speaker on the wall shelf: music sits inside the working zone.
     st.kit("SpeakerShelf", "WorkWall", "speaker-small", fit_scale("speaker-small", "y", 0.30),
-           rot=(0, -16, 0), anchor=("center", "min", "center"), at=(0.86, 1.65, wall_z + 0.16))
+           rot=(0, -16, 0), anchor=("center", "min", "center"), at=(-0.18, 1.65, wall_z + 0.16))
     st.kit("PlantShelf", "WorkWall", "plant-small", fit_scale("plant-small", "y", 0.22),
            rot=(0, 0, 0), anchor=("center", "min", "center"), at=(-1.62, 1.65, wall_z + 0.16))
 
@@ -488,7 +488,7 @@ def study_b():
     st.kit("SpeakerFore", "Studio", "speaker-small", fit_scale("speaker-small", "y", 0.42),
            rot=(0, -122, 0), anchor=("center", "min", "center"), at=(1.68, 0.44, 1.72))
     st.kit("SpeakerBack", "Studio", "speaker-small", fit_scale("speaker-small", "y", 0.34),
-           rot=(0, 52, 0), anchor=("center", "min", "center"), at=(-2.62, 0.88, -1.00))
+           rot=(0, 52, 0), anchor=("center", "min", "center"), at=(-2.62, 0.88, -0.90))
 
     st.box("Rug", "Studio", (3.1, 0.012, 2.3), (-0.20, 0.006, 0.45), "mat_rug")
 
@@ -498,9 +498,11 @@ def study_b():
     # Fixture on a floor stand, raking along the diagonal from the far corner.
     st.box("StandPole", "Lighting", (0.05, 2.18, 0.05), (-1.98, 1.09, 1.98), "mat_metal_dark")
     st.box("StandFoot", "Lighting", (0.46, 0.04, 0.46), (-1.98, 0.02, 1.98), "mat_metal_dark")
+    st.box("StandArm", "Lighting", (0.50, 0.045, 0.045), (-1.75, 2.14, 1.98),
+           "mat_metal_dark")
     st.kit("SpotFixture", "Lighting", "spotlight", fit_scale("spotlight", "y", 0.66),
-           rot=(-34, 124, 0), anchor=("center", "max", "center"), at=(-1.92, 2.18, 1.94))
-    add_spot(st, "SpotKey", "Lighting", (-1.86, 2.10, 1.88), (-30, 122, 0),
+           rot=(-34, 124, 0), anchor=("center", "max", "center"), at=(-1.50, 2.16, 1.96))
+    add_spot(st, "SpotKey", "Lighting", (-1.46, 2.04, 1.90), (-30, 122, 0),
              energy=11.0, color_rgb=(1.0, 0.878, 0.714), range_m=9.0, angle=32.0,
              angle_attenuation=0.8)
 
@@ -599,11 +601,11 @@ def study_c():
     # Corkboard rides the side wall beside the desk: research stays attached
     # to the working nucleus, not to the presentation wall.
     st.kit("Corkboard", "Nucleus", "corkboard", fit_scale("corkboard", "x", 1.12),
-           rot=(0, 90, 0), anchor=("min", "center", "center"), at=(-W / 2 + 0.03, 1.58, 1.95))
+           rot=(0, 90, 0), anchor=("min", "center", "center"), at=(-W / 2 + 0.03, 1.58, 0.80))
     st.s.node("PinnedSheets", "Node3D", "Nucleus")
     for i, (pz, py, pw, ph, prot, mat) in enumerate([
-        (2.82, 1.78, 0.34, 0.26, 1.6, "mat_paper"),
-        (2.78, 1.42, 0.22, 0.28, -1.2, "mat_surface_print"),
+        (1.08, 1.76, 0.34, 0.26, 1.6, "mat_paper"),
+        (0.56, 1.38, 0.22, 0.28, -1.2, "mat_surface_print"),
     ]):
         st.quad(f"Sheet{i}", "Nucleus/PinnedSheets", (pw, ph),
                 (-W / 2 + 0.035, py, pz), mat, rotation=(0, 90, prot))

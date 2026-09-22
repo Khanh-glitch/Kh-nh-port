@@ -68,12 +68,13 @@ func _surface(node: Node, family: Dictionary) -> void:
 		if mesh != null:
 			for i in mesh.get_surface_count():
 				var src := mesh.surface_get_material(i)
-				var name := ""
+				var surface_name := ""
 				if src is BaseMaterial3D:
-					name = (src as BaseMaterial3D).resource_name
-				if name.is_empty():
-					name = "surface_%d" % i
-				var mat := RoomPalette.build_material(family, name, src, roughness_offset)
+					surface_name = (src as BaseMaterial3D).resource_name
+				if surface_name.is_empty():
+					surface_name = "surface_%d" % i
+				var mat := RoomPalette.build_material(
+						family, surface_name, src, roughness_offset)
 				if mat != null:
 					mi.set_surface_override_material(i, mat)
 	for child in node.get_children():

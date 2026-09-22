@@ -178,7 +178,7 @@ dof_blur_far_enabled = false
 auto_exposure_enabled = false
 
 [sub_resource type="BoxMesh" id="Box_WallShelf"]
-size = Vector3(4.3, 0.06, 0.28)
+size = Vector3(2.6, 0.06, 0.28)
 
 [sub_resource type="BoxMesh" id="Box_WallShelfBracketL"]
 size = Vector3(0.04, 0.22, 0.2)
@@ -263,7 +263,7 @@ camera_attributes = SubResource("CamAttrs")
 [node name="Floorfield" type="Node3D" parent="."]
 
 [node name="WallShelf" type="MeshInstance3D" parent="WorkWall"]
-position = Vector3(-0.15, 1.62, -2.16)
+position = Vector3(-1, 1.62, -2.16)
 mesh = SubResource("Box_WallShelf")
 surface_material_override/0 = SubResource("mat_desk_top")
 
@@ -273,7 +273,7 @@ mesh = SubResource("Box_WallShelfBracketL")
 surface_material_override/0 = SubResource("mat_metal_dark")
 
 [node name="WallShelfBracketR" type="MeshInstance3D" parent="WorkWall"]
-position = Vector3(1.55, 1.5, -2.18)
+position = Vector3(0.06, 1.5, -2.18)
 mesh = SubResource("Box_WallShelfBracketR")
 surface_material_override/0 = SubResource("mat_metal_dark")
 
@@ -337,7 +337,7 @@ mesh = SubResource("Quad_Sheet1")
 surface_material_override/0 = SubResource("mat_paper")
 
 [node name="Sheet2" type="MeshInstance3D" parent="WorkWall/PinnedSheets"]
-position = Vector3(-1.8, 1.66, -2.288)
+position = Vector3(-1.8, 1.78, -2.288)
 rotation_degrees = Vector3(0, 0, -0.8)
 mesh = SubResource("Quad_Sheet2")
 surface_material_override/0 = SubResource("mat_paper_warm")
@@ -368,21 +368,21 @@ script = ExtResource("1_kit_instance")
 kit_id = "headphones"
 
 [node name="BooksDesk" parent="WorkWall" instance=ExtResource("5_books")]
-position = Vector3(-1.860099215, 0.735, -1.777230835)
+position = Vector3(-1.940099215, 0.735, -1.777230835)
 rotation_degrees = Vector3(0, -8, 0)
 scale = Vector3(1.728176547, 1.728176547, 1.728176547)
 script = ExtResource("1_kit_instance")
 kit_id = "books"
 
 [node name="CircuitBoard" parent="WorkWall" instance=ExtResource("6_circuit_board")]
-position = Vector3(-1.255856594, 0.738003022, -1.643166087)
+position = Vector3(-1.425856594, 0.738003022, -1.643166087)
 rotation_degrees = Vector3(-90, 14, 0)
 scale = Vector3(0.077169541, 0.077169541, 0.077169541)
 script = ExtResource("1_kit_instance")
 kit_id = "circuit-board"
 
 [node name="SpeakerShelf" parent="WorkWall" instance=ExtResource("7_speaker_small")]
-position = Vector3(0.769902427, 1.65, -2.096081371)
+position = Vector3(-0.270097573, 1.65, -2.096081371)
 rotation_degrees = Vector3(0, -16, 0)
 scale = Vector3(1.006780151, 1.006780151, 1.006780151)
 script = ExtResource("1_kit_instance")

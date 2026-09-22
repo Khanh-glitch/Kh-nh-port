@@ -37,28 +37,61 @@ FLOATING_OK = {
 }
 
 # Pairs that are meant to touch or nest.
+#
+# Matching is by whole name or explicit prefix, NOT bare substring. The old
+# substring rule meant ("Wall", "Corkboard") also matched WallShelf, which
+# silently excused a 4.3 m shelf running straight through Study A's corkboard.
+SHELL_NAMES = {"Floor", "Ceiling", "WallNorth", "WallSouth",
+               "WallWest", "WallEast"}
+
 CONTACT_OK = [
     ("Top", "Leg"), ("Top", "Primary"), ("Top", "Headphones"), ("Top", "Books"),
     ("Top", "Circuit"), ("Top", "Speaker"), ("Rug", "Chair"), ("Rug", "Leg"),
-    ("Rug", "Bookcase"), ("Floor", "Rug"), ("Bookcase", "Books"),
-    ("Bookcase", "Plant"), ("WallShelf", "Speaker"), ("WallShelf", "Plant"),
-    ("WallShelf", "Bracket"), ("Crate", "Speaker"), ("Bench", "Speaker"),
+    ("Rug", "Bookcase"), ("Rug", "Crate"), ("Rug", "Bench"), ("Floor", "Rug"),
+    ("Bookcase", "Books"), ("Bookcase", "Plant"),
+    ("WallShelf", "Speaker"), ("WallShelf", "Plant"), ("WallShelf", "Bracket"),
+    ("WallShelf", "Sheet"),
+    ("Crate", "Speaker"), ("Bench", "Speaker"),
     ("Corkboard", "Sheet"), ("PlanePanel", "Content"), ("PlanePanel", "Plane"),
-    ("PlanePanel", "Leaning"), ("StandPole", "SpotFixture"),
-    ("StandFoot", "StandPole"), ("HangRod", "SpotFixture"),
-    ("Display", "Content"), ("Wall", "Sheet"), ("Wall", "Content"),
-    ("Wall", "Corkboard"), ("Wall", "Plane"), ("Wall", "WallShelf"),
-    ("Wall", "Bracket"), ("Wall", "Bookcase"), ("Wall", "Top"),
+    ("PlanePanel", "Leaning"), ("PlaneSkirt", "Leaning"),
+    ("StandPole", "SpotFixture"), ("StandFoot", "StandPole"),
+    ("StandArm", "StandPole"), ("StandArm", "SpotFixture"),
+    ("HangRod", "SpotFixture"),
+    ("Display", "Content"),
+    # Anything mounted flat against a wall plane.
+    ("WALL", "Sheet"), ("WALL", "Content"), ("WALL", "Corkboard"),
+    ("WALL", "Plane"), ("WALL", "WallShelf"), ("WALL", "Bracket"),
+    ("WALL", "Bookcase"), ("WALL", "Top"), ("WALL", "Crate"),
     ("Floor", "Chair"), ("Floor", "Leg"), ("Floor", "Bookcase"),
     ("Floor", "Speaker"), ("Floor", "Crate"), ("Floor", "Bench"),
-    ("Floor", "StandFoot"), ("Ceiling", "HangRod"), ("Ceiling", "StandPole"),
-    ("PlaneSkirt", "Leaning"), ("Crate", "Rug"), ("Bench", "Rug"),
+    ("Floor", "StandFoot"),
+    ("Ceiling", "HangRod"), ("Ceiling", "StandPole"),
 ]
+
+
+# Flat floor coverings: props stand on top of these, and their 12 mm
+# thickness always registers as a shallow overlap.
+SOFT_GEOMETRY = {"Rug"}
+
+
+def _side_matches(token: str, name: str) -> bool:
+    """Match a whitelist token against a node name.
+
+    "WALL" is the wildcard for any shell wall. Every other token must match
+    the whole name or be a genuine prefix/suffix of it -- never an accidental
+    substring like "Wall" inside "WallShelf".
+    """
+    if token == "WALL":
+        return name in SHELL_NAMES and name.startswith("Wall")
+    if token == name:
+        return True
+    return name.startswith(token) or name.endswith(token)
 
 
 def pair_allowed(a: str, b: str) -> bool:
     for x, y in CONTACT_OK:
-        if (x in a and y in b) or (x in b and y in a):
+        if ((_side_matches(x, a) and _side_matches(y, b))
+                or (_side_matches(x, b) and _side_matches(y, a))):
             return True
     return False
 
@@ -103,7 +136,12 @@ def check(study, label):
             problems.append(f"{it['name']}: {word} {best[1]} by {abs(best[0]) * 1000:.0f} mm")
 
     # --- 2. interpenetration ------------------------------------------------
-    solid = [it for it in items if it["kind"] in ("kit", "shell")]
+    # Includes built boxes (shelves, rods, crates), not just imported props:
+    # a built shelf passing through a prop is just as wrong, and only shows up
+    # if both kinds are compared.
+    solid = [it for it in items
+             if it["kind"] in ("kit", "shell")
+             and it["name"] not in SOFT_GEOMETRY]
     for i in range(len(solid)):
         for j in range(i + 1, len(solid)):
             a, b = solid[i], solid[j]
