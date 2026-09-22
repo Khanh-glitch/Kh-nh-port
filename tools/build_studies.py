@@ -16,6 +16,7 @@ adjusted in Godot. Once a study is being iterated on in the editor, stop
 re-running this for that study.
 """
 
+import math
 import os
 import sys
 
@@ -251,6 +252,40 @@ def desk_surface_y() -> float:
     return DESK_H
 
 
+# --- display content surface ----------------------------------------------
+# Measured from the 2-triangle "metal" primitive inside core/display.glb,
+# expressed as fractions of the shell's 0.6848 m width so any display scale
+# lands the content plane exactly on the screen face.
+SCREEN_W_FRAC = 0.975569
+SCREEN_H_FRAC = 0.538069
+SCREEN_CY_FRAC = 0.382813
+SCREEN_Z_FRAC = 0.031250
+
+
+def add_display(st: Study, name: str, parent: str, *, width: float, at, yaw: float,
+                surface="mat_surface_primary"):
+    """Place a display shell and its reserved content plane as one unit.
+
+    `at` is the base-centre of the shell on its supporting surface. Returns the
+    shell AABB. The content plane is offset along the display's own forward
+    axis so it sits just proud of the screen face at any rotation.
+    """
+    scale = fit_scale("display", "x", width)
+    aabb = st.kit(name, parent, "display", scale, rot=(0, yaw, 0),
+                  anchor=("center", "min", "center"), at=at)
+
+    a = math.radians(yaw)
+    fwd = (math.sin(a), 0.0, math.cos(a))
+    off = width * SCREEN_Z_FRAC + 0.004
+    centre = (at[0] + fwd[0] * off,
+              at[1] + width * SCREEN_CY_FRAC,
+              at[2] + fwd[2] * off)
+    st.quad(f"Content{name.replace('Display', '')}" if "Display" in name else f"{name}Content",
+            parent, (width * SCREEN_W_FRAC, width * SCREEN_H_FRAC),
+            centre, surface, rotation=(0, yaw, 0))
+    return aabb
+
+
 # ---------------------------------------------------------------------------
 # STUDY A — WORK WALL
 # ---------------------------------------------------------------------------
@@ -283,23 +318,14 @@ def study_a():
                       width=2.9, depth=0.78)
 
     # --- primary display: the dominant content surface ----------------------
-    disp_scale = fit_scale("display", "x", 1.18)
-    disp_aabb = st.kit("PrimaryDisplay", "WorkWall", "display", disp_scale,
-                       rot=(0, 0, 0), anchor=("center", "min", "max"),
-                       at=(-0.62, desk_surface_y(), wall_z + 0.30))
-    # Content plane sits just proud of the shell's own screen quad.
-    screen_w = 1.18 * 0.9455   # measured screen quad fraction of shell width
-    screen_h = screen_w * (0.3685 / 0.9745) * (0.4547 / 0.6848) / (0.4547 / 0.6848)
-    screen_h = 1.18 * (0.3685 / 0.6848) * (0.6848 / 0.6848)
-    st.quad("ContentPrimary", "WorkWall", (screen_w, screen_h),
-            (-0.62, disp_aabb[0][1] + 1.18 * (0.2622 / 0.6848), disp_aabb[1][2] + 0.008),
-            "mat_surface_primary")
+    add_display(st, "PrimaryDisplay", "WorkWall", width=1.18,
+                at=(-0.62, desk_surface_y(), wall_z + 0.34), yaw=0.0)
 
     # --- corkboard: research wall, deliberately adjacent to the screen ------
-    cork_scale = fit_scale("corkboard", "x", 1.32)
+    cork_scale = fit_scale("corkboard", "x", 1.24)
     cork_aabb = st.kit("Corkboard", "WorkWall", "corkboard", cork_scale,
                        rot=(0, 0, 0), anchor=("center", "center", "min"),
-                       at=(1.28, 1.72, wall_z + 0.02))
+                       at=(1.10, 1.50, wall_z + 0.02))
 
     # --- pinned sheets: printed evidence, slightly irregular ----------------
     st.s.node("PinnedSheets", "Node3D", "WorkWall")
@@ -315,8 +341,8 @@ def study_a():
                 (x, y, wall_z + 0.012), mat, rotation=(0, 0, rot))
 
     # --- secondary display surface, wall-mounted, turned slightly -----------
-    st.quad("ContentSecondary", "WorkWall", (0.86, 0.52),
-            (2.02, 0.98, wall_z + 0.05), "mat_surface_secondary", rotation=(0, -6, 0))
+    st.quad("ContentSecondary", "WorkWall", (0.80, 0.50),
+            (1.74, 0.82, wall_z + 0.05), "mat_surface_secondary", rotation=(0, -7, 0))
 
     # --- working material on the desk ---------------------------------------
     y = desk_surface_y()
@@ -335,7 +361,7 @@ def study_a():
 
     # --- chair, pulled out and rotated: room reads as just-left -------------
     st.kit("Chair", "Floorfield", "chair", fit_scale("chair", "y", 0.94),
-           rot=(0, 188, 0), anchor=("center", "min", "center"), at=(-0.40, 0, wall_z + 1.32))
+           rot=(0, 203, 0), anchor=("center", "min", "center"), at=(-1.32, 0, wall_z + 1.24))
 
     # --- depth: low storage on the side wall --------------------------------
     st.kit("Bookcase", "Floorfield", "bookcase-low", fit_scale("bookcase-low", "y", 0.86),
@@ -355,8 +381,8 @@ def study_a():
     spot_scale = fit_scale("spotlight", "y", 0.62)
     st.kit("SpotFixture", "Lighting", "spotlight", spot_scale,
            rot=(-58, 24, 0), anchor=("center", "max", "center"),
-           at=(1.92, 2.62, wall_z + 0.62))
-    add_spot(st, "SpotKey", "Lighting", (1.86, 2.52, wall_z + 0.66), (-52, 22, 0),
+           at=(2.02, 2.52, wall_z + 0.86))
+    add_spot(st, "SpotKey", "Lighting", (1.96, 2.42, wall_z + 0.88), (-46, 30, 0),
              energy=9.5, color_rgb=(1.0, 0.867, 0.690), range_m=7.5, angle=30.0,
              angle_attenuation=0.75)
 
@@ -378,7 +404,7 @@ def study_a():
               })
 
     add_cameras(st,
-                canonical=dict(eye=(1.52, 1.44, 2.18), target=(-0.52, 1.18, -2.10), fov=42),
+                canonical=dict(eye=(1.78, 1.46, 2.42), target=(-0.18, 1.20, -2.10), fov=47),
                 secondary=dict(eye=(-2.05, 1.62, 1.35), target=(0.55, 1.05, -2.15), fov=52))
     return st
 
@@ -407,7 +433,6 @@ def study_b():
 
     y = desk_surface_y()
 
-    import math
     def on_desk(u: float, v: float):
         """Local desk coords (u along width, v along depth) -> world."""
         a = math.radians(DESK_ROT)
@@ -416,15 +441,9 @@ def study_b():
                 desk_center[2] - u * math.sin(a) + v * math.cos(a))
 
     # Display sits on the desk, angled with it — not square to camera.
-    disp_scale = fit_scale("display", "x", 1.04)
     dx, _, dz = on_desk(-0.42, -0.24)
-    disp_aabb = st.kit("PrimaryDisplay", "Studio", "display", disp_scale,
-                       rot=(0, DESK_ROT + 4, 0), anchor=("center", "min", "center"),
-                       at=(dx, y, dz))
-    sx, _, sz = on_desk(-0.42, -0.176)
-    st.quad("ContentPrimary", "Studio", (1.04 * 0.9455, 1.04 * (0.3685 / 0.6848)),
-            (sx, disp_aabb[0][1] + 1.04 * (0.2622 / 0.6848), sz),
-            "mat_surface_primary", rotation=(0, DESK_ROT + 4, 0))
+    add_display(st, "PrimaryDisplay", "Studio", width=1.04,
+                at=(dx, y, dz), yaw=DESK_ROT + 4)
 
     hx, _, hz = on_desk(0.52, 0.06)
     st.kit("Headphones", "Studio", "headphones", fit_scale("headphones", "x", 0.20),
@@ -443,14 +462,15 @@ def study_b():
 
     # --- background wall (-Z): the research surface, seen past the desk -----
     wall_z = -D / 2
-    cork_scale = fit_scale("corkboard", "x", 1.46)
+    cork_scale = fit_scale("corkboard", "x", 1.72)
     st.kit("Corkboard", "Studio", "corkboard", cork_scale,
-           rot=(0, 0, 0), anchor=("center", "center", "min"), at=(-1.22, 1.62, wall_z + 0.02))
+           rot=(0, 0, 0), anchor=("center", "center", "min"), at=(-0.35, 1.56, wall_z + 0.02))
     st.s.node("PinnedSheets", "Node3D", "Studio")
     for i, (px, py, pw, ph, prot, mat) in enumerate([
-        (0.16, 1.92, 0.44, 0.32, 1.4, "mat_surface_secondary"),
-        (0.22, 1.50, 0.24, 0.30, -2.0, "mat_paper"),
-        (0.58, 1.78, 0.20, 0.26, 0.9, "mat_paper_warm"),
+        (1.02, 1.94, 0.52, 0.38, 1.4, "mat_surface_secondary"),
+        (1.08, 1.44, 0.28, 0.34, -2.0, "mat_paper"),
+        (1.52, 1.74, 0.24, 0.30, 0.9, "mat_paper_warm"),
+        (-1.62, 1.86, 0.34, 0.26, -1.1, "mat_paper"),
     ]):
         st.quad(f"Sheet{i}", "Studio/PinnedSheets", (pw, ph),
                 (px, py, wall_z + 0.012), mat, rotation=(0, 0, prot))
@@ -476,11 +496,11 @@ def study_b():
     st.s.node("Lighting", "Node3D", ".")
 
     # Fixture on a floor stand, raking along the diagonal from the far corner.
-    st.box("StandPole", "Lighting", (0.05, 2.18, 0.05), (-2.28, 1.09, 1.62), "mat_metal_dark")
-    st.box("StandFoot", "Lighting", (0.46, 0.04, 0.46), (-2.28, 0.02, 1.62), "mat_metal_dark")
+    st.box("StandPole", "Lighting", (0.05, 2.18, 0.05), (-1.98, 1.09, 1.98), "mat_metal_dark")
+    st.box("StandFoot", "Lighting", (0.46, 0.04, 0.46), (-1.98, 0.02, 1.98), "mat_metal_dark")
     st.kit("SpotFixture", "Lighting", "spotlight", fit_scale("spotlight", "y", 0.66),
-           rot=(-34, 118, 0), anchor=("center", "max", "center"), at=(-2.22, 2.18, 1.58))
-    add_spot(st, "SpotKey", "Lighting", (-2.16, 2.10, 1.52), (-30, 116, 0),
+           rot=(-34, 124, 0), anchor=("center", "max", "center"), at=(-1.92, 2.18, 1.94))
+    add_spot(st, "SpotKey", "Lighting", (-1.86, 2.10, 1.88), (-30, 122, 0),
              energy=11.0, color_rgb=(1.0, 0.878, 0.714), range_m=9.0, angle=32.0,
              angle_attenuation=0.8)
 
@@ -499,8 +519,8 @@ def study_b():
               })
 
     add_cameras(st,
-                canonical=dict(eye=(2.62, 1.52, 3.05), target=(-1.05, 1.02, -1.35), fov=40),
-                secondary=dict(eye=(-2.55, 1.78, 2.72), target=(0.35, 0.95, -1.55), fov=50))
+                canonical=dict(eye=(2.34, 1.42, 2.52), target=(-0.88, 1.06, -1.30), fov=50),
+                secondary=dict(eye=(-2.35, 1.80, 2.95), target=(0.45, 0.95, -1.60), fov=54))
     return st
 
 
@@ -514,7 +534,7 @@ def study_c():
 
     # Longer room: the working nucleus is compressed at one end, the
     # presentation wall sits at the other. One space, two pressures.
-    W, D, H = 5.2, 8.2, 3.25
+    W, D, H = 5.2, 7.0, 3.25
     build_shell(st, W, D, H, open_sides=("south",), back_material="mat_wall")
     build_environment(st, sky_top=(0.075, 0.086, 0.118), sky_horizon=(0.133, 0.133, 0.145),
                       energy=0.32, fog=True)
@@ -546,12 +566,11 @@ def study_c():
 
     # --- the working nucleus, compressed into the near corner ---------------
     DESK_ROT = -18.0
-    desk_center = (-0.95, 0, 2.05)
+    desk_center = (-0.72, 0, 2.05)
     build_desk(st, "Nucleus", center=desk_center, width=2.3, depth=0.76,
                rotation_y=DESK_ROT)
 
     y = desk_surface_y()
-    import math
 
     def on_desk(u: float, v: float):
         a = math.radians(DESK_ROT)
@@ -559,15 +578,9 @@ def study_c():
                 y,
                 desk_center[2] - u * math.sin(a) + v * math.cos(a))
 
-    disp_scale = fit_scale("display", "x", 1.0)
     dx, _, dz = on_desk(-0.30, -0.22)
-    disp_aabb = st.kit("PrimaryDisplay", "Nucleus", "display", disp_scale,
-                       rot=(0, DESK_ROT + 6, 0), anchor=("center", "min", "center"),
-                       at=(dx, y, dz))
-    sx, _, sz = on_desk(-0.30, -0.158)
-    st.quad("ContentPrimary", "Nucleus", (1.0 * 0.9455, 1.0 * (0.3685 / 0.6848)),
-            (sx, disp_aabb[0][1] + 1.0 * (0.2622 / 0.6848), sz),
-            "mat_surface_primary", rotation=(0, DESK_ROT + 6, 0))
+    add_display(st, "PrimaryDisplay", "Nucleus", width=1.0,
+                at=(dx, y, dz), yaw=DESK_ROT + 6)
 
     hx, _, hz = on_desk(0.46, 0.08)
     st.kit("Headphones", "Nucleus", "headphones", fit_scale("headphones", "x", 0.20),
@@ -605,7 +618,7 @@ def study_c():
     st.kit("BooksShelf", "Nucleus", "books", fit_scale("books", "x", 0.28),
            rot=(0, -14, 0), anchor=("center", "min", "center"), at=(1.28, 0.86, 2.80))
 
-    st.box("Rug", "Nucleus", (2.9, 0.012, 2.1), (-0.55, 0.006, 2.35), "mat_rug")
+    st.box("Rug", "Nucleus", (2.9, 0.012, 2.1), (-0.42, 0.006, 2.35), "mat_rug")
 
     # Mid-room: a low bench keeps the middle from reading as empty floor and
     # gives the eye a step between nucleus and plane.
@@ -618,10 +631,10 @@ def study_c():
 
     # The fixture hangs mid-room and washes the presentation plane. This is
     # the gesture: production equipment lighting a gallery surface.
-    st.box("HangRod", "Lighting", (0.035, 0.62, 0.035), (0.35, 2.94, -1.30), "mat_metal_dark")
+    st.box("HangRod", "Lighting", (0.035, 0.62, 0.035), (-1.42, 2.94, -1.12), "mat_metal_dark")
     st.kit("SpotFixture", "Lighting", "spotlight", fit_scale("spotlight", "y", 0.72),
-           rot=(-42, 6, 0), anchor=("center", "max", "center"), at=(0.35, 2.64, -1.30))
-    add_spot(st, "SpotKey", "Lighting", (0.33, 2.54, -1.36), (-40, 5, 0),
+           rot=(-44, 26, 0), anchor=("center", "max", "center"), at=(-1.42, 2.64, -1.12))
+    add_spot(st, "SpotKey", "Lighting", (-1.40, 2.54, -1.18), (-42, 24, 0),
              energy=14.0, color_rgb=(1.0, 0.882, 0.722), range_m=8.5, angle=34.0,
              angle_attenuation=0.85)
 
@@ -630,7 +643,7 @@ def study_c():
              energy=5.0, color_rgb=(0.902, 0.898, 0.937), range_m=5.0, angle=42.0,
              angle_attenuation=1.2, shadow=False)
 
-    add_practical_light(st, "DeskPractical", "Lighting", (-0.95, 1.58, 2.15),
+    add_practical_light(st, "DeskPractical", "Lighting", (-0.72, 1.58, 2.15),
                         energy=3.2, color_rgb=(1.0, 0.824, 0.627), range_m=3.3,
                         attenuation=1.6)
     add_practical_light(st, "ScreenBounce", "Lighting", (dx + 0.10, y + 0.32, dz + 0.28),
@@ -645,8 +658,8 @@ def study_c():
               })
 
     add_cameras(st,
-                canonical=dict(eye=(1.92, 1.58, 4.35), target=(-0.45, 1.35, -3.20), fov=38),
-                secondary=dict(eye=(-1.85, 1.68, 0.35), target=(0.90, 1.30, -3.60), fov=46))
+                canonical=dict(eye=(2.02, 1.56, 3.90), target=(-0.55, 1.34, -2.90), fov=52),
+                secondary=dict(eye=(-1.80, 1.70, 0.65), target=(0.85, 1.32, -3.10), fov=50))
     return st
 
 

@@ -202,7 +202,7 @@ size = Vector3(0.045, 0.69, 0.045)
 size = Vector3(0.045, 0.69, 0.045)
 
 [sub_resource type="QuadMesh" id="Quad_ContentPrimary"]
-size = Vector2(1.11569, 0.634973715)
+size = Vector2(1.15117142, 0.63492142)
 
 [sub_resource type="QuadMesh" id="Quad_Sheet0"]
 size = Vector2(0.3, 0.4)
@@ -220,7 +220,7 @@ size = Vector2(0.42, 0.3)
 size = Vector2(0.2, 0.26)
 
 [sub_resource type="QuadMesh" id="Quad_ContentSecondary"]
-size = Vector2(0.86, 0.52)
+size = Vector2(0.8, 0.5)
 
 [sub_resource type="BoxMesh" id="Box_Rug"]
 size = Vector3(2.6, 0.012, 1.7)
@@ -306,19 +306,19 @@ mesh = SubResource("Box_LegRB")
 surface_material_override/0 = SubResource("mat_metal_dark")
 
 [node name="PrimaryDisplay" parent="WorkWall" instance=ExtResource("2_display")]
-position = Vector3(-0.62, 0.735, -2.110625)
+position = Vector3(-0.62, 0.735, -1.96)
 scale = Vector3(1.723130841, 1.723130841, 1.723130841)
 script = ExtResource("1_kit_instance")
 kit_id = "display"
 
 [node name="ContentPrimary" type="MeshInstance3D" parent="WorkWall"]
-position = Vector3(-0.62, 1.186804907, -1.992)
+position = Vector3(-0.62, 1.18671934, -1.919125)
 mesh = SubResource("Quad_ContentPrimary")
 surface_material_override/0 = SubResource("mat_surface_primary")
 
 [node name="Corkboard" parent="WorkWall" instance=ExtResource("3_corkboard")]
-position = Vector3(1.28, 1.264198217, -2.253492826)
-scale = Vector3(1.731024153, 1.731024153, 1.731024153)
+position = Vector3(1.1, 1.071822568, -2.255099321)
+scale = Vector3(1.626113598, 1.626113598, 1.626113598)
 script = ExtResource("1_kit_instance")
 kit_id = "corkboard"
 
@@ -355,8 +355,8 @@ mesh = SubResource("Quad_Sheet4")
 surface_material_override/0 = SubResource("mat_paper")
 
 [node name="ContentSecondary" type="MeshInstance3D" parent="WorkWall"]
-position = Vector3(2.02, 0.98, -2.25)
-rotation_degrees = Vector3(0, -6, 0)
+position = Vector3(1.74, 0.82, -2.25)
+rotation_degrees = Vector3(0, -7, 0)
 mesh = SubResource("Quad_ContentSecondary")
 surface_material_override/0 = SubResource("mat_surface_secondary")
 
@@ -395,8 +395,8 @@ script = ExtResource("1_kit_instance")
 kit_id = "plant-small"
 
 [node name="Chair" parent="Floorfield" instance=ExtResource("9_chair")]
-position = Vector3(-0.226080594, 0, -1.210798848)
-rotation_degrees = Vector3(0, 188, 0)
+position = Vector3(-1.211741891, 0, -1.327948222)
+rotation_degrees = Vector3(0, 203, 0)
 scale = Vector3(2.043478261, 2.043478261, 2.043478261)
 script = ExtResource("1_kit_instance")
 kit_id = "chair"
@@ -430,15 +430,15 @@ surface_material_override/0 = SubResource("mat_rug")
 [node name="Lighting" type="Node3D" parent="."]
 
 [node name="SpotFixture" parent="Lighting" instance=ExtResource("11_spotlight")]
-position = Vector3(1.802629093, 2.424155577, -1.943617067)
+position = Vector3(1.902629093, 2.324155577, -1.703617067)
 rotation_degrees = Vector3(-58, 24, 0)
 scale = Vector3(0.655132614, 0.655132614, 0.655132614)
 script = ExtResource("1_kit_instance")
 kit_id = "spotlight"
 
 [node name="SpotKey" type="SpotLight3D" parent="Lighting"]
-position = Vector3(1.86, 2.52, -1.64)
-rotation_degrees = Vector3(-52, 22, 0)
+position = Vector3(1.96, 2.42, -1.42)
+rotation_degrees = Vector3(-46, 30, 0)
 light_color = Color(1, 0.867, 0.69, 1)
 light_energy = 9.5
 light_specular = 0.5
@@ -487,9 +487,9 @@ shadow_enabled = false
 script = ExtResource("12_study_camera")
 
 [node name="Canonical" type="Camera3D" parent="Cameras"]
-position = Vector3(1.52, 1.44, 2.18)
-rotation_degrees = Vector3(-3.13879584, 25.48412699, 0)
-fov = 42
+position = Vector3(1.78, 1.46, 2.42)
+rotation_degrees = Vector3(-3.02092887, 23.442920715, 0)
+fov = 47
 near = 0.05
 far = 40
 current = true
