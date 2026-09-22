@@ -478,8 +478,8 @@ far = 40
 current = true
 
 [node name="Secondary" type="Camera3D" parent="Cameras"]
-position = Vector3(-2.35, 1.8, 2.95)
-rotation_degrees = Vector3(-9.040046933, -31.607502246, 0)
+position = Vector3(3.7, 1.58, 1.55)
+rotation_degrees = Vector3(-3.868930739, 60.697792518, 0)
 fov = 54
 near = 0.05
 far = 40

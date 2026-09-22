@@ -522,7 +522,7 @@ def study_b():
 
     add_cameras(st,
                 canonical=dict(eye=(2.34, 1.42, 2.52), target=(-0.88, 1.06, -1.30), fov=50),
-                secondary=dict(eye=(-2.35, 1.80, 2.95), target=(0.45, 0.95, -1.60), fov=54))
+                secondary=dict(eye=(3.70, 1.58, 1.55), target=(-1.20, 1.20, -1.20), fov=54))
     return st
 
 
@@ -661,7 +661,7 @@ def study_c():
 
     add_cameras(st,
                 canonical=dict(eye=(2.02, 1.56, 3.90), target=(-0.55, 1.34, -2.90), fov=52),
-                secondary=dict(eye=(-1.80, 1.70, 0.65), target=(0.85, 1.32, -3.10), fov=50))
+                secondary=dict(eye=(-1.40, 1.66, 4.75), target=(0.20, 1.34, -2.90), fov=54))
     return st
 
 

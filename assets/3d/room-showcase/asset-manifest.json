@@ -129,7 +129,16 @@
       "origin_url": "https://poly.pizza/m/U8yQZ9l0HZ",
       "mirror": "chappyasel/PersonalWebsite:public/models/corkboard.glb",
       "git_blob_sha": "5396a661c3ce4a964b276a369228e6ed5249ef6a",
-      "intended_role": "Surface for real notes, diagrams and research artifacts."
+      "intended_role": "Surface for real notes, diagrams and research artifacts.",
+      "godot_compatible_derivative": {
+        "path": "assets/3d/room-showcase/godot-compatible/research/corkboard.glb",
+        "bytes": 16200,
+        "git_blob_sha": "6b8bf72f2d86ce0c283af18bacc6bcd4880164d6",
+        "reason": "Original requires EXT_meshopt_compression + KHR_mesh_quantization, which Godot 4's glTF importer does not support; both are declared required, so the file has no fallback path and import fails outright.",
+        "produced_by": "tools/make-godot-compatible.mjs (npm run make-godot-compatible)",
+        "transform": "Decoded meshopt buffers and de-quantized vertex attributes to plain float32. Geometry unchanged: max AABB deviation 3.9e-8 m.",
+        "scene_usage": "Scenes reference this derivative; the original is retained unmodified as the provenance record."
+      }
     },
     {
       "id": "circuit-board",
@@ -142,7 +151,16 @@
       "origin_url": "https://poly.pizza/m/qqRVRerNSu",
       "mirror": "chappyasel/PersonalWebsite:public/models/circuit-board.glb",
       "git_blob_sha": "34ab7fcfcafb4f20bc82eff1748a4297f343619a",
-      "intended_role": "Subtle technical/AI cue; never the main AI metaphor."
+      "intended_role": "Subtle technical/AI cue; never the main AI metaphor.",
+      "godot_compatible_derivative": {
+        "path": "assets/3d/room-showcase/godot-compatible/ai/circuit-board.glb",
+        "bytes": 63056,
+        "git_blob_sha": "587145ec92b275cbb2b468d9b86bc1f7107b23b2",
+        "reason": "Original requires EXT_meshopt_compression + KHR_mesh_quantization, which Godot 4's glTF importer does not support; both are declared required, so the file has no fallback path and import fails outright.",
+        "produced_by": "tools/make-godot-compatible.mjs (npm run make-godot-compatible)",
+        "transform": "Decoded meshopt buffers and de-quantized vertex attributes to plain float32. Geometry unchanged: max AABB deviation 3.9e-8 m.",
+        "scene_usage": "Scenes reference this derivative; the original is retained unmodified as the provenance record."
+      }
     },
     {
       "id": "spotlight",
@@ -174,5 +192,6 @@
       "decision": "deferred",
       "reason": "Too much visual and technical mass before the room composition is approved; one spotlight is enough to test the event-production signal."
     }
-  ]
+  ],
+  "derivatives_note": "Two assets additionally ship a godot-compatible/ derivative. Originals are byte-for-byte as curated and remain the licensing/provenance record; derivatives exist only because Godot 4 cannot import meshopt-compressed glTF."
 }

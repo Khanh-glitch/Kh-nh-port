@@ -62,9 +62,15 @@ def frame(items, eye, target, fov, names):
     return out
 
 
-def search(study, must_fit, hero, eye_grid, target_grid, fov_grid, hero_target=0.30):
+def search(study, must_fit, hero, eye_grid, target_grid, fov_grid,
+           hero_target=0.30, avoid=()):
+    """Grid-search cameras.
+
+    `avoid` lists objects that must not loom in the foreground -- a light
+    stand between camera and subject reads as a pole through the frame.
+    """
     items = {i["name"]: i for i in study.s.placed}
-    names = list(set(must_fit) | {hero})
+    names = list(set(must_fit) | {hero} | set(avoid))
     results = []
 
     for eye, target, fov in itertools.product(eye_grid, target_grid, fov_grid):
@@ -78,6 +84,19 @@ def search(study, must_fit, hero, eye_grid, target_grid, fov_grid, hero_target=0
             x0, x1, y0, y1, _ = r[n]
             penalty += (max(0, x1 - MARGIN) + max(0, -MARGIN - x0) +
                         max(0, y1 - MARGIN) + max(0, -MARGIN - y0)) * 12
+
+        # Foreground obstructions: penalise by how much frame they eat and
+        # how much nearer they are than the hero.
+        hero_depth = r[hero][4] if hero in r else 1e9
+        for n in avoid:
+            if n not in r:
+                continue
+            ax0, ax1, ay0, ay1, adepth = r[n]
+            if adepth >= hero_depth:
+                continue
+            a_area = (max(0, min(ax1, 1) - max(ax0, -1))
+                      * max(0, min(ay1, 1) - max(ay0, -1)) / 4)
+            penalty += a_area * 30
 
         hx0, hx1, hy0, hy1, _ = r[hero]
         hero_area = max(0, min(hx1, 1) - max(hx0, -1)) * max(0, min(hy1, 1) - max(hy0, -1)) / 4
@@ -120,6 +139,32 @@ def solve_b():
     report(res)
 
 
+def solve_b2():
+    """Secondary view for B, from the open east side looking back.
+
+    The first hand-authored secondary put the camera behind the light stand,
+    so a 2 m pole bisected the frame and the fixture filled a third of it.
+    """
+    st = build_studies.study_b()
+    print("=== STUDY B — SECONDARY ===")
+    res = search(
+        st,
+        must_fit=["PrimaryDisplay", "ContentPrimary", "Corkboard", "Top",
+                  "Chair", "Crate"],
+        hero="Corkboard",
+        # East side, which the shell leaves open: a genuinely different
+        # angle from the canonical, and clear of the light stand.
+        eye_grid=[(x, 1.58, z) for x in (2.6, 3.2, 3.8)
+                  for z in (-0.8, 0.0, 0.8, 1.6)],
+        target_grid=[(x, 1.20, z) for x in (-1.4, -1.0, -0.6)
+                     for z in (-1.8, -1.2)],
+        fov_grid=[46, 50, 54, 58],
+        hero_target=0.06,
+        avoid=["StandPole", "StandArm", "SpotFixture"],
+    )
+    report(res)
+
+
 def solve_c():
     st = build_studies.study_c()
     print("=== STUDY C — PRESENTATION PLANE ===")
@@ -152,11 +197,39 @@ def solve_a():
     report(res)
 
 
+def solve_c2():
+    """Secondary for C: an oblique read of the plane, not a face-on crop.
+
+    The hand-authored one sat ~2 m from a 4 m plane, so the plane overflowed
+    the frame and the hanging fixture masked the corner.
+    """
+    st = build_studies.study_c()
+    print("=== STUDY C — SECONDARY ===")
+    res = search(
+        st,
+        must_fit=["ContentPlane", "PlanePanel", "Bench", "Top",
+                  "PrimaryDisplay", "Corkboard"],
+        hero="ContentPlane",
+        # South-east of the nucleus, far enough back that a 4 m plane fits,
+        # and off the canonical axis so it is a genuinely different read.
+        eye_grid=[(x, 1.66, z) for x in (-1.7, -1.1, -0.5)
+                  for z in (3.6, 4.2, 4.8)],
+        target_grid=[(x, 1.34, z) for x in (0.2, 0.7, 1.2)
+                     for z in (-2.9, -2.3)],
+        fov_grid=[42, 46, 50, 54],
+        hero_target=0.22,
+        avoid=["SpotFixture", "HangRod"],
+    )
+    report(res)
+
+
 if __name__ == "__main__":
     which = (sys.argv[1] if len(sys.argv) > 1 else "abc").lower()
     if "a" in which:
         solve_a()
     if "b" in which:
         solve_b()
+        solve_b2()
     if "c" in which:
         solve_c()
+        solve_c2()

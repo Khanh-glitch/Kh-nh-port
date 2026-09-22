@@ -6,6 +6,10 @@ export_presets.cfg
 # Offline asset-prep tooling (Node)
 tools/node_modules/
 
+# Python bytecode from the authoring tools
+__pycache__/
+*.pyc
+
 # OS noise
 .DS_Store
 Thumbs.db

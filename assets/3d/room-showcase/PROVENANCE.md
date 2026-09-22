@@ -25,4 +25,33 @@ The production files were copied byte-for-byte from documented GitHub mirrors. T
 - `chappyasel/PersonalWebsite/public/models/LICENSES.json`: corkboard (CreativeTrio) and circuit board (iPoly3D) recorded as CC0.
 - `david-ma/ParallelHorizons/README.md`: iPoly3D Spotlight from Poly Pizza credited as CC0.
 
+## Engine-compatibility derivatives
+
+Two curated originals cannot be imported by Godot 4. Both declare
+`EXT_meshopt_compression` and `KHR_mesh_quantization` in `extensionsRequired`,
+and Godot's glTF importer supports neither, so import fails outright rather
+than degrading — a meshopt buffer has no uncompressed fallback by design.
+
+Rather than swap in different models or hand-edit the curated files, the
+originals are kept **byte-for-byte** as the licensing and provenance record,
+and an importable derivative of each is generated alongside it:
+
+| Derivative | Generated from | Git blob SHA | Bytes |
+|---|---|---|---|
+| `godot-compatible/research/corkboard.glb` | `research/corkboard.glb` | `6b8bf72f2d86ce0c283af18bacc6bcd4880164d6` | 16,200 |
+| `godot-compatible/ai/circuit-board.glb` | `ai/circuit-board.glb` | `587145ec92b275cbb2b468d9b86bc1f7107b23b2` | 63,056 |
+
+Produced by `tools/make-godot-compatible.mjs` (`cd tools && npm install &&
+npm run make-godot-compatible`), which decodes the meshopt buffers and
+de-quantizes vertex attributes to plain float32. **Geometry is unchanged**:
+the largest world-space bounding-box deviation between original and
+derivative is 3.9e-8 m, far below any modelling tolerance here.
+
+The scenes reference the derivatives. Re-running the tool is idempotent and
+reproduces identical output, so the derivatives can be regenerated from the
+originals at any time and are safe to treat as build artifacts.
+
+Licensing is unaffected: both sources are CC0-1.0, which permits modification
+and redistribution without condition.
+
 CC0 does not require attribution, but this provenance file is intentionally kept so later work does not lose source history or silently replace assets with less-clearly licensed copies.
