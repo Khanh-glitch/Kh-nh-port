@@ -47,3 +47,39 @@ The 11 binary assets in this kit total **179,808 bytes (~175.6 KiB)** before God
 Higher-cost assets should only be introduced when their visible gain is proven.
 
 See `asset-manifest.json` and `PROVENANCE.md`.
+
+## Godot compatibility note (added during the composition studies)
+
+Two curated assets ship with `EXT_meshopt_compression` and `KHR_mesh_quantization`
+listed in **`extensionsRequired`**:
+
+- `research/corkboard.glb`
+- `ai/circuit-board.glb`
+
+Godot's glTF importer implements neither extension. Because they are *required*
+(and both files use a URI-less fallback buffer, so there is no uncompressed data
+to fall back to), Godot refuses the files outright:
+
+```text
+ERROR: GLTF: Can't import file '...', required extension
+'EXT_meshopt_compression' is not supported.
+```
+
+`tools/make-godot-compatible.mjs` decodes the meshopt bitstream, dequantizes the
+attributes and writes plain glTF 2.0 copies to:
+
+```text
+assets/3d/room-showcase/godot-compatible/
+  ai/circuit-board.glb
+  research/corkboard.glb
+```
+
+- The curated originals are **not modified** — they remain byte-identical to the
+  blobs recorded in `PROVENANCE.md`.
+- Geometry is preserved: world-space AABB corners match to better than 1e-7 m,
+  re-verified on every run of the script.
+- The derived copies are larger (uncompressed): 6,300 → 16,200 bytes and
+  16,040 → 63,056 bytes. Acceptable at this scale for engine compatibility.
+
+The room studies load the `godot-compatible/` copies for these two assets and the
+curated originals for the other nine.

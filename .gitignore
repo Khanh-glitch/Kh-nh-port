@@ -1,0 +1,11 @@
+# Godot 4 — generated import cache and per-user editor state
+.godot/
+*.import
+export_presets.cfg
+
+# Offline asset-prep tooling (Node)
+tools/node_modules/
+
+# OS noise
+.DS_Store
+Thumbs.db
