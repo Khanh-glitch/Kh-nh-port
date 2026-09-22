@@ -45,6 +45,7 @@ import zlib
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 STUDIES = {
+    "A1": ("RoomStudy_A1_WorkWall_Identity", "A1_WorkWall_Identity"),
     "A": ("RoomStudy_A_WorkWall", "A_WorkWall"),
     "B": ("RoomStudy_B_DiagonalStudio", "B_DiagonalStudio"),
     "C": ("RoomStudy_C_PresentationPlane", "C_PresentationPlane"),
@@ -321,23 +322,40 @@ def build(scene: Scene, palette: dict, cam_name: str, log):
     mat_cache = {}
 
     def make_material(name, albedo, rough, metal, spec=0.42,
-                      emission=None, emission_energy=1.0):
-        key = (name, albedo, rough, metal, emission, emission_energy)
+                      emission=None, emission_energy=1.0, tex_path=None):
+        key = (name, albedo, rough, metal, emission, emission_energy, tex_path)
         if key in mat_cache:
             return mat_cache[key]
         mat = bpy.data.materials.new(name)
         mat.use_nodes = True
-        bsdf = mat.node_tree.nodes["Principled BSDF"]
+        nt = mat.node_tree
+        bsdf = nt.nodes["Principled BSDF"]
         lin = srgb_to_linear(albedo)
         bsdf.inputs["Base Color"].default_value = (*lin, 1.0)
         bsdf.inputs["Roughness"].default_value = float(rough)
         bsdf.inputs["Metallic"].default_value = float(metal)
         if "Specular IOR Level" in bsdf.inputs:
             bsdf.inputs["Specular IOR Level"].default_value = float(spec)
+        tex_node = None
+        if tex_path:
+            abspath = os.path.join(REPO, tex_path)
+            if not os.path.exists(abspath):
+                raise SystemExit(f"MISSING TEXTURE: {tex_path}")
+            img = bpy.data.images.load(abspath, check_existing=True)
+            img.colorspace_settings.name = "sRGB"
+            tex_node = nt.nodes.new("ShaderNodeTexImage")
+            tex_node.image = img
+            tex_node.interpolation = "Cubic"
+            nt.links.new(tex_node.outputs["Color"], bsdf.inputs["Base Color"])
         if emission is not None:
             em = srgb_to_linear(emission)
             bsdf.inputs["Emission Color"].default_value = (*em, 1.0)
             bsdf.inputs["Emission Strength"].default_value = float(emission_energy)
+            # Godot's `emission_texture` modulates emission by the albedo map;
+            # without it a textured screen would glow as a flat white slab.
+            if tex_node is not None:
+                nt.links.new(tex_node.outputs["Color"],
+                             bsdf.inputs["Emission Color"])
         mat_cache[key] = mat
         return mat
 
@@ -353,8 +371,13 @@ def build(scene: Scene, palette: dict, cam_name: str, log):
         if p.get("emission_enabled", ("bool", False))[1]:
             emission = p["emission"][1]
             eng = p.get("emission_energy_multiplier", ("num", 1.0))[1]
+        tex_path = None
+        if "albedo_texture" in p and p["albedo_texture"][0] == "ext":
+            rid = p["albedo_texture"][1]
+            tex_path = scene.ext[rid]["attrs"]["path"][1].replace("res://", "")
         name = p["resource_name"][1] if "resource_name" in p else sub_id
-        return make_material(name, albedo, rough, metal, spec, emission, eng)
+        return make_material(name, albedo, rough, metal, spec, emission, eng,
+                             tex_path)
 
     # --- built geometry (BoxMesh / QuadMesh) -------------------------------
     def add_box(name, size, matrix, material):
@@ -383,6 +406,11 @@ def build(scene: Scene, palette: dict, cam_name: str, log):
         me = bpy.data.meshes.new(name)
         me.from_pydata(verts, [], [(0, 1, 2, 3)])
         me.update()
+        # Godot QuadMesh UVs: (0,0) top-left, V down. Blender V is up, so the
+        # bottom-left vertex gets V=0 and the image lands upright.
+        uv = me.uv_layers.new(name="UVMap")
+        for i, co in enumerate([(0, 0), (1, 0), (1, 1), (0, 1)]):
+            uv.data[i].uv = co
         ob = bpy.data.objects.new(name, me)
         ob.matrix_world = matrix
         ob.data.materials.append(material)

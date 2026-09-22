@@ -1,0 +1,799 @@
+[gd_scene load_steps=102 format=3]
+
+[ext_resource type="Script" path="res://scripts/kit_instance.gd" id="1_kit_instance"]
+[ext_resource type="PackedScene" path="res://assets/3d/room-showcase/core/display.glb" id="2_display"]
+[ext_resource type="PackedScene" path="res://assets/3d/room-showcase/godot-compatible/research/corkboard.glb" id="3_corkboard"]
+[ext_resource type="PackedScene" path="res://assets/3d/room-showcase/music/headphones.glb" id="4_headphones"]
+[ext_resource type="PackedScene" path="res://assets/3d/room-showcase/research/books.glb" id="5_books"]
+[ext_resource type="PackedScene" path="res://assets/3d/room-showcase/godot-compatible/ai/circuit-board.glb" id="6_circuit_board"]
+[ext_resource type="PackedScene" path="res://assets/3d/room-showcase/music/speaker-small.glb" id="7_speaker_small"]
+[ext_resource type="PackedScene" path="res://assets/3d/room-showcase/core/plant-small.glb" id="8_plant_small"]
+[ext_resource type="PackedScene" path="res://assets/3d/room-showcase/core/chair.glb" id="9_chair"]
+[ext_resource type="PackedScene" path="res://assets/3d/room-showcase/core/bookcase-low.glb" id="10_bookcase_low"]
+[ext_resource type="PackedScene" path="res://assets/3d/room-showcase/event/spotlight.glb" id="11_spotlight"]
+[ext_resource type="Script" path="res://scripts/study_camera.gd" id="12_study_camera"]
+[ext_resource type="Texture2D" path="res://assets/textures/room-content/screen_running_order.png" id="ScreenRunningOrder_tex"]
+[ext_resource type="Texture2D" path="res://assets/textures/room-content/desk_runsheet.png" id="DeskCueSheet_tex"]
+[ext_resource type="Texture2D" path="res://assets/textures/room-content/mounted_print.png" id="MountedPrint_tex"]
+[ext_resource type="Texture2D" path="res://assets/textures/room-content/pass_credential.png" id="Credential_tex"]
+[ext_resource type="Texture2D" path="res://assets/textures/room-content/board_runsheet.png" id="BoardRunSheet_tex"]
+[ext_resource type="Texture2D" path="res://assets/textures/room-content/board_floorplan.png" id="BoardFloorPlan_tex"]
+[ext_resource type="Texture2D" path="res://assets/textures/room-content/board_contact_strip.png" id="BoardContacts_tex"]
+[ext_resource type="Texture2D" path="res://assets/textures/room-content/board_print_event.png" id="BoardPrintEvent_tex"]
+[ext_resource type="Texture2D" path="res://assets/textures/room-content/board_print_music.png" id="BoardPrintMusic_tex"]
+[ext_resource type="Texture2D" path="res://assets/textures/room-content/board_note_a.png" id="BoardNoteA_tex"]
+[ext_resource type="Texture2D" path="res://assets/textures/room-content/board_note_b.png" id="BoardNoteB_tex"]
+[ext_resource type="Texture2D" path="res://assets/textures/room-content/wall_sheet_music.png" id="SheetMusic_tex"]
+[ext_resource type="Texture2D" path="res://assets/textures/room-content/wall_sheet_brief.png" id="SheetBrief_tex"]
+[ext_resource type="Texture2D" path="res://assets/textures/room-content/wall_sheet_layout.png" id="SheetLayout_tex"]
+[ext_resource type="Texture2D" path="res://assets/textures/room-content/wall_sheet_perf.png" id="SheetPerf_tex"]
+[ext_resource type="Texture2D" path="res://assets/textures/room-content/wall_sheet_frame.png" id="SheetFrame_tex"]
+
+[sub_resource type="StandardMaterial3D" id="mat_floor"]
+resource_name = "mat_floor"
+albedo_color = Color(0.128, 0.115, 0.104, 1)
+roughness = 0.93
+metallic = 0
+metallic_specular = 0.42
+
+[sub_resource type="StandardMaterial3D" id="mat_wall"]
+resource_name = "mat_wall"
+albedo_color = Color(0.196, 0.19, 0.181, 1)
+roughness = 0.96
+metallic = 0
+metallic_specular = 0.42
+
+[sub_resource type="StandardMaterial3D" id="mat_wall_dark"]
+resource_name = "mat_wall_dark"
+albedo_color = Color(0.121, 0.119, 0.118, 1)
+roughness = 0.95
+metallic = 0
+metallic_specular = 0.42
+
+[sub_resource type="StandardMaterial3D" id="mat_ceiling"]
+resource_name = "mat_ceiling"
+albedo_color = Color(0.156, 0.152, 0.147, 1)
+roughness = 0.97
+metallic = 0
+metallic_specular = 0.42
+
+[sub_resource type="StandardMaterial3D" id="mat_desk_top"]
+resource_name = "mat_desk_top"
+albedo_color = Color(0.298, 0.226, 0.165, 1)
+roughness = 0.78
+metallic = 0
+metallic_specular = 0.42
+
+[sub_resource type="StandardMaterial3D" id="mat_metal_dark"]
+resource_name = "mat_metal_dark"
+albedo_color = Color(0.098, 0.1, 0.106, 1)
+roughness = 0.55
+metallic = 0.45
+metallic_specular = 0.42
+
+[sub_resource type="StandardMaterial3D" id="mat_paper"]
+resource_name = "mat_paper"
+albedo_color = Color(0.706, 0.671, 0.608, 1)
+roughness = 0.94
+metallic = 0
+metallic_specular = 0.42
+
+[sub_resource type="StandardMaterial3D" id="mat_paper_warm"]
+resource_name = "mat_paper_warm"
+albedo_color = Color(0.741, 0.682, 0.569, 1)
+roughness = 0.94
+metallic = 0
+metallic_specular = 0.42
+
+[sub_resource type="StandardMaterial3D" id="mat_screen"]
+resource_name = "mat_screen"
+albedo_color = Color(0.043, 0.047, 0.055, 1)
+roughness = 0.16
+metallic = 0
+metallic_specular = 0.42
+
+[sub_resource type="StandardMaterial3D" id="mat_rug"]
+resource_name = "mat_rug"
+albedo_color = Color(0.184, 0.165, 0.149, 1)
+roughness = 0.97
+metallic = 0
+metallic_specular = 0.42
+
+[sub_resource type="StandardMaterial3D" id="mat_cable"]
+resource_name = "mat_cable"
+albedo_color = Color(0.071, 0.071, 0.075, 1)
+roughness = 0.8
+metallic = 0.1
+metallic_specular = 0.42
+
+[sub_resource type="StandardMaterial3D" id="mat_surface_primary"]
+resource_name = "mat_surface_primary"
+albedo_color = Color(0.128, 0.132, 0.14, 1)
+roughness = 0.34
+metallic = 0
+metallic_specular = 0.42
+emission_enabled = true
+emission = Color(0.18, 0.196, 0.212, 1)
+emission_energy_multiplier = 0.55
+
+[sub_resource type="StandardMaterial3D" id="mat_surface_secondary"]
+resource_name = "mat_surface_secondary"
+albedo_color = Color(0.15, 0.146, 0.14, 1)
+roughness = 0.62
+metallic = 0
+metallic_specular = 0.42
+emission_enabled = true
+emission = Color(0.132, 0.128, 0.122, 1)
+emission_energy_multiplier = 0.22
+
+[sub_resource type="StandardMaterial3D" id="mat_surface_print"]
+resource_name = "mat_surface_print"
+albedo_color = Color(0.678, 0.639, 0.576, 1)
+roughness = 0.92
+metallic = 0
+metallic_specular = 0.42
+
+[sub_resource type="BoxMesh" id="Box_Floor"]
+size = Vector3(5.4, 0.12, 4.6)
+
+[sub_resource type="BoxMesh" id="Box_Ceiling"]
+size = Vector3(5.4, 0.12, 4.6)
+
+[sub_resource type="BoxMesh" id="Box_WallNorth"]
+size = Vector3(5.4, 2.85, 0.12)
+
+[sub_resource type="BoxMesh" id="Box_WallWest"]
+size = Vector3(0.12, 2.85, 4.6)
+
+[sub_resource type="BoxMesh" id="Box_WallEast"]
+size = Vector3(0.12, 2.85, 4.6)
+
+[sub_resource type="ProceduralSkyMaterial" id="SkyMat"]
+sky_top_color = Color(0.078, 0.094, 0.133, 1)
+sky_horizon_color = Color(0.137, 0.141, 0.157, 1)
+sky_energy_multiplier = 0.35
+ground_bottom_color = Color(0.055, 0.052, 0.05, 1)
+ground_horizon_color = Color(0.137, 0.141, 0.157, 1)
+sun_angle_max = 18.0
+sun_curve = 0.25
+
+[sub_resource type="Sky" id="Sky"]
+sky_material = SubResource("SkyMat")
+
+[sub_resource type="Environment" id="Env"]
+background_mode = 2
+background_energy_multiplier = 0.35
+sky = SubResource("Sky")
+ambient_light_source = 3
+ambient_light_color = Color(0.318, 0.345, 0.404, 1)
+ambient_light_sky_contribution = 0.55
+ambient_light_energy = 0.9
+reflected_light_source = 2
+tonemap_mode = 3
+tonemap_exposure = 1.0
+tonemap_white = 6.0
+ssao_enabled = true
+ssao_radius = 0.8
+ssao_intensity = 1.6
+ssao_power = 1.8
+ssil_enabled = false
+sdfgi_enabled = false
+glow_enabled = true
+glow_intensity = 0.28
+glow_strength = 0.85
+glow_bloom = 0.05
+glow_blend_mode = 1
+glow_hdr_threshold = 1.25
+adjustment_enabled = true
+adjustment_brightness = 1.0
+adjustment_contrast = 1.06
+adjustment_saturation = 0.92
+
+[sub_resource type="CameraAttributesPractical" id="CamAttrs"]
+dof_blur_far_enabled = false
+auto_exposure_enabled = false
+
+[sub_resource type="BoxMesh" id="Box_WallShelf"]
+size = Vector3(2.6, 0.06, 0.28)
+
+[sub_resource type="BoxMesh" id="Box_WallShelfBracketL"]
+size = Vector3(0.04, 0.22, 0.2)
+
+[sub_resource type="BoxMesh" id="Box_WallShelfBracketR"]
+size = Vector3(0.04, 0.22, 0.2)
+
+[sub_resource type="BoxMesh" id="Box_Top"]
+size = Vector3(2.9, 0.045, 0.78)
+
+[sub_resource type="BoxMesh" id="Box_LegLF"]
+size = Vector3(0.045, 0.69, 0.045)
+
+[sub_resource type="BoxMesh" id="Box_LegLB"]
+size = Vector3(0.045, 0.69, 0.045)
+
+[sub_resource type="BoxMesh" id="Box_LegRF"]
+size = Vector3(0.045, 0.69, 0.045)
+
+[sub_resource type="BoxMesh" id="Box_LegRB"]
+size = Vector3(0.045, 0.69, 0.045)
+
+[sub_resource type="QuadMesh" id="Quad_ContentPrimary"]
+size = Vector2(1.15117142, 0.63492142)
+
+[sub_resource type="QuadMesh" id="Quad_Sheet0"]
+size = Vector2(0.3, 0.4)
+
+[sub_resource type="QuadMesh" id="Quad_Sheet1"]
+size = Vector2(0.22, 0.3)
+
+[sub_resource type="QuadMesh" id="Quad_Sheet2"]
+size = Vector2(0.26, 0.2)
+
+[sub_resource type="QuadMesh" id="Quad_Sheet3"]
+size = Vector2(0.42, 0.3)
+
+[sub_resource type="QuadMesh" id="Quad_Sheet4"]
+size = Vector2(0.2, 0.26)
+
+[sub_resource type="QuadMesh" id="Quad_ContentSecondary"]
+size = Vector2(0.8, 0.5)
+
+[sub_resource type="BoxMesh" id="Box_Rug"]
+size = Vector3(2.6, 0.012, 1.7)
+
+[sub_resource type="StandardMaterial3D" id="ScreenRunningOrder"]
+resource_name = "ScreenRunningOrder"
+albedo_color = Color(1, 1, 1, 1)
+albedo_texture = ExtResource("ScreenRunningOrder_tex")
+roughness = 0.34
+metallic = 0
+metallic_specular = 0.28
+texture_filter = 4
+emission_enabled = true
+emission = Color(1, 1, 1, 1)
+emission_energy_multiplier = 0.42
+emission_texture = ExtResource("ScreenRunningOrder_tex")
+emission_operator = 0
+
+[sub_resource type="StandardMaterial3D" id="DeskCueSheet"]
+resource_name = "DeskCueSheet"
+albedo_color = Color(1, 1, 1, 1)
+albedo_texture = ExtResource("DeskCueSheet_tex")
+roughness = 0.9
+metallic = 0
+metallic_specular = 0.28
+texture_filter = 4
+
+[sub_resource type="StandardMaterial3D" id="MountedPrint"]
+resource_name = "MountedPrint"
+albedo_color = Color(1, 1, 1, 1)
+albedo_texture = ExtResource("MountedPrint_tex")
+roughness = 0.82
+metallic = 0
+metallic_specular = 0.28
+texture_filter = 4
+
+[sub_resource type="StandardMaterial3D" id="Credential"]
+resource_name = "Credential"
+albedo_color = Color(1, 1, 1, 1)
+albedo_texture = ExtResource("Credential_tex")
+roughness = 0.74
+metallic = 0
+metallic_specular = 0.28
+texture_filter = 4
+
+[sub_resource type="StandardMaterial3D" id="BoardRunSheet"]
+resource_name = "BoardRunSheet"
+albedo_color = Color(1, 1, 1, 1)
+albedo_texture = ExtResource("BoardRunSheet_tex")
+roughness = 0.93
+metallic = 0
+metallic_specular = 0.28
+texture_filter = 4
+
+[sub_resource type="StandardMaterial3D" id="BoardFloorPlan"]
+resource_name = "BoardFloorPlan"
+albedo_color = Color(1, 1, 1, 1)
+albedo_texture = ExtResource("BoardFloorPlan_tex")
+roughness = 0.93
+metallic = 0
+metallic_specular = 0.28
+texture_filter = 4
+
+[sub_resource type="StandardMaterial3D" id="BoardContacts"]
+resource_name = "BoardContacts"
+albedo_color = Color(1, 1, 1, 1)
+albedo_texture = ExtResource("BoardContacts_tex")
+roughness = 0.93
+metallic = 0
+metallic_specular = 0.28
+texture_filter = 4
+
+[sub_resource type="StandardMaterial3D" id="BoardPrintEvent"]
+resource_name = "BoardPrintEvent"
+albedo_color = Color(1, 1, 1, 1)
+albedo_texture = ExtResource("BoardPrintEvent_tex")
+roughness = 0.93
+metallic = 0
+metallic_specular = 0.28
+texture_filter = 4
+
+[sub_resource type="StandardMaterial3D" id="BoardPrintMusic"]
+resource_name = "BoardPrintMusic"
+albedo_color = Color(1, 1, 1, 1)
+albedo_texture = ExtResource("BoardPrintMusic_tex")
+roughness = 0.93
+metallic = 0
+metallic_specular = 0.28
+texture_filter = 4
+
+[sub_resource type="StandardMaterial3D" id="BoardNoteA"]
+resource_name = "BoardNoteA"
+albedo_color = Color(1, 1, 1, 1)
+albedo_texture = ExtResource("BoardNoteA_tex")
+roughness = 0.93
+metallic = 0
+metallic_specular = 0.28
+texture_filter = 4
+
+[sub_resource type="StandardMaterial3D" id="BoardNoteB"]
+resource_name = "BoardNoteB"
+albedo_color = Color(1, 1, 1, 1)
+albedo_texture = ExtResource("BoardNoteB_tex")
+roughness = 0.93
+metallic = 0
+metallic_specular = 0.28
+texture_filter = 4
+
+[sub_resource type="StandardMaterial3D" id="SheetMusic"]
+resource_name = "SheetMusic"
+albedo_color = Color(1, 1, 1, 1)
+albedo_texture = ExtResource("SheetMusic_tex")
+roughness = 0.92
+metallic = 0
+metallic_specular = 0.28
+texture_filter = 4
+
+[sub_resource type="StandardMaterial3D" id="SheetBrief"]
+resource_name = "SheetBrief"
+albedo_color = Color(1, 1, 1, 1)
+albedo_texture = ExtResource("SheetBrief_tex")
+roughness = 0.92
+metallic = 0
+metallic_specular = 0.28
+texture_filter = 4
+
+[sub_resource type="StandardMaterial3D" id="SheetLayout"]
+resource_name = "SheetLayout"
+albedo_color = Color(1, 1, 1, 1)
+albedo_texture = ExtResource("SheetLayout_tex")
+roughness = 0.92
+metallic = 0
+metallic_specular = 0.28
+texture_filter = 4
+
+[sub_resource type="StandardMaterial3D" id="SheetPerf"]
+resource_name = "SheetPerf"
+albedo_color = Color(1, 1, 1, 1)
+albedo_texture = ExtResource("SheetPerf_tex")
+roughness = 0.92
+metallic = 0
+metallic_specular = 0.28
+texture_filter = 4
+
+[sub_resource type="StandardMaterial3D" id="SheetFrame"]
+resource_name = "SheetFrame"
+albedo_color = Color(1, 1, 1, 1)
+albedo_texture = ExtResource("SheetFrame_tex")
+roughness = 0.92
+metallic = 0
+metallic_specular = 0.28
+texture_filter = 4
+
+[sub_resource type="QuadMesh" id="Q_BoardRunSheet"]
+size = Vector2(0.3, 0.414)
+
+[sub_resource type="QuadMesh" id="Q_BoardFloorPlan"]
+size = Vector2(0.33, 0.248)
+
+[sub_resource type="QuadMesh" id="Q_BoardContacts"]
+size = Vector2(0.43, 0.112)
+
+[sub_resource type="QuadMesh" id="Q_BoardPrintEvent"]
+size = Vector2(0.29, 0.193)
+
+[sub_resource type="QuadMesh" id="Q_BoardPrintMusic"]
+size = Vector2(0.175, 0.245)
+
+[sub_resource type="QuadMesh" id="Q_BoardNoteA"]
+size = Vector2(0.105, 0.085)
+
+[sub_resource type="QuadMesh" id="Q_BoardNoteB"]
+size = Vector2(0.1, 0.08)
+
+[sub_resource type="QuadMesh" id="Q_SheetMusic"]
+size = Vector2(0.3, 0.4)
+
+[sub_resource type="QuadMesh" id="Q_SheetBrief"]
+size = Vector2(0.235, 0.32)
+
+[sub_resource type="QuadMesh" id="Q_SheetLayout"]
+size = Vector2(0.29, 0.207)
+
+[sub_resource type="QuadMesh" id="Q_SheetPerf"]
+size = Vector2(0.33, 0.254)
+
+[sub_resource type="QuadMesh" id="Q_SheetFrame"]
+size = Vector2(0.2, 0.26)
+
+[sub_resource type="QuadMesh" id="Q_DeskCueSheet"]
+size = Vector2(0.21, 0.297)
+
+[sub_resource type="QuadMesh" id="Q_MountedPrint"]
+size = Vector2(0.62, 0.3875)
+
+[sub_resource type="QuadMesh" id="Q_Credential"]
+size = Vector2(0.075, 0.1145)
+
+[sub_resource type="BoxMesh" id="Box_CredNail"]
+size = Vector3(0.012, 0.012, 0.035)
+
+[sub_resource type="BoxMesh" id="Box_CredStrap"]
+size = Vector3(0.016, 0.115, 0.004)
+
+[sub_resource type="StandardMaterial3D" id="mat_strap"]
+resource_name = "mat_strap"
+albedo_color = Color(0.404, 0.114, 0.075, 1)
+roughness = 0.88
+metallic = 0
+metallic_specular = 0.3
+
+[node name="RoomStudy_A1_WorkWall_Identity" type="Node3D"]
+
+[node name="RoomShell" type="Node3D" parent="."]
+
+[node name="Floor" type="MeshInstance3D" parent="RoomShell"]
+position = Vector3(0, -0.06, 0)
+mesh = SubResource("Box_Floor")
+surface_material_override/0 = SubResource("mat_floor")
+
+[node name="Ceiling" type="MeshInstance3D" parent="RoomShell"]
+position = Vector3(0, 2.91, 0)
+mesh = SubResource("Box_Ceiling")
+surface_material_override/0 = SubResource("mat_ceiling")
+
+[node name="WallNorth" type="MeshInstance3D" parent="RoomShell"]
+position = Vector3(0, 1.425, -2.36)
+mesh = SubResource("Box_WallNorth")
+surface_material_override/0 = SubResource("mat_wall_dark")
+
+[node name="WallWest" type="MeshInstance3D" parent="RoomShell"]
+position = Vector3(-2.76, 1.425, 0)
+mesh = SubResource("Box_WallWest")
+surface_material_override/0 = SubResource("mat_wall")
+
+[node name="WallEast" type="MeshInstance3D" parent="RoomShell"]
+position = Vector3(2.76, 1.425, 0)
+mesh = SubResource("Box_WallEast")
+surface_material_override/0 = SubResource("mat_wall")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Env")
+camera_attributes = SubResource("CamAttrs")
+
+[node name="WorkWall" type="Node3D" parent="."]
+
+[node name="Floorfield" type="Node3D" parent="."]
+
+[node name="WallShelf" type="MeshInstance3D" parent="WorkWall"]
+position = Vector3(-1, 1.62, -2.16)
+mesh = SubResource("Box_WallShelf")
+surface_material_override/0 = SubResource("mat_desk_top")
+
+[node name="WallShelfBracketL" type="MeshInstance3D" parent="WorkWall"]
+position = Vector3(-1.95, 1.5, -2.18)
+mesh = SubResource("Box_WallShelfBracketL")
+surface_material_override/0 = SubResource("mat_metal_dark")
+
+[node name="WallShelfBracketR" type="MeshInstance3D" parent="WorkWall"]
+position = Vector3(0.06, 1.5, -2.18)
+mesh = SubResource("Box_WallShelfBracketR")
+surface_material_override/0 = SubResource("mat_metal_dark")
+
+[node name="Desk" type="Node3D" parent="WorkWall"]
+position = Vector3(-0.55, 0, -1.88)
+
+[node name="Top" type="MeshInstance3D" parent="WorkWall/Desk"]
+position = Vector3(0, 0.7125, 0)
+mesh = SubResource("Box_Top")
+surface_material_override/0 = SubResource("mat_desk_top")
+
+[node name="LegLF" type="MeshInstance3D" parent="WorkWall/Desk"]
+position = Vector3(-1.36, 0.345, 0.31)
+mesh = SubResource("Box_LegLF")
+surface_material_override/0 = SubResource("mat_metal_dark")
+
+[node name="LegLB" type="MeshInstance3D" parent="WorkWall/Desk"]
+position = Vector3(-1.36, 0.345, -0.31)
+mesh = SubResource("Box_LegLB")
+surface_material_override/0 = SubResource("mat_metal_dark")
+
+[node name="LegRF" type="MeshInstance3D" parent="WorkWall/Desk"]
+position = Vector3(1.36, 0.345, 0.31)
+mesh = SubResource("Box_LegRF")
+surface_material_override/0 = SubResource("mat_metal_dark")
+
+[node name="LegRB" type="MeshInstance3D" parent="WorkWall/Desk"]
+position = Vector3(1.36, 0.345, -0.31)
+mesh = SubResource("Box_LegRB")
+surface_material_override/0 = SubResource("mat_metal_dark")
+
+[node name="PrimaryDisplay" parent="WorkWall" instance=ExtResource("2_display")]
+position = Vector3(-0.62, 0.735, -1.96)
+scale = Vector3(1.723130841, 1.723130841, 1.723130841)
+script = ExtResource("1_kit_instance")
+kit_id = "display"
+
+[node name="ContentPrimary" type="MeshInstance3D" parent="WorkWall"]
+position = Vector3(-0.62, 1.18671934, -1.919125)
+mesh = SubResource("Quad_ContentPrimary")
+surface_material_override/0 = SubResource("ScreenRunningOrder")
+
+[node name="Corkboard" parent="WorkWall" instance=ExtResource("3_corkboard")]
+position = Vector3(1.1, 1.071822568, -2.255099321)
+scale = Vector3(1.626113598, 1.626113598, 1.626113598)
+script = ExtResource("1_kit_instance")
+kit_id = "corkboard"
+
+[node name="PinnedSheets" type="Node3D" parent="WorkWall"]
+
+[node name="SheetMusic" type="MeshInstance3D" parent="WorkWall/PinnedSheets"]
+position = Vector3(-2.02, 1.98, -2.288)
+rotation_degrees = Vector3(0, 0, -2.5)
+mesh = SubResource("Q_SheetMusic")
+surface_material_override/0 = SubResource("SheetMusic")
+
+[node name="SheetBrief" type="MeshInstance3D" parent="WorkWall/PinnedSheets"]
+position = Vector3(-1.7, 2.04, -2.288)
+rotation_degrees = Vector3(0, 0, 1.8)
+mesh = SubResource("Q_SheetBrief")
+surface_material_override/0 = SubResource("SheetBrief")
+
+[node name="SheetLayout" type="MeshInstance3D" parent="WorkWall/PinnedSheets"]
+position = Vector3(-1.79, 1.735, -2.288)
+rotation_degrees = Vector3(0, 0, -0.8)
+mesh = SubResource("Q_SheetLayout")
+surface_material_override/0 = SubResource("SheetLayout")
+
+[node name="SheetPerf" type="MeshInstance3D" parent="WorkWall/PinnedSheets"]
+position = Vector3(0.255, 2.135, -2.288)
+rotation_degrees = Vector3(0, 0, 1.2)
+mesh = SubResource("Q_SheetPerf")
+surface_material_override/0 = SubResource("SheetPerf")
+
+[node name="SheetFrame" type="MeshInstance3D" parent="WorkWall/PinnedSheets"]
+position = Vector3(0.3, 1.8, -2.288)
+rotation_degrees = Vector3(0, 0, -1.6)
+mesh = SubResource("Q_SheetFrame")
+surface_material_override/0 = SubResource("SheetFrame")
+
+[node name="ContentSecondary" type="MeshInstance3D" parent="WorkWall"]
+position = Vector3(1.74, 0.82, -2.25)
+rotation_degrees = Vector3(0, -7, 0)
+mesh = SubResource("Q_MountedPrint")
+surface_material_override/0 = SubResource("MountedPrint")
+
+[node name="Headphones" parent="WorkWall" instance=ExtResource("4_headphones")]
+position = Vector3(0.299936412, 0.734999997, -1.780007723)
+rotation_degrees = Vector3(0, 24, 0)
+scale = Vector3(1.50251329, 1.50251329, 1.50251329)
+script = ExtResource("1_kit_instance")
+kit_id = "headphones"
+
+[node name="BooksDesk" parent="WorkWall" instance=ExtResource("5_books")]
+position = Vector3(-1.940099215, 0.735, -1.777230835)
+rotation_degrees = Vector3(0, -8, 0)
+scale = Vector3(1.728176547, 1.728176547, 1.728176547)
+script = ExtResource("1_kit_instance")
+kit_id = "books"
+
+[node name="CircuitBoard" parent="WorkWall" instance=ExtResource("6_circuit_board")]
+position = Vector3(-1.425856594, 0.738003022, -1.643166087)
+rotation_degrees = Vector3(-90, 14, 0)
+scale = Vector3(0.077169541, 0.077169541, 0.077169541)
+script = ExtResource("1_kit_instance")
+kit_id = "circuit-board"
+
+[node name="SpeakerShelf" parent="WorkWall" instance=ExtResource("7_speaker_small")]
+position = Vector3(-0.270097573, 1.65, -2.096081371)
+rotation_degrees = Vector3(0, -16, 0)
+scale = Vector3(1.006780151, 1.006780151, 1.006780151)
+script = ExtResource("1_kit_instance")
+kit_id = "speaker-small"
+
+[node name="PlantShelf" parent="WorkWall" instance=ExtResource("8_plant_small")]
+position = Vector3(-1.62, 1.65, -2.14)
+scale = Vector3(1.571428571, 1.571428571, 1.571428571)
+script = ExtResource("1_kit_instance")
+kit_id = "plant-small"
+
+[node name="Chair" parent="Floorfield" instance=ExtResource("9_chair")]
+position = Vector3(-1.211741891, 0, -1.327948222)
+rotation_degrees = Vector3(0, 203, 0)
+scale = Vector3(2.043478261, 2.043478261, 2.043478261)
+script = ExtResource("1_kit_instance")
+kit_id = "chair"
+
+[node name="Bookcase" parent="Floorfield" instance=ExtResource("10_bookcase_low")]
+position = Vector3(-2.29125, 0, 0.48)
+rotation_degrees = Vector3(0, 90, 0)
+scale = Vector3(2.15, 2.15, 2.15)
+script = ExtResource("1_kit_instance")
+kit_id = "bookcase-low"
+
+[node name="BooksShelf" parent="Floorfield" instance=ExtResource("5_books")]
+position = Vector3(-2.150618015, 0.86, 0.439329732)
+rotation_degrees = Vector3(0, 96, 0)
+scale = Vector3(1.994049862, 1.994049862, 1.994049862)
+script = ExtResource("1_kit_instance")
+kit_id = "books"
+
+[node name="SpeakerFloor" parent="Floorfield" instance=ExtResource("7_speaker_small")]
+position = Vector3(2.012532426, 0, -1.135568041)
+rotation_degrees = Vector3(0, 68, 0)
+scale = Vector3(1.543729565, 1.543729565, 1.543729565)
+script = ExtResource("1_kit_instance")
+kit_id = "speaker-small"
+
+[node name="Rug" type="MeshInstance3D" parent="Floorfield"]
+position = Vector3(-0.35, 0.006, -0.8)
+mesh = SubResource("Box_Rug")
+surface_material_override/0 = SubResource("mat_rug")
+
+[node name="BoardWork" type="Node3D" parent="WorkWall"]
+[node name="BoardRunSheet" type="MeshInstance3D" parent="WorkWall/BoardWork"]
+position = Vector3(0.68, 1.52, -2.2255)
+rotation_degrees = Vector3(0, 0, -1.4)
+mesh = SubResource("Q_BoardRunSheet")
+surface_material_override/0 = SubResource("BoardRunSheet")
+[node name="BoardFloorPlan" type="MeshInstance3D" parent="WorkWall/BoardWork"]
+position = Vector3(1.01, 1.76, -2.2255)
+rotation_degrees = Vector3(0, 0, 1.1)
+mesh = SubResource("Q_BoardFloorPlan")
+surface_material_override/0 = SubResource("BoardFloorPlan")
+[node name="BoardContacts" type="MeshInstance3D" parent="WorkWall/BoardWork"]
+position = Vector3(1.07, 1.54, -2.2255)
+rotation_degrees = Vector3(0, 0, -0.7)
+mesh = SubResource("Q_BoardContacts")
+surface_material_override/0 = SubResource("BoardContacts")
+[node name="BoardPrintEvent" type="MeshInstance3D" parent="WorkWall/BoardWork"]
+position = Vector3(1.46, 1.77, -2.2255)
+rotation_degrees = Vector3(0, 0, 1.8)
+mesh = SubResource("Q_BoardPrintEvent")
+surface_material_override/0 = SubResource("BoardPrintEvent")
+[node name="BoardPrintMusic" type="MeshInstance3D" parent="WorkWall/BoardWork"]
+position = Vector3(1.48, 1.42, -2.2255)
+rotation_degrees = Vector3(0, 0, -2.2)
+mesh = SubResource("Q_BoardPrintMusic")
+surface_material_override/0 = SubResource("BoardPrintMusic")
+[node name="BoardNoteA" type="MeshInstance3D" parent="WorkWall/BoardWork"]
+position = Vector3(0.905, 1.285, -2.2255)
+rotation_degrees = Vector3(0, 0, 3.4)
+mesh = SubResource("Q_BoardNoteA")
+surface_material_override/0 = SubResource("BoardNoteA")
+[node name="BoardNoteB" type="MeshInstance3D" parent="WorkWall/BoardWork"]
+position = Vector3(1.235, 1.26, -2.2255)
+rotation_degrees = Vector3(0, 0, -2.8)
+mesh = SubResource("Q_BoardNoteB")
+surface_material_override/0 = SubResource("BoardNoteB")
+[node name="DeskCueSheet" type="MeshInstance3D" parent="WorkWall"]
+position = Vector3(-1.02, 0.7385, -1.66)
+rotation_degrees = Vector3(-90, 13, 0)
+mesh = SubResource("Q_DeskCueSheet")
+surface_material_override/0 = SubResource("DeskCueSheet")
+[node name="Credential" type="Node3D" parent="WorkWall"]
+position = Vector3(1.905, 1.487, -2.276)
+[node name="Nail" type="MeshInstance3D" parent="WorkWall/Credential"]
+position = Vector3(0, 0.126, 0.012)
+mesh = SubResource("Box_CredNail")
+surface_material_override/0 = SubResource("mat_metal_dark")
+[node name="Strap" type="MeshInstance3D" parent="WorkWall/Credential"]
+position = Vector3(0, 0.064, 0.002)
+rotation_degrees = Vector3(0, 0, 3)
+mesh = SubResource("Box_CredStrap")
+surface_material_override/0 = SubResource("mat_strap")
+[node name="Card" type="MeshInstance3D" parent="WorkWall/Credential"]
+position = Vector3(0.004, -0.05, 0.004)
+rotation_degrees = Vector3(0, 0, 2)
+mesh = SubResource("Q_Credential")
+surface_material_override/0 = SubResource("Credential")
+
+[node name="Lighting" type="Node3D" parent="."]
+
+[node name="SpotFixture" parent="Lighting" instance=ExtResource("11_spotlight")]
+position = Vector3(1.902629093, 2.324155577, -1.703617067)
+rotation_degrees = Vector3(-58, 24, 0)
+scale = Vector3(0.655132614, 0.655132614, 0.655132614)
+script = ExtResource("1_kit_instance")
+kit_id = "spotlight"
+
+[node name="SpotKey" type="SpotLight3D" parent="Lighting"]
+position = Vector3(1.96, 2.42, -1.42)
+rotation_degrees = Vector3(-46, 30, 0)
+light_color = Color(1, 0.867, 0.69, 1)
+light_energy = 5.0
+light_specular = 0.5
+light_size = 0.06
+shadow_enabled = true
+shadow_bias = 0.03
+shadow_normal_bias = 1.4
+spot_range = 7.5
+spot_attenuation = 1.1
+spot_angle = 30
+spot_angle_attenuation = 0.75
+
+[node name="DeskPractical" type="OmniLight3D" parent="Lighting"]
+position = Vector3(-0.78, 1.46, -1.5)
+light_color = Color(1, 0.847, 0.667, 1)
+light_energy = 2.0
+light_specular = 0.4
+light_size = 0.1
+shadow_enabled = true
+shadow_bias = 0.04
+shadow_normal_bias = 1.2
+omni_range = 3.6
+omni_attenuation = 1.5
+
+[node name="ScreenBounce" type="OmniLight3D" parent="Lighting"]
+position = Vector3(-0.62, 1.05, -1.62)
+light_color = Color(0.639, 0.725, 0.855, 1)
+light_energy = 0.85
+light_specular = 0.2
+light_size = 0.1
+shadow_enabled = false
+shadow_bias = 0.04
+shadow_normal_bias = 1.2
+omni_range = 2
+omni_attenuation = 2
+
+[node name="DeskWash" type="SpotLight3D" parent="Lighting"]
+position = Vector3(-0.88, 2.66, -1.38)
+rotation_degrees = Vector3(-74, 6, 0)
+light_color = Color(1, 0.925, 0.827, 1)
+light_energy = 2.6
+light_specular = 0.3
+light_size = 0.12
+shadow_enabled = true
+shadow_bias = 0.03
+shadow_normal_bias = 1.4
+spot_range = 4.6
+spot_attenuation = 1.2
+spot_angle = 46
+spot_angle_attenuation = 1.1
+
+[node name="Fill" type="DirectionalLight3D" parent="Lighting"]
+position = Vector3(2.4, 2.4, 2.6)
+rotation_degrees = Vector3(-24, 148, 0)
+light_color = Color(0.616, 0.694, 0.855, 1)
+light_energy = 0.3
+light_specular = 0.15
+shadow_enabled = false
+
+[node name="Cameras" type="Node3D" parent="."]
+script = ExtResource("12_study_camera")
+
+[node name="Canonical" type="Camera3D" parent="Cameras"]
+position = Vector3(1.78, 1.46, 2.42)
+rotation_degrees = Vector3(-3.02092887, 23.442920715, 0)
+fov = 47
+near = 0.05
+far = 40
+current = true
+
+[node name="Secondary" type="Camera3D" parent="Cameras"]
+position = Vector3(-2.05, 1.62, 1.35)
+rotation_degrees = Vector3(-7.448183841, -36.607074813, 0)
+fov = 52
+near = 0.05
+far = 40
+current = false
