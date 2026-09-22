@@ -1,0 +1,178 @@
+{
+  "schema_version": 1,
+  "curated_on": "2026-09-22",
+  "target_engine": "Godot 4.x",
+  "format_policy": "GLB / glTF 2.0 only for this v1 kit",
+  "design_status": "Asset roles approved for audition; room layout, exact scale, palette, material overrides and lighting are NOT frozen.",
+  "design_intent": "One coherent low-poly creative production lab. Event, music, AI and research appear as integrated identity cues rather than four themed zones.",
+  "total_binary_bytes": 179808,
+  "assets": [
+    {
+      "id": "work-console",
+      "domain": "core",
+      "path": "assets/3d/room-showcase/core/work-console.glb",
+      "bytes": 19072,
+      "author": "Kenney",
+      "license": "CC0-1.0",
+      "origin": "Furniture Kit / sideTableDrawers.glb",
+      "origin_url": "https://kenney.nl/assets/furniture-kit",
+      "mirror": "a52cents/was-it-there:src/assets/models/corridor/prop-console.glb",
+      "git_blob_sha": "a801b290f9cd51a0dec7d5e0777ad839a727969d",
+      "intended_role": "Compact workstation/support surface; not frozen as the final hero desk.",
+      "documented_triangles": 238
+    },
+    {
+      "id": "chair",
+      "domain": "core",
+      "path": "assets/3d/room-showcase/core/chair.glb",
+      "bytes": 12588,
+      "author": "Kenney",
+      "license": "CC0-1.0",
+      "origin": "Furniture Kit / chairCushion.glb",
+      "origin_url": "https://kenney.nl/assets/furniture-kit",
+      "mirror": "a52cents/was-it-there:src/assets/models/bedroom/prop-chair-cushion.glb",
+      "git_blob_sha": "bffa780b8f8a3efef7756025b2d00a3e01377a41",
+      "intended_role": "Main workstation chair.",
+      "documented_triangles": 198
+    },
+    {
+      "id": "display",
+      "domain": "core",
+      "path": "assets/3d/room-showcase/core/display.glb",
+      "bytes": 6368,
+      "author": "Kenney",
+      "license": "CC0-1.0",
+      "origin": "Furniture Kit / televisionModern.glb",
+      "origin_url": "https://kenney.nl/assets/furniture-kit",
+      "mirror": "a52cents/was-it-there:src/assets/models/bedroom/prop-television.glb",
+      "git_blob_sha": "f047576f3d77a469e59059b1ae0aa1cdbbae7d0f",
+      "intended_role": "Screen shell for real portfolio, AI-process and event visual content.",
+      "documented_triangles": 72
+    },
+    {
+      "id": "bookcase-low",
+      "domain": "core",
+      "path": "assets/3d/room-showcase/core/bookcase-low.glb",
+      "bytes": 11520,
+      "author": "Kenney",
+      "license": "CC0-1.0",
+      "origin": "Furniture Kit / bookcaseOpenLow.glb",
+      "origin_url": "https://kenney.nl/assets/furniture-kit",
+      "mirror": "a52cents/was-it-there:src/assets/models/bedroom/prop-bookcase-low.glb",
+      "git_blob_sha": "3daa396e11c843a5da87ab6547a279731e6eba58",
+      "intended_role": "Research/archive support furniture.",
+      "documented_triangles": 184
+    },
+    {
+      "id": "plant-small",
+      "domain": "core",
+      "path": "assets/3d/room-showcase/core/plant-small.glb",
+      "bytes": 12996,
+      "author": "Kenney",
+      "license": "CC0-1.0",
+      "origin": "Furniture Kit / plantSmall2.glb",
+      "origin_url": "https://kenney.nl/assets/furniture-kit",
+      "mirror": "a52cents/was-it-there:src/assets/models/bedroom/prop-plant-small.glb",
+      "git_blob_sha": "2e6b8c7d1e1a6ce83d732344e1cc1a219a87adb4",
+      "intended_role": "Small neutral softening prop.",
+      "documented_triangles": 158
+    },
+    {
+      "id": "speaker-small",
+      "domain": "music",
+      "path": "assets/3d/room-showcase/music/speaker-small.glb",
+      "bytes": 15244,
+      "author": "Kenney",
+      "license": "CC0-1.0",
+      "origin": "Furniture Kit / speakerSmall.glb",
+      "origin_url": "https://kenney.nl/assets/furniture-kit",
+      "mirror": "a52cents/was-it-there:src/assets/models/corridor/prop-small-speaker.glb",
+      "git_blob_sha": "5673177a3db49c2bc65e8131babde9092a2c3ed4",
+      "intended_role": "Music/audio identity cue.",
+      "documented_triangles": 220
+    },
+    {
+      "id": "headphones",
+      "domain": "music",
+      "path": "assets/3d/room-showcase/music/headphones.glb",
+      "bytes": 42780,
+      "author": "CreativeTrio",
+      "license": "CC0-1.0",
+      "origin": "Headphones",
+      "origin_url": "https://poly.pizza/m/PSsWSIAYIL",
+      "mirror": "juthomas/Isotricks:public/models/headphones.glb",
+      "git_blob_sha": "ee822b19d9d6edc907e4772d163971e97cb46f21",
+      "intended_role": "Personal music-production cue near workstation."
+    },
+    {
+      "id": "books",
+      "domain": "research",
+      "path": "assets/3d/room-showcase/research/books.glb",
+      "bytes": 6864,
+      "author": "Kenney",
+      "license": "CC0-1.0",
+      "origin": "Furniture Kit / books.glb",
+      "origin_url": "https://kenney.nl/assets/furniture-kit",
+      "mirror": "a52cents/was-it-there:src/assets/models/bedroom/prop-books-stack.glb",
+      "git_blob_sha": "615aaa9632cf1b262c257f2cb7c208a6f199ab84",
+      "intended_role": "Small research cue; background support only.",
+      "documented_triangles": 62
+    },
+    {
+      "id": "corkboard",
+      "domain": "research",
+      "path": "assets/3d/room-showcase/research/corkboard.glb",
+      "bytes": 6300,
+      "author": "CreativeTrio",
+      "license": "CC0-1.0",
+      "origin": "Corkboard",
+      "origin_url": "https://poly.pizza/m/U8yQZ9l0HZ",
+      "mirror": "chappyasel/PersonalWebsite:public/models/corkboard.glb",
+      "git_blob_sha": "5396a661c3ce4a964b276a369228e6ed5249ef6a",
+      "intended_role": "Surface for real notes, diagrams and research artifacts."
+    },
+    {
+      "id": "circuit-board",
+      "domain": "ai",
+      "path": "assets/3d/room-showcase/ai/circuit-board.glb",
+      "bytes": 16040,
+      "author": "iPoly3D",
+      "license": "CC0-1.0",
+      "origin": "Electronics Collectable",
+      "origin_url": "https://poly.pizza/m/qqRVRerNSu",
+      "mirror": "chappyasel/PersonalWebsite:public/models/circuit-board.glb",
+      "git_blob_sha": "34ab7fcfcafb4f20bc82eff1748a4297f343619a",
+      "intended_role": "Subtle technical/AI cue; never the main AI metaphor."
+    },
+    {
+      "id": "spotlight",
+      "domain": "event",
+      "path": "assets/3d/room-showcase/event/spotlight.glb",
+      "bytes": 30036,
+      "author": "iPoly3D",
+      "license": "CC0-1.0",
+      "origin": "Spotlight",
+      "origin_url": "https://poly.pizza/m/YohOCmn0hO",
+      "mirror": "david-ma/ParallelHorizons:public/models/spotlight/Spotlight.glb",
+      "git_blob_sha": "18a5763856cc7161728c6667d3bae1bea72ff6aa",
+      "intended_role": "Single event-production accent fixture; pair with Godot SpotLight3D."
+    }
+  ],
+  "rejected_or_deferred": [
+    {
+      "candidate": "DJ controller / stage-truss mirror set",
+      "decision": "deferred",
+      "reason": "Useful models were discoverable, but redistribution provenance/license was not documented cleanly enough in that mirror."
+    },
+    {
+      "candidate": "Kenney laptop.glb mirror",
+      "decision": "rejected for v1",
+      "reason": "About 10.7 MB for a role that can be expressed by the much lighter display shell plus real portfolio textures."
+    },
+    {
+      "candidate": "Full concert-stage packs",
+      "decision": "deferred",
+      "reason": "Too much visual and technical mass before the room composition is approved; one spotlight is enough to test the event-production signal."
+    }
+  ]
+}
