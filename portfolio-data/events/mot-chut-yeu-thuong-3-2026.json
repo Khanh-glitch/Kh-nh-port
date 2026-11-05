@@ -1,0 +1,93 @@
+{
+  "schema_version": "1.0",
+  "id": "mot-chut-yeu-thuong-3-2026",
+  "title": "Một Chút Yêu Thương 3",
+  "type": [
+    "Charity Concert",
+    "CSR Event",
+    "Traffic Safety Awareness"
+  ],
+  "date": "2026-01-08",
+  "event_context": {
+    "venue": "Nhà hát Bến Thành, TP.HCM",
+    "organizer": "CLB Doanh nhân và Pháp luật",
+    "summary": "Charity concert combining live music, storytelling, fundraising and traffic safety awareness to support road-traffic accident victims.",
+    "statistics": [
+      {
+        "name": "Assistance announced",
+        "value": "500 packages, 2,000,000 VND each",
+        "scope": "Reported beneficiary support; NOT the concert production budget"
+      },
+      {
+        "name": "Total assistance equivalent",
+        "value": "1,000,000,000 VND",
+        "scope": "Reported program-level support"
+      },
+      {
+        "name": "Helmets announced distributed",
+        "value": "2,000",
+        "scope": "Not additive with 2,500 mobilized at launch"
+      },
+      {
+        "name": "Live donations",
+        "value": "over 135,000,000 VND",
+        "scope": "Reported raised during the performance; not additive to other unverified aggregates"
+      },
+      {
+        "name": "Audience",
+        "value": null,
+        "scope": "Not verified"
+      }
+    ],
+    "reported_highlights": [
+      "Post-event assistance reported in Đồng Tháp: 50 beneficiaries, 100 million VND and 200 helmets (part of reported overall support)",
+      "Music, stage storytelling and beneficiary testimonies"
+    ]
+  },
+  "research_references": [
+    {
+      "label": "Báo Pháp Luật TP.HCM",
+      "url": "https://plo.vn/mot-chut-yeu-thuong-lan-3-thap-sang-niem-tin-cho-nan-nhan-tai-nan-giao-thong-post890553.html"
+    },
+    {
+      "label": "Báo SGGP",
+      "url": "https://www.sggp.org.vn/mot-chut-yeu-thuong-xoa-diu-noi-dau-tai-nan-giao-thong-post832615.html"
+    },
+    {
+      "label": "Báo Đồng Tháp",
+      "url": "https://baodongthap.vn/dong-thap-trao-100-trieu-dong-ho-tro-nan-nhan-tai-nan-giao-thong-a235749.html"
+    },
+    {
+      "label": "Alta Media LED vendor note (date inconsistency in user brief)",
+      "url": "https://altamedia.vn/alta-medias-indoor-p3-led-screen-at-mot-chut-yeu-thuong-3-concert-night/?lang=en"
+    }
+  ],
+  "personal_contribution": {
+    "confirmation": "AWAITING_USER",
+    "job_title": null,
+    "team": null,
+    "participation_period": null,
+    "workstreams": [],
+    "decisions": [],
+    "individual_results": [],
+    "proof_links": [],
+    "notes": null
+  },
+  "media": {
+    "cover": null,
+    "photos": [],
+    "videos": [],
+    "audio": [],
+    "documents": [],
+    "media_rights": "NOT_REVIEWED",
+    "user_ownership": "NOT_CONFIRMED"
+  },
+  "editorial_state": {
+    "intake": "IN_PROGRESS",
+    "publication": "DO_NOT_PUBLISH",
+    "event_facts": "USER_SUPPLIED_SECONDARY_RESEARCH",
+    "individual_claims": "NO_CLAIMS_UNTIL_USER_CONFIRMS",
+    "external_links": "RESEARCH_REFERENCES_NOT_VERIFIED_AS_USER_WORK",
+    "last_intake_date": "2026-11-05"
+  }
+}
