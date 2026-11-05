@@ -100,7 +100,9 @@
     "audio": [],
     "documents": [],
     "media_rights": "NOT_REVIEWED",
-    "user_ownership": "NOT_CONFIRMED"
+    "user_ownership": "NOT_CONFIRMED",
+    "personal_action_photos": "NOT_AVAILABLE_PER_USER",
+    "notes": "User reports no individual photo evidence due to being actively occupied running the show. This is not a missing-data blocker; use organizer/press event visuals with licensing and truthful self-reported role labels."
   },
   "editorial_state": {
     "intake": "IN_PROGRESS",
