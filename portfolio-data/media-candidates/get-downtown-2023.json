@@ -1,0 +1,155 @@
+{
+  "schema_version": "1.0",
+  "event_id": "get-downtown-2023",
+  "curated_on": "2026-11-05",
+  "purpose": "Research-source and visual candidate library, NOT permission to republish",
+  "candidate_sources": [
+    {
+      "id": "gdt-ueh-recap",
+      "type": "official_event_recap",
+      "title": "UEH Youth — GDT concert 2023: SI:N",
+      "url": "https://youth.ueh.edu.vn/tin-tuc/clb-giai-dieu-tre-live-concert-get-downtown-2023-sin/",
+      "confidence": "HIGH_EVENT_MATCH",
+      "use": [
+        "primary public evidence",
+        "narrative structure",
+        "photo gallery"
+      ],
+      "notes": "Published 17 Jan 2024; describes the 9 Dec 2023 concert and >4 months team preparation. Does not verify personal participation."
+    },
+    {
+      "id": "gdt-mono-press",
+      "type": "press_gallery",
+      "title": "Sinh Viên Việt Nam / Tiền Phong — MONO at UEH event",
+      "url": "https://svvn.tienphong.vn/mono-danh-up-sinh-vien-truong-dh-kinh-te-tp-hcm-gay-an-tuong-voi-khoanh-khac-da-chan-360-do-post1594779.tpo",
+      "confidence": "LIKELY_MATCH_REQUIRES_PHOTO_REVIEW",
+      "use": [
+        "guest-performance context"
+      ],
+      "notes": "Verify each image before use; belongs to press copyright holder."
+    }
+  ],
+  "image_candidates": [
+    {
+      "id": "gdt-hero-01",
+      "label": "Official recap lead/thumbnail",
+      "url": "https://youth.ueh.edu.vn/wp-content/uploads/2024/01/0.-Thumbnail.jpg",
+      "source_page": "gdt-ueh-recap",
+      "source_caption": "Article lead image",
+      "shot_role": "hero_candidate",
+      "validation": "IMAGE_LINK_FOUND_ON_OFFICIAL_ARTICLE;BINARY_NOT_OPENED",
+      "rights": "THIRD_PARTY_PERMISSION_REQUIRED"
+    },
+    {
+      "id": "gdt-01",
+      "label": "Recap gallery photo 1",
+      "url": "https://youth.ueh.edu.vn/wp-content/uploads/2024/01/1-3.jpg",
+      "source_page": "gdt-ueh-recap",
+      "shot_role": "arrival_or_pre_show_candidate",
+      "validation": "ARTICLE_GALLERY_LINK;CONTENT_NOT_INDEPENDENTLY_VIEWED",
+      "rights": "THIRD_PARTY_PERMISSION_REQUIRED"
+    },
+    {
+      "id": "gdt-03",
+      "label": "Recap gallery photo 3",
+      "url": "https://youth.ueh.edu.vn/wp-content/uploads/2024/01/3-3.jpg",
+      "source_page": "gdt-ueh-recap",
+      "shot_role": "gallery_candidate",
+      "validation": "ARTICLE_GALLERY_LINK;CONTENT_NOT_INDEPENDENTLY_VIEWED",
+      "rights": "THIRD_PARTY_PERMISSION_REQUIRED"
+    },
+    {
+      "id": "gdt-04",
+      "label": "Recap gallery photo 4",
+      "url": "https://youth.ueh.edu.vn/wp-content/uploads/2024/01/4-2.jpg",
+      "source_page": "gdt-ueh-recap",
+      "shot_role": "three_chapters_gallery_candidate",
+      "validation": "ARTICLE_GALLERY_LINK;CONTENT_NOT_INDEPENDENTLY_VIEWED",
+      "rights": "THIRD_PARTY_PERMISSION_REQUIRED"
+    },
+    {
+      "id": "gdt-05",
+      "label": "Recap gallery photo 5",
+      "url": "https://youth.ueh.edu.vn/wp-content/uploads/2024/01/5-2.jpg",
+      "source_page": "gdt-ueh-recap",
+      "shot_role": "three_chapters_gallery_candidate",
+      "validation": "ARTICLE_GALLERY_LINK;CONTENT_NOT_INDEPENDENTLY_VIEWED",
+      "rights": "THIRD_PARTY_PERMISSION_REQUIRED"
+    },
+    {
+      "id": "gdt-06",
+      "label": "Recap gallery photo 6",
+      "url": "https://youth.ueh.edu.vn/wp-content/uploads/2024/01/6-1.jpg",
+      "source_page": "gdt-ueh-recap",
+      "shot_role": "three_chapters_gallery_candidate",
+      "validation": "ARTICLE_GALLERY_LINK;CONTENT_NOT_INDEPENDENTLY_VIEWED",
+      "rights": "THIRD_PARTY_PERMISSION_REQUIRED"
+    },
+    {
+      "id": "gdt-09",
+      "label": "Recap gallery photo 9",
+      "url": "https://youth.ueh.edu.vn/wp-content/uploads/2024/01/9-2.jpg",
+      "source_page": "gdt-ueh-recap",
+      "shot_role": "performance_candidate",
+      "validation": "ARTICLE_GALLERY_LINK;CONTENT_NOT_INDEPENDENTLY_VIEWED",
+      "rights": "THIRD_PARTY_PERMISSION_REQUIRED"
+    },
+    {
+      "id": "gdt-10",
+      "label": "Recap gallery photo 10",
+      "url": "https://youth.ueh.edu.vn/wp-content/uploads/2024/01/10-1.jpg",
+      "source_page": "gdt-ueh-recap",
+      "shot_role": "performance_candidate",
+      "validation": "ARTICLE_GALLERY_LINK;CONTENT_NOT_INDEPENDENTLY_VIEWED",
+      "rights": "THIRD_PARTY_PERMISSION_REQUIRED"
+    },
+    {
+      "id": "gdt-11",
+      "label": "Recap gallery photo 11",
+      "url": "https://youth.ueh.edu.vn/wp-content/uploads/2024/01/11.jpg",
+      "source_page": "gdt-ueh-recap",
+      "shot_role": "performance_candidate",
+      "validation": "ARTICLE_GALLERY_LINK;CONTENT_NOT_INDEPENDENTLY_VIEWED",
+      "rights": "THIRD_PARTY_PERMISSION_REQUIRED"
+    },
+    {
+      "id": "gdt-13",
+      "label": "Recap gallery photo 13",
+      "url": "https://youth.ueh.edu.vn/wp-content/uploads/2024/01/13.jpg",
+      "source_page": "gdt-ueh-recap",
+      "shot_role": "finale_or_guest_candidate",
+      "validation": "ARTICLE_GALLERY_LINK;CONTENT_NOT_INDEPENDENTLY_VIEWED",
+      "rights": "THIRD_PARTY_PERMISSION_REQUIRED"
+    }
+  ],
+  "video_leads": [
+    {
+      "url": "https://www.youtube.com/watch?v=oG1Yj6ENUPU",
+      "source": "User-supplied research brief",
+      "status": "VIDEO_ID_PRESENT_BUT_UNABLE_TO_VERIFY_TITLE_AND_CONTENT",
+      "embed_status": "NOT_APPROVED"
+    },
+    {
+      "url": "https://www.youtube.com/watch?v=1k_NlkZvfGQ",
+      "source": "User-supplied research brief",
+      "status": "VIDEO_ID_PRESENT_BUT_UNABLE_TO_VERIFY_TITLE_AND_CONTENT",
+      "embed_status": "NOT_APPROVED"
+    }
+  ],
+  "editorial_selection": {
+    "visual_goal": "filmstrip across childhood / adolescence / adulthood",
+    "recommended_showcase": [
+      "official lead image",
+      "best 1-2 images per act from original organizer gallery",
+      "pre-show / logistics documents if personally supplied"
+    ],
+    "priority": "HIGH",
+    "publishable_now": false
+  },
+  "missing_user_only": [
+    "Confirm rights to republish image copies or use authorized embeds",
+    "Any photograph explicitly showing the owner at work",
+    "Personal logistic checklist / risk-handling document if available"
+  ],
+  "status": "SOURCE_SHORTLIST_READY;MEDIA_NOT_CLEARED"
+}
