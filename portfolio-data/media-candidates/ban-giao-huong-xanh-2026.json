@@ -1,0 +1,71 @@
+{
+  "schema_version": "1.0",
+  "event_id": "ban-giao-huong-xanh-2026",
+  "curated_on": "2026-11-05",
+  "sources": [
+    {
+      "id": "bghx-city-press",
+      "type": "municipal_press_story",
+      "title": "Trung tâm Báo chí TP.HCM — Tháng Công nhân 2026",
+      "url": "https://ttbc-hcm.gov.vn/ldld-tphcm-chinh-thuc-khai-mac-thang-cong-nhan-2026-1021216.html",
+      "event_match": "CONFIRMED",
+      "notes": "Photos credited Hoàng Triều/NLĐO; stage-opening photo plus crowd and official moments. This source is not an independent backstage record."
+    },
+    {
+      "id": "bghx-nld",
+      "type": "press_photo_gallery",
+      "title": "NLĐO — LĐLĐ TP.HCM chính thức khai mạc Tháng Công nhân 2026",
+      "url": "https://tuoitre.vn/nld/ldld-tphcm-chinh-thuc-khai-mac-thang-cong-nhan-2026-196260428195216262.htm",
+      "event_match": "CONFIRMED"
+    },
+    {
+      "id": "bghx-plo",
+      "type": "press_event_context",
+      "title": "PLO — Khai mạc Tháng Công nhân",
+      "url": "https://plo.vn/khai-mac-thang-cong-nhan-tang-12-mai-am-cong-doan-cho-nguoi-lao-dong-post906307.html",
+      "event_match": "CONFIRMED",
+      "notes": "Confirms art program is a part of larger inauguration and welfare activities; do not attribute whole event outcomes to owner."
+    }
+  ],
+  "image_candidates": [
+    {
+      "id": "bghx-stage-opener",
+      "label": "Hợp xướng, sân khấu hóa Nhịp sống công nhân",
+      "url": "https://nld.mediacdn.vn/thumb_w/698/291774122806476800/2026/4/28/z7772327182954005129ff9df0873effebc2e99f7869a8-17773781952751259789478.jpg",
+      "source_page": "bghx-nld",
+      "visual_use": "opening_performance;cover_candidate",
+      "validation": "CAPTION_AND_EVENT_CONTEXT_CONFIRMED;BINARY_NOT_OPENED",
+      "credit": "Hoàng Triều / NLĐO",
+      "rights": "PRESS_OWNED;LINK_ONLY_UNTIL_APPROVAL"
+    },
+    {
+      "id": "bghx-audience",
+      "label": "Gần 2.000 người tham gia sự kiện tổng thể — ảnh khán giả",
+      "url": "https://nld.mediacdn.vn/thumb_w/698/291774122806476800/2026/4/28/z7772327171850e03c2b9679ff0bc4038c405df9a60fda-17773781952511367554682.jpg",
+      "source_page": "bghx-nld",
+      "visual_use": "scale_context",
+      "validation": "ARTICLE_CAPTION_CONFIRMED;BINARY_NOT_OPENED",
+      "credit": "Hoàng Triều / NLĐO",
+      "rights": "PRESS_OWNED;LINK_ONLY_UNTIL_APPROVAL"
+    }
+  ],
+  "video_leads": [],
+  "video_status": "NO_ARTISTIC_PERFORMANCE_VIDEO_CONFIRMED",
+  "editorial_selection": {
+    "concept": "Production Command — explore real stage layout and controlled cue/performer transitions",
+    "recommended_cover": "bghx-stage-opener",
+    "recommended_gallery": [
+      "bghx-stage-opener",
+      "bghx-audience"
+    ],
+    "important_scope": "The photo source documents the full Workers' Month opening; the show is a component, not the entirety. Never label event-wide 2,000 attendance as audience of art show alone.",
+    "personal_role": "Wing-side performer movement and cue coordination with radio link to director/stage manager/technical team, as owner-reported.",
+    "interaction_truthfulness": "Stage diagram and running-order simulation only with actual plans or clear 'conceptual illustration' disclosure"
+  },
+  "missing_user_only": [
+    "Actual stage-wing image / layout / personal photo if available",
+    "Permission for republishing press photographs as copied assets",
+    "Exact performance clip / licensed media if held"
+  ],
+  "status": "SOURCE_SHORTLIST_READY;LOW_PERFORMANCE_MEDIA_DEPTH;RIGHTS_PENDING"
+}
