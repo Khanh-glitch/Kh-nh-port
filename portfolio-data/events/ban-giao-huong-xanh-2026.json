@@ -63,19 +63,23 @@
     }
   ],
   "personal_contribution": {
-    "confirmation": "USER_SELF_REPORTED_SCOPE_PENDING_DETAILS",
+    "confirmation": "USER_SELF_REPORTED_SCOPE_WITH_DETAILS_PENDING_EVIDENCE",
     "job_title": null,
     "team": null,
     "participation_period": null,
     "workstreams": [
-      "Điều phối tại cánh sân khấu (cách hiểu sơ bộ, chờ xác nhận)",
-      "Theo dõi/keep track tại cánh sân khấu (chưa rõ đối tượng, cue, phạm vi)"
+      "Điều phối hoạt động ở cánh sân khấu",
+      "Theo dõi thứ tự nghệ sĩ/diễn viên ra vào",
+      "Theo dõi thời điểm chuẩn bị từng tiết mục",
+      "Theo dõi cue sân khấu",
+      "Điều phối và hướng dẫn nghệ sĩ/diễn viên về vị trí trên sân khấu khi cần"
     ],
     "decisions": [],
     "individual_results": [],
     "proof_links": [],
-    "notes": "Lời gốc có lỗi gõ; diễn giải sơ bộ là điều phối và keeptrack cánh, không tự gán Stage Manager hay nhiệm vụ quản lý toàn bộ chương trình.",
-    "original_user_statement": "BGHX: Điều pphốivaf keeptrack cánh"
+    "notes": "Phạm vi công việc do chủ portfolio trực tiếp mô tả cho cả MCYT và BGHX. Chưa có chức danh chính thức, khoảng thời gian tham gia, tài liệu chứng minh và kết quả cá nhân. 'Theo dõi cue' không mặc nhiên đồng nghĩa với quyền gọi cue hoặc điều hành toàn bộ sân khấu.",
+    "original_user_statement": "BGHX: Điều pphốivaf keeptrack cánh",
+    "detail_clarification_original": "Chẳng hạn thứ tự nghệ sĩ/diễn viên ra vào, thời điểm chuẩn bị tiết mục, cue sân khấu, điều phối và hướng dẫn nghệ sĩ trên sân khấu về vị trí nếu cần"
   },
   "media": {
     "cover": null,
