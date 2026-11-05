@@ -116,8 +116,21 @@
       "rights": "PRESS_OWNED;LINK_ONLY_UNTIL_APPROVAL"
     }
   ],
-  "video_leads": [],
-  "video_status": "NO_EVENT_SPECIFIC_EMBEDDABLE_VIDEO_VERIFIED",
+  "video_leads": [
+    {
+      "id": "mcyt-charity-donation-video-press-story",
+      "title": "Á hậu Băng Châu tham gia quyên góp tại chương trình Một Chút Yêu Thương 3",
+      "url": "https://1thegioi.vn/a-hau-bang-chau-ba-nam-lien-giu-mot-loi-hua-tu-te-243446.html",
+      "kind": "PRESS_PAGE_WITH_VIDEO_SECTION",
+      "relation": "CONFIRMED_MC_YT_2026_CONTEXTUAL_VIDEO",
+      "role": "SOCIAL_IMPACT_CONTEXT_NOT_STAGE_PERFORMANCE",
+      "embedded_player_url": null,
+      "embed_validation": "NOT_VERIFIED",
+      "republication": "LINK_TO_ORIGINAL_SOURCE_ONLY_UNTIL_RIGHTS_VERIFIED",
+      "note": "Article dated 2026-01-09 explicitly labels a video of charity-donation activity at MCYT3. Do not claim independent video playback/standalone source until verified."
+    }
+  ],
+  "video_status": "ONE_CONFIRMED_CONTEXTUAL_VIDEO_ARTICLE;NO_VERIFIED_INDEPENDENT_EMBED_OR_FULL_EVENT_VIDEO",
   "editorial_selection": {
     "concept": "Backstage Live — synchronized stage view and hypothetical running-order interface",
     "recommended_cover": "mcyt-ensemble",
