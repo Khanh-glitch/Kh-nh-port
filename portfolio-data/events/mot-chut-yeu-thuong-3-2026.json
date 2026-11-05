@@ -99,8 +99,15 @@
     "videos": [],
     "audio": [],
     "documents": [],
-    "media_rights": "NOT_REVIEWED",
-    "user_ownership": "NOT_CONFIRMED"
+    "media_rights": "AWAITING_USER_REPUBLICATION_CONFIRMATION",
+    "user_ownership": "NOT_CONFIRMED",
+    "submitted_photo_ids": [
+      "mcyt-personal-stage-group-01",
+      "mcyt-full-crew-stage-02"
+    ],
+    "submitted_images_reference": "portfolio-data/media-candidates/mot-chut-yeu-thuong-3-2026.json",
+    "photos_status": "TWO_USER_UPLOADED_PHOTOS_CATALOGUED_BY_NAME_AND_HASH;BINARY_NOT_ON_GITHUB",
+    "notes": "One small-group picture and one large wrap-up stage group photo; do not identify any person until user confirms position. Not action photos."
   },
   "editorial_state": {
     "intake": "IN_PROGRESS",
