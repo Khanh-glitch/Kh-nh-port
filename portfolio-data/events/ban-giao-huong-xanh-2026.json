@@ -1,0 +1,93 @@
+{
+  "schema_version": "1.0",
+  "id": "ban-giao-huong-xanh-2026",
+  "title": "Bản Giao Hưởng Xanh 2026",
+  "type": [
+    "Public Ceremony",
+    "Cultural Show",
+    "Community Event"
+  ],
+  "date": "2026-04-28",
+  "event_context": {
+    "venue": "Cung Văn hóa Lao động TP.HCM – cơ sở Bình Trưng",
+    "organizer": "Liên đoàn Lao động TP.HCM",
+    "summary": "Artistic program at the opening of Workers’ Month 2026, alongside public ceremony and community welfare activities.",
+    "reported_highlights": [
+      "Performance program combined with ceremonial segments and community support",
+      "Sen Việt identified in supplied procurement research as contractor for one event-service package; NOT evidence of user's employment or duties"
+    ],
+    "statistics": [
+      {
+        "name": "Participants",
+        "value": "nearly 2,000",
+        "scope": "Full opening ceremony, not exclusively artistic-show audience"
+      },
+      {
+        "name": "Welfare packages",
+        "value": "300",
+        "scope": "Program-wide benefits, not individual portfolio impact"
+      },
+      {
+        "name": "Union-supported homes",
+        "value": "12",
+        "scope": "Program-wide result"
+      },
+      {
+        "name": "Shopping benefit recipients",
+        "value": "1,500",
+        "scope": "Program-wide"
+      },
+      {
+        "name": "One event-service contract",
+        "value": "485,000,000 VND",
+        "scope": "One procurement contract, NOT total event cost"
+      }
+    ]
+  },
+  "research_references": [
+    {
+      "label": "Báo Người Lao Động",
+      "url": "https://nld.com.vn/ldld-tphcm-chinh-thuc-khai-mac-thang-cong-nhan-2026-196260428195216262.htm"
+    },
+    {
+      "label": "Báo Pháp Luật TP.HCM",
+      "url": "https://plo.vn/khai-mac-thang-cong-nhan-tang-12-mai-am-cong-doan-cho-nguoi-lao-dong-post906307.html"
+    },
+    {
+      "label": "Báo Nhân Dân",
+      "url": "https://nhandan.vn/thanh-pho-ho-chi-minh-khai-mac-thang-cong-nhan-lan-thu-18-nam-2026-post958997.html"
+    },
+    {
+      "label": "Public procurement result",
+      "url": "https://dauthau.asia/ketqua/luachon-nhathau/to-chuc-su-kien-khai-mac-thang-cong-nhan-va-dai-nhac-hoi-ban-giao-huong-xanh-2746190.html"
+    }
+  ],
+  "personal_contribution": {
+    "confirmation": "AWAITING_USER",
+    "job_title": null,
+    "team": null,
+    "participation_period": null,
+    "workstreams": [],
+    "decisions": [],
+    "individual_results": [],
+    "proof_links": [],
+    "notes": null
+  },
+  "media": {
+    "cover": null,
+    "photos": [],
+    "videos": [],
+    "audio": [],
+    "documents": [],
+    "media_rights": "NOT_REVIEWED",
+    "user_ownership": "NOT_CONFIRMED"
+  },
+  "editorial_state": {
+    "intake": "IN_PROGRESS",
+    "publication": "DO_NOT_PUBLISH",
+    "event_facts": "USER_SUPPLIED_SECONDARY_RESEARCH",
+    "individual_claims": "NO_CLAIMS_UNTIL_USER_CONFIRMS",
+    "external_links": "RESEARCH_REFERENCES_NOT_VERIFIED_AS_USER_WORK",
+    "last_intake_date": "2026-11-05"
+  }
+}
