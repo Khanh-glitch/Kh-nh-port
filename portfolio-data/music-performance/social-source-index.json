@@ -1,0 +1,75 @@
+{
+  "schema_version": "1.0",
+  "intake_state": "OPEN",
+  "created_at": "2026-11-05",
+  "owner_supplied_handles": {
+    "tiktok": "menisrealforeverbae",
+    "instagram": "menisrealforeverbae",
+    "source": "USER_DIRECT"
+  },
+  "public_profiles": [
+    {
+      "platform": "tiktok",
+      "url": "https://www.tiktok.com/@menisrealforeverbae",
+      "handle": "@menisrealforeverbae",
+      "verification": "USERNAME_MATCHED_IN_INDEXED_POSTS;FULL_PROFILE_NOT_ACCESSIBLE",
+      "deep_scan": "NOT_COMPLETED"
+    },
+    {
+      "platform": "instagram",
+      "url": "https://www.instagram.com/menisrealforeverbae/",
+      "handle": "@menisrealforeverbae",
+      "verification": "INDEXED_PUBLIC_PROFILE_MATCHED;LIST_OF_POSTS_NOT_ACCESSIBLE",
+      "deep_scan": "NOT_COMPLETED"
+    }
+  ],
+  "indexed_posts": [
+    {
+      "id": "tiktok-demo-ke-lam-mau-7322142040626580737",
+      "platform": "tiktok",
+      "url": "https://www.tiktok.com/@menisrealforeverbae/video/7322142040626580737",
+      "search_result_caption": "chỉ là demo xin đừng tắt tiếng huhu #kelammau #demo #menisrealforeverbae",
+      "candidate_type": "DEMO",
+      "working_title": "Kẻ Làm Màu (from hashtag, not verified official title)",
+      "author_handle": "@menisrealforeverbae",
+      "confidence": "SEARCH_SNIPPET_MATCH_ONLY",
+      "media_opened": false,
+      "playback_verified": false,
+      "role_detail": "NOT_VERIFIED_BEYOND_ACCOUNT_OWNERSHIP",
+      "use": "DEMO_TAPES_CANDIDATE"
+    },
+    {
+      "id": "tiktok-cover-7274581965217615106",
+      "platform": "tiktok",
+      "url": "https://www.tiktok.com/@menisrealforeverbae/video/7274581965217615106",
+      "search_result_caption": "quá mơi bài này ròi, phải cô ve thoai #khiconmodanphai #tez",
+      "candidate_type": "COVER_CANDIDATE",
+      "working_title": null,
+      "author_handle": "@menisrealforeverbae",
+      "confidence": "SEARCH_SNIPPET_MATCH_ONLY",
+      "media_opened": false,
+      "playback_verified": false,
+      "role_detail": "NOT_VERIFIED",
+      "use": "VOICE_EXPERIMENTS_OR_COVERS_CANDIDATE"
+    }
+  ],
+  "linked_official_releases": [
+    {
+      "title": "Nếu ngày mai",
+      "file": "works/neu-ngay-mai-ho-da-cha-guom-2026.json",
+      "status": "SPOTIFY_AND_OFFICIAL_YOUTUBE_VERIFIED"
+    },
+    {
+      "title": "Mùa Hạ Thứ 18",
+      "file": "works/facebook-composer-reel-848691413758411.json",
+      "status": "TITLE_AND_COMPOSER_CONFIRMED_BY_OWNER;FACEBOOK_REEL_METADATA_UNREADABLE"
+    }
+  ],
+  "discovery_limits": [
+    "TikTok post pages are blocked from direct scrape in this environment; the two links were discovered from search index snippets rather than playable inspection.",
+    "Instagram profile is indexed but its public posts could not be enumerated; indexed comments elsewhere must not be mistaken for authored posts.",
+    "No original social video file has been downloaded or copied into GitHub.",
+    "Do not choose hero performance based only on social caption or source popularity."
+  ],
+  "staging_next": "Accept additional public performance links or source folder if user supplies; meanwhile treat these as the first two indexed candidates, not a comprehensive account crawl."
+}
