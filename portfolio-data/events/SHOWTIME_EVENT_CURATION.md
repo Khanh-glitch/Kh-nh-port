@@ -77,3 +77,18 @@ Candidate links remain research records and must not be automatically pulled int
 The only inputs requiring the user's private knowledge are: which media truly includes their personal work; any owned backstage material; optional exact production diagrams/run-of-show; and whether assets have permission for portfolio publication. The assistant should complete public-source research, selection and planning independently, not ask the user to manually search already accessible public pages.
 
 **NO TEMPLATE BUILD OR PUBLICATION** until explicitly requested; content submission is still open.
+
+
+## New personal evidence update — MCYT (05 Nov 2026, user uploads)
+
+Two images were uploaded directly by the owner, inspected and hashed:
+1. `612125098_1271470444823328_5140945500326160407_n.png` (2048×1536, 4,942,905 bytes, SHA256 `39779e40c5c5821ef5c077b6c2459e57685bb5ed9c272dc57bc10bb140b2503c`). Visual: small group of seven posing on the MCYT stage. Owner says one portrait is with their superior, a director; exact identities/positions are not inferred.
+2. `DSC09408.JPG` (2048×1365, 609,277 bytes, SHA256 `199e9a71c6bbdd430f8e54a2881535a2ed301f0fc14b4a100c3321c9317bd082`). Visual: large group wrap-up stage photograph.
+
+Recommended showcase placement:
+- Small-group image: **PERSONAL NOTE / THE PEOPLE BEHIND THE SHOW**, with user-approved caption and an optional zoom hotspot only after owner's location in frame is provided.
+- Large-group image: **FINAL CURTAIN / THE TEAM**, full panoramic presentation retaining overall team context, no fake depiction of on-duty cue work.
+- The best stage image remains for the **stage performance hero**; these two are powerful **authentic presence** material, not proof of every claimed task.
+- Publishing or copying binaries to GitHub public **awaits explicit right-to-publish confirmation**. Existing assets were *not* uploaded as images to GitHub; only metadata was saved.
+
+The user explicitly reports **no personal action photos for GDT or BGHX**, since they were busy running the shows. Do not continue treating absence of such photos as an issue they must solve; use properly credited official event media and the self-described responsibilities.
