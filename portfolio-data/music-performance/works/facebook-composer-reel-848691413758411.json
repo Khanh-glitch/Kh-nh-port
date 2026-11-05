@@ -1,0 +1,39 @@
+{
+  "schema_version": "1.0",
+  "id": "facebook-composer-reel-848691413758411",
+  "title": null,
+  "working_title": "Untitled composition — Facebook Reel",
+  "work_type": "Facebook Reel; user-described composition",
+  "user_role": {
+    "role": "Composer",
+    "source": "USER_CONFIRMED"
+  },
+  "platforms": [
+    {
+      "type": "facebook_reel",
+      "url": "https://www.facebook.com/reel/848691413758411",
+      "verified_media_metadata": false,
+      "note": "The public reel could not be fetched by web or Firecrawl; do not invent song name, creator, release date, or singer."
+    }
+  ],
+  "metadata_unknown": [
+    "exact_title",
+    "performance_or_recording_credits",
+    "year",
+    "song_language",
+    "duration",
+    "full_audio_or_other_link",
+    "whether_publicly_embeddable"
+  ],
+  "presentation": {
+    "collection": [
+      "COMPOSITIONS",
+      "MUSIC_ARCHIVE"
+    ],
+    "priority": "FEATURED_CANDIDATE_PENDING_SOURCE_DETAILS",
+    "mode": "composer_story_board",
+    "fallback": "Link to Facebook reel with honest composer credit until embeddability is validated"
+  },
+  "editorial_status": "USER_PROVIDED_LINK_AND_ROLE;CONTENT_NOT_YET_VERIFIABLE",
+  "rights_status": "PLATFORM_LINK_ONLY_UNTIL_EMBED_VERIFIED"
+}
