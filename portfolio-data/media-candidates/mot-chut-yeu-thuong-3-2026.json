@@ -135,7 +135,7 @@
     "Optional source running order/cue sheet",
     "Any personal backstage documentation or portrait"
   ],
-  "status": "SOURCE_SHORTLIST_READY;TWO_OWNER_SUPPLIED_IMAGES_CATALOGUED;RIGHTS_PENDING",
+  "status": "TWO_USER_PHOTOS_APPROVED_BY_OWNER;MEDIA_BINARY_INGEST_PENDING",
   "note": "Opening a linked source photo is not permission to copy it to a public portfolio. Links are candidates, not uploaded assets.",
   "user_submitted_media": [
     {
@@ -157,9 +157,10 @@
         "PERSONAL_EVENT_GALLERY"
       ],
       "recommended_layout": "Human-scale, personal-story image. Crop only after the owner clarifies who they are and consent/rights are confirmed.",
-      "rights_status": "USER_SUPPLIED_PERMISSION_TO_REPUBLISH_NOT_YET_CONFIRMED",
+      "rights_status": "OWNER_APPROVED_PUBLIC_PORTFOLIO_USE;THIRD_PARTY_RIGHTS_NOT_INDEPENDENTLY_CHECKED",
       "repo_binary_uploaded": false,
-      "target_repo_path": "portfolio-data/media/events/mcyt-2026/crew-small-group.png"
+      "target_repo_path": "portfolio-data/media/events/mcyt-2026/crew-small-group.png",
+      "display_status": "APPROVED_FOR_PORTFOLIO_BY_OWNER;BINARY_NOT_YET_IN_GITHUB"
     },
     {
       "id": "mcyt-full-crew-stage-02",
@@ -179,9 +180,10 @@
         "GROUP_GALLERY"
       ],
       "recommended_layout": "Full-frame panorama with a slowly moving crop only if it doesn't falsely spotlight an individual. Keep group context/caption.",
-      "rights_status": "USER_SUPPLIED_PERMISSION_TO_REPUBLISH_NOT_YET_CONFIRMED",
+      "rights_status": "OWNER_APPROVED_PUBLIC_PORTFOLIO_USE;THIRD_PARTY_RIGHTS_NOT_INDEPENDENTLY_CHECKED",
       "repo_binary_uploaded": false,
-      "target_repo_path": "portfolio-data/media/events/mcyt-2026/full-crew-stage.jpg"
+      "target_repo_path": "portfolio-data/media/events/mcyt-2026/full-crew-stage.jpg",
+      "display_status": "APPROVED_FOR_PORTFOLIO_BY_OWNER;BINARY_NOT_YET_IN_GITHUB"
     }
   ],
   "owner_evidence_notes": {
@@ -189,5 +191,11 @@
     "photography_scope": "These show event presence/group moments, NOT in-action backstage or direct proof of individual cue operation.",
     "image_source_status": "The uploaded photos were visually inspected in the conversation and checked for size and checksum, but have not been published or copied as binaries to this public repository.",
     "truthfulness": "Do not infer identity of any pictured person from the photo; clarify user position before any label or crop identifies them."
+  },
+  "user_publication_authorization": {
+    "status": "APPROVED_BY_PORTFOLIO_OWNER_IN_CONVERSATION",
+    "date": "2026-11-05",
+    "scope": "These two images may be used publicly in user's SHOWTIME portfolio and uploaded to the public Khanh-glitch/Kh-nh-port repository.",
+    "note": "The owner expressly authorized use and asked not to delay. Authorization is not a statement that third-party subjects/photographers have separately consented, if applicable."
   }
 }
