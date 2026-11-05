@@ -1,0 +1,140 @@
+{
+  "schema_version": "1.0",
+  "event_id": "mot-chut-yeu-thuong-3-2026",
+  "curated_on": "2026-11-05",
+  "sources": [
+    {
+      "id": "mcyt-1thegioi",
+      "url": "https://1thegioi.vn/mot-chut-yeu-thuong-3-nghe-thuat-vi-an-toan-giao-thong-va-long-nhan-ai-243405.html",
+      "type": "press_photo_essay",
+      "match": "CONFIRMED",
+      "notes": "Jan 9, 2026; article has individual stage, ceremony, charity and 10+ gallery photos."
+    },
+    {
+      "id": "mcyt-htv",
+      "url": "https://htv.vn/mot-chut-yeu-thuong-mua-3-nhip-cau-nhan-ai-xoa-diu-noi-dau-tai-nan-giao-thong-22226010910411304.htm",
+      "type": "broadcast_report_photos",
+      "match": "CONFIRMED_FROM_SEARCH_IMAGE",
+      "notes": "Two image-search previews were matched to the correct 2026 charity concert."
+    },
+    {
+      "id": "mcyt-plo",
+      "url": "https://plo.vn/mot-chut-yeu-thuong-lan-3-thap-sang-niem-tin-cho-nan-nhan-tai-nan-giao-thong-post890553.html",
+      "type": "press_event_verification",
+      "match": "CONFIRMED"
+    }
+  ],
+  "image_candidates": [
+    {
+      "id": "mcyt-ensemble",
+      "label": "HTV stage: female vocal and choir",
+      "url": "https://htv.mediacdn.vn/155334506109014016/2026/1/9/z7411572742714fdd0c657ab99534f7e1f929700992136-17679271691261574188140.jpg",
+      "source_page": "mcyt-htv",
+      "visual_use": "performance_wide",
+      "validation": "IMAGE_SEARCH_PREVIEW_MATCHED_EVENT",
+      "rights": "PRESS_OWNED;LINK_ONLY_UNTIL_APPROVAL"
+    },
+    {
+      "id": "mcyt-performance-pink",
+      "label": "HTV stage: singer and dancers",
+      "url": "https://htv.mediacdn.vn/155334506109014016/2026/1/9/z7411572750811d421041e9ffb9577edf18856a53b43e0-1767929413618935070206.jpg",
+      "source_page": "mcyt-htv",
+      "visual_use": "performance_close",
+      "validation": "IMAGE_SEARCH_PREVIEW_MATCHED_EVENT",
+      "rights": "PRESS_OWNED;LINK_ONLY_UNTIL_APPROVAL"
+    },
+    {
+      "id": "mcyt-group",
+      "label": "Organizers, traffic police, artists group photo",
+      "url": "https://mtg.1cdn.vn/2026/01/09/z7411508092971_18dc179eec8c2b58ec8142e77a2457f3.jpg",
+      "source_page": "mcyt-1thegioi",
+      "visual_use": "group_context",
+      "validation": "ARTICLE_CAPTION_CONFIRMED",
+      "rights": "PRESS_OWNED;LINK_ONLY_UNTIL_APPROVAL"
+    },
+    {
+      "id": "mcyt-gala",
+      "label": "Stage performance photograph",
+      "url": "https://mtg.1cdn.vn/2026/01/09/z7411508144189_28da533d4ec3685cb76a623179e41311.jpg",
+      "source_page": "mcyt-1thegioi",
+      "visual_use": "performance",
+      "validation": "ARTICLE_CAPTION_CONFIRMED",
+      "rights": "PRESS_OWNED;LINK_ONLY_UNTIL_APPROVAL"
+    },
+    {
+      "id": "mcyt-artists",
+      "label": "Khắc Triệu and Cẩm Vân interaction",
+      "url": "https://mtg.1cdn.vn/2026/01/09/z7411508122105_f092a342690f68ec8c75d8f4b6fec4b4.jpg",
+      "source_page": "mcyt-1thegioi",
+      "visual_use": "artist_interaction",
+      "validation": "ARTICLE_CAPTION_CONFIRMED",
+      "rights": "PRESS_OWNED;LINK_ONLY_UNTIL_APPROVAL"
+    },
+    {
+      "id": "mcyt-donation",
+      "label": "Onstage contribution moment",
+      "url": "https://mtg.1cdn.vn/2026/01/09/z7411508160057_49edf7e71f5d287c8a45238bcff0e54d.jpg",
+      "source_page": "mcyt-1thegioi",
+      "visual_use": "charity_context",
+      "validation": "ARTICLE_CAPTION_CONFIRMED",
+      "rights": "PRESS_OWNED;LINK_ONLY_UNTIL_APPROVAL"
+    },
+    {
+      "id": "mcyt-awards",
+      "label": "Organizer acknowledgements onstage",
+      "url": "https://mtg.1cdn.vn/2026/01/09/z7411508154439_5be192d87e74cb9b48441ff7b0928dc0.jpg",
+      "source_page": "mcyt-1thegioi",
+      "visual_use": "ceremony",
+      "validation": "ARTICLE_CAPTION_CONFIRMED",
+      "rights": "PRESS_OWNED;LINK_ONLY_UNTIL_APPROVAL"
+    },
+    {
+      "id": "mcyt-gallery-1",
+      "label": "Further event gallery image",
+      "url": "https://mtg.1cdn.vn/2026/01/09/z7411508154797_efb526ba1f9a35d357157fe1c0e91975.jpg",
+      "source_page": "mcyt-1thegioi",
+      "visual_use": "gallery",
+      "validation": "ARTICLE_GALLERY_LINK;DETAIL_NOT_REVIEWED",
+      "rights": "PRESS_OWNED;LINK_ONLY_UNTIL_APPROVAL"
+    },
+    {
+      "id": "mcyt-gallery-2",
+      "label": "Further event gallery image",
+      "url": "https://mtg.1cdn.vn/2026/01/09/z7411508146235_ba01f3feb1737c7a2313b01e3b8db5fe.jpg",
+      "source_page": "mcyt-1thegioi",
+      "visual_use": "gallery",
+      "validation": "ARTICLE_GALLERY_LINK;DETAIL_NOT_REVIEWED",
+      "rights": "PRESS_OWNED;LINK_ONLY_UNTIL_APPROVAL"
+    },
+    {
+      "id": "mcyt-gallery-3",
+      "label": "Further event gallery image",
+      "url": "https://mtg.1cdn.vn/2026/01/09/z7411508145588_a17f168ae251952169ea1df50bad99d3.jpg",
+      "source_page": "mcyt-1thegioi",
+      "visual_use": "gallery",
+      "validation": "ARTICLE_GALLERY_LINK;DETAIL_NOT_REVIEWED",
+      "rights": "PRESS_OWNED;LINK_ONLY_UNTIL_APPROVAL"
+    }
+  ],
+  "video_leads": [],
+  "video_status": "NO_EVENT_SPECIFIC_EMBEDDABLE_VIDEO_VERIFIED",
+  "editorial_selection": {
+    "concept": "Backstage Live — synchronized stage view and hypothetical running-order interface",
+    "recommended_cover": "mcyt-ensemble",
+    "recommended_gallery": [
+      "mcyt-performance-pink",
+      "mcyt-gala",
+      "mcyt-artists",
+      "mcyt-donation"
+    ],
+    "require_before_accurate_cue_timeline": "Actual running order or user-checked fictional illustration label",
+    "individual_contribution": "Stage-wing coordination, readiness, stage cues, radio contact with director/stage manager/technical team (user-reported)."
+  },
+  "missing_user_only": [
+    "Permission to republish external imagery as copied media, if desired",
+    "Optional source running order/cue sheet",
+    "Any personal backstage documentation or portrait"
+  ],
+  "status": "SOURCE_SHORTLIST_READY;RIGHTS_AND_USER_ASSETS_PENDING",
+  "note": "Opening a linked source photo is not permission to copy it to a public portfolio. Links are candidates, not uploaded assets."
+}
