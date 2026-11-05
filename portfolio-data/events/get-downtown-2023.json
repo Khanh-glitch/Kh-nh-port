@@ -1,0 +1,79 @@
+{
+  "schema_version": "1.0",
+  "id": "get-downtown-2023",
+  "title": "GET DOWNTOWN 2023: |SI:N|",
+  "type": [
+    "Live Concert",
+    "Student Entertainment"
+  ],
+  "date": "2023-12-09",
+  "event_context": {
+    "venue": "Hội trường A1.16, Đại học Kinh tế TP.HCM (UEH)",
+    "organizer": "CLB Giai Điệu Trẻ – UEH",
+    "creative_theme": "The Scene You Have Ever Seen",
+    "summary": "A cinematic-memory concert journey through childhood, adolescence and adulthood, combining live vocals, dance, theatrical performance and a finale.",
+    "reported_highlights": [
+      "Guests reported: Hoàng Thùy Linh and MONO",
+      "Guest groups reported: IU Arteam and Black Out Crew",
+      "Diamond sponsor reported: EnerZ"
+    ],
+    "statistics": [
+      {
+        "name": "Audience",
+        "value": "approximately 1,000",
+        "scope": "Estimated attendance reported by UEH, not audited ticket count"
+      },
+      {
+        "name": "Preparation time",
+        "value": "over four months",
+        "scope": "Organizing team, not personal tenure"
+      }
+    ]
+  },
+  "research_references": [
+    {
+      "label": "UEH Youth event recap",
+      "url": "https://youth.ueh.edu.vn/tin-tuc/clb-giai-dieu-tre-live-concert-get-downtown-2023-sin/"
+    },
+    {
+      "label": "UEH cultural impact",
+      "url": "https://future.ueh.edu.vn/1125-dong-gop-vao-nghe-thuat-va-di-san-van-hoa/"
+    },
+    {
+      "label": "User-provided candidate video 1 (not yet reviewed)",
+      "url": "https://www.youtube.com/watch?v=oG1Yj6ENUPU"
+    },
+    {
+      "label": "User-provided candidate video 2 (not yet reviewed)",
+      "url": "https://www.youtube.com/watch?v=1k_NlkZvfGQ"
+    }
+  ],
+  "personal_contribution": {
+    "confirmation": "AWAITING_USER",
+    "job_title": null,
+    "team": null,
+    "participation_period": null,
+    "workstreams": [],
+    "decisions": [],
+    "individual_results": [],
+    "proof_links": [],
+    "notes": null
+  },
+  "media": {
+    "cover": null,
+    "photos": [],
+    "videos": [],
+    "audio": [],
+    "documents": [],
+    "media_rights": "NOT_REVIEWED",
+    "user_ownership": "NOT_CONFIRMED"
+  },
+  "editorial_state": {
+    "intake": "IN_PROGRESS",
+    "publication": "DO_NOT_PUBLISH",
+    "event_facts": "USER_SUPPLIED_SECONDARY_RESEARCH",
+    "individual_claims": "NO_CLAIMS_UNTIL_USER_CONFIRMS",
+    "external_links": "RESEARCH_REFERENCES_NOT_VERIFIED_AS_USER_WORK",
+    "last_intake_date": "2026-11-05"
+  }
+}
