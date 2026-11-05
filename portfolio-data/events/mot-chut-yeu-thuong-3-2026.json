@@ -109,5 +109,15 @@
     "individual_claims": "USER_SELF_REPORTED_SCOPE_PENDING_EVIDENCE",
     "external_links": "RESEARCH_REFERENCES_NOT_VERIFIED_AS_USER_WORK",
     "last_intake_date": "2026-11-05"
+  },
+  "curated_media_research": {
+    "asset_manifest": "portfolio-data/media-candidates/mot-chut-yeu-thuong-3-2026.json",
+    "treatment_reference": "portfolio-data/events/SHOWTIME_EVENT_CURATION.md",
+    "interaction_concept": "BACKSTAGE_LIVE",
+    "research_status": "stage_and_charity_press_photos_found;10_image_leads;no_verified_embed",
+    "source_images": "EXTERNAL_LINK_CANDIDATES_ONLY",
+    "rights_status": "NOT_CLEARED_FOR_REPUBLICATION",
+    "verification": "SOURCE_PAGE_EVENT_MATCHED;IMAGE_LINKS_NOT_ALL_BINARY_CHECKED",
+    "publish_cleared": false
   }
 }
