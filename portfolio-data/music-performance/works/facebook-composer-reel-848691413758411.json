@@ -1,8 +1,8 @@
 {
   "schema_version": "1.0",
   "id": "facebook-composer-reel-848691413758411",
-  "title": null,
-  "working_title": "Untitled composition — Facebook Reel",
+  "title": "Mùa Hạ Thứ 18",
+  "working_title": "Mùa Hạ Thứ 18",
   "work_type": "Facebook Reel; user-described composition",
   "user_role": {
     "role": "Composer",
@@ -17,7 +17,6 @@
     }
   ],
   "metadata_unknown": [
-    "exact_title",
     "performance_or_recording_credits",
     "year",
     "song_language",
@@ -34,6 +33,7 @@
     "mode": "composer_story_board",
     "fallback": "Link to Facebook reel with honest composer credit until embeddability is validated"
   },
-  "editorial_status": "USER_PROVIDED_LINK_AND_ROLE;CONTENT_NOT_YET_VERIFIABLE",
-  "rights_status": "PLATFORM_LINK_ONLY_UNTIL_EMBED_VERIFIED"
+  "editorial_status": "USER_CONFIRMED_TITLE_AND_COMPOSER;FACEBOOK_VIDEO_METADATA_INACCESSIBLE",
+  "rights_status": "PLATFORM_LINK_ONLY_UNTIL_EMBED_VERIFIED",
+  "title_source": "USER_CONFIRMED_2026-11-05"
 }
