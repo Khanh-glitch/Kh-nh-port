@@ -49,3 +49,11 @@ The assistant researched all three events and committed **candidate media manife
 Current video status: **no candidate YouTube clip from GDT has been verified by title/content**; MCYT and BGHX have no independently verified event-specific embeddable footage in the research set. Event records point to manifest files using `curated_media_research`.
 
 Drive access: folder listing/read works. An attempt to create three event subfolders in `EVENT` returned **403 insufficientParentPermissions** for all three; no Drive folder was created. Please don't treat the existing EVENT folder as writable by this connector. GitHub staging works.
+
+
+## User-uploaded MCYT personal photographs (05 Nov 2026)
+The portfolio owner directly uploaded **two photographs**, approved both for **public portfolio use**, and the assistant visually reviewed their content (group on stage; large group wrap-up on stage). Source files, image dimensions, hashes, editorial placement and publication authorization are catalogued at `portfolio-data/media-candidates/mot-chut-yeu-thuong-3-2026.json`.
+
+Prepared binary packaging (not yet on GitHub): two originals, two web-optimized WebP images, two thumbnails, manifest and a README. The display-slot contract is `portfolio-data/media/events/mcyt-2026/README.md`. The connector cannot directly transfer binary files mounted in ChatGPT into GitHub; **do not mistake authorized assets for uploaded assets**.
+
+Public video cross-check performed 05 Nov 2026 did not establish an event-specific official playable clip for MCYT/BGHX or verify the two earlier GDT YouTube candidate IDs. Do not show a fake video button or misattribute similar event footage.
