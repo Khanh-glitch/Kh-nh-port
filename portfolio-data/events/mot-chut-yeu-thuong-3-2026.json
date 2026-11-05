@@ -72,14 +72,26 @@
       "Theo dõi thứ tự nghệ sĩ/diễn viên ra vào",
       "Theo dõi thời điểm chuẩn bị từng tiết mục",
       "Theo dõi cue sân khấu",
-      "Điều phối và hướng dẫn nghệ sĩ/diễn viên về vị trí trên sân khấu khi cần"
+      "Điều phối và hướng dẫn nghệ sĩ/diễn viên về vị trí trên sân khấu khi cần",
+      "Trực tiếp liên lạc qua bộ đàm với đạo diễn, stage manager hoặc bộ phận kỹ thuật để phối hợp cue sân khấu."
     ],
     "decisions": [],
     "individual_results": [],
     "proof_links": [],
-    "notes": "Phạm vi công việc do chủ portfolio trực tiếp mô tả cho cả MCYT và BGHX. Chưa có chức danh chính thức, khoảng thời gian tham gia, tài liệu chứng minh và kết quả cá nhân. 'Theo dõi cue' không mặc nhiên đồng nghĩa với quyền gọi cue hoặc điều hành toàn bộ sân khấu.",
+    "notes": "Thông tin phạm vi công việc và phối hợp cue do chủ portfolio trực tiếp cung cấp. Chưa xác định chức danh chính thức; không tự gán vai trò stage manager, show caller hoặc người điều hành toàn bộ chương trình.",
     "original_user_statement": "MCYT: Điều phối và keeptrack cánh",
-    "detail_clarification_original": "Chẳng hạn thứ tự nghệ sĩ/diễn viên ra vào, thời điểm chuẩn bị tiết mục, cue sân khấu, điều phối và hướng dẫn nghệ sĩ trên sân khấu về vị trí nếu cần"
+    "detail_clarification_original": "Chẳng hạn thứ tự nghệ sĩ/diễn viên ra vào, thời điểm chuẩn bị tiết mục, cue sân khấu, điều phối và hướng dẫn nghệ sĩ trên sân khấu về vị trí nếu cần",
+    "radio_coordination": {
+      "confirmed_by_user": true,
+      "method": "Bộ đàm",
+      "participants": [
+        "đạo diễn",
+        "stage manager",
+        "bộ phận kỹ thuật"
+      ],
+      "purpose": "Phối hợp cue sân khấu",
+      "scope_note": "Chưa có xác nhận về quyền tự gọi cue, điều hành toàn bộ show hoặc hệ thống thông tin liên lạc cụ thể."
+    }
   },
   "media": {
     "cover": null,
