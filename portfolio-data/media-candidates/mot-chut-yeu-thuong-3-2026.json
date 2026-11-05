@@ -135,6 +135,59 @@
     "Optional source running order/cue sheet",
     "Any personal backstage documentation or portrait"
   ],
-  "status": "SOURCE_SHORTLIST_READY;RIGHTS_AND_USER_ASSETS_PENDING",
-  "note": "Opening a linked source photo is not permission to copy it to a public portfolio. Links are candidates, not uploaded assets."
+  "status": "SOURCE_SHORTLIST_READY;TWO_OWNER_SUPPLIED_IMAGES_CATALOGUED;RIGHTS_PENDING",
+  "note": "Opening a linked source photo is not permission to copy it to a public portfolio. Links are candidates, not uploaded assets.",
+  "user_submitted_media": [
+    {
+      "id": "mcyt-personal-stage-group-01",
+      "original_filename": "612125098_1271470444823328_5140945500326160407_n.png",
+      "file_type": "image/png",
+      "width": 2048,
+      "height": 1536,
+      "bytes": 4942905,
+      "sha256": "39779e40c5c5821ef5c077b6c2459e57685bb5ed9c272dc57bc10bb140b2503c",
+      "source_kind": "USER_UPLOADED_IN_CHAT",
+      "visual_description": "Seven people posing together onstage with purple/blue stage lighting and the Một Chút Yêu Thương title behind them.",
+      "user_context": "User describes one of the photos as a smaller portrait with their director/superior at the event; exact pictured identities are not assigned.",
+      "identified_user_index": null,
+      "identified_superior_index": null,
+      "potential_placement": [
+        "MY_TEAM",
+        "AFTER_THE_SHOW",
+        "PERSONAL_EVENT_GALLERY"
+      ],
+      "recommended_layout": "Human-scale, personal-story image. Crop only after the owner clarifies who they are and consent/rights are confirmed.",
+      "rights_status": "USER_SUPPLIED_PERMISSION_TO_REPUBLISH_NOT_YET_CONFIRMED",
+      "repo_binary_uploaded": false,
+      "target_repo_path": "portfolio-data/media/events/mcyt-2026/crew-small-group.png"
+    },
+    {
+      "id": "mcyt-full-crew-stage-02",
+      "original_filename": "DSC09408.JPG",
+      "file_type": "image/jpeg",
+      "width": 2048,
+      "height": 1365,
+      "bytes": 609277,
+      "sha256": "199e9a71c6bbdd430f8e54a2881535a2ed301f0fc14b4a100c3321c9317bd082",
+      "source_kind": "USER_UPLOADED_IN_CHAT",
+      "visual_description": "Large group of cast/crew and event participants posing together across the stage after the event, in front of the event LED design.",
+      "user_context": "User calls this the event wrap-up / summary group photo.",
+      "identified_user_index": null,
+      "potential_placement": [
+        "FINAL_CURTAIN",
+        "PRODUCTION_TEAM_GROUP",
+        "GROUP_GALLERY"
+      ],
+      "recommended_layout": "Full-frame panorama with a slowly moving crop only if it doesn't falsely spotlight an individual. Keep group context/caption.",
+      "rights_status": "USER_SUPPLIED_PERMISSION_TO_REPUBLISH_NOT_YET_CONFIRMED",
+      "repo_binary_uploaded": false,
+      "target_repo_path": "portfolio-data/media/events/mcyt-2026/full-crew-stage.jpg"
+    }
+  ],
+  "owner_evidence_notes": {
+    "user_statement": "GDT và BGHX không có ảnh cá nhân vì chủ yếu chạy chương trình; MCYT có ảnh tổng kết tập thể và ảnh chụp riêng với cấp trên là giám đốc/đạo diễn.",
+    "photography_scope": "These show event presence/group moments, NOT in-action backstage or direct proof of individual cue operation.",
+    "image_source_status": "The uploaded photos were visually inspected in the conversation and checked for size and checksum, but have not been published or copied as binaries to this public repository.",
+    "truthfulness": "Do not infer identity of any pictured person from the photo; clarify user position before any label or crop identifies them."
+  }
 }
