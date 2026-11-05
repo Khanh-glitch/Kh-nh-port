@@ -63,15 +63,19 @@
     }
   ],
   "personal_contribution": {
-    "confirmation": "AWAITING_USER",
+    "confirmation": "USER_SELF_REPORTED_SCOPE_PENDING_DETAILS",
     "job_title": null,
     "team": null,
     "participation_period": null,
-    "workstreams": [],
+    "workstreams": [
+      "Điều phối tại cánh sân khấu (cách hiểu sơ bộ, chờ xác nhận)",
+      "Theo dõi/keep track tại cánh sân khấu (chưa rõ đối tượng, cue, phạm vi)"
+    ],
     "decisions": [],
     "individual_results": [],
     "proof_links": [],
-    "notes": null
+    "notes": "Không tự gán chức danh Stage Manager, hoặc trách nhiệm điều hành toàn bộ show.",
+    "original_user_statement": "MCYT: Điều phối và keeptrack cánh"
   },
   "media": {
     "cover": null,
@@ -86,7 +90,7 @@
     "intake": "IN_PROGRESS",
     "publication": "DO_NOT_PUBLISH",
     "event_facts": "USER_SUPPLIED_SECONDARY_RESEARCH",
-    "individual_claims": "NO_CLAIMS_UNTIL_USER_CONFIRMS",
+    "individual_claims": "USER_SELF_REPORTED_SCOPE_PENDING_EVIDENCE",
     "external_links": "RESEARCH_REFERENCES_NOT_VERIFIED_AS_USER_WORK",
     "last_intake_date": "2026-11-05"
   }
