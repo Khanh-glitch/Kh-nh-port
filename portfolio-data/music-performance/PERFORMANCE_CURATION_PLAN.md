@@ -29,3 +29,13 @@ THE VAULT = unbounded searchable archive (years, genres, formats, roles).
 - A source collection for live performances (social profiles, playlists, albums or Drive folder). Curator should select from that and ask only for missing identity/credits.
 
 Until user declares complete, no content freeze, site deployment, or assumption every posted clip is licensed for rehosting.
+
+
+## Owner follow-up / 05 Nov 2026
+- TikTok: https://www.tiktok.com/@menisrealforeverbae
+- Instagram: https://www.instagram.com/menisrealforeverbae/
+- Composer Reel title confirmed by owner: "Mùa Hạ Thứ 18".
+- Search-index discovery (links recorded, **not playable-reviewed**): TikTok demo `https://www.tiktok.com/@menisrealforeverbae/video/7322142040626580737` (caption `#kelammau #demo`), TikTok cover candidate `https://www.tiktok.com/@menisrealforeverbae/video/7274581965217615106` (`#khiconmodanphai #tez`).
+- Catalog: `portfolio-data/music-performance/social-source-index.json`.
+- The Instagram profile was indexed, but direct enumeration of its 13 posts was inaccessible through source tools. Do not fabricate a comprehensive reel list. Facebook Reel remains inaccessible for direct metadata.
+- Two video leads are not enough to pick a hero performance. Ask for one source containing live-performance archives, not dozens of individual links, when necessary.
