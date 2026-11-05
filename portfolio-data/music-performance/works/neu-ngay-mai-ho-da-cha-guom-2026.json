@@ -1,0 +1,79 @@
+{
+  "schema_version": "1.0",
+  "id": "neu-ngay-mai-ho-da-cha-guom-2026",
+  "title": "Nếu ngày mai",
+  "artist": "Hồ Đá Chà Gươm",
+  "work_type": "Published single / official lyric video",
+  "release_year": 2026,
+  "user_role": {
+    "role": "Vocalist",
+    "source": "USER_CONFIRMED",
+    "stage_credit_candidate": "Men",
+    "stage_credit_confirmation": "PENDING_USER_CONFIRMATION_STAGE_NAME",
+    "note": "Official YouTube band credits 'Vocalist: Men, WinNguyen'; the user independently identified this Spotify recording as work where they were vocalist."
+  },
+  "official_credits": {
+    "composer_performer": "Hồ Đá Chà Gươm",
+    "lyricist": "Nguyễn Nhật Khang",
+    "recording_mixing_mastering": "Nkhang",
+    "artwork": "vess",
+    "distributor": "VIEENT",
+    "vocalists": [
+      "Men",
+      "WinNguyen"
+    ],
+    "pianist": "Jerry",
+    "keyboardist": "tvan",
+    "rhythm_guitar": "davies",
+    "lead_guitar": "inviz",
+    "bassist": "gnol",
+    "drummer": "Nkhang",
+    "source": "Official YouTube lyric video description, 2026-05-31"
+  },
+  "platforms": [
+    {
+      "type": "spotify",
+      "url": "https://open.spotify.com/track/2AkPSNohBGtrZMGeTtwV12",
+      "verified": true,
+      "listed_duration_seconds": 295
+    },
+    {
+      "type": "youtube_official_lyric_video",
+      "url": "https://www.youtube.com/watch?v=179btG24VE8",
+      "verified": true,
+      "video_duration_seconds": 296,
+      "posted_date": "2026-05-31",
+      "account": "Hồ Đá Chà Gươm Official",
+      "embed_url": "https://www.youtube.com/embed/179btG24VE8"
+    },
+    {
+      "type": "multi_platform_smartlink",
+      "url": "https://vieent.lnk.to/nnm",
+      "verified_as_official_description_link": true
+    }
+  ],
+  "artwork_candidates": [
+    {
+      "url": "https://i.scdn.co/image/ab67616d0000e1a37ea7def3464ea881c44137be",
+      "origin": "Spotify page",
+      "public_image_use": "EXTERNAL_PLATFORM_LINK;COPY_PERMISSION_NOT_REVIEWED"
+    },
+    {
+      "url": "https://i.ytimg.com/vi/179btG24VE8/maxresdefault.jpg",
+      "origin": "YouTube platform preview",
+      "public_image_use": "EXTERNAL_PLATFORM_PREVIEW;COPY_PERMISSION_NOT_REVIEWED"
+    }
+  ],
+  "presentation": {
+    "collection": [
+      "RELEASED_MUSIC",
+      "LISTENING_ROOM"
+    ],
+    "priority": "FEATURED",
+    "hero_kind": "youtube_embedded_lyric_video",
+    "secondary": "spotify_player",
+    "annotation": "Contributor credit + band members + recording context; no song lyrics copied."
+  },
+  "editorial_status": "INTAKE_VERIFIED_TRACK_METADATA;PERSONAL_STAGE_CREDIT_CONFIRMATION_PENDING",
+  "rights_status": "LINK_AND_PLATFORM_EMBED;NO_AUDIO_DOWNLOAD_OR_REHOST"
+}
