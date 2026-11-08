@@ -3,6 +3,10 @@
 **Cơ sở nội dung:** `SHOWTIME_EDITORIAL_MASTER_V1.md` (10 case chính và danh mục hỗ trợ)  
 **Ràng buộc của chủ portfolio:** không dựng giao diện, không cắt ngắn video để làm clip highlight; ngoại lệ là về sau được tuyển chọn ảnh tĩnh. Giữ nguyên bản tác phẩm khi người xem muốn xem/nghe chúng. Chưa xuất bản hoặc đóng thu thập.
 
+## Art direction selection — OWNER LOCKED B
+
+The prior experience architecture remains, but its visual identity is now **B · SIGNAL / CUE ROOM** (08 Nov 2026), documented in `SHOWTIME_VISUAL_IDENTITY_SPEC_B_V1.md`. “The Show Is the Work” remains an editorial/experience principle, **not** approval of literal cinema/stage visuals. Do not interpret older research recommendations for A as current art direction. No video/audio trimming, no UI build.
+
 ## 1. Vấn đề SHOWTIME thực sự phải giải quyết
 
 Một khách tuyển dụng cần thấy năng lực trong vài chục giây. Người quan tâm nghệ thuật muốn trải nghiệm tác phẩm nguyên vẹn. Người đánh giá chuyên môn cần biết người tạo đã làm phần nào, nguồn ở đâu, chất lượng đã được kiểm chứng đến đâu. Nếu chỉ làm một website CV dài, SHOWTIME đánh mất tính sáng tạo; nếu làm một trò chơi dẫn đường quá phức tạp, người xem bỏ đi trước khi nhìn thấy bất kỳ bằng chứng nghề nghiệp nào.
