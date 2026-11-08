@@ -1,0 +1,94 @@
+{
+  "schema_version": "1.0",
+  "id": "mathpath",
+  "title": "MathPath",
+  "portfolio_section": "DIGITAL_PRODUCTS / LEARNING_DESIGN",
+  "ingestion_date": "2026-11-08",
+  "source_repo": {
+    "url": "https://github.com/Khanh-glitch/MathPath",
+    "main_readme_checked": true,
+    "source_docs": [
+      "docs/REBUILD_IMPLEMENTATION_STATUS.md",
+      "docs/PRODUCTION_IMPLEMENTATION_STATUS.md",
+      "docs/PRODUCTION_AUDIT_VI.md"
+    ],
+    "review_scope": "README plus actual implementation/audit text; no fresh test run or personal live user playtest"
+  },
+  "source_status": "CURRENT_MAIN_REFERENCES_NOV_2026_LOCAL_PROGRESS;OCT_2026_PRODUCTION_AUDIT_IS_HISTORICAL_RELEASE_CANDIDATE",
+  "product_type": "Interactive mathematics learning system for students in Economics and Management",
+  "user_intent_connection": {
+    "tutoring": "User has reported tutoring one Advanced Mathematics learner with foundational gaps and reaching their course objective.",
+    "causal_link": "UNPROVEN_MATHPATH_MAY_HAVE_EMERGED_FROM_TUTORING_BUT_DO_NOT_CLAIM_LINK_WITHOUT_USER",
+    "author_role": "AI-assisted/vibecode owner inferred from connected repository and conversation; exact contribution narrative not independently established."
+  },
+  "feature_evidence": {
+    "learning_experience": [
+      "A Living Board navigation surface with 4 destinations",
+      "Chapter 1 learning journey with 7 stages and a chapter Gate",
+      "K51 exam practice with 10-item sessions and resume",
+      "Skill map (65 skills, 92 authored relationships described in rebuild doc)",
+      "Achievement/progress and cosmetic game economy"
+    ],
+    "academic_integrity": [
+      "Private server-side grading for correct answers",
+      "Versioned question/answer content",
+      "Mastery evidence, retries, hint/reveal, recovery and audit controls",
+      "No cosmetic/game rewards gating learning"
+    ],
+    "persistence": [
+      "Anonymous local progress",
+      "Optional Supabase authentication and account backup",
+      "Owner isolation, validated server RPCs and security controls"
+    ],
+    "commercial_candidate": [
+      "Draft paid classes, operator review, human transfer reconciliation, privacy/export/delete flows; not proof classes have been sold"
+    ],
+    "technical": [
+      "Next.js/React/TypeScript",
+      "Supabase/PostgreSQL with database migrations",
+      "Cloudflare Workers/OpenNext build"
+    ]
+  },
+  "tests_and_commercial_gates": {
+    "repository_reported_historical_verification": [
+      "337 application tests across 44 files reported by production audit, 2026-10-17",
+      "14/14 desktop/mobile browser tests on 2026-10-17 audit",
+      "Real PostgreSQL rollback checks and staging restore described in release docs"
+    ],
+    "new_runtime_test_in_this_intake": false,
+    "full_commercial_launch_confirmed": false,
+    "outstanding": [
+      "Public operation/payment and class catalog not confirmed",
+      "Current linked Supabase Auth/deploy gates may differ from historical Oct audit",
+      "No verified student outcome or adoption metrics"
+    ]
+  },
+  "editorial": {
+    "tier": "STRONG_FEATURED_DIGITAL_PRODUCT_CANDIDATE",
+    "status_label": "Interactive Learning Product · Release Candidate / Active Development (verify current)",
+    "why": "Connects first-hand tutoring context to pedagogy, user journeys, assessment, data integrity and creative product design. More compelling than simple teaching CV paragraph.",
+    "visitor_takeaway": "Can shape a teaching problem into a structured, game-informed learning product and quality-reviewed implementation.",
+    "narrative": [
+      "Learner pain: confusing foundational math",
+      "Learning system: guided stages, practice, skill evidence, feedback",
+      "Pedagogical design tradeoffs: no fake mastery, retry and assistance",
+      "Technological implementation via AI-assisted/vibecoding",
+      "Validation and product-launch boundaries"
+    ],
+    "proof_priority": [
+      "Current valid running demo/capture when link identified",
+      "Actual Chapter 1 and K51 learner journey (no mocked results)",
+      "Source-led pedagogy/spec evidence",
+      "Tutor case vignette, separately owner-reported"
+    ],
+    "no_claims": [
+      "Do not call MathPath a scaled edtech business",
+      "Do not present one private learner as verified MathPath user",
+      "Do not fabricate course sales/student counts",
+      "Do not claim every source line hand-coded",
+      "Do not publish account emails/secrets or private learner data"
+    ]
+  },
+  "rights_and_publication": "SOURCE_LINK_AND_EDITORIAL_NOTES_ONLY;NOT_YET_APPROVED_FOR_FINAL_PUBLICATION",
+  "dependencies": "No owner action now. Can request causal link to tutoring and live deployment status during final editorial approval."
+}
