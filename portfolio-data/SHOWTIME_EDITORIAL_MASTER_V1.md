@@ -1,7 +1,7 @@
 # SHOWTIME — Editorial Master v1
 **Working artifact · 08/11/2026 · Content-first, not UI design · Intake remains open**
 
-> **This is the current single editorial handoff for SHOWTIME.** Other `portfolio-data/**` files are source/evidence records and historical intake decisions, not competing live portfolio copy. The official public-facing game title is **Ragnarok: The Last Island**; the source repository is still named `Soul-of-Hero`. The creator channel’s official name is **Que Quá Quao**.
+> **Long-form editorial reference and provenance.** For website integration, use `SHOWTIME_SITE_CONTENT_V1.json` as the single renderer-facing content snapshot; this document remains supporting narrative and claim boundaries. Source/evidence records in `portfolio-data/**` are not competing site copy. The official public-facing game title is **Ragnarok: The Last Island**; the source repository is still named `Soul-of-Hero`. The creator channel’s official name is **Que Quá Quao**.
 
 ## 1. Editorial position
 
