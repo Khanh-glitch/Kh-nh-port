@@ -1,142 +1,72 @@
-## CURRENT ART DIRECTION (OWNER-SELECTED)
+# SHOWTIME — Portfolio content handoff
 
-**B — SIGNAL / CUE ROOM is locked as SHOWTIME's visual territory.** Read [SHOWTIME_VISUAL_IDENTITY_SPEC_B_V1.md](SHOWTIME_VISUAL_IDENTITY_SPEC_B_V1.md) before any aesthetic or experience design. Earlier A-based research preference is superseded. Design tokens still require visual testing. No UI/build/publication is authorized.
+**Current stage:** Content ready for integration into a future web template. **NOT deployed, merged, or publication-approved.**  
+**Approved visual territory:** **B — Signal / Cue Room**.  
+**Identity:** SHOWTIME — creative production, content, live events, music, interactive products and research.
 
-## AUTHORITATIVE CONTENT: SHOWTIME EDITORIAL MASTER V1
+## 1. Start here (one reader-facing content authority)
 
-**Current user-facing case copy and editorial position:** [SHOWTIME_EDITORIAL_MASTER_V1.md](SHOWTIME_EDITORIAL_MASTER_V1.md) (created 08 Nov 2026).
+### [SHOWTIME_SITE_CONTENT_V1.json](SHOWTIME_SITE_CONTENT_V1.json)
 
-It contains 10 usable main case-study narratives plus verified-source-based supporting-work capsules. The prior `EDITORIAL_CONTENT_MAP_V1_2026-11-08.md`, `CAPABILITY_PROOF_MATRIX_V1_2026-11-08.md`, and lane intake files remain **source/history**, not parallel copy authorities.
+This is the **single renderer-facing portfolio content file**. Use this to populate the future website; **do not parse old research logs into cards**, duplicate works across sections, or use fake sample portfolio content.
 
-**Owner corrections enforced:** `Que Quá Quao` (no accent on Que), breakout TikTok clip around 1.1M views (owner-reported, [direct post](https://www.tiktok.com/@quequaquao/video/7530989283956559122)); formerly Soul of Hero is now officially **Ragnarok: The Last Island** while its GitHub repository URL remains `Khanh-glitch/Soul-of-Hero`.
+The file contains:
+- **Home:** identity, edited bilingual opening copy, 6 prioritized real projects.
+- **Work directory:** 6 themed sections (live events; film/content; games/interactive; digital products; music/performance; research/experiments) and filter membership.
+- **Work detail:** 25 uniquely identified records with stable slugs, VI/EN headlines, descriptions, contribution/role, outcomes with evidence basis, links/media, related work, statuses and source paths.
+- **About:** edited bilingual personal narrative, five capability groupings grounded in actual works, verified public-profile links.
+- **Contact:** explicit disabled state; no real professional email/contact endpoint supplied. **Do not invent one.**
 
-**Stage:** Editorial draft produced; collection still open. No public launch, UI design, HTML build, or merge permission implied by this artifact.
+Of the 25 works: 6 featured, 13 selected, 5 archive, 1 hold. **Show featured+selected by default, allow archive only by explicit choice, never publish hold.** Tier means editorial priority, NOT publication permission.
 
+## 2. How to integrate into any template
 
----
+All content is plain UTF-8 JSON with **no dependency on React, Vite, Next.js, WebGL or any UI framework**.
 
-## Expanded repository/source intake — 08 Nov 2026
+Suggested logical mapping (not a design requirement):
 
-- **MathPath:** substantive learning-product source recovered. See `digital-products/mathpath.json`, plus the reconciled `learning-research` copy. Its release-candidate status is not proven commercial launch. Do not infer that the owner's reported Advanced Mathematics learner was a MathPath user.
-- **Alphabet Engine:** browser idea + Godot redesign are one experimental game concept, not two published games. See `game-design/alphabet-engine.json`.
-- **Personal interactive audio/story source:** creative-systems relevance noted, but private personal media/subject matter is **opt-in only**. See `creative-experiments/private-interactive-storytelling-candidate.json`.
-- **Capability matrix:** `CAPABILITY_PROOF_MATRIX_V1_2026-11-08.md` groups truthful cross-lane evidence into career-facing narratives and keeps the same work counted once.
-- **Editorial map:** `EDITORIAL_CONTENT_MAP_V1_2026-11-08.md` revised with MathPath and Alphabet Engine; no UI/website work is authorized yet.
+| Rendered destination | Data path |
+| --- | --- |
+| Identity / home lead | `site.identity`, `pages.home` |
+| Home selected-work collection | `pages.home.featured_work_ids` → `works[].id` |
+| Full project directory / filters | `sections[]`, `pages.work_index`, `works[].section` |
+| Project detail page | `works[].slug` at `/work/:slug` |
+| Backstage / credits | `works[].role`, `contributions[]`, `detail` |
+| Proof / external work | `works[].links`, `outcome.basis`, `source_files` |
+| About / capability clusters | `pages.about` |
+| Cross-project transitions | `works[].related` (stable IDs) |
 
-**Video source truth:** 3 Drive MP4s found; 1 binary fetched, no frames decoded due unavailable container. Another default fetch of a ~397MB MP4 failed the inline message-size cap; do not use default inline fetch for oversized media. No clips have been visually identified or attributed.
+Field convention:
+- `{vi, en}`: choose current language, fallback to `vi` if needed.
+- `section`: each work has **one primary section**. `related` only adds cross-links; it is not duplicate project ownership.
+- `tier`: `featured` / `selected` / `archive` / `hold`.
+- `status`: exact factual lifecycle, e.g. `playable_demo`, `published_music`, `active_development`, `release_candidate_not_commercially_verified`. **Translate these appropriately**; never turn `active_development` into “Launched”.
+- `outcome.basis`: `owner_reported` requires a human-readable qualification; a public artifact is not proof of revenue or impact.
+- `media[].thumbnail_url: null` or `binary_in_repository:false`: **do not render a broken image**. Use the original `links[]` when available; wait until an actual owned/approved image is mounted.
+- `links[].kind`: distinguishes source/demo/listen/official publication/event-context links.
+- `review[]`: internal editorial cautions, **not public-facing copy**. They are necessary for safe content staging and future review.
 
+**Video/music policy:** no short edits or showreels. Originals remain intact; use official source/embed where rights allow. No synthetic screenshots of game/app output. Re-link to Drive/TikTok when embedding is unavailable rather than silently replacing real content with stock images.
 
----
+**Template integration acceptance:** every featured card should open its real detail; the full directory should include all featured/selected works; filters should not duplicate projects; VI/EN should be readable; source URLs must work or fail gracefully; absent images must not break layout; contact must not display invented details; the visual treatment must honor B without becoming fake sci-fi HUD.
 
-## Social Media & Content Production audit / Content Map v1 — 08 Nov 2026
+## 3. Original evidence and editorial research (not competing site copy)
 
-A source-backed research and editorial audit is now saved:
-- `social-media/VIDEO_SOURCE_AUDIT_2026-11-08.json` — exact Drive metadata for 3 MP4s totaling 913,479,983 bytes; first raw download succeeded but media-frame extraction was blocked by the container runtime, so **no video contents are classified**.
-- `social-media/CONTENT_PRODUCTION_SOURCE_FINDINGS_2026-11-08.json` — two substantive private Google Drive workflow documents: `ELP` (10–12-minute A2+–B1 English-listening podcast script architecture + QA and script draft), and `M²` (planning table naming owner for `Happiness` content prototype/edit specifications/voice-over research). Neither is assumed to be a published/revenue-generating channel.
-- `EDITORIAL_CONTENT_MAP_V1_2026-11-08.md` — evidence-backed project hierarchy covering all disciplines, with confidence/provenance classes, reasons for inclusion and explicitly unknown claims.
+- [SHOWTIME_EDITORIAL_MASTER_V1.md](SHOWTIME_EDITORIAL_MASTER_V1.md): expanded narrative, source reasoning and detailed case-copy background. If site text conflicts, update the renderer JSON after checking this and the original source.
+- [SHOWTIME_EXPERIENCE_BLUEPRINT_V1.md](SHOWTIME_EXPERIENCE_BLUEPRINT_V1.md): Frontstage / Backstage / Proof, quick recruiter access vs free exploration, native media and user-initiated audio.
+- [SHOWTIME_VISUAL_IDENTITY_SPEC_B_V1.md](SHOWTIME_VISUAL_IDENTITY_SPEC_B_V1.md): **current, owner-approved direction B**; palette, timing and type values inside remain proposals for artistic testing.
+- [SHOWTIME_ART_DIRECTION_RESEARCH_V1.md](SHOWTIME_ART_DIRECTION_RESEARCH_V1.md): comparison of original A/B/C options; **the old A recommendation is superseded**.
+- [PORTFOLIO_INTAKE_CONTROL_2026-11-08.md](PORTFOLIO_INTAKE_CONTROL_2026-11-08.md): short latest-stage control file.
+- Topic folders `events/`, `social-media/`, `game-design/`, `digital-products/`, `music-performance/`, `creative-experiments/`, `learning-research/`: **source records, original link registers, media rights and audit provenance**.
+- `EDITORIAL_CONTENT_MAP_V1_2026-11-08.md` and `CAPABILITY_PROOF_MATRIX_V1_2026-11-08.md`: earlier synthesis; kept for history, **not a second site-content system**.
 
-The owner explicitly corrected premature interface authoring: **CURRENT PHASE IS SOURCE DISCOVERY, VERIFICATION AND EDITORIAL CURATION ONLY.** No user-visible HTML/UX mockup, website template/deployment or content freeze is authorized. Continue direct source work in active turns and ask for owner input only when necessary.
+## 4. Accurate blockers, not busywork
 
+- Real media binaries for stage/event photos are **not in GitHub**. The catalog notes candidates, not available web assets. Some images require photographer/third-party rights checks.
+- Several Drive MP4s are identified by metadata but **not visually/audio reviewed**. Copy follows owner-reported project contributions and does not claim a quality audit.
+- MathPath and EventFlow do not have a confirmed public final-runtime deployment; Ragnarok: The Last Island is still developing.
+- No verified direct professional contact destination; do **not** display a broken Contact CTA. Add one after the owner supplies an approved address/profile.
+- TikTok ~1.1M views and 4K+ followers are owner-reported, not independent current analytics.
+- Private gifts, respondents' data, unpublished interview transcripts and unknown-rights assets are **not** renderer content.
 
----
-
-# SHOWTIME — Portfolio data intake (work in progress)
-
-**Status:** `IN_PROGRESS`. The user explicitly stated they have NOT finished supplying information. Do not mark complete, publish, merge, or build a public template from this data yet.
-
-## Scope
-Three preliminary **EVENT** records have been created from the user-provided "EVENT PROJECT RESEARCH — MASTER BRIEF" (05 Nov 2026). Those records describe public events, not verified personal contributions. They are intentionally stored on a separate intake branch.
-
-## Governance
-1. Only the user provides/authorizes personal facts, roles, documents, assets and claims. Do not infer that the portfolio owner performed organizer-level duties.
-2. Public research links in the event records are **references to verify**, not personal proof. Event scale, donated welfare, sponsor amounts and contract values must never be presented as personal results or personal budget control.
-3. `personal_contribution.confirmation = AWAITING_USER`, `media_rights = NOT_REVIEWED`, and `publication = DO_NOT_PUBLISH` are intentional.
-4. Never copy third-party photos/videos/audio from Drive or the web into a public repository before the user confirms the file, context and publication rights.
-5. Add user-provided images, videos and per-project evidence by referenced link/ID at intake; avoid storing heavy files or sensitive internal documents in public Git.
-6. Do not overwrite the repository's existing exploratory assets, ZIPs, website files, or the `main` branch.
-7. Keep structured data separate from future UI/templates; preserve old drafts without declaring them production content.
-
-## Intended fields
-Each `events/*.json` has:
-- `event_context`: public event-level background and caveated numbers
-- `research_references`: URLs supplied in the research brief, not yet independently checked
-- `personal_contribution`: awaiting the user's role, dates, workstreams, evidence and results
-- `media`: awaiting user-selected cover, galleries, video and publication permission
-- `editorial_state`: explicit publication and intake gates
-
-## Drive intake inventory (verified 2026-11-05)
-Folder: https://drive.google.com/drive/folders/1KvClUIAL66Rqsyw1d3yZm3YE_YOGF38Z
-- EVENT: **0 files** currently visible
-- MUSIC: 1 PNG image
-- SOCIAL MEDIA: 3 MP4 files (not classified or linked to projects)
-- A.I: 1 folder "Prompt to Play - VNG Contest"
-- OTHERS: **0 files** currently visible
-
-No Drive media has been copied to GitHub or attributed to a project.
-
-## Next inputs requested
-For each of the three events: exact job title, dates of participation, responsibilities, direct individual contributions, public or shareable supporting evidence, photos/videos with rights status, and outcome/feedback if available.
-
-Wait for the user to say they have finished submitting before final curation or template/publication.
-
-## Public-media research / 05 Nov 2026
-
-The assistant researched all three events and committed **candidate media manifests** (22 external image URL leads: GDT 10, MCYT 10, BGHX 2) plus a cross-event interactive exhibition blueprint. These are **not uploaded image files**, and some individual images could not be opened as binaries despite being linked within matching source pages. No image is cleared for republishing yet.
-
-- `portfolio-data/media-candidates/get-downtown-2023.json`
-- `portfolio-data/media-candidates/mot-chut-yeu-thuong-3-2026.json`
-- `portfolio-data/media-candidates/ban-giao-huong-xanh-2026.json`
-- `portfolio-data/events/SHOWTIME_EVENT_CURATION.md`
-
-Current video status: **no candidate YouTube clip from GDT has been verified by title/content**; MCYT and BGHX have no independently verified event-specific embeddable footage in the research set. Event records point to manifest files using `curated_media_research`.
-
-Drive access: folder listing/read works. An attempt to create three event subfolders in `EVENT` returned **403 insufficientParentPermissions** for all three; no Drive folder was created. Please don't treat the existing EVENT folder as writable by this connector. GitHub staging works.
-
-
-## User-uploaded MCYT personal photographs (05 Nov 2026)
-The portfolio owner directly uploaded **two photographs**, approved both for **public portfolio use**, and the assistant visually reviewed their content (group on stage; large group wrap-up on stage). Source files, image dimensions, hashes, editorial placement and publication authorization are catalogued at `portfolio-data/media-candidates/mot-chut-yeu-thuong-3-2026.json`.
-
-Prepared binary packaging (not yet on GitHub): two originals, two web-optimized WebP images, two thumbnails, manifest and a README. The display-slot contract is `portfolio-data/media/events/mcyt-2026/README.md`. The connector cannot directly transfer binary files mounted in ChatGPT into GitHub; **do not mistake authorized assets for uploaded assets**.
-
-Public video cross-check performed 05 Nov 2026 did not establish an event-specific official playable clip for MCYT/BGHX or verify the two earlier GDT YouTube candidate IDs. Do not show a fake video button or misattribute similar event footage.
-
-
-## Digital product intake — EventFlow Pro (08 Nov 2026)
-
-Source-backed candidate case study saved to `portfolio-data/digital-products/eventflow-pro.json`. Product state: tested **browser-local demo with limitations**, not production SaaS or real buyer-adopted system. The portfolio will present the guided brief → needs → BOQ → human-pricing → simulated review → public PDF journey, source evidence, and the owner's AI-assisted product-building process, without claiming manual coding or unverified commercial outcomes.
-
-Reference repo: https://github.com/Khanh-glitch/eventflow-pro . Personal origin story / user-specific decisions still open; do not invent them. Event and Performance intake remain open to later media; no website template/deployment has been authorized.
-
-
-## Game Design intake — 08 Nov 2026
-
-Publicly playable **APEX CHAOS** and planned-before-portfolio-launch **Ragnarok: The Last Island** are now staged as separate truthful records:
-- `game-design/apex-chaos.json` — public HTML5 demo at `https://realbae.itch.io/apex-chaos`, player/revenue numbers not claimed.
-- `game-design/soul-of-hero.json` — active Godot game, public release planned by owner but not yet confirmed; current game has evolved beyond old `main` README. No assumed launch or integrated features.
-- `game-design/GAME_DESIGN_SHOWCASE_POLICY.md` — gameplay/playable-first evidence, no invented traction and precise state/version boundaries.
-
-Neither project requires impressive sales or play counts to be included. The honest representation is playable demo vs developing game, then actual release when verified.
-
-## AI & Creative Experiments / consolidated control — 08 Nov 2026
-
-The assistant has verified three still images on GitHub's `new` branch: a VNG Prompt To Play event-work photograph, a social/group-activity still, and the Music Vibes portfolio concept. The connected Drive `A.I/Prompt to Play - VNG Contest` folder lists two **shortcuts**, `In Action` and `CovaraMaris - Game Project`, but their contents cannot be opened with the current Drive connector (403; target not exposed). No standalone contest game build or personal team role is verified. VNG's own 2026 article confirms contest context, not the user's achievement or award.
-
-New records:
-- `creative-experiments/source-inventory-2026-11-08.json` — 5 differentiated candidates, source URLs/IDs, scope and proof limits.
-- `creative-experiments/CURATION_AND_CROSS_LINKS.md` — design/use-policy for genuine interaction exhibits and cross-lane deduplication.
-- `PORTFOLIO_INTAKE_CONTROL_2026-11-08.md` — current readiness and action requirements across the whole portfolio.
-
-A 406KB standalone `Six Primordials Boss Lab` HTML file was also located in the user's Library and inspected at source-header level, but not functionally playtested. Video automation ZIPs referenced in earlier discussions remain unverified here. Keep all experimental status labels explicit.
-
-**No user action is currently required, and content collection is NOT finished or frozen.**
-
-## Learning Design & Academic Research — 08 Nov 2026
-
-The user reported: one-on-one mathematics tutoring of one learner who began with foundational gaps and reached their course target; occasional support with essays and thesis work; GPA 3.77; 100% of essays above 8 and 80% above 9 (sample size, grading scale, time frame and ownership unverified); and a repeatable personal method whose concrete steps have not yet been supplied. Do not invent credentials or convert the essay-grade percentages into tutoring-success metrics.
-
-An authored private connected-Drive graduation thesis draft was reviewed at the **topic/method** level only. Its subject compares event-production and attendee evaluation of AI-assisted event advertising visuals; methods include qualitative comparative research, semi-structured interviews, photo elicitation and Framework Method analysis. **No private participant information, source links, interviews or thesis excerpts were copied into the portfolio repo**, and the draft is not treated as peer-reviewed, graded or published.
-
-- `learning-research/learning-and-academic-research.json` — separated direct user claims from source-supported thesis methodology, with disclosure gates.
-- `learning-research/EXHIBIT_AND_COPY.md` — professional bilingual description and visual narrative; one research spotlight and a compact teaching vignette, not a fictitious tutoring consultancy.
-
-Publication remains on HOLD pending final owner copy review. **No additional input required now**; portfolio collection remains open.
+**Do not create or publish a finished website from this handoff automatically.** It is the canonical data input for the next beautiful template.
