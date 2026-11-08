@@ -1,3 +1,22 @@
+## CURRENT ART DIRECTION RESEARCH — 08 Nov 2026
+
+**Delivered:** [SHOWTIME_ART_DIRECTION_RESEARCH_V1.md](SHOWTIME_ART_DIRECTION_RESEARCH_V1.md) — 3 researched visual territories, external live/studio reference sources, application to real projects, draft color/type/motion rules, anti-patterns, and explicit acceptance criteria.
+
+**Recommendation pending owner choice:** **A · Black Box / Living Stage** as the emotional identity, with **C · Open Atelier** contributing editorial clarity and **B · Signal/Cue Room** reserved for real backstage/technical evidence. This is NOT an approved final art style or a UI implementation.
+
+**Explicit owner media decision remains active:** show existing full-length videos/audio; no automatic clipping, reels or showreel editing. Still photographs can be curated. Avoid fabricated screenshot/proof, universal color filters or a mandatory 3D game-world navigator.
+
+**One next decision needed:** owner chooses A / B / C (or revises the emotional direction). Only then develop a visual-identity specification / real-asset moodboard; **still no HTML, UI mockups, website code, publication or merges**.
+
+**Current canonical files:**
+- `SHOWTIME_EDITORIAL_MASTER_V1.md`: source-bound content/case copy.
+- `SHOWTIME_EXPERIENCE_BLUEPRINT_V1.md`: conceptual paths, frontstage/backstage/proof.
+- `SHOWTIME_ART_DIRECTION_RESEARCH_V1.md`: current visual territories for selection.
+- Other `portfolio-data/**`: source inventory, evidence, historical decision logs.
+
+
+---
+
 ## CURRENT EXPERIENCE CONCEPT — 08 Nov 2026
 
 **New deliverable:** `SHOWTIME_EXPERIENCE_BLUEPRINT_V1.md` (concept stage, not site design) created after the owner's explicit request to skip media clipping.
