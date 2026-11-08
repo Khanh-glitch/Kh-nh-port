@@ -1,3 +1,16 @@
+## Expanded repository/source intake — 08 Nov 2026
+
+- **MathPath:** substantive learning-product source recovered. See `digital-products/mathpath.json`, plus the reconciled `learning-research` copy. Its release-candidate status is not proven commercial launch. Do not infer that the owner's reported Advanced Mathematics learner was a MathPath user.
+- **Alphabet Engine:** browser idea + Godot redesign are one experimental game concept, not two published games. See `game-design/alphabet-engine.json`.
+- **Personal interactive audio/story source:** creative-systems relevance noted, but private personal media/subject matter is **opt-in only**. See `creative-experiments/private-interactive-storytelling-candidate.json`.
+- **Capability matrix:** `CAPABILITY_PROOF_MATRIX_V1_2026-11-08.md` groups truthful cross-lane evidence into career-facing narratives and keeps the same work counted once.
+- **Editorial map:** `EDITORIAL_CONTENT_MAP_V1_2026-11-08.md` revised with MathPath and Alphabet Engine; no UI/website work is authorized yet.
+
+**Video source truth:** 3 Drive MP4s found; 1 binary fetched, no frames decoded due unavailable container. Another default fetch of a ~397MB MP4 failed the inline message-size cap; do not use default inline fetch for oversized media. No clips have been visually identified or attributed.
+
+
+---
+
 ## Social Media & Content Production audit / Content Map v1 — 08 Nov 2026
 
 A source-backed research and editorial audit is now saved:
