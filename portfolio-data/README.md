@@ -57,3 +57,10 @@ The portfolio owner directly uploaded **two photographs**, approved both for **p
 Prepared binary packaging (not yet on GitHub): two originals, two web-optimized WebP images, two thumbnails, manifest and a README. The display-slot contract is `portfolio-data/media/events/mcyt-2026/README.md`. The connector cannot directly transfer binary files mounted in ChatGPT into GitHub; **do not mistake authorized assets for uploaded assets**.
 
 Public video cross-check performed 05 Nov 2026 did not establish an event-specific official playable clip for MCYT/BGHX or verify the two earlier GDT YouTube candidate IDs. Do not show a fake video button or misattribute similar event footage.
+
+
+## Digital product intake — EventFlow Pro (08 Nov 2026)
+
+Source-backed candidate case study saved to `portfolio-data/digital-products/eventflow-pro.json`. Product state: tested **browser-local demo with limitations**, not production SaaS or real buyer-adopted system. The portfolio will present the guided brief → needs → BOQ → human-pricing → simulated review → public PDF journey, source evidence, and the owner's AI-assisted product-building process, without claiming manual coding or unverified commercial outcomes.
+
+Reference repo: https://github.com/Khanh-glitch/eventflow-pro . Personal origin story / user-specific decisions still open; do not invent them. Event and Performance intake remain open to later media; no website template/deployment has been authorized.
