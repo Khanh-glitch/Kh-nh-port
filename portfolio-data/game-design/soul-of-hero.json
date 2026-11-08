@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0",
   "id": "soul-of-hero",
-  "title": "Soul of Hero",
+  "title": "Ragnarok: The Last Island",
   "portfolio_section": "GAME_DESIGN",
   "intake_state": "ACTIVE_DEVELOPMENT",
   "source_of_claims": {
@@ -19,7 +19,8 @@
   "repo": {
     "url": "https://github.com/Khanh-glitch/Soul-of-Hero",
     "main_readme_snapshot": "Main README reflects prior Chapter 1 action-RPG prototype; current work branches and survival direction have evolved beyond this document.",
-    "main_readme_as_final_authority": false
+    "main_readme_as_final_authority": false,
+    "display_name_note": "GitHub repository is still named Soul-of-Hero; source path remains unchanged despite the new portfolio title."
   },
   "game": {
     "genre_direction": "Godot 4.7 2D top-down action RPG/survival project; active rework toward survival-oriented gameplay",
@@ -73,5 +74,9 @@
     "publication": "DO_NOT_PUBLISH",
     "state": "WAIT_FOR_VALIDATED_NEW_BUILD_FOR_FINAL_VISUALS",
     "source_integrity": "README_MAIN_OLDER_THAN_ACTIVE_DEVELOPMENT"
-  }
+  },
+  "previous_names": [
+    "Soul of Hero"
+  ],
+  "branding_status": "CURRENT_OFFICIAL_PORTFOLIO_TITLE_OWNER_CONFIRMED_2026-11-08"
 }
