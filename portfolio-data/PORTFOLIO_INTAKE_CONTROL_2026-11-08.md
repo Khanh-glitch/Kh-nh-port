@@ -1,3 +1,14 @@
+## CURRENT EDITORIAL ARTIFACT — 08 Nov 2026
+
+**Single source for narrative/portfolio copy:** `SHOWTIME_EDITORIAL_MASTER_V1.md`. This document is an internal status/operations guide only. Previously accumulated Content Maps and capability matrices are source/historical context, **not competing final content**.
+
+**Delivered now:** 10 featured/source-backed case-study copy sections, short captions and first-pass supporting work descriptions. Official title **Ragnarok: The Last Island** is authoritative for the game portfolio; the source repo remains `Soul-of-Hero`. Official social channel is **Que Quá Quao** with ~1.1M owner-reported views on the specified viral post.
+
+**Current content work:** The master exists and has been inspected. Work that remains is validation of media/rights/attribution where possible, and later creative-direction research only if separately authorized. Do not build UI, publish, merge or close intake. No owner interview required for this deliverable.
+
+
+---
+
 ## PHASE CORRECTION — OWNER HAS NOT FINISHED SUBMITTING WORK
 
 The previous assistant suggestion to begin **final Editorial Acceptance now** was premature and is **superseded**. The owner has NOT stated that all materials are supplied or that content intake can be closed.
