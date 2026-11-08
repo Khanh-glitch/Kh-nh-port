@@ -1,0 +1,174 @@
+{
+  "schema_version": "1.0",
+  "section": "AI & Creative Experiments",
+  "intake_date": "2026-11-08",
+  "status": "OPEN_INTAKE_NOT_PUBLISHED",
+  "source_inventory": {
+    "drive_ai_folder": {
+      "id": "1cRPjGi3QPOdhzM7QoXkQQGa6H1iHJxjx",
+      "url": "https://drive.google.com/drive/folders/1cRPjGi3QPOdhzM7QoXkQQGa6H1iHJxjx",
+      "list_verified": true
+    },
+    "prompt_to_play_folder": {
+      "id": "1QckgPv5lkzGzJa_-qmg2vfUOUdAVaPMy",
+      "url": "https://drive.google.com/drive/folders/1QckgPv5lkzGzJa_-qmg2vfUOUdAVaPMy",
+      "children": [
+        {
+          "id": "1NmPPFPxBHnpVZgO96pIa3F_ovQKb3zQg",
+          "name": "In Action",
+          "type": "Google Drive shortcut",
+          "target": "UNKNOWN_CONNECTOR_DOES_NOT_EXPOSE_SHORTCUT_TARGET",
+          "open_status": "FORBIDDEN_403"
+        },
+        {
+          "id": "1ZAVpn7P_uOpyaQCfQDZKlNulzZyFKY1N",
+          "name": "CovaraMaris - Game Project",
+          "type": "Google Drive shortcut",
+          "target": "UNKNOWN_CONNECTOR_DOES_NOT_EXPOSE_SHORTCUT_TARGET",
+          "open_status": "FORBIDDEN_403"
+        }
+      ]
+    },
+    "github_new_branch": {
+      "repo": "Khanh-glitch/Kh-nh-port",
+      "branch": "new",
+      "asset_files": [
+        {
+          "path": "01_ai_prompt_to_play.jpg",
+          "sha": "8e4532040823096bd13af4448802a165737432b7",
+          "verified_visual": "A small group working with laptops at a public event venue, behind them a colorful 'Prompt To Play' sign; does not identify any individual"
+        },
+        {
+          "path": "02_social_debate_poster.jpg",
+          "sha": "fdc55d1f5a27860d71755a41cd122457ce3ece51",
+          "verified_visual": "A frame of a multi-person activity with English subtitle 'Each team must reach a consensus on their chosen item'; context/owner's role not proven"
+        },
+        {
+          "path": "03_music_vibes.jpg",
+          "sha": "d7ea96c15d81236cfb22a0d3060a16b86b03ff46",
+          "verified_visual": "A portfolio-style graphic labelled 'Music Led My Life' linking Mùa Hạ Thứ 18, Nếu ngày mai, and Performance; already covered under Music section"
+        }
+      ]
+    },
+    "related_earlier_experiments": [
+      {
+        "name": "Six Primordials Boss Lab",
+        "source": "personal Library document",
+        "file_id": "file_000000000c488206880955b59cc1b7e2",
+        "type": "text/html",
+        "bytes": 406210,
+        "review_status": "OPENED_SOURCE_HEADER;interactive combat canvas, boss/skill selection and sprite editor UI present; no runtime smoke test",
+        "proposed_role": "Separate interaction exhibit or nested under Soul of Hero game VFX explorations, not claim as shipped game feature"
+      },
+      {
+        "name": "AI-CapCut production/automation prototypes",
+        "source": "prior conversation within project",
+        "review_status": "DISCUSSED_AND_ZIP_NAMES_REFERENCED;ARCHIVE_BYTES_NOT_CURRENTLY_VERIFIED",
+        "proposed_role": "Candidate Creative Production Systems research; do not claim automated batch production or CapCut interoperability until deliverable is checked"
+      }
+    ]
+  },
+  "candidates": [
+    {
+      "id": "prompt-to-play-vng-2026",
+      "title": "Prompt To Play — AI Game Jam",
+      "classification": "AI-assisted game prototyping / participation evidence candidate",
+      "priority": "HIGH",
+      "user_evidence": {
+        "photo_path": "01_ai_prompt_to_play.jpg",
+        "image_shows": "A team at laptops and contest branding, not a verified identification of the owner",
+        "drive_folder": "Prompt to Play - VNG Contest",
+        "owner_specific_role": "NOT_CONFIRMED",
+        "prize_or_rank": "NOT_CONFIRMED"
+      },
+      "organizer_context": {
+        "source_url": "https://vng.com.vn/news/enterprise/vnggames-khoi-dong-cuoc-thi-lam-game-ai.html",
+        "additional_url": "https://vnggames.com/en/news/prompt-to-play-2026-san-choi-lap-trinh-game-ai-dau-tien-danh-cho-cac-nha-phat-trien-game-viet-nam/",
+        "format": "24-hour AI-assisted puzzle-game development contest",
+        "venue": "VNG Campus, Ho Chi Minh City",
+        "final_dates": "2026-07-11/2026-07-12",
+        "note": "Organizer facts establish event context, not that owner was a finalist or won."
+      },
+      "possible_project": "CovaraMaris - Game Project (Drive shortcut; target unavailable)",
+      "story": "A documented event setting for collaborative rapid ideation and AI-assisted game prototyping; ownership, challenge details and playable output pending source.",
+      "showcase_mode": "Photo + concise contest context + process timeline only when actual project artifacts become available.",
+      "release_gate": "Resolve target artifact or obtain authenticated source evidence; never invent a finished game/award."
+    },
+    {
+      "id": "social-debate-activity",
+      "title": "Social Debate / Group Activity",
+      "classification": "Cross-lane candidate: Social / Academic / Activities, NOT automatically AI",
+      "priority": "SECONDARY",
+      "source_image": "02_social_debate_poster.jpg",
+      "evidence": "User-source image shows group and English consensus subtitle.",
+      "status": "IMAGE_ONLY;EVENT_AND_PERSONAL_ROLE_UNKNOWN",
+      "showcase_mode": "Archive photo pending contextual validation."
+    },
+    {
+      "id": "music-vibes-graphic",
+      "title": "Music Led My Life",
+      "classification": "Existing portfolio concept artwork — cross-link Music & Performance",
+      "priority": "REFERENCE_ONLY",
+      "source_image": "03_music_vibes.jpg",
+      "evidence": "Shows Mùa Hạ Thứ 18 (composer), Nếu ngày mai (singer), Performance; these are existing cases.",
+      "status": "VISUALLY_VERIFIED;NOT_A_SEPARATE_WORK",
+      "showcase_mode": "Design reference, do not duplicate separate music releases."
+    },
+    {
+      "id": "six-primordials-boss-lab",
+      "title": "Six Primordials — Boss Lab",
+      "classification": "Interactive gameplay/VFX sandbox",
+      "priority": "MEDIUM",
+      "source": "Library: six-primordials-boss-lab-standalone.html",
+      "status": "SOURCE_HTML_AVAILABLE;INTERACTIVE_SOURCE_PRESENT;NO_PLAYTEST_OR_OWNER_ATTRIBUTION_REVIEW_YET",
+      "showcase_mode": "Potential playable exhibit, grouped under Game Design experiments."
+    },
+    {
+      "id": "ai-video-automation",
+      "title": "AI Video Editing / CapCut Automation Experiments",
+      "classification": "Creative tooling prototype",
+      "priority": "MEDIUM",
+      "source": "Prior portfolio project conversation",
+      "status": "PROJECT_DISCUSSION_ONLY;FILES_NOT_VERIFIED_THIS_INTAKE",
+      "showcase_mode": "Candidate process exhibit only after code/package and real output verify."
+    }
+  ],
+  "uncurated_media": [
+    {
+      "folder": "SOCIAL MEDIA",
+      "url": "https://drive.google.com/drive/folders/1aFnDpFW-91X9rSFdgWPjC4O-Vetjfio_",
+      "files": [
+        {
+          "id": "1sR4CaGBWVUNnmaIQK-gWbmYP_0W4KDko",
+          "name": "FDown.vn_Tai_video_Facebook_720p (HD)_9c40.mp4",
+          "size_bytes": 266036413
+        },
+        {
+          "id": "1Q8fq-i-Of1jMqeuFCPNCpLhZTatq4j4h",
+          "name": "FDown.vn_Tai_video_Facebook_720p (HD)_92da.mp4",
+          "size_bytes": 396564315
+        },
+        {
+          "id": "1O5hcaN86PB4KGd9Sb476Mdahqgv6W-bY",
+          "name": "FDown.vn_Tai_video_Facebook_720p (HD)_ea07.mp4",
+          "size_bytes": 250879255
+        }
+      ],
+      "status": "FILE_LISTED_BUT_NOT_DOWNLOADED_OR_ATTRIBUTED;DO_NOT_INFER_VIDEO_CONTENT_FROM_FILENAME"
+    }
+  ],
+  "editorial_rules": [
+    "Show experiments as source-backed outcomes where possible, not a pile of generic AI screenshots.",
+    "Separate competition participation from awards/placement; do not imply a team photo proves individual authorship or a finished game.",
+    "Treat AI usage as part of workflow/process, never assert hand-coded developer status.",
+    "Avoid double counting game, music or social media works in AI section; use cross-links.",
+    "Do not auto-publish private Drive or third-party content; linked GitHub images on branch new are source references.",
+    "Keep owner intake open; do not request materials before exhausting accessible authenticated sources."
+  ],
+  "next_assistant_actions": [
+    "Document VNG contest as reference case without individual award claim",
+    "Keep inaccessible Drive shortcuts as explicit source blockers, do not ask owner to manually screenshot immediately",
+    "Cross-link AI experiments to existing game design, music and product case studies",
+    "Review media packages with accessible originals when materialized or shared in this conversation"
+  ]
+}
