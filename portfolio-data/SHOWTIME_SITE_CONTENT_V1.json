@@ -1,0 +1,1840 @@
+{
+  "schema_version": "1.0.0",
+  "content_revision": "2026-11-08",
+  "content_language_default": "vi",
+  "supported_languages": [
+    "vi",
+    "en"
+  ],
+  "staging_only": true,
+  "origin_branch": "portfolio/data-intake-2026-11-05",
+  "decision_authority": {
+    "art_direction": "B — Signal / Cue Room",
+    "experience": "Frontstage / Backstage / Proof",
+    "media": "preserve originals full length; still-photo curation allowed",
+    "do_not_publish_without_approval": true
+  },
+  "identity": {
+    "brand": "SHOWTIME",
+    "person_name": "Lê Quốc Khánh",
+    "professional_title": {
+      "vi": "Creative Producer · Người phát triển trải nghiệm tương tác có AI hỗ trợ",
+      "en": "Creative Producer · AI-assisted Interactive Creator"
+    },
+    "claim_limits": [
+      "No agency or sole-engineer title is implied",
+      "Current status and self-reported metrics must remain qualified"
+    ]
+  },
+  "navigation": [
+    {
+      "id": "work",
+      "label": {
+        "vi": "Tác phẩm",
+        "en": "Work"
+      },
+      "route": "/work"
+    },
+    {
+      "id": "about",
+      "label": {
+        "vi": "Về tôi",
+        "en": "About"
+      },
+      "route": "/about"
+    }
+  ],
+  "pages": {
+    "home": {
+      "eyebrow": {
+        "vi": "Sáng tạo · Sản xuất · Tương tác",
+        "en": "Creative production · Experience · Interaction"
+      },
+      "title": "SHOWTIME",
+      "lead": {
+        "vi": "Tôi tạo ra những trải nghiệm để người khác xem, nghe, chơi và sử dụng.",
+        "en": "I build experiences people can watch, hear, play and use."
+      },
+      "introduction": {
+        "vi": "Từ cánh sân khấu đến phòng dựng, từ ý tưởng nội dung đến những thế giới trò chơi và sản phẩm số: đây là tuyển tập các công việc tôi thực sự tham gia tạo nên.",
+        "en": "From backstage coordination and film editing to interactive games and digital products, this is a collection of work I have genuinely helped bring to life."
+      },
+      "primary_action": {
+        "label": {
+          "vi": "Khám phá tác phẩm",
+          "en": "Explore the work"
+        },
+        "route": "/work"
+      },
+      "featured_work_ids": [
+        "que-qua-quao",
+        "apex-chaos",
+        "mot-chut-yeu-thuong-3",
+        "mathpath",
+        "neu-ngay-mai",
+        "china-town"
+      ],
+      "selected_story_order": [
+        "live-production",
+        "film-content",
+        "games-interactive",
+        "digital-products",
+        "music-performance",
+        "research-experiments"
+      ]
+    },
+    "work_index": {
+      "title": {
+        "vi": "Selected Work",
+        "en": "Selected Work"
+      },
+      "intro": {
+        "vi": "Mỗi dự án có một hình thức riêng. Hãy xem tác phẩm trước; nếu muốn, khám phá vai trò và những gì thực sự đứng phía sau nó.",
+        "en": "Every project has its own form. Experience the work first, then go behind it to explore my role and the evidence behind it."
+      },
+      "filter_section_ids": [
+        "live-production",
+        "film-content",
+        "games-interactive",
+        "digital-products",
+        "music-performance",
+        "research-experiments"
+      ],
+      "default_display_tiers": [
+        "featured",
+        "selected"
+      ],
+      "archive_toggle_available": true,
+      "hide_tier": [
+        "hold"
+      ]
+    },
+    "about": {
+      "title": {
+        "vi": "Từ hậu trường đến những trải nghiệm có thể chạm tới.",
+        "en": "From behind the scenes to experiences you can interact with."
+      },
+      "paragraphs": [
+        {
+          "vi": "Tôi làm việc giữa sản xuất sự kiện, nội dung số, âm nhạc và các sản phẩm tương tác. Điểm chung giữa những lĩnh vực đó là quá trình đưa một ý tưởng qua nhiều quyết định thực tế, cho đến khi nó trở thành thứ có thể trải nghiệm.",
+          "en": "My work spans live production, digital content, music and interactive products. What connects these disciplines is the process of taking an idea through real decisions until people can experience it."
+        },
+        {
+          "vi": "Tôi từng tham gia hậu cần và điều phối cánh sân khấu, phát triển một kênh nội dung ngắn, thể hiện giọng hát trong một sản phẩm phát hành và xây dựng những game, công cụ học tập, hệ thống sản xuất có AI hỗ trợ. Tôi quan tâm cả cảm xúc người xem lẫn cách một sản phẩm thực sự vận hành.",
+          "en": "I have contributed to stage-side production, operated a short-form content channel, recorded vocals on a released song and built AI-assisted games and digital-product experiments. I care about both what audiences feel and how experiences actually work."
+        },
+        {
+          "vi": "Tôi sử dụng AI như một phần của quy trình sản xuất và lập trình sáng tạo. Những dự án tương tác được mô tả đúng là AI-assisted, thay vì tự nhận mọi dòng code đều do tôi viết tay.",
+          "en": "I use AI as part of the creative and development workflow. Interactive projects are described transparently as AI-assisted rather than implying every line of code was manually written."
+        }
+      ],
+      "capability_groups": [
+        {
+          "id": "live",
+          "label": {
+            "vi": "Sản xuất & Điều phối",
+            "en": "Production & Coordination"
+          },
+          "proof_ids": [
+            "mot-chut-yeu-thuong-3",
+            "get-downtown-2023",
+            "ban-giao-huong-xanh"
+          ]
+        },
+        {
+          "id": "content",
+          "label": {
+            "vi": "Nội dung, Dựng & Voice",
+            "en": "Content, Editing & Voice"
+          },
+          "proof_ids": [
+            "que-qua-quao",
+            "china-town",
+            "war-remnants-documentary"
+          ]
+        },
+        {
+          "id": "interactive",
+          "label": {
+            "vi": "Thiết kế tương tác & Game",
+            "en": "Interactive & Game Direction"
+          },
+          "proof_ids": [
+            "apex-chaos",
+            "ragnarok-the-last-island",
+            "mathpath"
+          ]
+        },
+        {
+          "id": "music",
+          "label": {
+            "vi": "Âm nhạc & Biểu diễn",
+            "en": "Music & Performance"
+          },
+          "proof_ids": [
+            "neu-ngay-mai",
+            "mua-ha-thu-18",
+            "live-performance"
+          ]
+        },
+        {
+          "id": "research",
+          "label": {
+            "vi": "Nghiên cứu & Học tập",
+            "en": "Research & Learning"
+          },
+          "proof_ids": [
+            "ai-event-visual-research",
+            "advanced-math-tutoring",
+            "mathpath"
+          ]
+        }
+      ],
+      "public_profiles": [
+        {
+          "label": "GitHub",
+          "url": "https://github.com/Khanh-glitch",
+          "kind": "profile"
+        },
+        {
+          "label": "Que Quá Quao — TikTok",
+          "url": "https://www.tiktok.com/@quequaquao",
+          "kind": "profile"
+        }
+      ],
+      "contact_cta": {
+        "enabled": false,
+        "reason": "No owner-confirmed contact email or professional contact form destination; must not invent.",
+        "email": null
+      }
+    }
+  },
+  "sections": [
+    {
+      "id": "live-production",
+      "slug": "live-production",
+      "label": {
+        "vi": "Sự kiện & Sân khấu",
+        "en": "Live Production"
+      },
+      "intro": {
+        "vi": "Từ hậu cần tiền sự kiện đến điều phối những khoảnh khắc diễn ra trong thời gian thực.",
+        "en": "From pre-show logistics to the precise coordination of live moments."
+      },
+      "work_ids": [
+        "mot-chut-yeu-thuong-3",
+        "ban-giao-huong-xanh",
+        "get-downtown-2023"
+      ]
+    },
+    {
+      "id": "film-content",
+      "slug": "film-content",
+      "label": {
+        "vi": "Nội dung & Phim",
+        "en": "Film & Content"
+      },
+      "intro": {
+        "vi": "Chiến lược, sản xuất, biên tập và giọng kể — nhiều định dạng, một mối quan tâm đến khán giả.",
+        "en": "Strategy, scripting, editing and voice—different formats, a consistent focus on the audience."
+      },
+      "work_ids": [
+        "que-qua-quao",
+        "china-town",
+        "crowd-effect-experiment",
+        "war-remnants-documentary",
+        "veinora-interior-film",
+        "motivational-voiceover",
+        "historical-voiceover",
+        "spec-promotional-films"
+      ]
+    },
+    {
+      "id": "games-interactive",
+      "slug": "games-interactive",
+      "label": {
+        "vi": "Game & Tương tác",
+        "en": "Games & Interactive"
+      },
+      "intro": {
+        "vi": "Từ bản chơi công khai đến những thử nghiệm cơ chế và thế giới đang phát triển.",
+        "en": "From a public playable build to evolving systems and experimental worlds."
+      },
+      "work_ids": [
+        "apex-chaos",
+        "ragnarok-the-last-island",
+        "alphabet-engine",
+        "six-primordials-boss-lab"
+      ]
+    },
+    {
+      "id": "digital-products",
+      "slug": "digital-products",
+      "label": {
+        "vi": "Sản phẩm số",
+        "en": "Digital Products"
+      },
+      "intro": {
+        "vi": "Những bài toán thực tế được chuyển thành luồng thao tác, phản hồi và hệ thống có thể sử dụng.",
+        "en": "Turning practical problems into workflows, feedback and usable systems."
+      },
+      "work_ids": [
+        "mathpath",
+        "eventflow"
+      ]
+    },
+    {
+      "id": "music-performance",
+      "slug": "music-performance",
+      "label": {
+        "vi": "Âm nhạc & Biểu diễn",
+        "en": "Music & Performance"
+      },
+      "intro": {
+        "vi": "Một hành trình qua giọng hát, sáng tác và khoảnh khắc trực tiếp trên sân khấu.",
+        "en": "A journey through vocals, composition and live performance."
+      },
+      "work_ids": [
+        "neu-ngay-mai",
+        "mua-ha-thu-18",
+        "live-performance"
+      ]
+    },
+    {
+      "id": "research-experiments",
+      "slug": "research-experiments",
+      "label": {
+        "vi": "Nghiên cứu & Thử nghiệm",
+        "en": "Research & Experiments"
+      },
+      "intro": {
+        "vi": "Đặt câu hỏi, thiết kế cách tiếp cận và thử nghiệm những hệ thống chưa có sẵn đáp án.",
+        "en": "Asking better questions, shaping methods and exploring unfamiliar systems."
+      },
+      "work_ids": [
+        "ai-event-visual-research",
+        "advanced-math-tutoring",
+        "english-listening-podcast-system",
+        "m2-happiness",
+        "prompt-to-play-vng-2026"
+      ]
+    }
+  ],
+  "works": [
+    {
+      "id": "que-qua-quao",
+      "slug": "que-qua-quao",
+      "section": "film-content",
+      "tier": "featured",
+      "status": "active_channel",
+      "year": 2026,
+      "kind": "social-channel",
+      "role": {
+        "vi": "Chiến lược nội dung · Sản xuất · Vận hành kênh",
+        "en": "Content strategy · Production · Channel operations"
+      },
+      "tagline": {
+        "vi": "Từ ý tưởng đến kênh nội dung đang hoạt động",
+        "en": "A channel built across the entire content pipeline"
+      },
+      "headline": {
+        "vi": "Một kênh nội dung được xây dựng từ đầu đến cuối.",
+        "en": "From concept to a real, running content channel."
+      },
+      "summary": {
+        "vi": "Que Quá Quao là hành trình kết hợp chiến lược, kể chuyện và vận hành nội dung ngắn: từ kịch bản, dựng, lồng tiếng đến đăng tải và phát triển quy trình sáng tạo lặp lại.",
+        "en": "Que Quá Quao brings strategy, storytelling and execution into one short-form content workflow—from scripting and editing to voice work, publishing and channel operations."
+      },
+      "detail": {
+        "vi": "Tôi phụ trách định hướng nội dung, viết kịch bản, biên tập video, xử lý giọng và quản lý kênh. Điều đáng giới thiệu không chỉ là một video bùng nổ, mà còn là khả năng đưa ý tưởng thành một quy trình sản xuất có thể duy trì.",
+        "en": "My contribution spans content direction, writing, video editing, voice processing and channel management. The story is not simply one breakout post; it is the end-to-end process behind producing and sustaining the channel."
+      },
+      "contributions": [
+        {
+          "vi": "Lên kế hoạch nội dung và xuất bản",
+          "en": "Planned content and publishing"
+        },
+        {
+          "vi": "Viết kịch bản, dựng video, voice-over và xử lý giọng",
+          "en": "Scripted, edited and produced voice content"
+        },
+        {
+          "vi": "Xây dựng framework dựng và quản lý kênh",
+          "en": "Developed repeatable edit workflows and ran the channel"
+        }
+      ],
+      "outcome": {
+        "text": {
+          "vi": "Một video đạt khoảng 1,1 triệu lượt xem; kênh có hơn 4.000 người theo dõi (do chủ kênh cung cấp, chưa kiểm tra độc lập).",
+          "en": "A linked video reached approximately 1.1M views and the channel passed 4K followers (owner-reported, not independently audited)."
+        },
+        "basis": "owner_reported"
+      },
+      "links": [
+        {
+          "label": "Kênh TikTok",
+          "url": "https://www.tiktok.com/@quequaquao",
+          "kind": "profile"
+        },
+        {
+          "label": "Video nổi bật",
+          "url": "https://www.tiktok.com/@quequaquao/video/7530989283956559122",
+          "kind": "original"
+        }
+      ],
+      "media": [
+        {
+          "kind": "original_link",
+          "url": "https://www.tiktok.com/@quequaquao/video/7530989283956559122",
+          "full_length": true,
+          "rehost_permission": "not_granted",
+          "thumbnail_url": null,
+          "playback_verified": false
+        }
+      ],
+      "related": [
+        "china-town",
+        "motivational-voiceover"
+      ],
+      "source_files": [
+        "social-media/SOCIAL_MEDIA_MASTER_CURATION_2026-11-08.json"
+      ],
+      "review": [
+        "Live engagement numbers inaccessible through public TikTok in prior audit; do not claim sales conversion or ROI."
+      ]
+    },
+    {
+      "id": "apex-chaos",
+      "slug": "apex-chaos",
+      "section": "games-interactive",
+      "tier": "featured",
+      "status": "playable_demo",
+      "year": null,
+      "kind": "browser-game",
+      "role": {
+        "vi": "Thiết kế trải nghiệm · Định hướng game · Phát triển có AI hỗ trợ",
+        "en": "Game direction · Experience design · AI-assisted building"
+      },
+      "tagline": {
+        "vi": "Game đấu trường có thể chơi trực tiếp",
+        "en": "A playable browser arena"
+      },
+      "headline": {
+        "vi": "Một ý tưởng giao tranh trở thành trò chơi thật.",
+        "en": "An arena concept turned into something people can play."
+      },
+      "summary": {
+        "vi": "APEX CHAOS là game đấu trường 2D chạy trên trình duyệt, nơi nhân vật, nhịp chiến đấu và các cơ chế giao tranh được kết hợp thành một bản chơi công khai.",
+        "en": "APEX CHAOS is a browser-based 2D combat game combining distinct fighter identities, combat pacing and gameplay systems into a public playable build."
+      },
+      "detail": {
+        "vi": "Dự án thể hiện quá trình biến một ý tưởng game thành trải nghiệm có thể thử trực tiếp. Tôi phát triển dự án bằng phương pháp AI-assisted/vibecoding, tập trung vào hướng thiết kế, vòng lặp chiến đấu và việc kiểm thử – tinh chỉnh sản phẩm.",
+        "en": "The project shows the transition from a game idea to an accessible playable experience. It was developed through AI-assisted building, with emphasis on creative direction, combat loops, iteration and product testing."
+      },
+      "contributions": [
+        {
+          "vi": "Định hướng thiết kế nhân vật và giao tranh",
+          "en": "Directed fighter and combat experience"
+        },
+        {
+          "vi": "Phát triển và lặp thử nghiệm với AI hỗ trợ",
+          "en": "Built and iterated with AI assistance"
+        }
+      ],
+      "outcome": {
+        "text": {
+          "vi": "Có bản demo HTML5 công khai trên itch.io.",
+          "en": "A publicly accessible HTML5 demo exists on itch.io."
+        },
+        "basis": "public_artifact"
+      },
+      "links": [
+        {
+          "label": "Chơi APEX CHAOS",
+          "url": "https://realbae.itch.io/apex-chaos",
+          "kind": "play"
+        },
+        {
+          "label": "Mã nguồn",
+          "url": "https://github.com/Khanh-glitch/APEX-CHAOS",
+          "kind": "source"
+        }
+      ],
+      "media": [
+        {
+          "kind": "playable_link",
+          "url": "https://realbae.itch.io/apex-chaos",
+          "full_length": true,
+          "rehost_permission": "not_granted",
+          "thumbnail_url": null,
+          "playback_verified": false
+        }
+      ],
+      "related": [
+        "ragnarok-the-last-island",
+        "alphabet-engine"
+      ],
+      "source_files": [
+        "game-design/apex-chaos.json"
+      ],
+      "review": [
+        "Do not claim commercial success or all listed game modes were independently replay-tested."
+      ]
+    },
+    {
+      "id": "mot-chut-yeu-thuong-3",
+      "slug": "mot-chut-yeu-thuong-3",
+      "section": "live-production",
+      "tier": "featured",
+      "status": "completed_event",
+      "year": 2026,
+      "kind": "live-event",
+      "role": {
+        "vi": "Điều phối cánh sân khấu · Theo dõi cue · Phối hợp bộ đàm",
+        "en": "Stage-side coordination · Cue tracking · Radio liaison"
+      },
+      "tagline": {
+        "vi": "Nhà hát Bến Thành · 08.01.2026",
+        "en": "Bến Thành Theatre · 08 Jan 2026"
+      },
+      "headline": {
+        "vi": "Giữ nhịp cho những khoảnh khắc không có lần diễn lại.",
+        "en": "Keeping a live performance in sync, in real time."
+      },
+      "summary": {
+        "vi": "Trong Một Chút Yêu Thương 3, tôi hỗ trợ ở cánh sân khấu: theo dõi lượt chuẩn bị, thứ tự ra vào của nghệ sĩ, vị trí biểu diễn và phối hợp cue cùng bộ phận sản xuất qua bộ đàm.",
+        "en": "At Một Chút Yêu Thương 3, I supported stage-side operations: performer readiness, entry and exit order, stage positioning and cue coordination over radio with the production team."
+      },
+      "detail": {
+        "vi": "Công việc tập trung vào những điểm chuyển tiếp khán giả ít thấy: ai đã sẵn sàng, khi nào tiết mục tiếp theo cần chuẩn bị và thông tin nào phải truyền tới đạo diễn, stage manager hoặc kỹ thuật. Đây là đóng góp tại cánh sân khấu, không phải vai trò điều hành toàn bộ chương trình.",
+        "en": "Much of this work happens out of sight: checking readiness, following performance order and relaying timely information to the director, stage manager and technical crew. This was a stage-side role, not responsibility for calling the entire show."
+      },
+      "contributions": [
+        {
+          "vi": "Theo dõi thứ tự và mức sẵn sàng của nghệ sĩ",
+          "en": "Tracked performer order and readiness"
+        },
+        {
+          "vi": "Hướng dẫn vị trí và phối hợp cue khi cần",
+          "en": "Assisted positioning and cue transitions"
+        },
+        {
+          "vi": "Liên lạc bộ đàm với các bộ phận sản xuất",
+          "en": "Coordinated with production colleagues over radio"
+        }
+      ],
+      "outcome": {
+        "text": {
+          "vi": "Tham gia vận hành một chương trình biểu diễn gây quỹ có thật; kết quả chương trình không được quy thành thành tích cá nhân.",
+          "en": "Contributed to the delivery of a real charity performance; overall show outcomes are not represented as personal results."
+        },
+        "basis": "owner_role_and_external_event"
+      },
+      "links": [
+        {
+          "label": "Báo Pháp Luật TP.HCM",
+          "url": "https://plo.vn/mot-chut-yeu-thuong-lan-3-thap-sang-niem-tin-cho-nan-nhan-tai-nan-giao-thong-post890553.html",
+          "kind": "event_context"
+        },
+        {
+          "label": "Báo SGGP",
+          "url": "https://www.sggp.org.vn/mot-chut-yeu-thuong-xoa-diu-noi-dau-tai-nan-giao-thong-post832615.html",
+          "kind": "event_context"
+        }
+      ],
+      "media": [
+        {
+          "kind": "photo_candidate",
+          "asset_key": "mcyt-crew-personal-group",
+          "binary_in_repository": false,
+          "thumbnail_url": null,
+          "rights": "owner_approved_third_party_not_cleared"
+        },
+        {
+          "kind": "photo_candidate",
+          "asset_key": "mcyt-full-crew-curtain",
+          "binary_in_repository": false,
+          "thumbnail_url": null,
+          "rights": "owner_approved_third_party_not_cleared"
+        }
+      ],
+      "related": [
+        "ban-giao-huong-xanh",
+        "get-downtown-2023",
+        "eventflow"
+      ],
+      "source_files": [
+        "events/mot-chut-yeu-thuong-3-2026.json",
+        "media/events/mcyt-2026/README.md"
+      ],
+      "review": [
+        "No official individual job title; do not call the owner the overall show caller.",
+        "Event photos not hosted in this repo."
+      ]
+    },
+    {
+      "id": "mathpath",
+      "slug": "mathpath",
+      "section": "digital-products",
+      "tier": "featured",
+      "status": "release_candidate_not_commercially_verified",
+      "year": 2026,
+      "kind": "learning-product",
+      "role": {
+        "vi": "Thiết kế sản phẩm học tập · Phát triển có AI hỗ trợ",
+        "en": "Learning product direction · AI-assisted development"
+      },
+      "tagline": {
+        "vi": "Học Toán như một hành trình tiến bộ",
+        "en": "Making mathematical progress visible"
+      },
+      "headline": {
+        "vi": "Một lộ trình học không chỉ có đáp án.",
+        "en": "A learning journey designed for more than right answers."
+      },
+      "summary": {
+        "vi": "MathPath biến nội dung Toán thành một hành trình gồm các chặng học, luyện tập và đánh giá năng lực; kết hợp động lực khám phá với tính toàn vẹn của kết quả học.",
+        "en": "MathPath turns mathematics into a structured learning journey with stages, practice and skill feedback, combining gamified motivation with integrity in assessment."
+      },
+      "detail": {
+        "vi": "Từ Living Board bốn điểm đến đến bảy chặng Chương 1 và chương trình luyện đề K51, dự án thử nghiệm cách khiến người học biết mình đang ở đâu và bước tiếp theo là gì. Hồ sơ mã nguồn ghi nhận cơ chế mastery, chấm điểm phía server và một số vòng kiểm thử lịch sử; đây không phải tuyên bố đã có lớp học trả phí hoặc kết quả học viên được kiểm chứng.",
+        "en": "From the four-destination Living Board to Chapter 1's seven stages and K51 practice, the product explores how learners navigate, practise and understand progress. The repository documents mastery state and server-side grading, but does not establish paid enrolment or independently verified learner outcomes."
+      },
+      "contributions": [
+        {
+          "vi": "Định hình hành trình học và gamification",
+          "en": "Shaped learning journeys and gamification"
+        },
+        {
+          "vi": "Phát triển hướng sản phẩm cùng AI và kiểm thử lặp lại",
+          "en": "Built and iterated through AI-assisted workflows"
+        }
+      ],
+      "outcome": {
+        "text": {
+          "vi": "Có mã nguồn, hệ thống chức năng và tài liệu kiểm thử lịch sử; chưa xác nhận vận hành thương mại.",
+          "en": "Source, implemented systems and historical test reports exist; commercial deployment is not confirmed."
+        },
+        "basis": "source_and_historical_test"
+      },
+      "links": [
+        {
+          "label": "Mã nguồn MathPath",
+          "url": "https://github.com/Khanh-glitch/MathPath",
+          "kind": "source"
+        }
+      ],
+      "media": [],
+      "related": [
+        "advanced-math-tutoring",
+        "ai-event-visual-research",
+        "eventflow"
+      ],
+      "source_files": [
+        "digital-products/mathpath.json"
+      ],
+      "review": [
+        "Do not treat historical 337/14 testing reports as a fresh live acceptance.",
+        "Do not claim tutoring learner used MathPath."
+      ]
+    },
+    {
+      "id": "china-town",
+      "slug": "china-town",
+      "section": "film-content",
+      "tier": "featured",
+      "status": "completed_course_project",
+      "year": null,
+      "kind": "commercial-format-film",
+      "role": {
+        "vi": "Trưởng nhóm · Voice-over · Diễn xuất trước ống kính",
+        "en": "Project lead · Voice-over · On-camera performance"
+      },
+      "tagline": {
+        "vi": "Phim quảng bá trong học phần",
+        "en": "Commercial-format course film"
+      },
+      "headline": {
+        "vi": "Khi người làm nội dung cũng đứng trước ống kính.",
+        "en": "Leading a production—and stepping into the frame."
+      },
+      "summary": {
+        "vi": "China Town là dự án phim quảng bá thực hiện trong học phần, nơi tôi tham gia từ vai trò trưởng nhóm đến voice-over và xuất hiện trước máy quay.",
+        "en": "China Town is a commercial-format course film in which I led the team, performed voice-over and appeared on camera."
+      },
+      "detail": {
+        "vi": "Dự án kết nối tổ chức nhóm, diễn đạt thông điệp và biểu diễn trong một sản phẩm video hoàn chỉnh. Theo thông tin tôi cung cấp, video đạt kết quả cao nhất học phần và thu hút hàng nghìn lượt xem trên Facebook cá nhân; đây không phải chiến dịch quảng cáo thương mại được khách hàng thuê.",
+        "en": "The project brought coordination, messaging and performance together in a finished film. The owner reports the top result in the course and thousands of views on a personal Facebook post; it was not presented as a commissioned brand campaign."
+      },
+      "contributions": [
+        {
+          "vi": "Điều phối nhóm và sản phẩm hoàn chỉnh",
+          "en": "Led the team and final production"
+        },
+        {
+          "vi": "Lồng tiếng và trình diễn trước máy quay",
+          "en": "Performed voice-over and on camera"
+        }
+      ],
+      "outcome": {
+        "text": {
+          "vi": "Đạt kết quả cao nhất học phần và hàng nghìn lượt xem Facebook cá nhân (do chủ dự án báo cáo).",
+          "en": "Top course result and thousands of personal Facebook views (owner-reported)."
+        },
+        "basis": "owner_reported"
+      },
+      "links": [
+        {
+          "label": "Xem video gốc",
+          "url": "https://drive.google.com/file/d/1Q8fq-i-Of1jMqeuFCPNCpLhZTatq4j4h/view",
+          "kind": "original"
+        }
+      ],
+      "media": [
+        {
+          "kind": "original_link",
+          "url": "https://drive.google.com/file/d/1Q8fq-i-Of1jMqeuFCPNCpLhZTatq4j4h/view",
+          "full_length": true,
+          "rehost_permission": "not_granted",
+          "thumbnail_url": null,
+          "playback_verified": false
+        }
+      ],
+      "related": [
+        "que-qua-quao",
+        "motivational-voiceover"
+      ],
+      "source_files": [
+        "social-media/SOCIAL_MEDIA_MASTER_CURATION_2026-11-08.json"
+      ],
+      "review": [
+        "Drive file metadata checked; visual/audio playback not audited.",
+        "Course grading and post analytics owner-reported."
+      ]
+    },
+    {
+      "id": "neu-ngay-mai",
+      "slug": "neu-ngay-mai",
+      "section": "music-performance",
+      "tier": "featured",
+      "status": "published_music",
+      "year": 2026,
+      "kind": "published-song",
+      "role": {
+        "vi": "Giọng hát cùng Hồ Đá Chà Gươm",
+        "en": "Vocalist with Hồ Đá Chà Gươm"
+      },
+      "tagline": {
+        "vi": "Bản thu đã phát hành",
+        "en": "Officially released recording"
+      },
+      "headline": {
+        "vi": "Một giọng hát trong tập thể âm nhạc.",
+        "en": "One voice in a shared musical story."
+      },
+      "summary": {
+        "vi": "“Nếu ngày mai” đánh dấu phần đóng góp giọng hát của tôi trong một tác phẩm đã phát hành cùng Hồ Đá Chà Gươm, có thể nghe trên Spotify và xem lyric video chính thức.",
+        "en": "“Nếu ngày mai” documents my vocal contribution to a released work with Hồ Đá Chà Gươm, available on Spotify and in the official lyric video."
+      },
+      "detail": {
+        "vi": "Đây là một tác phẩm cộng tác: phần credit cần tôn trọng đầy đủ các thành viên và ekip, không chuyển vai trò giọng hát thành tác giả ca khúc hay người thể hiện duy nhất. Tác phẩm âm nhạc nên được nghe qua nguồn chính thức, không tái phát hành file nhạc trên portfolio.",
+        "en": "This is a collaborative release with multiple credited artists and production contributors. The portfolio should attribute my vocal role precisely, without claiming songwriting or sole performance, and use official listening links rather than rehosting audio."
+      },
+      "contributions": [
+        {
+          "vi": "Tham gia thể hiện giọng hát trong bản phát hành",
+          "en": "Contributed vocals to the released track"
+        }
+      ],
+      "outcome": {
+        "text": {
+          "vi": "Có bản phát hành và lyric video chính thức.",
+          "en": "Official streaming release and lyric video are available."
+        },
+        "basis": "public_artifact"
+      },
+      "links": [
+        {
+          "label": "Spotify",
+          "url": "https://open.spotify.com/track/2AkPSNohBGtrZMGeTtwV12",
+          "kind": "listen"
+        },
+        {
+          "label": "Official lyric video",
+          "url": "https://www.youtube.com/watch?v=179btG24VE8",
+          "kind": "watch"
+        }
+      ],
+      "media": [
+        {
+          "kind": "audio_link",
+          "url": "https://open.spotify.com/track/2AkPSNohBGtrZMGeTtwV12",
+          "full_length": true,
+          "rehost_permission": "not_granted",
+          "thumbnail_url": null,
+          "playback_verified": false
+        },
+        {
+          "kind": "original_link",
+          "url": "https://www.youtube.com/watch?v=179btG24VE8",
+          "full_length": true,
+          "rehost_permission": "not_granted",
+          "thumbnail_url": null,
+          "playback_verified": false
+        }
+      ],
+      "related": [
+        "live-performance",
+        "mua-ha-thu-18"
+      ],
+      "source_files": [
+        "music-performance/works/neu-ngay-mai-ho-da-cha-guom-2026.json"
+      ],
+      "review": [
+        "Do not claim composer credit for this song.",
+        "Audio redistribution rights are not established."
+      ]
+    },
+    {
+      "id": "get-downtown-2023",
+      "slug": "get-downtown-2023",
+      "section": "live-production",
+      "tier": "selected",
+      "status": "completed_event",
+      "year": 2023,
+      "kind": "live-concert",
+      "role": {
+        "vi": "Hậu cần · Xử lý rủi ro · Hỗ trợ tiền sự kiện",
+        "en": "Pre-event logistics · Risk handling · Production support"
+      },
+      "tagline": {
+        "vi": "Live concert · UEH · 09.12.2023",
+        "en": "Live concert · UEH · 09 Dec 2023"
+      },
+      "headline": {
+        "vi": "Trước ánh đèn là cả một quá trình chuẩn bị.",
+        "en": "The work behind the show begins before the lights go up."
+      },
+      "summary": {
+        "vi": "Tôi tham gia hậu cần, xử lý rủi ro và hỗ trợ những đầu việc tiền sự kiện cho GET DOWNTOWN 2023, một live concert được triển khai theo mô hình tập thể.",
+        "en": "I supported logistics, risk handling and pre-event operations for GET DOWNTOWN 2023, a collaboratively produced live concert."
+      },
+      "detail": {
+        "vi": "Vai trò của tôi thuộc phần chuẩn bị và hỗ trợ sản xuất — những công việc làm nền cho sân khấu vận hành. Không có ảnh cá nhân tại hiện trường và chưa có hồ sơ xác minh chức danh chính thức, nên tác phẩm được trình bày bằng ngữ cảnh sự kiện và phạm vi công việc do tôi xác nhận.",
+        "en": "My contribution sits in preparation and practical production support. There are no individual action photographs and no confirmed formal title, so the case focuses on the event context and owner-described scope."
+      },
+      "contributions": [
+        {
+          "vi": "Hỗ trợ hậu cần và các đầu việc trước show",
+          "en": "Supported pre-show logistics"
+        },
+        {
+          "vi": "Phối hợp xử lý rủi ro phát sinh",
+          "en": "Supported risk-handling tasks"
+        }
+      ],
+      "outcome": null,
+      "links": [
+        {
+          "label": "UEH Youth — Tổng kết chương trình",
+          "url": "https://youth.ueh.edu.vn/tin-tuc/clb-giai-dieu-tre-live-concert-get-downtown-2023-sin/",
+          "kind": "event_context"
+        }
+      ],
+      "media": [],
+      "related": [
+        "mot-chut-yeu-thuong-3",
+        "eventflow"
+      ],
+      "source_files": [
+        "events/get-downtown-2023.json"
+      ],
+      "review": [
+        "Individual role is owner-reported; organizer images require rights verification."
+      ]
+    },
+    {
+      "id": "ban-giao-huong-xanh",
+      "slug": "ban-giao-huong-xanh",
+      "section": "live-production",
+      "tier": "selected",
+      "status": "completed_event",
+      "year": 2026,
+      "kind": "public-show",
+      "role": {
+        "vi": "Điều phối cánh sân khấu · Phối hợp cue",
+        "en": "Stage-side operations · Cue coordination"
+      },
+      "tagline": {
+        "vi": "Chương trình nghệ thuật · 28.04.2026",
+        "en": "Civic performance programme · 28 Apr 2026"
+      },
+      "headline": {
+        "vi": "Điều phối biểu diễn trong một sự kiện nhiều lớp vận hành.",
+        "en": "Stage-side coordination within a larger civic programme."
+      },
+      "summary": {
+        "vi": "Trong Bản Giao Hưởng Xanh, tôi hỗ trợ điều phối hoạt động biểu diễn tại cánh sân khấu, theo dõi thứ tự nghệ sĩ và phối hợp cue qua bộ đàm.",
+        "en": "At Bản Giao Hưởng Xanh, I supported performance-side operations, tracking performer order and coordinating cues through radio communication."
+      },
+      "detail": {
+        "vi": "Chương trình nghệ thuật diễn ra trong bối cảnh lễ khai mạc Tháng Công nhân 2026. Đóng góp của tôi thuộc phần điều phối biểu diễn, không đại diện cho công tác tổ chức toàn bộ chương trình cộng đồng hay những chỉ tiêu của ban tổ chức.",
+        "en": "The performance formed part of a broader Workers' Month opening ceremony. My contribution was in the performance-side production workflow, not overall programme leadership or the organiser's public outcomes."
+      },
+      "contributions": [
+        {
+          "vi": "Theo dõi lượt ra vào và chuẩn bị tiết mục",
+          "en": "Tracked entry, exit and readiness"
+        },
+        {
+          "vi": "Hỗ trợ vị trí và phối hợp qua bộ đàm",
+          "en": "Assisted positioning and radio coordination"
+        }
+      ],
+      "outcome": null,
+      "links": [
+        {
+          "label": "Báo Người Lao Động",
+          "url": "https://nld.com.vn/ldld-tphcm-chinh-thuc-khai-mac-thang-cong-nhan-2026-196260428195216262.htm",
+          "kind": "event_context"
+        }
+      ],
+      "media": [],
+      "related": [
+        "mot-chut-yeu-thuong-3",
+        "get-downtown-2023"
+      ],
+      "source_files": [
+        "events/ban-giao-huong-xanh-2026.json"
+      ],
+      "review": [
+        "Avoid assigning reported whole-ceremony attendance or benefits to the individual."
+      ]
+    },
+    {
+      "id": "ragnarok-the-last-island",
+      "slug": "ragnarok-the-last-island",
+      "section": "games-interactive",
+      "tier": "selected",
+      "status": "active_development",
+      "year": 2026,
+      "kind": "survival-game",
+      "role": {
+        "vi": "Định hướng sáng tạo · Thiết kế hệ thống · Phát triển có AI hỗ trợ",
+        "en": "Creative direction · Systems design · AI-assisted development"
+      },
+      "tagline": {
+        "vi": "Thế giới sinh tồn đang phát triển",
+        "en": "An evolving survival world"
+      },
+      "headline": {
+        "vi": "Một hòn đảo nơi những lựa chọn để lại hậu quả.",
+        "en": "A survival world built around consequences."
+      },
+      "summary": {
+        "vi": "Ragnarok: The Last Island đang được phát triển như một trải nghiệm sinh tồn có quy luật: khám phá, thu thập, chế tạo, chiến đấu và tiến trình dài hạn.",
+        "en": "Ragnarok: The Last Island is being developed as a systemic survival experience built around exploration, gathering, crafting, combat and long-term progression."
+      },
+      "detail": {
+        "vi": "Điểm hấp dẫn nằm trong mối quan hệ giữa các hệ thống và hành vi người chơi, không phải chỉ ở số lượng tính năng. Dự án hiện vẫn đang phát triển; hình ảnh hoặc bản chơi cũ không được trình bày như chất lượng và nội dung bản phát hành cuối.",
+        "en": "Its creative ambition is in the relationship between systems and player decisions, not simply a feature checklist. The game is still in development, and legacy screenshots or builds should never be presented as the final release."
+      },
+      "contributions": [
+        {
+          "vi": "Định hướng vòng lặp sinh tồn và các hệ thống trò chơi",
+          "en": "Directed survival loops and game systems"
+        },
+        {
+          "vi": "Điều phối thử nghiệm và vòng lặp xây dựng AI-assisted",
+          "en": "Coordinated iteration and AI-assisted building"
+        }
+      ],
+      "outcome": null,
+      "links": [
+        {
+          "label": "Repository phát triển",
+          "url": "https://github.com/Khanh-glitch/Soul-of-Hero",
+          "kind": "source"
+        }
+      ],
+      "media": [],
+      "related": [
+        "apex-chaos",
+        "alphabet-engine"
+      ],
+      "source_files": [
+        "game-design/soul-of-hero.json"
+      ],
+      "review": [
+        "Owner-confirmed public title differs from legacy GitHub repo name.",
+        "Do not claim released or fully integrated final gameplay."
+      ]
+    },
+    {
+      "id": "eventflow",
+      "slug": "eventflow",
+      "section": "digital-products",
+      "tier": "selected",
+      "status": "active_rebuild",
+      "year": 2026,
+      "kind": "event-production-tool",
+      "role": {
+        "vi": "Ý tưởng sản phẩm · Thiết kế quy trình · Phát triển có AI hỗ trợ",
+        "en": "Product direction · Workflow design · AI-assisted development"
+      },
+      "tagline": {
+        "vi": "Từ brief đến phạm vi và báo giá",
+        "en": "From event brief to actionable production scope"
+      },
+      "headline": {
+        "vi": "Biến kinh nghiệm sản xuất sự kiện thành một công cụ.",
+        "en": "Turning event-production knowledge into a working tool."
+      },
+      "summary": {
+        "vi": "EventFlow khám phá cách chuyển một brief sự kiện thành các nhu cầu sản xuất, BOQ, định giá có kiểm soát và quy trình rà soát trước khi bàn giao.",
+        "en": "EventFlow explores a structured path from an event brief to production needs, BOQ, human-reviewed pricing and delivery review."
+      },
+      "detail": {
+        "vi": "Dự án hình thành từ bài toán thật của lĩnh vực sản xuất sự kiện và từng có một browser-local workflow demo. Phiên bản mới đang được tái thiết; bản demo lịch sử là bằng chứng thiết kế quy trình, không phải bằng chứng một SaaS đã thương mại hóa.",
+        "en": "The product is grounded in event-production workflows and previously had a browser-local demo. A rebuild is ongoing; that historical demonstration establishes workflow experimentation, not a commercially deployed SaaS."
+      },
+      "contributions": [
+        {
+          "vi": "Xây dựng mô hình quy trình và nhu cầu người dùng",
+          "en": "Mapped workflow and user needs"
+        },
+        {
+          "vi": "Phát triển và thử nghiệm giải pháp có AI hỗ trợ",
+          "en": "Built and tested AI-assisted product iterations"
+        }
+      ],
+      "outcome": null,
+      "links": [
+        {
+          "label": "Repository EventFlow",
+          "url": "https://github.com/Khanh-glitch/eventflow-pro",
+          "kind": "source"
+        }
+      ],
+      "media": [],
+      "related": [
+        "get-downtown-2023",
+        "mot-chut-yeu-thuong-3",
+        "mathpath"
+      ],
+      "source_files": [
+        "digital-products/eventflow-pro.json"
+      ],
+      "review": [
+        "Label old demo as historical; do not claim present commercial deployment."
+      ]
+    },
+    {
+      "id": "mua-ha-thu-18",
+      "slug": "mua-ha-thu-18",
+      "section": "music-performance",
+      "tier": "selected",
+      "status": "published_platform_reel",
+      "year": null,
+      "kind": "composition",
+      "role": {
+        "vi": "Sáng tác",
+        "en": "Composition"
+      },
+      "tagline": {
+        "vi": "Tác phẩm sáng tác",
+        "en": "Original composition"
+      },
+      "headline": {
+        "vi": "Một câu chuyện âm nhạc ở vai trò người viết.",
+        "en": "A musical idea from the composer's side."
+      },
+      "summary": {
+        "vi": "“Mùa Hạ Thứ 18” là tác phẩm tôi giới thiệu với vai trò người sáng tác, có bản reel được chia sẻ trên Facebook.",
+        "en": "“Mùa Hạ Thứ 18” is presented as a composition work, with a Facebook Reel supplied as the original viewing source."
+      },
+      "detail": {
+        "vi": "Khác với vai trò hát trong “Nếu ngày mai”, ở tác phẩm này phần đóng góp được xác nhận của tôi là sáng tác. Các credit thu âm và phát hành khác chưa được kiểm chứng, nên phần trình bày giữ đúng phạm vi đó.",
+        "en": "Unlike my vocal contribution to “Nếu ngày mai,” my confirmed role here is composition. Other recording and release credits remain unverified, so the portfolio stays within that scope."
+      },
+      "contributions": [
+        {
+          "vi": "Sáng tác ca khúc",
+          "en": "Composed the song"
+        }
+      ],
+      "outcome": null,
+      "links": [
+        {
+          "label": "Reel gốc",
+          "url": "https://www.facebook.com/reel/848691413758411",
+          "kind": "original"
+        }
+      ],
+      "media": [
+        {
+          "kind": "original_link",
+          "url": "https://www.facebook.com/reel/848691413758411",
+          "full_length": true,
+          "rehost_permission": "not_granted",
+          "thumbnail_url": null,
+          "playback_verified": false
+        }
+      ],
+      "related": [
+        "neu-ngay-mai",
+        "live-performance"
+      ],
+      "source_files": [
+        "music-performance/works/facebook-composer-reel-848691413758411.json"
+      ],
+      "review": [
+        "Facebook reel metadata unavailable; do not invent collaborators or release date."
+      ]
+    },
+    {
+      "id": "live-performance",
+      "slug": "live-performance",
+      "section": "music-performance",
+      "tier": "selected",
+      "status": "photo_documented",
+      "year": null,
+      "kind": "live-photography",
+      "role": {
+        "vi": "Biểu diễn trực tiếp · Giọng hát",
+        "en": "Live performance · Vocals"
+      },
+      "tagline": {
+        "vi": "Âm nhạc trên sân khấu",
+        "en": "Performing in front of an audience"
+      },
+      "headline": {
+        "vi": "Những khoảnh khắc chỉ tồn tại một lần trên sân khấu.",
+        "en": "The moments that only exist on stage."
+      },
+      "summary": {
+        "vi": "Tuyển tập ảnh biểu diễn ghi lại phần thực hành âm nhạc trực tiếp của tôi, từ những khoảnh khắc cận cảnh đến biểu diễn cùng tập thể.",
+        "en": "A curated set of real performance photographs documents my live music practice, from close-up moments to collaborative stage settings."
+      },
+      "detail": {
+        "vi": "Hồ sơ gồm 28 ảnh từ một thư mục biểu diễn, trong đó NHP_0440.jpg là ứng viên ảnh mở đầu đã được tôi xác nhận nhận diện. Bộ ảnh không đồng nghĩa 28 chương trình riêng biệt; ngày diễn, tên show và bản quyền nhiếp ảnh cần xác nhận trước khi ghi chú hoặc đăng tải.",
+        "en": "The inventory contains 28 photographs, with NHP_0440.jpg confirmed by the owner as a hero candidate. It does not document 28 distinct events; photographer rights, event attribution and dates must be verified before publication."
+      },
+      "contributions": [
+        {
+          "vi": "Biểu diễn trực tiếp",
+          "en": "Performed live"
+        }
+      ],
+      "outcome": null,
+      "links": [],
+      "media": [
+        {
+          "kind": "photo_collection_reference",
+          "source_folder": "https://drive.google.com/drive/folders/19cJ47NU8SisT4vmFpjh_S8kPbWsJtXuu",
+          "hero_filename": "NHP_0440.jpg",
+          "binary_in_repository": false,
+          "thumbnail_url": null,
+          "rights": "photographer_permission_unverified"
+        }
+      ],
+      "related": [
+        "neu-ngay-mai",
+        "mua-ha-thu-18"
+      ],
+      "source_files": [
+        "music-performance/performance-photo-inventory-2026-11-08.json"
+      ],
+      "review": [
+        "Do not call 28 files 28 unique live shows; do not make author identity claims for other people."
+      ]
+    },
+    {
+      "id": "crowd-effect-experiment",
+      "slug": "crowd-effect-experiment",
+      "section": "film-content",
+      "tier": "selected",
+      "status": "completed_student_experiment",
+      "year": null,
+      "kind": "social-experiment-film",
+      "role": {
+        "vi": "Ý tưởng · Kịch bản · Thiết kế thử nghiệm · Voice-over · Lên hình",
+        "en": "Concept · Script · Experiment design · Voice-over · On-camera"
+      },
+      "tagline": {
+        "vi": "Quan sát hành vi qua một thử nghiệm",
+        "en": "Exploring behaviour through an experiment"
+      },
+      "headline": {
+        "vi": "Biến một câu hỏi về đám đông thành câu chuyện trên màn hình.",
+        "en": "Turning a question about crowds into an on-camera experiment."
+      },
+      "summary": {
+        "vi": "Tôi tham gia từ ý tưởng, kịch bản đến thiết kế thử nghiệm và thể hiện bằng giọng nói, hình ảnh trong một video về hành vi đám đông.",
+        "en": "I developed the concept, script and experiment structure, then contributed voice and on-camera presentation for a crowd-behaviour video."
+      },
+      "detail": {
+        "vi": "Điểm đáng giới thiệu là cách biến một câu hỏi xã hội thành sản phẩm có cấu trúc và thể hiện được. Kết quả thực nghiệm chưa được thẩm định độc lập, nên video được giới thiệu như một dự án sáng tạo học thuật, không phải công bố khoa học.",
+        "en": "The value of the work lies in translating a behavioural question into a structured presentation. Its methodology and results have not been independently reviewed, so it is shown as an academic creative experiment rather than a scientific finding."
+      },
+      "contributions": [],
+      "outcome": null,
+      "links": [
+        {
+          "label": "Video nguyên bản",
+          "url": "https://drive.google.com/file/d/1O5hcaN86PB4KGd9Sb476Mdahqgv6W-bY/view",
+          "kind": "original"
+        }
+      ],
+      "media": [
+        {
+          "kind": "original_link",
+          "url": "https://drive.google.com/file/d/1O5hcaN86PB4KGd9Sb476Mdahqgv6W-bY/view",
+          "full_length": true,
+          "rehost_permission": "not_granted",
+          "thumbnail_url": null,
+          "playback_verified": false
+        }
+      ],
+      "related": [
+        "china-town",
+        "ai-event-visual-research"
+      ],
+      "source_files": [
+        "social-media/SOCIAL_MEDIA_MASTER_CURATION_2026-11-08.json"
+      ],
+      "review": [
+        "Actual experiment procedure and film were not visually reviewed."
+      ]
+    },
+    {
+      "id": "war-remnants-documentary",
+      "slug": "war-remnants-documentary",
+      "section": "film-content",
+      "tier": "selected",
+      "status": "completed_course_project",
+      "year": null,
+      "kind": "documentary",
+      "role": {
+        "vi": "Trưởng nhóm · Biên tập video",
+        "en": "Project lead · Video editing"
+      },
+      "tagline": {
+        "vi": "Dự án phim tư liệu thực địa",
+        "en": "A field-based documentary assignment"
+      },
+      "headline": {
+        "vi": "Khi tư liệu, hiện trường và nhịp dựng cùng kể chuyện.",
+        "en": "Building a documentary through fieldwork and editing."
+      },
+      "summary": {
+        "vi": "Dự án tư liệu tại Bảo tàng Chứng tích Chiến tranh được thực hiện với vai trò trưởng nhóm và biên tập video của tôi.",
+        "en": "A field-based documentary project at the War Remnants Museum, with my contribution in team leadership and video editing."
+      },
+      "detail": {
+        "vi": "Tác phẩm thể hiện năng lực tổ chức một dự án nội dung và biên tập tư liệu thực địa. Đây là bài tập/dự án học thuật, không phải một bộ phim do bảo tàng đặt hàng.",
+        "en": "The work reflects coordinating a content project and editing field material. It is an academic project, not a museum-commissioned film."
+      },
+      "contributions": [],
+      "outcome": null,
+      "links": [
+        {
+          "label": "Video nguyên bản",
+          "url": "https://drive.google.com/file/d/1sR4CaGBWVUNnmaIQK-gWbmYP_0W4KDko/view",
+          "kind": "original"
+        }
+      ],
+      "media": [
+        {
+          "kind": "original_link",
+          "url": "https://drive.google.com/file/d/1sR4CaGBWVUNnmaIQK-gWbmYP_0W4KDko/view",
+          "full_length": true,
+          "rehost_permission": "not_granted",
+          "thumbnail_url": null,
+          "playback_verified": false
+        }
+      ],
+      "related": [
+        "china-town",
+        "crowd-effect-experiment"
+      ],
+      "source_files": [
+        "social-media/SOCIAL_MEDIA_MASTER_CURATION_2026-11-08.json"
+      ],
+      "review": [
+        "Not independently reviewed for visual/audio quality."
+      ]
+    },
+    {
+      "id": "veinora-interior-film",
+      "slug": "veinora-interior-film",
+      "section": "film-content",
+      "tier": "selected",
+      "status": "completed_editing_work",
+      "year": null,
+      "kind": "interior-concept-film",
+      "role": {
+        "vi": "Biên tập video",
+        "en": "Video editing"
+      },
+      "tagline": {
+        "vi": "Biên tập phim giới thiệu concept nội thất",
+        "en": "Editing an interior-design concept film"
+      },
+      "headline": {
+        "vi": "Dựng nhịp để một ý tưởng không gian dễ hình dung hơn.",
+        "en": "Helping an interior concept come alive through editing."
+      },
+      "summary": {
+        "vi": "Tôi phụ trách biên tập video giới thiệu một concept thiết kế nội thất, tập trung vào nhịp dựng và cách truyền đạt ý tưởng không gian.",
+        "en": "I edited a presentation film for an interior-design concept, focusing on pacing and communicating spatial ideas."
+      },
+      "detail": {
+        "vi": "Đây là công việc biên tập cho dự án học phần của người học thiết kế nội thất khác. Phạm vi đóng góp là video editing; không nhận mình là tác giả thiết kế nội thất hoặc đơn vị thực hiện chiến dịch thương mại.",
+        "en": "This was editing work for another student's interior-design course project. My contribution was video editing, not architectural authorship or a commissioned advertising campaign."
+      },
+      "contributions": [],
+      "outcome": null,
+      "links": [
+        {
+          "label": "Video nguyên bản",
+          "url": "https://drive.google.com/file/d/1EbOndbX6Dd3Sd7Z_jm9yjuQPM8YKiyYH/view",
+          "kind": "original"
+        }
+      ],
+      "media": [
+        {
+          "kind": "original_link",
+          "url": "https://drive.google.com/file/d/1EbOndbX6Dd3Sd7Z_jm9yjuQPM8YKiyYH/view",
+          "full_length": true,
+          "rehost_permission": "not_granted",
+          "thumbnail_url": null,
+          "playback_verified": false
+        }
+      ],
+      "related": [
+        "china-town"
+      ],
+      "source_files": [
+        "social-media/SOCIAL_MEDIA_MASTER_CURATION_2026-11-08.json"
+      ],
+      "review": [
+        "Editing contribution owner-reported; playback unverified."
+      ]
+    },
+    {
+      "id": "motivational-voiceover",
+      "slug": "motivational-voiceover",
+      "section": "film-content",
+      "tier": "selected",
+      "status": "source_link_available",
+      "year": null,
+      "kind": "voice-sample",
+      "role": {
+        "vi": "Voice-over",
+        "en": "Voice-over"
+      },
+      "tagline": {
+        "vi": "Giọng kể giàu năng lượng",
+        "en": "Expressive motivational narration"
+      },
+      "headline": {
+        "vi": "Nhịp kể tạo lực cho thông điệp.",
+        "en": "Giving a message momentum through voice."
+      },
+      "summary": {
+        "vi": "Một mẫu voice-over theo hướng truyền cảm hứng, được lưu dưới dạng tác phẩm nguyên bản để nghe và đánh giá trực tiếp.",
+        "en": "A motivational voice-over sample retained in its original form for direct listening."
+      },
+      "detail": {
+        "vi": "Mẫu này chứng minh phạm vi chất liệu giọng được chủ portfolio cung cấp; chưa có vòng nghe độc lập để đánh giá kỹ thuật thu âm hoặc âm sắc.",
+        "en": "This source demonstrates a category of narration supplied by the owner. Sound quality and vocal performance have not yet been independently audited."
+      },
+      "contributions": [],
+      "outcome": null,
+      "links": [
+        {
+          "label": "Nghe bản gốc",
+          "url": "https://drive.google.com/file/d/1cvvIfw154wCIpcGK_S4fpzkUlRDmplkb/view",
+          "kind": "original"
+        }
+      ],
+      "media": [
+        {
+          "kind": "audio_link",
+          "url": "https://drive.google.com/file/d/1cvvIfw154wCIpcGK_S4fpzkUlRDmplkb/view",
+          "full_length": true,
+          "rehost_permission": "not_granted",
+          "thumbnail_url": null,
+          "playback_verified": false
+        }
+      ],
+      "related": [
+        "historical-voiceover",
+        "china-town"
+      ],
+      "source_files": [
+        "social-media/SOCIAL_MEDIA_MASTER_CURATION_2026-11-08.json"
+      ],
+      "review": []
+    },
+    {
+      "id": "historical-voiceover",
+      "slug": "historical-voiceover",
+      "section": "film-content",
+      "tier": "selected",
+      "status": "source_link_available",
+      "year": null,
+      "kind": "voice-sample",
+      "role": {
+        "vi": "Voice-over",
+        "en": "Voice-over"
+      },
+      "tagline": {
+        "vi": "Giọng kể tư liệu và lịch sử",
+        "en": "Narration for history and reportage"
+      },
+      "headline": {
+        "vi": "Một sắc thái khác của giọng kể.",
+        "en": "A different register of storytelling."
+      },
+      "summary": {
+        "vi": "Mẫu voice-over theo phong cách lịch sử/phóng sự, phù hợp trình bày song song với voice-over truyền cảm hứng để thể hiện phạm vi thể loại.",
+        "en": "A historical and reportage-style voice-over sample, complementing the motivational narration work."
+      },
+      "detail": {
+        "vi": "Giữ nguyên bản nguồn và để người nghe tự đánh giá; không tự gán nhận xét kỹ thuật về chất giọng khi chưa kiểm tra audio.",
+        "en": "The original is preserved for listening. Technical judgements about vocal fidelity or sound design are reserved until the recording can be reviewed."
+      },
+      "contributions": [],
+      "outcome": null,
+      "links": [
+        {
+          "label": "Nghe bản gốc",
+          "url": "https://drive.google.com/file/d/1uKsSNLJGACpJOpttvteuexWEZr-Oj8NH/view",
+          "kind": "original"
+        }
+      ],
+      "media": [
+        {
+          "kind": "audio_link",
+          "url": "https://drive.google.com/file/d/1uKsSNLJGACpJOpttvteuexWEZr-Oj8NH/view",
+          "full_length": true,
+          "rehost_permission": "not_granted",
+          "thumbnail_url": null,
+          "playback_verified": false
+        }
+      ],
+      "related": [
+        "motivational-voiceover"
+      ],
+      "source_files": [
+        "social-media/SOCIAL_MEDIA_MASTER_CURATION_2026-11-08.json"
+      ],
+      "review": []
+    },
+    {
+      "id": "spec-promotional-films",
+      "slug": "spec-promotional-films",
+      "section": "film-content",
+      "tier": "archive",
+      "status": "spec_media_unreviewed",
+      "year": null,
+      "kind": "spec-promo-series",
+      "role": {
+        "vi": "Tuyển tập tác phẩm video thử nghiệm · Credit cá nhân đang đối chiếu",
+        "en": "Experimental promo collection · Individual credits pending"
+      },
+      "tagline": {
+        "vi": "Những thử nghiệm video quảng bá ngắn",
+        "en": "Exploring compact promotional formats"
+      },
+      "headline": {
+        "vi": "Những thử nghiệm ngắn về cách thu hút sự chú ý.",
+        "en": "Short experiments in capturing attention."
+      },
+      "summary": {
+        "vi": "Bốn video ngắn xoay quanh định dạng quảng bá, âm nhạc và ý tưởng truyền thông; đây là tác phẩm thử nghiệm/spec, không phải chiến dịch OOH đã triển khai.",
+        "en": "Four short examples exploring promotional and music-discovery formats; these are spec experiments, not proven live OOH campaigns."
+      },
+      "detail": {
+        "vi": "Nguồn tệp đã được kiểm tra metadata nhưng chưa kiểm tra nội dung trực quan hoặc phân định credit từng video. Không sử dụng như bằng chứng đã mua quảng cáo, chạy chiến dịch hay đạt hiệu quả thương mại.",
+        "en": "File records are available, but visual quality and individual authorship have not been audited. Do not present them as paid campaigns or commercial performance evidence."
+      },
+      "contributions": [],
+      "outcome": null,
+      "links": [
+        {
+          "label": "Thư mục tác phẩm",
+          "url": "https://drive.google.com/drive/folders/1uWTByPE6GZDmTRVkYzigrQPkAwQ_FOET",
+          "kind": "source"
+        }
+      ],
+      "media": [],
+      "related": [
+        "que-qua-quao"
+      ],
+      "source_files": [
+        "social-media/SOCIAL_MEDIA_MASTER_CURATION_2026-11-08.json"
+      ],
+      "review": [
+        "Keep archive-only until exact per-film role and media rights are reviewed."
+      ]
+    },
+    {
+      "id": "alphabet-engine",
+      "slug": "alphabet-engine",
+      "section": "games-interactive",
+      "tier": "archive",
+      "status": "experimental_in_development",
+      "year": null,
+      "kind": "game-design-experiment",
+      "role": {
+        "vi": "Ý tưởng hệ thống · Thử nghiệm có AI hỗ trợ",
+        "en": "Systems concept · AI-assisted prototyping"
+      },
+      "tagline": {
+        "vi": "Thiết kế cơ chế mới",
+        "en": "Exploring a new ruleset"
+      },
+      "headline": {
+        "vi": "Khi một từ có thể trở thành cơ chế chiến đấu.",
+        "en": "What happens when a word becomes a combat mechanic?"
+      },
+      "summary": {
+        "vi": "Alphabet Engine nghiên cứu cách ghép chữ và tạo từ biến thành vật thể hoặc hành động có hiệu ứng trong một vòng lặp chiến đấu thử nghiệm.",
+        "en": "Alphabet Engine explores combining letters into words that become tactical objects or actions in an experimental combat loop."
+      },
+      "detail": {
+        "vi": "Dự án có hai repository liên quan đến cùng một ý tưởng phát triển, không phải hai game đã phát hành. Bản Godot đang ở mức định hướng/vertical slice chưa được xác minh bằng bản chơi hoàn chỉnh.",
+        "en": "The browser and Godot repositories represent one evolving concept, not two separate shipped games. A verified playable Godot slice is not yet established."
+      },
+      "contributions": [],
+      "outcome": null,
+      "links": [
+        {
+          "label": "Browser prototype repo",
+          "url": "https://github.com/Khanh-glitch/alphabet-engine",
+          "kind": "source"
+        },
+        {
+          "label": "Godot redesign repo",
+          "url": "https://github.com/Khanh-glitch/alphabet-engine-godot",
+          "kind": "source"
+        }
+      ],
+      "media": [],
+      "related": [
+        "apex-chaos",
+        "ragnarok-the-last-island"
+      ],
+      "source_files": [
+        "game-design/alphabet-engine.json"
+      ],
+      "review": [
+        "Repository paths are source records; do not infer release."
+      ]
+    },
+    {
+      "id": "six-primordials-boss-lab",
+      "slug": "six-primordials-boss-lab",
+      "section": "games-interactive",
+      "tier": "archive",
+      "status": "experimental_sandbox",
+      "year": null,
+      "kind": "vfx-boss-lab",
+      "role": {
+        "vi": "Chỉ đạo ý tưởng hiệu ứng · Thử nghiệm boss",
+        "en": "Boss/VFX concept direction · Experimentation"
+      },
+      "tagline": {
+        "vi": "Phòng thử nghiệm boss và hiệu ứng pixel",
+        "en": "A boss and pixel-VFX sandbox"
+      },
+      "headline": {
+        "vi": "Thử nghiệm cá tính và chuyển động của những đối thủ lớn.",
+        "en": "Exploring boss identity and pixel-scale spectacle."
+      },
+      "summary": {
+        "vi": "Six Primordials là sandbox thử nghiệm boss, chuyển động và hiệu ứng chiêu ở cấp độ prototype, không phải một game thương mại hoàn chỉnh.",
+        "en": "Six Primordials is a prototype environment for boss design, movement and skill effects, not a finished standalone commercial game."
+      },
+      "detail": {
+        "vi": "Tác phẩm phù hợp để cho thấy cách phân tách và đánh giá hiệu ứng; chưa có bản triển khai chính thức trong Ragnarok được nghiệm thu từ nguồn SHOWTIME.",
+        "en": "It can illustrate experiments in decomposing and evaluating visual effects. The portfolio source does not prove that these effects have been integrated into an accepted Ragnarok release."
+      },
+      "contributions": [],
+      "outcome": null,
+      "links": [],
+      "media": [],
+      "related": [
+        "ragnarok-the-last-island",
+        "apex-chaos"
+      ],
+      "source_files": [
+        "creative-experiments/source-inventory-2026-11-08.json"
+      ],
+      "review": [
+        "No verified public playable source; archive until a reproducible build is linked."
+      ]
+    },
+    {
+      "id": "ai-event-visual-research",
+      "slug": "ai-event-visual-research",
+      "section": "research-experiments",
+      "tier": "selected",
+      "status": "thesis_working_draft",
+      "year": 2026,
+      "kind": "qualitative-research",
+      "role": {
+        "vi": "Nghiên cứu học thuật · Phân tích định tính",
+        "en": "Academic research · Qualitative analysis"
+      },
+      "tagline": {
+        "vi": "AI tạo sinh trong hình ảnh quảng bá sự kiện",
+        "en": "Generative AI in event-promotion visuals"
+      },
+      "headline": {
+        "vi": "Khi người làm sự kiện và khán giả nhìn cùng một hình ảnh.",
+        "en": "How producers and audiences read the same visual."
+      },
+      "summary": {
+        "vi": "Đề tài khóa luận đang triển khai tìm hiểu sự khác biệt trong đánh giá hình ảnh quảng bá sự kiện có AI tạo sinh giữa phía sản xuất và người tham dự tại TP.HCM.",
+        "en": "An ongoing thesis explores differences between event producers' and attendees' evaluations of generative-AI-assisted promotional visuals in Ho Chi Minh City."
+      },
+      "detail": {
+        "vi": "Tài liệu nghiên cứu đề xuất phỏng vấn bán cấu trúc, kích thích bằng hình ảnh và phân tích Framework Method. Đây là bản thảo học thuật, chưa phải kết quả nghiên cứu đã xuất bản hoặc được nghiệm thu; dữ liệu người tham gia phải được giữ kín.",
+        "en": "The working research design includes semi-structured interviews, photo elicitation and Framework Method analysis. It is not a published or accepted research finding; participant data remain private."
+      },
+      "contributions": [
+        {
+          "vi": "Xác định câu hỏi và thiết kế nghiên cứu",
+          "en": "Framed the question and study design"
+        },
+        {
+          "vi": "Xây dựng hướng so sánh giữa nhóm sản xuất và khán giả",
+          "en": "Designed a producer–audience comparison"
+        }
+      ],
+      "outcome": null,
+      "links": [],
+      "media": [],
+      "related": [
+        "mathpath",
+        "crowd-effect-experiment"
+      ],
+      "source_files": [
+        "learning-research/learning-and-academic-research.json"
+      ],
+      "review": [
+        "No public Drive thesis link; no raw interview material, respondents or institutional data."
+      ]
+    },
+    {
+      "id": "advanced-math-tutoring",
+      "slug": "advanced-math-tutoring",
+      "section": "research-experiments",
+      "tier": "selected",
+      "status": "owner_reported_case",
+      "year": null,
+      "kind": "one-to-one-tutoring",
+      "role": {
+        "vi": "Gia sư Toán cao cấp 1:1",
+        "en": "One-on-one Advanced Mathematics tutor"
+      },
+      "tagline": {
+        "vi": "Hỗ trợ học tập cá nhân hóa",
+        "en": "Individualized learning support"
+      },
+      "headline": {
+        "vi": "Bắt đầu từ những lỗ hổng kiến thức căn bản.",
+        "en": "Starting where foundational understanding needs rebuilding."
+      },
+      "summary": {
+        "vi": "Tôi hỗ trợ một người học Toán cao cấp theo hình thức 1:1, tập trung củng cố kiến thức nền và hướng tới mục tiêu môn học đã đặt ra.",
+        "en": "I tutored one Advanced Mathematics learner individually, focusing on foundational understanding and the learner's course objective."
+      },
+      "detail": {
+        "vi": "Theo thông tin tôi cung cấp, người học đã đạt mục tiêu môn học. Không có số liệu hay giấy tờ xác nhận độc lập về điểm số, nên câu chuyện nằm ở cách tiếp cận hỗ trợ người học, không phải biểu đồ tỷ lệ thành công.",
+        "en": "The owner reports the learner achieved their course objective. No independent grades or records are available; this is a learning-support example, not a cohort success statistic."
+      },
+      "contributions": [
+        {
+          "vi": "Hỗ trợ một học viên theo tiến độ cá nhân",
+          "en": "Supported one learner's individual progression"
+        }
+      ],
+      "outcome": {
+        "text": {
+          "vi": "Một người học đạt mục tiêu môn học theo ghi nhận của chủ portfolio.",
+          "en": "One learner reached their course objective, as reported by the owner."
+        },
+        "basis": "owner_reported"
+      },
+      "links": [],
+      "media": [],
+      "related": [
+        "mathpath",
+        "ai-event-visual-research"
+      ],
+      "source_files": [
+        "learning-research/learning-and-academic-research.json"
+      ],
+      "review": [
+        "No causal evidence tying this tutoring case to MathPath usage."
+      ]
+    },
+    {
+      "id": "english-listening-podcast-system",
+      "slug": "english-listening-podcast-system",
+      "section": "research-experiments",
+      "tier": "archive",
+      "status": "script_system_source_only",
+      "year": null,
+      "kind": "content-production-system",
+      "role": {
+        "vi": "Thiết kế quy trình nội dung bằng AI — mức đóng góp cần đối chiếu",
+        "en": "AI content workflow concept — individual credit under review"
+      },
+      "tagline": {
+        "vi": "Khung sản xuất podcast luyện nghe",
+        "en": "A structured listening-content workflow"
+      },
+      "headline": {
+        "vi": "Thiết kế nội dung có thể tái tạo theo một hệ thống.",
+        "en": "Building a repeatable listening-content framework."
+      },
+      "summary": {
+        "vi": "Hồ sơ nguồn mô tả hệ thống kịch bản podcast tiếng Anh hai người dẫn hướng tới người học A2–B1, với quy tắc giọng đọc, nhịp và kiểm soát chất lượng nội dung.",
+        "en": "The source materials describe a two-host A2–B1 English listening podcast scripting system, including pacing, voice specification and content QA."
+      },
+      "detail": {
+        "vi": "Bản tài liệu nguồn dài đã được đọc, nhưng không có tập podcast phát hành hoặc xác minh đầy đủ vai trò tác giả cá nhân trong hồ sơ SHOWTIME.",
+        "en": "A substantial source document has been inspected, but a published episode and complete individual authorship have not been established."
+      },
+      "contributions": [],
+      "outcome": null,
+      "links": [],
+      "media": [],
+      "related": [
+        "que-qua-quao",
+        "motivational-voiceover"
+      ],
+      "source_files": [
+        "creative-experiments/source-inventory-2026-11-08.json"
+      ],
+      "review": [
+        "Do not call this a launched podcast channel or attribute all source authorship."
+      ]
+    },
+    {
+      "id": "m2-happiness",
+      "slug": "m2-happiness",
+      "section": "research-experiments",
+      "tier": "archive",
+      "status": "storyboard_and_spec_only",
+      "year": null,
+      "kind": "storyboard-project",
+      "role": {
+        "vi": "Content prototype · Đặc tả edit · Nghiên cứu VO",
+        "en": "Content prototyping · Editing specification · Voice research"
+      },
+      "tagline": {
+        "vi": "Một ý tưởng được phát triển bằng storyboard",
+        "en": "Concept development through a storyboard"
+      },
+      "headline": {
+        "vi": "Từ một chủ đề cảm xúc tới cấu trúc sản xuất.",
+        "en": "From an emotional theme to a production plan."
+      },
+      "summary": {
+        "vi": "Hồ sơ M² Happiness gồm storyboard và tài liệu quy trình, với phần việc liên quan nội dung, đặc tả dựng và nghiên cứu voice-over.",
+        "en": "M² Happiness is documented as a storyboard and production plan, including content prototyping, editing specifications and voice research."
+      },
+      "detail": {
+        "vi": "Nguồn hiện tại chưa chứng minh sản phẩm đã hoàn thiện hoặc xuất bản; đây là tư liệu cho quá trình phát triển ý tưởng sáng tạo.",
+        "en": "The source does not establish a finished or publicly released film, so the work belongs to the creative process archive."
+      },
+      "contributions": [],
+      "outcome": null,
+      "links": [],
+      "media": [],
+      "related": [
+        "english-listening-podcast-system"
+      ],
+      "source_files": [
+        "creative-experiments/source-inventory-2026-11-08.json"
+      ],
+      "review": [
+        "No final distributed film verified."
+      ]
+    },
+    {
+      "id": "prompt-to-play-vng-2026",
+      "slug": "prompt-to-play-vng-2026",
+      "section": "research-experiments",
+      "tier": "hold",
+      "status": "participation_context_only",
+      "year": 2026,
+      "kind": "game-jam-context",
+      "role": {
+        "vi": "Tham gia hoạt động nhóm — vai trò cụ thể chưa xác minh",
+        "en": "Group-event participation — individual role unverified"
+      },
+      "tagline": {
+        "vi": "Môi trường sáng tạo game AI trong 24 giờ",
+        "en": "A 24-hour AI-assisted game-jam setting"
+      },
+      "headline": {
+        "vi": "Một môi trường thử nghiệm sáng tạo giới hạn thời gian.",
+        "en": "A time-boxed collaborative creation setting."
+      },
+      "summary": {
+        "vi": "Nguồn sự kiện VNG Prompt To Play 2026 và ảnh nhóm cung cấp bối cảnh tham gia; chưa đủ chứng cứ xác nhận riêng tác phẩm, vai trò hoặc giải thưởng của chủ portfolio.",
+        "en": "Official event context and a group photograph exist for VNG Prompt To Play 2026, but do not establish the individual's game output, role or any award."
+      },
+      "detail": {
+        "vi": "Không đưa vào bản portfolio công khai cho đến khi có bằng chứng về tác phẩm cụ thể và đóng góp của chủ portfolio.",
+        "en": "Do not publish this item as a personal case study until an identifiable work and individual contribution are evidenced."
+      },
+      "contributions": [],
+      "outcome": null,
+      "links": [
+        {
+          "label": "Thông tin sự kiện",
+          "url": "https://vng.com.vn/news/enterprise/vnggames-khoi-dong-cuoc-thi-lam-game-ai.html",
+          "kind": "event_context"
+        }
+      ],
+      "media": [],
+      "related": [],
+      "source_files": [
+        "creative-experiments/source-inventory-2026-11-08.json"
+      ],
+      "review": [
+        "No verified prize, individual role or submitted game."
+      ]
+    }
+  ],
+  "integration_policy": {
+    "stable_work_route": "/work/:slug",
+    "stable_section_route": "/work?category=:section-id",
+    "primary_section_is_unique": true,
+    "crosslinks_use_ids": true,
+    "media_without_renderable_url": "do not render; use available source links; never create false screenshot",
+    "video_audio_rule": "Open full original source; no trimming or generated showreel",
+    "published_work_rule": "A historical audit or development repo is not proof of release",
+    "external_links": "Do not imply public embed permission or working access from a metadata-verified Drive URL",
+    "visibility_rule": "Default render featured+selected only; archive opt-in; hold never public",
+    "tier_not_rights_approval": true,
+    "evidence_status_must_be_visible_for_metrics_and_unreleased_work": true,
+    "locale_fallback": "vi",
+    "preserve_source_credits": true
+  },
+  "_internal": {
+    "source_root": "portfolio-data",
+    "canonical_copy_policy": "This JSON is the renderer-facing editorial content snapshot; Editorial Master and intake JSON are provenance/copy references. No content is automatically public.",
+    "contact_missing": true,
+    "media_binary_hosting_unresolved": true
+  }
+}
