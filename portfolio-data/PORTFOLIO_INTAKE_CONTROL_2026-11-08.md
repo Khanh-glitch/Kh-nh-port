@@ -32,9 +32,9 @@ SHOWTIME is a show-all creative portfolio of **actual work**, spanning event pro
 3. Corrections across master source and editorial docs: Quê Quá Quao breakout post is **1.1M views** owner-reported, precise TikTok video link recorded.
 4. **Editorial Synthesis v1.2:** five grounded proof pillars, role-specific emphasis for Event, Content, Interactive, Music/Voice, Learning/Research, with honest contribution and evidence gates. This lives at top of `EDITORIAL_CONTENT_MAP_V1_2026-11-08.md`.
 
-## Immediate next editorial work
-**Write concise, reusable case-study copy grounded in existing source records for current featured projects**, prioritizing Quê Quá Quao, China Town, the three events, APEX CHAOS, MathPath, music/performance. Each should have one-line proof, owner role, visitor value, direct source/CTA and one honest limitation. Avoid deep-source technical audits unless one concrete claim depends on them.
+## Current milestone and next editorial work
+**Editorial synthesis and first-pass featured-case copy COMPLETED in this turn**, stored in \`EDITORIAL_CONTENT_MAP_V1_2026-11-08.md\`. Copy covers Quê Quá Quao, China Town, three events, APEX CHAOS, MathPath, Music/Performance and clearly version-gated SOH/EventFlow. It is a *draft*, not public-copy approval.
 
-Then perform a **single owner-review checkpoint** for personal attribution and privacy rights; continue accepting additional material opportunistically. This next task is copy curation, **not website UI**.
+**Next:** perform a short attribution/source/rights consistency pass across this draft and prepare one consolidated owner-review checkpoint only for assertions the source records cannot establish. Continue accepting additional assets without reopening already mapped works. No UI, mockup or public publication until separately authorized.
 
 **Currently no owner homework is blocking editorial drafting.**
