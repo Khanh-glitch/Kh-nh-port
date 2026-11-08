@@ -39,3 +39,20 @@ Until user declares complete, no content freeze, site deployment, or assumption 
 - Catalog: `portfolio-data/music-performance/social-source-index.json`.
 - The Instagram profile was indexed, but direct enumeration of its 13 posts was inaccessible through source tools. Do not fabricate a comprehensive reel list. Facebook Reel remains inaccessible for direct metadata.
 - Two video leads are not enough to pick a hero performance. Ask for one source containing live-performance archives, not dozens of individual links, when necessary.
+
+
+## CURATION REVISION — 2026-11-08: PHOTO-LED, NO SHOW-BY-SHOW INTAKE
+
+**Decision:** Do NOT ask the owner to map the 28 performance photographs into named events/years/songs or fill a SET A/B/C questionnaire. The photos span several events; forcing metadata per picture is distracting, and it is not necessary for an artistic performer gallery.
+
+This decision follows a review of existing vocalist/performer portfolio examples:
+- Tony H live gallery (https://www.tonyhtopmalevocalist.com/gallery) — mostly imagery with short gallery-level introduction.
+- Rebecca Zeller (https://www.rebecca-zeller.com/) — categories Performance Photos / Personality Photos / Artwork, separate Media for reels.
+- Zac Hoina (https://zachoina.com/) — location/photographer credit appears on hover, rather than a large caption on every image.
+- Lady Gaga official (https://www.ladygaga.com/) — dates used for selected releases/major milestones, not for every photo.
+
+**UI structure:** 1 hero portrait (NHP_0440.jpg, confirmed by user as depicting them) -> an asymmetric editorial photo wall with 8–12 visually diverse featured photos -> optional full 28-image lightbox/archive. Use a few low-friction image filters (solo / collaboration / stage atmosphere) only if helpful; don't turn photo clusters into claims about separate shows. Allow optional source/photographer credit on expand. No mandatory years/show names/song titles. Add event/program metadata only when important and verifiable, or explicitly supplied later.
+
+**Presentation labels:** Section-wide 'Vocalist / Performer', not a row of invented individual event credentials. Published music 'Nếu ngày mai' and 'Mùa Hạ Thứ 18' remain in MUSIC, with actual credits. If a user wants precise named show credits later, add a separate optional credits/milestones drawer.
+
+**Photo assets:** authenticated Drive folder https://drive.google.com/drive/folders/19cJ47NU8SisT4vmFpjh_S8kPbWsJtXuu verified to contain 28 JPEG images and image inventory stored at performance-photo-inventory-2026-11-08.json. NHP_0440 is user-identified hero subject. No claim that every photo or event is personally attributable in the same way without review.
