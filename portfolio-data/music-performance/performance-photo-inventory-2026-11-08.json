@@ -21,10 +21,13 @@
     "top_pick": {
       "file": "NHP_0440.jpg",
       "role": "hero_candidate",
-      "reason": "Vocal close-up with distinctive purple/magenta LED stage, strong expression and usable crop. User identity in photograph is not yet annotated."
+      "reason": "Vocal close-up with distinctive purple/magenta LED stage, strong expression and usable crop. User identity in photograph is not yet annotated.",
+      "identity_confirmed_by_user": true
     },
     "shortlist": "Eight editorial candidates: 1 hero + 7 signatures; 'signature' only visual curation, not claim of eight separate performances.",
-    "risk": "Many NHP_46xx images show one choreographed stage sequence, not separately credited shows. IMG_0122 and IMG_0124 are two angles/moments of the same stage setup. Event dates and show names not verified from EXIF or context."
+    "risk": "Many NHP_46xx images show one choreographed stage sequence, not separately credited shows. IMG_0122 and IMG_0124 are two angles/moments of the same stage setup. Event dates and show names not verified from EXIF or context.",
+    "editorial_decision": "PHOTO_LED_GALLERY;NO_MANDATORY_PER_EVENT_METADATA",
+    "metadata_policy": "Use visual clustering only; don't treat each image as separate event, require owner to recall show/date/song or invent captions. Optional photo credits/show attribution only if known."
   },
   "assets": [
     {
@@ -235,7 +238,8 @@
       "visual_cluster": "solo",
       "curation_status": "hero_candidate",
       "publication_status": "USER_PROVIDED_FOR_PORTFOLIO_REVIEW;RIGHTS_FOR_PUBLIC_COPY_NOT_SEPARATELY_VERIFIED",
-      "has_personal_identity_label": false
+      "has_personal_identity_label": true,
+      "identity_label_source": "USER_CONFIRMED: the person holding the microphone in NHP_0440.jpg is the portfolio owner."
     },
     {
       "id": 22,
