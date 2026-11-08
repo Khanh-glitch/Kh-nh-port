@@ -1,3 +1,7 @@
+## CURRENT ART DIRECTION (OWNER-SELECTED)
+
+**B — SIGNAL / CUE ROOM is locked as SHOWTIME's visual territory.** Read [SHOWTIME_VISUAL_IDENTITY_SPEC_B_V1.md](SHOWTIME_VISUAL_IDENTITY_SPEC_B_V1.md) before any aesthetic or experience design. Earlier A-based research preference is superseded. Design tokens still require visual testing. No UI/build/publication is authorized.
+
 ## AUTHORITATIVE CONTENT: SHOWTIME EDITORIAL MASTER V1
 
 **Current user-facing case copy and editorial position:** [SHOWTIME_EDITORIAL_MASTER_V1.md](SHOWTIME_EDITORIAL_MASTER_V1.md) (created 08 Nov 2026).
