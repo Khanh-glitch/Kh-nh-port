@@ -12,16 +12,16 @@
   },
   "user_reported_evidence": {
     "tutoring": {
-      "fact": "Gia sư Toán 1:1 cho một người học mất căn bản, đạt mục tiêu môn học đã đặt ra.",
-      "subject": "Mathematics",
+      "fact": "Gia sư môn Toán cao cấp 1:1 cho một người học mất gốc, đạt mục tiêu môn học đã đặt ra.",
+      "subject": "Toán cao cấp (Advanced Mathematics course)",
       "learner_count": 1,
       "starting_point": "FOUNDATIONAL_GAPS;USER_REPORTED",
       "goal_outcome": "TARGET_COURSE_GOAL_ACHIEVED;USER_REPORTED",
       "exact_target_grade": "NOT_SUPPLIED",
       "date_or_duration": "NOT_SUPPLIED",
       "credentials": "No teaching certificate or formal institutional appointment claimed.",
-      "portfolio_language_vi": "Hướng dẫn Toán 1:1 theo nhu cầu, hỗ trợ một người học củng cố nền tảng và đạt mục tiêu môn học.",
-      "portfolio_language_en": "Provided personalized one-on-one mathematics tutoring, helping a learner rebuild foundational understanding and meet their course goal."
+      "portfolio_language_vi": "Gia sư môn Toán cao cấp theo hình thức 1:1, hỗ trợ một người học mất căn bản củng cố kiến thức và đạt mục tiêu môn học.",
+      "portfolio_language_en": "Tutored Advanced Mathematics one-on-one, helping a learner rebuild foundational understanding and achieve their course objective."
     },
     "academic_support": {
       "fact": "Có một số lần hỗ trợ tiểu luận và khóa luận.",
