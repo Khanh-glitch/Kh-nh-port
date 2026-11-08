@@ -9,7 +9,7 @@ SHOWTIME is a show-all creative portfolio of **actual work**, spanning event pro
 
 | Lane | Status / source | Current action |
 |---|---|---|
-| **Social & Media** | **FIRST-PASS SELECTED.** Quê Quá Quao @quequaquao is the growth-led hero: owner reports 4K+ followers and ~1.1M views on [this exact TikTok post](https://www.tiktok.com/@quequaquao/video/7530989283956559122). China Town course commercial film is featured secondary. Museum, crowd experiment, VEINORA interior, motivation/history VO and 4 OOH short clips are supporting/archives. | Don't ask to classify again. Video/VO artistic QA and rights when access improves. Source: `social-media/SOCIAL_MEDIA_MASTER_CURATION_2026-11-08.json` |
+| **Social & Media** | **FIRST-PASS SELECTED.** Que Quá Quao @quequaquao is the growth-led hero: owner reports 4K+ followers and ~1.1M views on [this exact TikTok post](https://www.tiktok.com/@quequaquao/video/7530989283956559122). China Town course commercial film is featured secondary. Museum, crowd experiment, VEINORA interior, motivation/history VO and 4 OOH short clips are supporting/archives. | Don't ask to classify again. Video/VO artistic QA and rights when access improves. Source: `social-media/SOCIAL_MEDIA_MASTER_CURATION_2026-11-08.json` |
 | **Event Production** | 3 sourced story cases: GDT pre-show logistics/risk; MCYT and BGHX side-stage performer readiness and radio/cue coordination, not overall Stage Manager. | Review publication-licensed media when needed; no new event case required for first pass. |
 | **Music & Performance** | “Nếu ngày mai” vocalist, “Mùa Hạ Thứ 18” composer, 28 Drive photos reviewed; NHP_0440 user-confirmed as performer. | Photo-led gallery content ready for first pass; no show-by-show form. |
 | **Games** | APEX CHAOS public playable demo; Soul of Hero planned future launch; Alphabet Engine + Six Primordials are experimental source leads. | SOH release and integrated gameplay must be verified when available. |
@@ -29,11 +29,11 @@ SHOWTIME is a show-all creative portfolio of **actual work**, spanning event pro
 ## What was completed in this intake
 1. Event, Music/Performance, Game, Digital Product, AI/Creative, Social/Media, Research/Learning source shortlist.
 2. **Social Media first-pass content selection** and owner role mapping for all 7 groups; 4 OOH clips indexed.
-3. Corrections across master source and editorial docs: Quê Quá Quao breakout post is **1.1M views** owner-reported, precise TikTok video link recorded.
+3. Corrections across master source and editorial docs: Que Quá Quao breakout post is **1.1M views** owner-reported, precise TikTok video link recorded.
 4. **Editorial Synthesis v1.2:** five grounded proof pillars, role-specific emphasis for Event, Content, Interactive, Music/Voice, Learning/Research, with honest contribution and evidence gates. This lives at top of `EDITORIAL_CONTENT_MAP_V1_2026-11-08.md`.
 
 ## Current milestone and next editorial work
-**Editorial synthesis and first-pass featured-case copy COMPLETED in this turn**, stored in \`EDITORIAL_CONTENT_MAP_V1_2026-11-08.md\`. Copy covers Quê Quá Quao, China Town, three events, APEX CHAOS, MathPath, Music/Performance and clearly version-gated SOH/EventFlow. It is a *draft*, not public-copy approval.
+**Editorial synthesis and first-pass featured-case copy COMPLETED in this turn**, stored in \`EDITORIAL_CONTENT_MAP_V1_2026-11-08.md\`. Copy covers Que Quá Quao, China Town, three events, APEX CHAOS, MathPath, Music/Performance and clearly version-gated SOH/EventFlow. It is a *draft*, not public-copy approval.
 
 **Next:** perform a short attribution/source/rights consistency pass across this draft and prepare one consolidated owner-review checkpoint only for assertions the source records cannot establish. Continue accepting additional assets without reopening already mapped works. No UI, mockup or public publication until separately authorized.
 
