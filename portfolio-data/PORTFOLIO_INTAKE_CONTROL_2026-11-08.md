@@ -1,3 +1,16 @@
+## SOCIAL & MEDIA SOURCE INTAKE CLOSED FOR FIRST-PASS SELECTION — 08 Nov 2026
+
+The owner provided exact identity, scope and sources for **seven video/channel groups**, plus **four ads/promote/OOH short clips**. Their first-pass editorial ranking is now defined in `social-media/SOCIAL_MEDIA_MASTER_CURATION_2026-11-08.json` and integrated into `EDITORIAL_CONTENT_MAP_V1_2026-11-08.md`.
+
+**Prior misclassification superseded:** the three `FDown.vn` files are not unknown projects anymore; they are respectively **China Town** (`92da`), **Crowd Effect Experiment** (`ea07`) and **War Remnants Museum** (`9c40`). The owner identified them; no frame/audio has been independently examined.
+
+**Featured:** Quê Quá Quao TikTok @quequaquao — 4K+ followers, one 1.3M+ view video with hundreds of thousands of likes, all **owner-reported metrics**; end-to-end scripting/edit/publishing/voice/channel ownership. Commercial affiliate conversion not promoted because this is a creative/reach case, not proof of sales performance. **Supporting featured:** China Town course-based commercial video, owner role leader/VO/on-camera, owner reports highest course score and thousands of personal Facebook views/hundreds of interactions.
+
+**Breadth:** Crowd experiment (concept, script, experiment design, VO, on-camera), Museum film (editing/leader), VEINORA interior-design concept edit (paid project-for-student context, avoid mislabelling it as a brand commission), motivational and historical VO, and four verified Drive short-form ad/OOH spec files.
+
+**Open QA before public display:** link of the specific viral TikTok post or analytics screenshot to substantiate figures independently, actual playback quality/reuse permissions of film assets. This does **not** delay first-pass editorial selection and does **not** authorize UI work.
+
+
 ## ADDENDUM — Independent repository audit / 08 Nov 2026
 
 The source audit expanded beyond the previous list, and **MathPath is a material correction to the SHOWTIME portfolio priorities**.
