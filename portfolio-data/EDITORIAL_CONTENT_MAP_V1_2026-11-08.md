@@ -22,7 +22,7 @@ These are candidate descriptions to test against future owner direction; not pub
 |---|---|---|---|
 | **LIVE PRODUCTION** | Một Chút Yêu Thương 3, Bản Giao Hưởng Xanh; GET DOWNTOWN | EventFlow *historical* demo | Actual logistics, sidestage readiness, radio/cue coordination; not overall show leadership |
 | **CONTENT & AUDIENCE** | Que Quá Quao; owner-reported ~1.1M-view [TikTok post](https://www.tiktok.com/@quequaquao/video/7530989283956559122), 4K+ followers | China Town; crowd experiment; museum film; VEINORA; OOH spec clips; voice samples | Full-cycle short-form content direction and transferable editing/voice/storytelling work |
-| **INTERACTIVE PRODUCTS & GAMES** | APEX CHAOS public playable demo; MathPath source-backed learning product | EventFlow rebuild; Soul of Hero planned release; Alphabet Engine, Six Primordials as labs | Real digital product/game outputs and design thinking; avoid launch/adoption and code-authorship inflation |
+| **INTERACTIVE PRODUCTS & GAMES** | APEX CHAOS public playable demo; MathPath source-backed learning product | EventFlow rebuild; Ragnarok: The Last Island planned release; Alphabet Engine, Six Primordials as labs | Real digital product/game outputs and design thinking; avoid launch/adoption and code-authorship inflation |
 | **MUSIC & PERFORMANCE** | “Nếu ngày mai” vocalist credit, “Mùa Hạ Thứ 18” composer credit; 28 performance photos with a confirmed hero subject | Social demo tapes, live archive | Published/sourced creative work and stage identity; no invented commercial music reach |
 | **RESEARCH & METHOD** | Qualitative graduation-thesis working draft; reported advanced-math tutoring success with one learner | ELP structured podcast content workflow, M² Happiness planning notes | Evidence-oriented creative decisions, structured learning and repeatable processes; not degrees/awards not granted or fake student cohorts |
 
@@ -30,7 +30,7 @@ These are candidate descriptions to test against future owner direction; not pub
 
 1. **Event/Production recruiter:** lead with actual side-stage coordination at MCYT/BGHX and pre-show logistics at GDT; EventFlow only as proof of domain-informed toolmaking. Do not promote irrelevant follower counts as event metrics.
 2. **Social Media/Video/Creative recruiter or client:** lead with Que Quá Quao's owner-confirmed viral **1.1M-view** video, 4K+ followers, strategy/edit/voice/management; China Town as course commercial-film leadership; finish with specialty editing, VO and OOH spec. No affiliate-conversion/GMV claims.
-3. **Game/Interactive/Creative Technology:** lead with playable APEX CHAOS and MathPath's test/source-backed learning product. Present Soul of Hero as versioned development until an actual released build is reachable. EventFlow is an active rebuild; previous demo is historical proof. Research and music can show breadth without drowning gameplay.
+3. **Game/Interactive/Creative Technology:** lead with playable APEX CHAOS and MathPath's test/source-backed learning product. Present Ragnarok: The Last Island as versioned development until an actual released build is reachable. EventFlow is an active rebuild; previous demo is historical proof. Research and music can show breadth without drowning gameplay.
 4. **Music/Performing/Voice:** lead with official song and composer/performance sources; two VO samples demonstrate genre range; use real stage photographs. Que Quá Quao provides media-production context, not proof of professional voice acting credits.
 5. **Research/Teaching/Learning design:** lead with MathPath's pedagogy and system constraints, then own qualitative thesis methods and narrowly scoped one-on-one tutoring. GPA and essay-grade percentages should only be used when their scales and scope are clear.
 
@@ -38,7 +38,7 @@ These are candidate descriptions to test against future owner direction; not pub
 
 **FEATURED, usable for editorial story now:** Que Quá Quao (post directly linked, metrics owner-reported), APEX CHAOS public demo, Music & Performance, three production event cases, China Town course video. MathPath is a **strong featured product candidate**, with release-candidate facts source-backed but real public learner use not independently proved.
 
-**FEATURED, version-gated:** Soul of Hero following real release; EventFlow following rebuild/accepted experience.
+**FEATURED, version-gated:** Ragnarok: The Last Island following real release; EventFlow following rebuild/accepted experience.
 
 **SUPPORT / ARCHIVE:** crowd experiment, museum field film, VEINORA, voice reel, OOH concept shorts, ELP structured workflow, research/tutoring, Prompt To Play context, Alphabet Engine, Six Primordials, Happiness planning notes, older performance archive.
 
@@ -98,7 +98,7 @@ These are candidate descriptions to test against future owner direction; not pub
 
 **Evidence:** [Spotify song](https://open.spotify.com/track/2AkPSNohBGtrZMGeTtwV12), [composer-linked reel](https://www.facebook.com/reel/848691413758411), 28 authentic Drive photographs. **Status:** roles confirmed by owner; one selected performer photo identified; event names/years not required. **Do not:** imply the user is sole vocalist or songwriter of both songs.
 
-### Soul of Hero — Reserved for launch verification
+### Ragnarok: The Last Island — Reserved for launch verification
 > Dự án game đang phát triển, tập trung vào trải nghiệm sinh tồn, thế giới có quy luật, chiến đấu và tiến trình dài hạn. Phần giới thiệu chính thức sẽ cập nhật dựa trên bản phát hành thực tế.
 
 **Evidence:** [game repository](https://github.com/Khanh-glitch/Soul-of-Hero) and ongoing project record. **Status:** ACTIVE DEVELOPMENT, no portfolio claim of finished public launch.
@@ -166,7 +166,7 @@ A single project may support multiple hiring narratives but it is **counted once
 
 | Work | What matters | Status / evidence | Editorial decision |
 |---|---|---|---|
-| **Soul of Hero** | Player fantasy, survival design, world rules, progression, combat, visual/VFX direction and responsible iteration | **O/H/U:** owner plans launch before portfolio; current many-agent source work underway. GitHub `main` README is older Chapter 1 RPG design and not authoritative for recent survival integration | **FLAGSHIP RESERVED**. Gather true gameplay from latest accepted integrated release; only label `Released` after anonymous launch link and playable review |
+| **Ragnarok: The Last Island** | Player fantasy, survival design, world rules, progression, combat, visual/VFX direction and responsible iteration | **O/H/U:** owner plans launch before portfolio; current many-agent source work underway. GitHub `main` README is older Chapter 1 RPG design and not authoritative for recent survival integration | **FLAGSHIP RESERVED**. Gather true gameplay from latest accepted integrated release; only label `Released` after anonymous launch link and playable review |
 | **EventFlow Pro** | Turning event-production domain knowledge into operational product flow (brief → needs → BOQ → human pricing → guarded review → proposal) | **H/O:** historical accepted *browser-local demo with limitations* source and test record. Owner confirms active rebuild | **FLAGSHIP RESERVED**. Use earlier version to explain evolution only. Final feature/capture claims must reflect new tested build |
 
 These two must not stall editorial work elsewhere. Do not repurpose historic screenshots as proof of current functionality.
@@ -189,7 +189,7 @@ Source record: `digital-products/mathpath.json`. Public source: https://github.c
 
 Source record: `game-design/alphabet-engine.json`.
 
-**Priority refinement:** MathPath moves ahead of unverified Prompt To Play/ELP on the digital-product evidence ladder. It may become a major portfolio work alongside EventFlow, Apex Chaos and Soul of Hero, subject to actual current runtime evidence. Alphabet Engine remains a lab experiment, not a fourth released game.
+**Priority refinement:** MathPath moves ahead of unverified Prompt To Play/ELP on the digital-product evidence ladder. It may become a major portfolio work alongside EventFlow, Apex Chaos and Ragnarok: The Last Island, subject to actual current runtime evidence. Alphabet Engine remains a lab experiment, not a fourth released game.
 
 ## Supporting artifacts / cross-disciplinary proof
 
@@ -197,7 +197,7 @@ Source record: `game-design/alphabet-engine.json`.
 |---|---|---|---|---|
 | **Mùa Hạ Thứ 18** | Music — composition | Songwriting, structure, creative authorship | **O:** owner confirmed title and composer role, Facebook reel source; direct media metadata inaccessible | **FEATURED SUPPORT** beneath music rather than a fabricated independent commercial release |
 | **Prompt To Play — VNGGames** | AI / game prototyping | Working in a fast creative-team game-jam context and AI-related iteration | **P/A/U:** official VNGGames event July 11–12, 2026; real group photo from `new` branch; Drive shortcuts `In Action` and `CovaraMaris` inaccessible | **SOURCE CANDIDATE** until personal role + actual project artifact is verified; no prize/finalist claim based on photo |
-| **Six Primordials Boss Lab** | Game Design — experimental process | Interactive combat/VFX exploration, pixel style choices and comparative ability design | **A/U:** 406KB standalone HTML source found in Library, source controls inspected, no runtime acceptance | **LAB/EXPERIMENT CANDIDATE**, do not claim shipped Soul of Hero mechanic |
+| **Six Primordials Boss Lab** | Game Design — experimental process | Interactive combat/VFX exploration, pixel style choices and comparative ability design | **A/U:** 406KB standalone HTML source found in Library, source controls inspected, no runtime acceptance | **LAB/EXPERIMENT CANDIDATE**, do not claim shipped Ragnarok: The Last Island mechanic |
 | **ELP — English Listening Podcast** | Content & Creative Systems | Audience-specific AI-assisted script architecture, modular dialogue, voice-production intentions, quality criteria | **A/U:** 181,869-character private Drive workflow/script document inspected; no published channel/audio verified | **SUPPORTING EDITORIAL CASE**; describe process and one actual draft artifact, no output/view metrics |
 | **Happiness / M²** | Content & Creative Systems archive | Creative prototyping, editing specifications and voice-over workflow research | **A/U:** private Drive planning table names owner for Content/Edit/Voice-over across `Happiness`; completion not proved | **ARCHIVE CANDIDATE**. Attribution and outcome remain planned |
 | **Research thesis** | Research & Learning | Comparative qualitative inquiry into AI-assisted event advertising visuals; semi-structured interview, photo elicitation, Framework Method | **A/O:** private authored working draft reviewed for methodology; owner evidence in `learning-research` record | **SUPPORTING RESEARCH FEATURE**. No participant data, transcript or unverified published finding |
@@ -210,7 +210,7 @@ Source record: `game-design/alphabet-engine.json`.
 - Google Drive `SOCIAL MEDIA` contains three MP4s, total **913,479,983 bytes** (~871 MiB). The authenticated metadata and upload dates were confirmed; first file fetched as raw binary but container extraction returned ClientError, so NO actual video frames/audio were reviewed. Evidence: `social-media/VIDEO_SOURCE_AUDIT_2026-11-08.json`. Never infer content/owner rights from `FDown.vn` filename.
 - MCYT owner-approved images have verified identifiers but the binaries are not GitHub deploy assets. Public article photographs should be treated as linked references unless licensed.
 - Performance still-photo inventory includes 28 source URLs, not a set of web-optimized hosted binaries.
-- No automatically usable final gameplay capture for Soul of Hero or updated EventFlow is in this intake.
+- No automatically usable final gameplay capture for Ragnarok: The Last Island or updated EventFlow is in this intake.
 
 ## Content hierarchy — defensible, NOT a visual design
 **Anchor content (current):**
@@ -221,7 +221,7 @@ Source record: `game-design/alphabet-engine.json`.
 - Real production experience: 3 event cases with non-overlapping individual roles.
 
 **Anchor content (reserved pending real build):**
-- Soul of Hero integrated release.
+- Ragnarok: The Last Island integrated release.
 - EventFlow rebuild.
 - MathPath current learning-product run / live release verification (rich source-backed release-candidate work already exists).
 
