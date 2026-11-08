@@ -1,3 +1,16 @@
+## AUTHORITATIVE CONTENT: SHOWTIME EDITORIAL MASTER V1
+
+**Current user-facing case copy and editorial position:** [SHOWTIME_EDITORIAL_MASTER_V1.md](SHOWTIME_EDITORIAL_MASTER_V1.md) (created 08 Nov 2026).
+
+It contains 10 usable main case-study narratives plus verified-source-based supporting-work capsules. The prior `EDITORIAL_CONTENT_MAP_V1_2026-11-08.md`, `CAPABILITY_PROOF_MATRIX_V1_2026-11-08.md`, and lane intake files remain **source/history**, not parallel copy authorities.
+
+**Owner corrections enforced:** `Que Quá Quao` (no accent on Que), breakout TikTok clip around 1.1M views (owner-reported, [direct post](https://www.tiktok.com/@quequaquao/video/7530989283956559122)); formerly Soul of Hero is now officially **Ragnarok: The Last Island** while its GitHub repository URL remains `Khanh-glitch/Soul-of-Hero`.
+
+**Stage:** Editorial draft produced; collection still open. No public launch, UI design, HTML build, or merge permission implied by this artifact.
+
+
+---
+
 ## Expanded repository/source intake — 08 Nov 2026
 
 - **MathPath:** substantive learning-product source recovered. See `digital-products/mathpath.json`, plus the reconciled `learning-research` copy. Its release-candidate status is not proven commercial launch. Do not infer that the owner's reported Advanced Mathematics learner was a MathPath user.
