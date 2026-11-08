@@ -1,0 +1,89 @@
+{
+  "schema_version": "1.0",
+  "id": "apex-chaos",
+  "title": "APEX CHAOS",
+  "portfolio_section": "GAME_DESIGN",
+  "intake_state": "SOURCE_FOUND_PORTFOLIO_READY_FOR_FIRST_PASS",
+  "source_of_claims": {
+    "project_ownership": "USER_DIRECT_REPORT",
+    "public_release": "PUBLIC_ITCH_IO_LISTING_AND_SIDE_PROJECTORS_LINK",
+    "feature_list": "PUBLIC_SELLER_LISTING_NOT_INDEPENDENT_GAMEPLAY_TEST",
+    "metrics": "NO_CREDIBLE_PUBLIC_TRACTION_METRICS_COLLECTED"
+  },
+  "launch": {
+    "status": "PUBLIC_PLAYABLE_HTML5_DEMO",
+    "confirmed_url": "https://realbae.itch.io/apex-chaos",
+    "platform": "itch.io",
+    "release_date": null,
+    "not_equivalent_to": "proven commercial release"
+  },
+  "game": {
+    "genre": "2D browser arena combat",
+    "feature_claims": [
+      "Distinct fighters and ability identities including NEWBOT, BOXE, SHURI, CRYSTALA",
+      "Weapon pickups and rarity/loadout variation",
+      "Solo vs BOT",
+      "Local 1v1 on same device",
+      "BOT WAVE PvE"
+    ],
+    "tech_claims": [
+      "Custom JavaScript combat runtime",
+      "React/Vite frontend"
+    ],
+    "source": "https://www.sideprojectors.com/project/106627/apex-chaos",
+    "feature_verification": "SOURCE_DESCRIBED;NOT_PLAYTESTED_BY_ASSISTANT"
+  },
+  "user_contribution": {
+    "owner_reported": "A self-directed AI-assisted/vibecoded indie game",
+    "scope_to_verify": "Narrative, gameplay design, production direction, iteration, QA and exact original assets if claimed; do not attribute hand-coded implementation without first-person evidence."
+  },
+  "commercial_status": {
+    "public_listing": "PRE_REVENUE_AND_OFFERED_FOR_SOURCE_PROJECT_ACQUISITION",
+    "note": "An asking price is not realized revenue, a closed transaction or a portfolio success metric.",
+    "include_sales_metrics_in_portfolio": false
+  },
+  "showcase": {
+    "concept": "PLAY THE CHAOS",
+    "front_page": {
+      "headline": "Choose a fighter. Change the fight.",
+      "primary_action": "PLAY_PUBLIC_DEMO",
+      "target": "https://realbae.itch.io/apex-chaos"
+    },
+    "narrative_structure": [
+      "Playable game / gameplay capture",
+      "Distinct fighters and combat identities",
+      "Weapon pickup / combat design",
+      "Multiple play modes",
+      "Development/evolution/role"
+    ],
+    "showcase_if_no_numbers": "Lead with playable link, accurate feature coverage, design decisions and tangible artifacts; omit player counts/revenue rather than show zeros.",
+    "media_candidates": [
+      "Game storefront hero and screenshots if approved",
+      "Actual recorded gameplay/screenshots from playable build",
+      "Fighter silhouettes, skills, weapon interaction captures"
+    ],
+    "warnings": [
+      "Do not claim verified player growth, retention, revenue, commercial release or multiplayer online if only local mode confirmed",
+      "Any marketplace listing price is an offer, not earnings",
+      "If full project/IP acquisition completes later, revisit portfolio asset and source rights"
+    ]
+  },
+  "sources": [
+    {
+      "name": "itch.io",
+      "url": "https://realbae.itch.io/apex-chaos"
+    },
+    {
+      "name": "SideProjectors public listing",
+      "url": "https://www.sideprojectors.com/project/106627/apex-chaos"
+    },
+    {
+      "name": "itch creator profile",
+      "url": "https://itch.io/profile/realbae"
+    }
+  ],
+  "editorial_state": {
+    "publication": "DO_NOT_PUBLISH",
+    "status": "FIRST_PASS_READY;SCREENSHOTS_AND_PLAYTEST_NOT_YET_VERIFIED"
+  }
+}
