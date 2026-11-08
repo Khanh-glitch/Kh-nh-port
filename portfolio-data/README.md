@@ -1,3 +1,15 @@
+## Social Media & Content Production audit / Content Map v1 — 08 Nov 2026
+
+A source-backed research and editorial audit is now saved:
+- `social-media/VIDEO_SOURCE_AUDIT_2026-11-08.json` — exact Drive metadata for 3 MP4s totaling 913,479,983 bytes; first raw download succeeded but media-frame extraction was blocked by the container runtime, so **no video contents are classified**.
+- `social-media/CONTENT_PRODUCTION_SOURCE_FINDINGS_2026-11-08.json` — two substantive private Google Drive workflow documents: `ELP` (10–12-minute A2+–B1 English-listening podcast script architecture + QA and script draft), and `M²` (planning table naming owner for `Happiness` content prototype/edit specifications/voice-over research). Neither is assumed to be a published/revenue-generating channel.
+- `EDITORIAL_CONTENT_MAP_V1_2026-11-08.md` — evidence-backed project hierarchy covering all disciplines, with confidence/provenance classes, reasons for inclusion and explicitly unknown claims.
+
+The owner explicitly corrected premature interface authoring: **CURRENT PHASE IS SOURCE DISCOVERY, VERIFICATION AND EDITORIAL CURATION ONLY.** No user-visible HTML/UX mockup, website template/deployment or content freeze is authorized. Continue direct source work in active turns and ask for owner input only when necessary.
+
+
+---
+
 # SHOWTIME — Portfolio data intake (work in progress)
 
 **Status:** `IN_PROGRESS`. The user explicitly stated they have NOT finished supplying information. Do not mark complete, publish, merge, or build a public template from this data yet.
