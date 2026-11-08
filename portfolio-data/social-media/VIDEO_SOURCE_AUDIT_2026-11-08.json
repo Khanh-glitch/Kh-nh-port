@@ -1,0 +1,71 @@
+{
+  "schema_version": "1.0",
+  "date": "2026-11-08",
+  "collection": {
+    "location": "Connected Google Drive SOCIAL MEDIA folder",
+    "url": "https://drive.google.com/drive/folders/1aFnDpFW-91X9rSFdgWPjC4O-Vetjfio_",
+    "count": 3,
+    "total_bytes": 913479983,
+    "mime": "video/mp4",
+    "all_listed_with_connected_drive": true
+  },
+  "media_items": [
+    {
+      "id": "1sR4CaGBWVUNnmaIQK-gWbmYP_0W4KDko",
+      "name": "FDown.vn_Tai_video_Facebook_720p (HD)_9c40.mp4",
+      "size": 266036413,
+      "created": "2026-09-21T08:34:24.955Z",
+      "modified": "2026-09-21T07:55:47.000Z",
+      "raw_download": "SUCCEEDED_2026-11-08",
+      "local_parse": "BLOCKED_CONTAINER_MEDIA_TOOLS_CLIENTERROR",
+      "role": "UNKNOWN",
+      "content": "NOT_INSPECTED",
+      "drive_url": "https://drive.google.com/file/d/1sR4CaGBWVUNnmaIQK-gWbmYP_0W4KDko/view",
+      "editorial_classification": "UNCLASSIFIED",
+      "display_permission": "NOT_DETERMINED",
+      "source_origin": "Downloaded Facebook video via FDown naming convention; not evidence of original ownership or uploader identity",
+      "next_validation": "Preview 3–6 frames plus duration/audio at the original MP4 when media extraction is available; then map to video/project/role."
+    },
+    {
+      "id": "1Q8fq-i-Of1jMqeuFCPNCpLhZTatq4j4h",
+      "name": "FDown.vn_Tai_video_Facebook_720p (HD)_92da.mp4",
+      "size": 396564315,
+      "created": "2026-09-21T07:58:57.249Z",
+      "modified": "2026-09-21T07:53:52.563Z",
+      "raw_download": "NOT_ATTEMPTED_TO_AVOID_ADDING_397MB_WITH_EXTRACTION_BLOCKED",
+      "local_parse": "NOT_STARTED",
+      "role": "UNKNOWN",
+      "content": "NOT_INSPECTED",
+      "drive_url": "https://drive.google.com/file/d/1Q8fq-i-Of1jMqeuFCPNCpLhZTatq4j4h/view",
+      "editorial_classification": "UNCLASSIFIED",
+      "display_permission": "NOT_DETERMINED",
+      "source_origin": "Downloaded Facebook video via FDown naming convention; not evidence of original ownership or uploader identity",
+      "next_validation": "Preview 3–6 frames plus duration/audio at the original MP4 when media extraction is available; then map to video/project/role."
+    },
+    {
+      "id": "1O5hcaN86PB4KGd9Sb476Mdahqgv6W-bY",
+      "name": "FDown.vn_Tai_video_Facebook_720p (HD)_ea07.mp4",
+      "size": 250879255,
+      "created": "2026-09-21T07:26:47.346Z",
+      "modified": "2026-09-21T07:23:29.726Z",
+      "raw_download": "NOT_ATTEMPTED_TO_AVOID_ADDING_251MB_WITH_EXTRACTION_BLOCKED",
+      "local_parse": "NOT_STARTED",
+      "role": "UNKNOWN",
+      "content": "NOT_INSPECTED",
+      "drive_url": "https://drive.google.com/file/d/1O5hcaN86PB4KGd9Sb476Mdahqgv6W-bY/view",
+      "editorial_classification": "UNCLASSIFIED",
+      "display_permission": "NOT_DETERMINED",
+      "source_origin": "Downloaded Facebook video via FDown naming convention; not evidence of original ownership or uploader identity",
+      "next_validation": "Preview 3–6 frames plus duration/audio at the original MP4 when media extraction is available; then map to video/project/role."
+    }
+  ],
+  "source_evidence": {
+    "metadata": "Google Drive authenticated files.get fields ID, name, size, createdTime, modifiedTime",
+    "binary": "Google Drive authenticated fetch for first video; returns raw file reference; no visual frames were obtained",
+    "failed_media_extraction": "Container and Python media inspection returned ClientError after raw 266MB file was fetched. Do not represent the file as viewed or playable.",
+    "public_web": "Public Drive URL open is unavailable; not a reliable method for private media."
+  },
+  "release_decision": "HOLD_ALL_FILES_AS_UNCLASSIFIED_SOURCE; no evidence that any of these are user's videos, work product or permitted public portfolio media.",
+  "next_work": "Classify by extracted frames/video metadata when container-backed media inspection recovers or if actual original reel links are found via connected sources; avoid user chores until access options exhausted.",
+  "audited_by": "SHOWTIME editorial source audit; does not include technical codec or content inspection"
+}
