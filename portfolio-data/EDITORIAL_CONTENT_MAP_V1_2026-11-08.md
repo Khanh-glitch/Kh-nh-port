@@ -54,6 +54,63 @@ These are candidate descriptions to test against future owner direction; not pub
 **Stop rule:** For already-grounded works, no further source archaeology is required merely to keep the project moving. Move each case to short draft copy and proof links. A blocked high-effort video inspection should not prevent editorial completion of other cases.
 
 
+## FEATURED CASE COPY — FIRST EDITORIAL DRAFT (not public copy approval)
+
+**These are concise narrative candidates anchored to the source inventory.** They are deliberately less detailed than the technical evidence; the source record remains definitive when verifying a claim. No UI or publication is authorized.
+
+### Quê Quá Quao — Short-form strategy & production
+> Tôi phát triển và vận hành nội dung TikTok của Quê Quá Quao xuyên suốt từ ý tưởng, chiến lược đăng tải, viết nội dung và biên tập đến voice-over, xử lý âm thanh và quản lý kênh. Kênh đạt hơn 4.000 người theo dõi; một video đạt khoảng 1,1 triệu lượt xem.
+
+**Evidence:** [TikTok profile](https://www.tiktok.com/@quequaquao) · [Specific breakout video](https://www.tiktok.com/@quequaquao/video/7530989283956559122). **Status:** all reach metrics are owner-reported, not independently retrieved from TikTok. **Do not:** imply commission revenue/conversion success.
+
+### China Town — Course commercial film
+> Dẫn dắt một dự án video quảng bá thuộc học phần, đồng thời đảm nhiệm phần voice-over và xuất hiện trước ống kính. Sản phẩm đạt kết quả cao nhất học phần và thu hút hàng nghìn lượt xem, hàng trăm tương tác trên Facebook cá nhân.
+
+**Evidence:** [source video](https://drive.google.com/file/d/1Q8fq-i-Of1jMqeuFCPNCpLhZTatq4j4h/view). **Status:** role/grade/reach owner-reported; genuine file verified on Drive, not watched in this audit. **Do not:** label paid agency commission.
+
+### Một Chút Yêu Thương 3 — Backstage coordination
+> Tham gia điều phối ở cánh sân khấu: theo dõi thứ tự ra vào và mức sẵn sàng của nghệ sĩ, phối hợp cue và trao đổi qua bộ đàm với đạo diễn, stage manager cùng bộ phận kỹ thuật nhằm giữ các tiết mục được chuyển tiếp đúng kế hoạch.
+
+**Evidence:** event source and two supplied owner-approved portfolio photographs in event intake. **Status:** exact role owner-reported; no claim of full show management or fundraising impact.
+
+### GET DOWNTOWN 2023 — Pre-show production operations
+> Hỗ trợ công tác hậu cần và chuẩn bị trước chương trình GET DOWNTOWN, bao gồm xử lý tình huống phát sinh và những đầu việc sản xuất nằm ngoài phần trình diễn trên sân khấu.
+
+**Evidence:** UEH event context and owner-described role. **Status:** no individual on-duty photo; event audience is not personal business outcome.
+
+### Bản Giao Hưởng Xanh — Stage-side operations
+> Theo dõi tiến trình chuẩn bị và di chuyển của nghệ sĩ ở cánh sân khấu, hỗ trợ xác định thời điểm lên sân khấu và phối hợp cue qua bộ đàm trong chương trình nghệ thuật thuộc hoạt động cộng đồng quy mô lớn.
+
+**Evidence:** public event sources + owner's stage-side role; no implication of supervising the overall ceremony.
+
+### APEX CHAOS — Playable game
+> Một trò chơi đấu trường 2D phát triển theo quy trình AI-assisted, tập trung vào các nhân vật có bản sắc chiến đấu riêng, nhịp giao tranh và khả năng chơi lại. Bản demo có thể truy cập công khai trên trình duyệt.
+
+**Evidence:** [public playable demo](https://realbae.itch.io/apex-chaos) and source repo. **Status:** described game features sourced from public listing/source; specific live mode QA not independently re-run. **Do not:** claim sales, large player base or fully manual code authorship.
+
+### MathPath — Interactive learning product
+> Dự án thiết kế trải nghiệm học Toán cho sinh viên Kinh tế và Quản trị theo lộ trình: luyện tập, nhận phản hồi, theo dõi kỹ năng và tiến trình, thay vì chỉ trình bày đáp án. Hệ thống kết hợp thiết kế học tập, gamification và quy trình phát triển sản phẩm AI-assisted.
+
+**Evidence:** [source repository](https://github.com/Khanh-glitch/MathPath), implementation/production reports. **Status:** source-backed release candidate; no established paid-class business or confirmed real learner acquisition. **Do not:** assert MathPath was used by the user's one private tutee.
+
+### Music & Performance — Published work + live practice
+> Hoạt động âm nhạc của tôi kết hợp biểu diễn sân khấu và sáng tạo tác phẩm: góp giọng trong “Nếu ngày mai”, tham gia sáng tác “Mùa Hạ Thứ 18” và biểu diễn trực tiếp qua nhiều bối cảnh sân khấu.
+
+**Evidence:** [Spotify song](https://open.spotify.com/track/2AkPSNohBGtrZMGeTtwV12), [composer-linked reel](https://www.facebook.com/reel/848691413758411), 28 authentic Drive photographs. **Status:** roles confirmed by owner; one selected performer photo identified; event names/years not required. **Do not:** imply the user is sole vocalist or songwriter of both songs.
+
+### Soul of Hero — Reserved for launch verification
+> Dự án game đang phát triển, tập trung vào trải nghiệm sinh tồn, thế giới có quy luật, chiến đấu và tiến trình dài hạn. Phần giới thiệu chính thức sẽ cập nhật dựa trên bản phát hành thực tế.
+
+**Evidence:** [game repository](https://github.com/Khanh-glitch/Soul-of-Hero) and ongoing project record. **Status:** ACTIVE DEVELOPMENT, no portfolio claim of finished public launch.
+
+### EventFlow — Reserved for rebuild verification
+> Dự án công cụ phục vụ quy trình sản xuất sự kiện, từ tiếp nhận brief và xác định nhu cầu đến chuẩn bị báo giá, rà soát và tạo tài liệu cho khách hàng. Phiên bản mới đang được tái thiết.
+
+**Evidence:** [source repository](https://github.com/Khanh-glitch/eventflow-pro) and historical local-demo acceptance. **Status:** ACTIVE REBUILD; no claim of enterprise adoption or current SaaS production.
+
+**Supporting-clip shorthand:** Crowd Effect = experiment concept/script/VO/on-camera; Museum = project leadership/editing; VEINORA = interior-concept film editing; Motivation/History = distinct narration genres; OOH clips = speculative promotional short experiments, not documented real ad placements. Source links and full scope are in `social-media/SOCIAL_MEDIA_MASTER_CURATION_2026-11-08.json`.
+
+
 ---
 
 # SHOWTIME — Evidence-backed Content Map v1
