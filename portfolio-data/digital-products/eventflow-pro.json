@@ -1,0 +1,140 @@
+{
+  "schema_version": "1.0",
+  "id": "eventflow-pro",
+  "intake_state": "IN_PROGRESS",
+  "publication_state": "DO_NOT_PUBLISH",
+  "source_repository": {
+    "url": "https://github.com/Khanh-glitch/eventflow-pro",
+    "readme": "https://github.com/Khanh-glitch/eventflow-pro/blob/main/README.md",
+    "handover": "https://github.com/Khanh-glitch/eventflow-pro/blob/main/docs/review/buyer-handover-index.md",
+    "acceptance": "https://github.com/Khanh-glitch/eventflow-pro/blob/main/docs/review/V1_FINAL_PRODUCT_ACCEPTANCE.md",
+    "exact_source_rehearsal_sha": "8ee697fad32cab16cbb92dfa903b5c1e965a6a3d",
+    "last_source_audit": "2026-11-08"
+  },
+  "project_type": "Interactive event-agency production and commercial workflow demo",
+  "characterization": {
+    "problem_domain": "Transform event brief into a reviewed production scope and human-priced quotation with client-facing output.",
+    "intended_users": "Event agency producers and commercial reviewers (domain inferred from README, not user-tested claims).",
+    "product_status": "TESTED_BROWSER_LOCAL_DEMO_WITH_LIMITATIONS",
+    "intended_commercialization": "One-time source and workflow transfer to a purchasing organization, not operating a seller-owned SaaS.",
+    "published_or_deployed": false
+  },
+  "workflow": [
+    {
+      "step": 1,
+      "screen": "Projects & Brief",
+      "goal": "Create project and capture facts, unknowns, scope, optional budget"
+    },
+    {
+      "step": 2,
+      "screen": "Production Needs",
+      "goal": "Review seven production zones and explicitly accept required needs"
+    },
+    {
+      "step": 3,
+      "screen": "Prepare BOQ draft",
+      "goal": "Stage accepted needs as private unpriced candidates"
+    },
+    {
+      "step": 4,
+      "screen": "Sonnet Quote Lab",
+      "goal": "Human prices/costs, three LEAN/SIGNATURE/FLAGSHIP scenarios and finance reconciliation"
+    },
+    {
+      "step": 5,
+      "screen": "Commercial Review",
+      "goal": "Simulated approval decisions with warnings/blockers; not authenticated reviewers"
+    },
+    {
+      "step": 6,
+      "screen": "Client Proposal",
+      "goal": "Local issue/versioned R1/R2 public PDF snapshots excluding internal data"
+    },
+    {
+      "step": 7,
+      "screen": "Workspace Backup",
+      "goal": "Local unencrypted export/validation/restore"
+    }
+  ],
+  "contribution": {
+    "user_self_description": "Vibecoder; coordinates AI-assisted creation rather than claiming hand-written engineering.",
+    "personal_problem_framing": "PENDING_FIRST_PERSON_ACCOUNT",
+    "personal_design_decisions": "PENDING_FIRST_PERSON_ACCOUNT",
+    "personal_testing_and_iteration": "User has described overseeing project and QA in conversation, but exact individual actions need a first-person confirmation if attributed.",
+    "permitted_safe_statement": "An AI-assisted product project directed and reviewed by the portfolio owner; attribution of specific design/implementation contributions remains to be clarified.",
+    "no_invention": "Do not claim original hand-coding, professional product adoption, external buyer acceptance, delivered client work, revenue, or production launch."
+  },
+  "reproducible_test_evidence": {
+    "source": "README & buyer-handover index, historical bounded verified runs",
+    "local_rehearsal": {
+      "unit": "249/249",
+      "browser": "137/137",
+      "sonnet_visual": "142/142",
+      "integration_visual": "9/9",
+      "synthetic_responsive": "255/255"
+    },
+    "human_uat": "PENDING",
+    "independent_buyer_signoff": "PENDING",
+    "production": "NOT_APPROVED",
+    "note": "Test counts are linked to stated source and local rehearsal, not independently re-run in this portfolio intake."
+  },
+  "media_candidates": [
+    {
+      "path": "docs/review/artifacts/v1-final-product-acceptance/01-blank-project-desktop.png",
+      "role": "journey_start",
+      "url": "https://github.com/Khanh-glitch/eventflow-pro/blob/main/docs/review/artifacts/v1-final-product-acceptance/01-blank-project-desktop.png",
+      "visual_inspection": "NOT_YET_REVIEWED;PATH_FROM_ACCEPTANCE_DOC"
+    },
+    {
+      "path": "docs/review/artifacts/v1-final-product-acceptance/02-authored-root-brief-desktop.png",
+      "role": "brief",
+      "url": "https://github.com/Khanh-glitch/eventflow-pro/blob/main/docs/review/artifacts/v1-final-product-acceptance/02-authored-root-brief-desktop.png",
+      "visual_inspection": "NOT_YET_REVIEWED;PATH_FROM_ACCEPTANCE_DOC"
+    },
+    {
+      "path": "docs/review/artifacts/v1-final-product-acceptance/04-blank-sonnet-showdesk-desktop.png",
+      "role": "production_empty",
+      "url": "https://github.com/Khanh-glitch/eventflow-pro/blob/main/docs/review/artifacts/v1-final-product-acceptance/04-blank-sonnet-showdesk-desktop.png",
+      "visual_inspection": "NOT_YET_REVIEWED;PATH_FROM_ACCEPTANCE_DOC"
+    },
+    {
+      "path": "docs/review/artifacts/v1-final-product-acceptance/05-signature-quote-lab-desktop.png",
+      "role": "quote_lab",
+      "url": "https://github.com/Khanh-glitch/eventflow-pro/blob/main/docs/review/artifacts/v1-final-product-acceptance/05-signature-quote-lab-desktop.png",
+      "visual_inspection": "NOT_YET_REVIEWED;PATH_FROM_ACCEPTANCE_DOC"
+    }
+  ],
+  "showcase_concept": {
+    "title": "FROM BRIEF TO SHOW",
+    "presentation": "Interactive guided product journey rather than code gallery or generic case-study cards.",
+    "steps": [
+      "Client brief",
+      "Production planning",
+      "BOQ + scenarios",
+      "Review",
+      "Client proposal PDF"
+    ],
+    "interactions": [
+      "Choose synthetic event case",
+      "Explore workflow stages",
+      "Reveal why a missing fact stays unknown",
+      "Inspect pricing stage without implying automated pricing",
+      "Open source evidence"
+    ],
+    "evidence_mode": "Separate tested demo functionality, pending features and user's own contribution."
+  },
+  "remaining_owner_input": "Explain in plain words the real problem or experience that inspired EventFlow. No need for technical specs already in repository.",
+  "risks": [
+    "Repo status is local demo only",
+    "Source case data is synthetic",
+    "Commercial policy and UAT pending",
+    "Do not display private backup or client data",
+    "Do not imply reviewer identity is authenticated"
+  ],
+  "data_sources": [
+    "README.md",
+    "docs/review/buyer-handover-index.md",
+    "docs/review/V1_FINAL_PRODUCT_ACCEPTANCE.md",
+    "README_RUNBOOK.md"
+  ]
+}
