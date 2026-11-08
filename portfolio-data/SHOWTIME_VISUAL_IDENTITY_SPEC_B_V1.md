@@ -139,7 +139,7 @@ The asset-first identity avoids faux brand authority. Distinguish:
 - Original media rights, confidentiality and permission checked before hosting/embedding.
 
 **Rights & ethical attribution**
-- No reuse of actual Getty, Siena, Thyssen, Bruno Simon, makemepulse or studio proprietary design elements as SHO WTIME assets.
+- No reuse of actual Getty, Siena, Thyssen, Bruno Simon, makemepulse or studio proprietary design elements as SHOWTIME assets.
 - No unauthorized third-party audio redistribution, private student submissions or thesis interview transcript publication.
 
 ### 10. What is locked vs what remains to art-test
