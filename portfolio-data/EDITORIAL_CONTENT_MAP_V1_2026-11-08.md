@@ -36,6 +36,26 @@ A single project may support multiple hiring narratives but it is **counted once
 
 These two must not stall editorial work elsewhere. Do not repurpose historic screenshots as proof of current functionality.
 
+## Newly audited repository-backed projects — 08 Nov 2026 (v1.1)
+
+### MathPath — substantive Learning Design / Digital Product
+**Editorial tier: STRONG FEATURED DIGITAL PRODUCT CANDIDATE.** The original Research & Learning shortlist was incomplete without this work. A direct audit of `Khanh-glitch/MathPath` README and `docs/REBUILD_IMPLEMENTATION_STATUS.md`, `docs/PRODUCTION_IMPLEMENTATION_STATUS.md`, `docs/PRODUCTION_AUDIT_VI.md` confirms a substantial Next.js/React/Supabase learning system for Economics/Management mathematics:
+- Living Board with four destinations; Chapter 1 with seven stages + Gate; ten-item K51 practice sessions; Skill/Mastery; achievements and cosmetic progression.
+- Source describes private grading, immutable question versions, transaction locks/receipts and feedback/recovery mechanisms.
+- Historical October 2026 release-candidate audit reports 337 application tests and 14 desktop/mobile browser tests, plus rollback database security/academic tests and backup/restore certification. **We did not rerun those tests.**
+- Paid-class workflow was built as a *release candidate*, not an officially opened commercial learning business or verified sales channel. November README references newer account backup features; do not treat older October release report as a fresh launch signoff.
+
+**Visitor takeaway:** ability to design a personalized/gamified study journey and direct development of a pedagogically constrained product, connecting pedagogy, user experience and trustworthy evaluation. **Separate from** the one reported tutoring client; no evidence yet that MathPath was built for or used by that client.
+
+Source record: `digital-products/mathpath.json`. Public source: https://github.com/Khanh-glitch/MathPath
+
+### Alphabet Engine — novel systemic game prototype
+**Editorial tier: GAME DESIGN EXPERIMENT / ARCHIVE CANDIDATE.** Two repos, one evolving concept: https://github.com/Khanh-glitch/alphabet-engine and https://github.com/Khanh-glitch/alphabet-engine-godot. First README describes a word-forming roguelite autobattler. Second describes a Godot 4.7.2 2.5D vertical-slice goal: communal letter economy, simultaneous word recipes, physical manifestation, semantic objects and emergent combat cascades. **No playable vertical slice was verified** and several linked design docs were unavailable on the default branch. Don't equate ambition with achieved gameplay.
+
+Source record: `game-design/alphabet-engine.json`.
+
+**Priority refinement:** MathPath moves ahead of unverified Prompt To Play/ELP on the digital-product evidence ladder. It may become a major portfolio work alongside EventFlow, Apex Chaos and Soul of Hero, subject to actual current runtime evidence. Alphabet Engine remains a lab experiment, not a fourth released game.
+
 ## Supporting artifacts / cross-disciplinary proof
 
 | Work | Primary placement | Distinctive transferable capability | Source/status | Decision |
@@ -66,12 +86,13 @@ These two must not stall editorial work elsewhere. Do not repurpose historic scr
 **Anchor content (reserved pending real build):**
 - Soul of Hero integrated release.
 - EventFlow rebuild.
+- MathPath current learning-product run / live release verification (rich source-backed release-candidate work already exists).
 
 **Supporting evidence:**
 - Research & Learning; ELP podcast workflow; Prompt To Play context pending actual project link.
 
 **Deep archive:**
-- Other performance photos, exploratory Boss Lab/VFX, Happiness notes, CapCut experiments, optional social activities.
+- Other performance photos, exploratory Boss Lab/VFX, Alphabet Engine systems-design prototype, Happiness notes, CapCut experiments, optional social activities.
 
 This hierarchy is intentionally cross-disciplinary. A dedicated application profile can foreground event-production cases; game-design and AI creative roles can foreground playable prototypes; music/performer work retains its own identity.
 
@@ -90,6 +111,7 @@ This hierarchy is intentionally cross-disciplinary. A dedicated application prof
 **Independent of user inputs:**
 - Social video media extraction when tools recover; validate actual content, source ownership and location of published originals.
 - For Apex, inspect public demo play experience and gather source-owned media; clarify which features are live.
+- For MathPath, verify current runtime / deployment status and true learner flow before calling it publicly launched.
 - For Prompt To Play, independently resolve shortcut targets or other actual game source. Until then source candidate only.
 - For future versioned projects, watch for accepted build/release evidence before updating status.
 - Identify reusable public artifacts versus materials that must remain references.
