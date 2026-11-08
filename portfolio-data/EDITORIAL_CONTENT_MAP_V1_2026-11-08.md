@@ -27,6 +27,26 @@ A single project may support multiple hiring narratives but it is **counted once
 
 **Story separation:** GDT = preparation/risk; MCYT = wing/cue/readiness; BGHX = coordination across art program and public ceremony. Do not generate three identical descriptions or fake running-order screenshots.
 
+## Social Media & Media Production — curated owner-confirmed lineup (08 Nov 2026)
+
+**Authoritative first-pass record:** `social-media/SOCIAL_MEDIA_MASTER_CURATION_2026-11-08.json`. All seven group descriptions and roles are owner supplied; Drive connector confirms six individual MP4 IDs and four short spec-ad MP4s in one folder. Footage, voice and metrics have **not** been independently play-reviewed. Creator's TikTok follower and viral statistics are self-reported because direct public indexing was unavailable.
+
+| Work | Editorial position | Distinct skill to demonstrate | Sources / honest claims |
+|---|---|---|---|
+| **Quê Quá Quao (@quequaquao)** | **ANCHOR / FEATURED HERO** | End-to-end short-form strategy, publishing framework, editing, VO/voice processing and channel operations | Owner reports >4,000 followers, one video >1.3M views and hundreds of thousands of likes. Do not round the latter into an invented exact count. No exact breakout post ID verified. Public profile: https://www.tiktok.com/@quequaquao |
+| **China Town — Commercial Film (course-based)** | **FEATURED SECONDARY** | Film project leadership, voiceover and camera presence | [Drive video](https://drive.google.com/file/d/1Q8fq-i-Of1jMqeuFCPNCpLhZTatq4j4h/view). Owner reports thousands of views/hundreds of Facebook engagements and highest course score. Do not imply external paying brand commission or independent analytics verification. |
+| **Crowd Effect Experiment** | **SUPPORTING** | Concept, experimental scripting, procedure design, VO, on-camera presentation | [Drive video](https://drive.google.com/file/d/1O5hcaN86PB4KGd9Sb476Mdahqgv6W-bY/view). No fake experiment results/reach metrics. |
+| **War Remnants Museum film** | **SUPPORTING** | Editing and project leadership, documentary/field narrative | [Drive video](https://drive.google.com/file/d/1sR4CaGBWVUNnmaIQK-gWbmYP_0W4KDko/view). Do not imply museum commissioned it. |
+| **VEINORA — Interior concept film** | **CREATIVE EDITING ARCHIVE / SUPPORT** | Editing for architecture/interior communication and a different industry tone | [Drive video](https://drive.google.com/file/d/1EbOndbX6Dd3Sd7Z_jm9yjuQPM8YKiyYH/view). Source was a paid editing engagement for another student's end-of-term interior-design video. It can be truthfully presented as video editing for an interior-design concept; not a commercial property brand campaign. |
+| **Motivational VO / Historical reportage VO** | **COMPACT VOICE REEL** | Contrast between motivational delivery and historical/documentary narration | [Motivation](https://drive.google.com/file/d/1cvvIfw154wCIpcGK_S4fpzkUlRDmplkb/view), [History](https://drive.google.com/file/d/1uKsSNLJGACpJOpttvteuexWEZr-Oj8NH/view). No actual timbre/quality evaluation until listening. |
+| **Ads / Promote / OOH shorts** | **SPEC-AD EXPERIMENTAL REEL** | Promotional hook exploration, short-form concept and music discovery positioning | [4-video Drive folder](https://drive.google.com/drive/folders/1uWTByPE6GZDmTRVkYzigrQPkAwQ_FOET). Do not claim purchased ad inventory, active public OOH placement, ad budgets or business ROI. |
+
+**Editorial decision:** Only Quê Quá Quao should carry a performance-metrics presentation, and it should focus on audience reach and broad production ownership. Affiliate commission conversion is irrelevant for a content-creation/creative-production portfolio; omit rather than substitute fictional revenue numbers.
+
+**Group format:** 1 growth case + 1 commercial-video case + concise creative-breadth showcase (crowd/museum/interior) + 2 voice samples + a four-piece spec-ad shelf. This demonstrates multiple **different skills** instead of pretending they are all channel strategy projects.
+
+**Data intake status:** Sufficient user attribution and Drive pointers for first-pass curation. Before public final release: identify a specific TikTok viral post/screenshot for independent numeric claim verification; review actual edits/audio and media permissions. **Do not ask owner to re-explain these project identities or roles.**
+
 ## Major evolving works — strategically prominent but version-gated
 
 | Work | What matters | Status / evidence | Editorial decision |
@@ -79,6 +99,8 @@ Source record: `game-design/alphabet-engine.json`.
 
 ## Content hierarchy — defensible, NOT a visual design
 **Anchor content (current):**
+- **Quê Quá Quao**, end-to-end social-media channel and viral short-form growth, owner-reported metrics (public video statistic verification still open).
+- **China Town**, course-based commercial-video leadership and VO, user-reported course/social result.
 - Playable game: Apex Chaos.
 - Music and performer identity: `Nếu ngày mai`, `Mùa Hạ Thứ 18`, stage photo gallery.
 - Real production experience: 3 event cases with non-overlapping individual roles.
@@ -89,6 +111,7 @@ Source record: `game-design/alphabet-engine.json`.
 - MathPath current learning-product run / live release verification (rich source-backed release-candidate work already exists).
 
 **Supporting evidence:**
+- Creative-breadth film editing and VO: crowd experiment, museum film, VEINORA interior, motivation/history narration and OOH spec concepts.
 - Research & Learning; ELP podcast workflow; Prompt To Play context pending actual project link.
 
 **Deep archive:**
