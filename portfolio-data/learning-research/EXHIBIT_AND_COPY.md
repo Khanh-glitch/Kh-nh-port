@@ -21,8 +21,8 @@
 *Đánh giá nội dung thị giác quảng bá sự kiện có sự tham gia của AI tạo sinh*  
 Nghiên cứu khóa luận về cách các bên tham gia sản xuất và người tham dự đánh giá cùng những hình ảnh quảng bá sự kiện. Bản thảo sử dụng phỏng vấn bán cấu trúc, khơi gợi bằng hình ảnh và phương pháp phân tích dữ liệu định tính theo khung. Tư liệu này minh họa một cách tiếp cận: không dừng ở ấn tượng đầu tiên, mà đặt câu hỏi về căn cứ, sự khác biệt và cách diễn giải của người xem.
 
-**Personalized Mathematics Tutoring**  
-Hỗ trợ Toán theo hình thức 1:1 cho một người học gặp khó khăn về nền tảng. Người học đạt mục tiêu môn học đã đặt ra sau quá trình đồng hành và điều chỉnh cách học.
+**Advanced Mathematics — One-on-One Tutoring**  
+Gia sư môn Toán cao cấp theo hình thức 1:1 cho một người học gặp khó khăn về nền tảng. Người học đạt mục tiêu môn học đã đặt ra sau quá trình đồng hành và điều chỉnh cách học.
 
 **Academic support (brief mention only)**  
 Có kinh nghiệm hỗ trợ học thuật cho một số bài tiểu luận và khóa luận. Chi tiết đóng góp cá nhân và phạm vi hỗ trợ sẽ chỉ được công bố khi được xác nhận.
@@ -40,8 +40,8 @@ I approach complex work by breaking it into clear questions, structured steps an
 **Featured research (graduation-thesis draft)**  
 A qualitative comparison of how event-production stakeholders and attendees evaluate AI-assisted event promotional visuals. The working study uses semi-structured interviews, photo elicitation and Framework Method analysis to investigate not just judgments, but the reasoning behind them.
 
-**One-on-One Mathematics Tutoring**  
-Supported a learner in rebuilding foundational mathematics knowledge through personalized instruction, helping them reach their course objective.
+**Advanced Mathematics — One-on-One Tutoring**  
+Provided one-on-one Advanced Mathematics tutoring to a learner rebuilding foundational knowledge through personalized instruction, helping them reach their course objective.
 
 **Academic project support**  
 Contributed academic support to several essay and thesis workflows. Specific scope and attribution to be clarified before public publication.
