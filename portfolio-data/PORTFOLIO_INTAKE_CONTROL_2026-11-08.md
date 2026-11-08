@@ -1,3 +1,35 @@
+## CONTROL RESET — 08 Nov 2026 / explicit owner correction
+
+**Current operating stage: DISCOVERY + SOURCE VERIFICATION + EDITORIAL CURATION. NOT UI AUTHORING.**
+The owner explicitly rejected the assistant's premature plan to build SHOWTIME interface prototypes. **No HTML, UI, mockups, visual layout, website generation, deployment, template selection or live staging is authorized in the current phase.** Past suggestions to do so are superseded by this decision.
+
+**Actual goal:** collect and verify the owner's real cross-disciplinary work so SHOWTIME can later become a high-quality interactive creative exhibition supporting multiple hiring/freelance/product opportunities. Portfolio intake remains open until the owner says otherwise.
+
+### Content readiness (provisional, not final)
+| Lane | State | Editorial action |
+|---|---|---|
+| Event | 3 event source stories staged | Verify remaining media/rights, preserve honest individual role |
+| Music/Performance | 2 user-attributed music releases, 28 reviewed live photos, social demo candidates | Keep photo-led curation and real source embeds; no per-show questionnaires |
+| Game Design | Apex Chaos public demo; Soul of Hero in active development | Verify current actual releases/build when available; don't invent traction |
+| EventFlow | Rebuild in progress; historical accepted local demo | Preserve old proof but do not confuse it with new product |
+| AI / Creative | Prompt To Play context, inaccessible shortcuts, Boss Lab/CapCut candidates | Require real artifact/role verification before featured status |
+| Learning & Research | One structured case and a tutoring vignette drafted | Keep evidence/private participant data boundaries |
+| **Social Media & Content Production** | **Not meaningfully audited**; three large Drive MP4s identified | **NEXT PRIORITY: identify actual contents, project role and compelling results/case candidates; do not invent content from filenames** |
+
+### Exact next work order
+1. **Social Media / Content Production source audit:** inventory the three Drive videos, determine what each actually shows using accessible media tools, link to work/project and record source, status, role and creative strengths. Prioritize proof and an editorial shortlist rather than UI. Flag files too large or unavailable for full inspection accurately.
+2. **AI / Experiments source resolution:** investigate Prompt To Play / CovaraMaris shortcuts and any accessible CapCut prototype or VFX artifact, establish what is truly runnable, completed or merely experimented with. No inferred award/production outcome.
+3. **Cross-lane editorial map:** for each genuine project specify (a) visitor's takeaway, (b) owner contribution, (c) strongest evidence, (d) featured / supporting / archive placement, (e) missing proof and explicit uncertainty. Remove duplicate project counts (e.g. Music Vibes promotional art).
+4. **Readiness and owner checkpoint:** ask owner only for matters unrecoverable from accessible sources (identity, personal scope, approval) in one consolidated round. Do not keep pausing for data already provided.
+5. **ONLY after owner confirms content/creative direction:** propose design reference review, art direction, visual quality gates and implementation separately. No assistant-led speculative UI in the interim.
+
+**Responsibility:** Assistant proceeds with source research, verification, intake updates and editorial prioritization in current turns without user hand-holding; owner may continue to send materials incrementally but is not required to reorganize folders, annotate every photo or provide software stack specifics. Do not promise asynchronous work: perform work when the next user turn and tools permit.
+
+**Current milestone definition:** an *Evidence-backed Content Map v1*, not a rendered website. Each entry must separate confirmed source facts, owner-reported facts, unverified assumptions, source/media access, and publication rights.
+
+
+---
+
 # SHOWTIME — Intake control board / 08 Nov 2026
 
 **Owner intent:** SHOW ALL, across event production, music, performance, game design, AI-assisted creation, social/academic work and experiments. User may supply more materials gradually; **do not freeze collection or publish a site without instruction**.
