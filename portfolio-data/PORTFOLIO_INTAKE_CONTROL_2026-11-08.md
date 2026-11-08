@@ -1,3 +1,19 @@
+## PHASE CORRECTION — OWNER HAS NOT FINISHED SUBMITTING WORK
+
+The previous assistant suggestion to begin **final Editorial Acceptance now** was premature and is **superseded**. The owner has NOT stated that all materials are supplied or that content intake can be closed.
+
+**Current workflow is parallel and iterative**, not a strict phase transition:
+1. Continue accepting and examining owner-supplied work incrementally; do not demand a full inventory from the owner or ask for a formal stop.
+2. Verify sources, identify exact owner contributions, publication rights and truthful output status as each item arrives.
+3. Maintain an evolving cross-disciplinary story and provisional project hierarchy **in parallel**, without pretending it has been finally approved.
+4. Do not ask to ratify or freeze an Editorial Master until the owner explicitly signals intake is sufficiently complete, or expressly requests a bounded checkpoint. A provisional content map is not a final editorial signoff.
+5. Creative Direction, HTML, UI, mockups, builds and deployment remain outside the authorized phase.
+
+**Immediate next move:** Consolidate the provisional connective narrative across Event / Social & Media / Music / Games / Digital Products / Research using authentic evidence already available, while keeping each intake lane open. Avoid more repetitive status documents. Bring only essential unresolvable questions to the owner.
+
+
+---
+
 # SHOWTIME — Current intake control (as of 08 Nov 2026)
 
 **Authority:** For current decisions use this file and `EDITORIAL_CONTENT_MAP_V1_2026-11-08.md` (the latter includes Editorial Synthesis v1.2). Earlier checklists, draft sections and status updates are historical Git commits, not competing live instructions.
