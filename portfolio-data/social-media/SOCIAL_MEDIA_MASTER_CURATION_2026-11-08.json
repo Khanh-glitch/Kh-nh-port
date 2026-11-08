@@ -1,0 +1,228 @@
+{
+  "schema_version": "1.0",
+  "date": "2026-11-08",
+  "status": "CURATED_FIRST_PASS;NO_PUBLIC_RELEASE",
+  "collection": "SOCIAL MEDIA / CONTENT / VOICE / AD SPECS",
+  "priority_rule": "Rank by substantive unique competency, not by quantity of videos or fabricated impact. One anchor case, one commercial case, 3 other formats, concise voice samples and OOH experimental reel.",
+  "facts_and_proof_levels": {
+    "owner": "Role/results and labels directly supplied by user; self-reported and not independently audited.",
+    "drive": "Link metadata and filenames confirmed through authenticated Google Drive connector; video frames/audio not yet inspected.",
+    "tiktok": "Handle directly given by user; public profile and metric counts could not be independently fetched (TikTok blocks direct indexing).",
+    "money": "Commission conversion should be omitted if not part of the proposed claim, but no substitute commercial performance may be fabricated."
+  },
+  "works": [
+    {
+      "key": "que-qua-quao",
+      "title": "Quê Quá Quao",
+      "category": "Short-form Strategy & Channel Management",
+      "priority": "FEATURED_HERO",
+      "link": "https://www.tiktok.com/@quequaquao",
+      "link_type": "creator_profile",
+      "evidence": {
+        "owner_confirmation": "Channel operated end-to-end by portfolio owner",
+        "external_metadata": "PUBLIC_TIKTOK_WEB_ACCESS_BLOCKED_OR_NOT_INDEXED; NO CURRENT COUNT VERIFIED"
+      },
+      "roles": [
+        "Content strategy and publishing plan",
+        "Content writing / scripting",
+        "Short-form editing",
+        "Editing framework / process documentation",
+        "Voice-over and voice editing",
+        "Channel management"
+      ],
+      "owner_reported_results": {
+        "followers": ">4000",
+        "best_video_views": ">1300000",
+        "best_video_likes": "hundreds of thousands",
+        "specific_viral_video_id": null
+      },
+      "editorial_pitch": "Built and operated a short-form TikTok channel across concept, production, publishing and iteration, generating one breakout video with over 1.3 million views (owner-reported).",
+      "not_show": "Affiliate commission conversion—this is not a commerce case unless one is specifically commissioned; do not infer commercial ROI.",
+      "proof_gate": "Locate viral exact post link or screenshot of in-app analytics before independent public performance-stat verification."
+    },
+    {
+      "key": "china-town",
+      "title": "China Town — Commercial Video",
+      "category": "Commercial Video Production / On-Camera / Voice",
+      "priority": "FEATURED_SECONDARY",
+      "link": "https://drive.google.com/file/d/1Q8fq-i-Of1jMqeuFCPNCpLhZTatq4j4h/view",
+      "link_type": "drive_video",
+      "drive_id": "1Q8fq-i-Of1jMqeuFCPNCpLhZTatq4j4h",
+      "bytes": 396564315,
+      "drive_verified": true,
+      "roles": [
+        "Project lead",
+        "Voice-over",
+        "On-camera appearance"
+      ],
+      "owner_reported_results": {
+        "facebook_views": "thousands",
+        "interactions": "hundreds",
+        "course_result": "highest score in course module"
+      },
+      "editorial_pitch": "Led a course-based commercial video project, combining coordination, screen presence and voice performance. The project earned the course's top result and reached thousands of views on a personal Facebook account (owner-reported).",
+      "not_show": "Do not imply commissioned client campaign or paid advertising performance; label course project where details are material.",
+      "proof_gate": "Actual video playback and academic grade/post statistics not independently inspected."
+    },
+    {
+      "key": "crowd-effect-experiment",
+      "title": "Crowd Behavior Experiment",
+      "category": "Experimental Content / Social Psychology",
+      "priority": "SUPPORTING",
+      "link": "https://drive.google.com/file/d/1O5hcaN86PB4KGd9Sb476Mdahqgv6W-bY/view",
+      "link_type": "drive_video",
+      "drive_id": "1O5hcaN86PB4KGd9Sb476Mdahqgv6W-bY",
+      "bytes": 250879255,
+      "drive_verified": true,
+      "roles": [
+        "Concept development",
+        "Scriptwriting",
+        "Experiment design",
+        "Voice-over",
+        "On-camera presentation"
+      ],
+      "owner_reported_results": {
+        "public_reach": "No notable reach claim"
+      },
+      "editorial_pitch": "Designed and presented a crowd-effect experiment, translating a social-behavior question into a structured on-camera narrative.",
+      "not_show": "Do not fabricate statistically meaningful findings, formal research approval or reach metrics.",
+      "proof_gate": "Experiment methodology, outcome and footage not independently reviewed."
+    },
+    {
+      "key": "war-remnants-museum",
+      "title": "War Remnants Museum — Documentary / Field Project",
+      "category": "Documentary Editing & Production Leadership",
+      "priority": "SUPPORTING",
+      "link": "https://drive.google.com/file/d/1sR4CaGBWVUNnmaIQK-gWbmYP_0W4KDko/view",
+      "link_type": "drive_video",
+      "drive_id": "1sR4CaGBWVUNnmaIQK-gWbmYP_0W4KDko",
+      "bytes": 266036413,
+      "drive_verified": true,
+      "roles": [
+        "Project lead",
+        "Video editor"
+      ],
+      "owner_reported_results": {
+        "reach": "Not supplied"
+      },
+      "editorial_pitch": "Led editing and project coordination for a documentary-style field assignment at the War Remnants Museum.",
+      "not_show": "Do not imply professional museum commission, journalism credential or paid client.",
+      "proof_gate": "Visual and audio content not independently reviewed."
+    },
+    {
+      "key": "veinora-interior",
+      "title": "VEINORA — Interior Concept Video",
+      "category": "Creative Editing Across Industries",
+      "priority": "SUPPORTING_OR_ARCHIVE",
+      "link": "https://drive.google.com/file/d/1EbOndbX6Dd3Sd7Z_jm9yjuQPM8YKiyYH/view",
+      "link_type": "drive_video",
+      "drive_id": "1EbOndbX6Dd3Sd7Z_jm9yjuQPM8YKiyYH",
+      "drive_title": "VEINORA .mp4",
+      "bytes": 158209059,
+      "drive_verified": true,
+      "roles": [
+        "Video editing"
+      ],
+      "owner_reported_context": "Paid editing work contributing to a student's final interior-design course project.",
+      "editorial_pitch": "Edited a presentation film for an interior-design concept, adapting pacing and visuals to communicate spatial ideas.",
+      "context_disclosure": "Accurately describe as an external academic concept-film edit or commissioned student-project editing if asked; never state professional architecture studio commission or built interior client campaign.",
+      "proof_gate": "Finished content not independently viewed."
+    },
+    {
+      "key": "motivation-voice",
+      "title": "Motivational Narration",
+      "category": "Voice-over / Performance",
+      "priority": "VOICE_REEL_CANDIDATE",
+      "link": "https://drive.google.com/file/d/1cvvIfw154wCIpcGK_S4fpzkUlRDmplkb/view",
+      "link_type": "drive_video",
+      "drive_id": "1cvvIfw154wCIpcGK_S4fpzkUlRDmplkb",
+      "drive_title": "TRUYỀN ĐỘNG LỰC.mp4",
+      "bytes": 51608145,
+      "drive_verified": true,
+      "roles": [
+        "Voice-over — user-provided category, exact recording role to confirm if needed"
+      ],
+      "editorial_pitch": "Sample for motivational narration: intended to demonstrate energy, expression and pacing.",
+      "proof_gate": "Actual voice fidelity, sound mix and licensing not independently reviewed."
+    },
+    {
+      "key": "history-voice",
+      "title": "Historical / Reportage Narration",
+      "category": "Voice-over / Documentary",
+      "priority": "VOICE_REEL_CANDIDATE",
+      "link": "https://drive.google.com/file/d/1uKsSNLJGACpJOpttvteuexWEZr-Oj8NH/view",
+      "link_type": "drive_video",
+      "drive_id": "1uKsSNLJGACpJOpttvteuexWEZr-Oj8NH",
+      "drive_title": "LỊCH SỬ.mp4",
+      "bytes": 35449317,
+      "drive_verified": true,
+      "roles": [
+        "Voice-over — user-provided category"
+      ],
+      "editorial_pitch": "Sample for documentary and historical storytelling, distinct from a motivational voice style.",
+      "proof_gate": "Actual narration and mix not independently reviewed."
+    }
+  ],
+  "ooh": {
+    "folder": "https://drive.google.com/drive/folders/1uWTByPE6GZDmTRVkYzigrQPkAwQ_FOET",
+    "files": [
+      {
+        "fileId": "1fkUo-py1nE_pqeGVYvpnJCJCs1IlWAKe",
+        "title": "the_foot_betrays_you.mp4",
+        "bytes": 9401900,
+        "source_url": "https://drive.google.com/file/d/1fkUo-py1nE_pqeGVYvpnJCJCs1IlWAKe/view",
+        "drive_verified": true,
+        "content_verified": false,
+        "public_campaign_verified": false
+      },
+      {
+        "fileId": "1RfgyAe0LeKlENlNUTLRYanoFpslrKDz3",
+        "title": "unheard-music-discovery-1920x1080-30fps.mp4",
+        "bytes": 6492708,
+        "source_url": "https://drive.google.com/file/d/1RfgyAe0LeKlENlNUTLRYanoFpslrKDz3/view",
+        "drive_verified": true,
+        "content_verified": false,
+        "public_campaign_verified": false
+      },
+      {
+        "fileId": "1zauc-A7NKCyPS6OLB8K8QRedV33ecMHi",
+        "title": "unheard_8s_realtime_capture.mp4",
+        "bytes": 3806166,
+        "source_url": "https://drive.google.com/file/d/1zauc-A7NKCyPS6OLB8K8QRedV33ecMHi/view",
+        "drive_verified": true,
+        "content_verified": false,
+        "public_campaign_verified": false
+      },
+      {
+        "fileId": "1b2ELFug3vof8iZxXkjRfXAKNbqZ3DovY",
+        "title": "unheard-music-discovery-concept-1080p30.mp4",
+        "bytes": 6625992,
+        "source_url": "https://drive.google.com/file/d/1b2ELFug3vof8iZxXkjRfXAKNbqZ3DovY/view",
+        "drive_verified": true,
+        "content_verified": false,
+        "public_campaign_verified": false
+      }
+    ],
+    "classification": "SPEC_AD / PROMO / OOH SHORT-FORM CREATIVE EXPERIMENTS",
+    "priority": "SUPPORTING_REEL",
+    "owner_reported_role": "User provided files as creative examples; precise personal creative contribution to each clip not separately stated.",
+    "editorial_pitch": "A small experimental collection exploring short promotional formats, visual hooks and music-discovery concepts.",
+    "do_not_claim": [
+      "Paid advertising placements",
+      "Out-of-home campaigns actually displayed",
+      "Client approval/ad spend",
+      "Conversion lift",
+      "Performance marketing outcomes"
+    ],
+    "awaiting": "Inspect actual 4 films before aesthetic or creative quality grading."
+  },
+  "narrative_brief": {
+    "primary": "Organic short-form strategy + full-cycle channel ownership (Quê Quá Quao)",
+    "secondary": "Commercial film leadership and performance (China Town)",
+    "breadth": "Experiment design (crowd), documentary editing and project leadership (museum), interior concept film editing (VEINORA), two distinct narration tones and four short ad/OOH spec pieces.",
+    "crosslinks": "ELP and Happiness documentation should stay in AI/content processes rather than competing as published videos; stage/music samples belong to Music; EventFlow stays Products.",
+    "media_rights": "Do not copy Drive binaries or third-party tracks into public portfolio without source/publication authorization."
+  },
+  "video_playback_state": "DRIVE_METADATA_ONLY;DO_NOT_ASSERT_VISUAL_OR_AURAL_REVIEW",
+  "publication_copy_policy": "Assemble persuasive but truthful captions; no fake sales, inflated official production/client roles, experimental research findings, or attribution of other people's end-of-term submissions."
+}
