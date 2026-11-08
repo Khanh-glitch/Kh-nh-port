@@ -22,6 +22,24 @@ The art direction **must not** present these as a visually unrelated resume cata
 5. Que Quá Quao is the correct name, and its linked viral post has **approximately 1.1 million owner-reported views**: https://www.tiktok.com/@quequaquao/video/7530989283956559122.
 6. The site should let a recruiter see authentic proof quickly AND let interested visitors explore deeply; neither requires playing an exploratory minigame.
 
+## 0A. Access reality check for reference viewing (owner tested — 08 Nov 2026)
+
+The user **could not access the live A/C experiences**: `siena.film` showed only animated stripes; the Thyssen interactive webdoc returned **Access Denied**. This is a reference-access blocker, **not** a reason to infer the owner's artistic preference or claim the user experienced either site.
+
+**A / Siena reliable reference viewing path:**
+1. [Siena — full captured website recording + screenshots](https://www.landing.love/sites/siena/) — a third-party gallery preserving a full-page recording. This is **not** a live interactive site; it demonstrates real layout and some motion without requiring Siena WebGL to initialize.
+2. [Siena visual gallery (Communication Arts)](https://www.commarts.com/project/37665/siena-film-foundation) — real screenshots of the filmstrip, cinematic composition and project grids.
+3. [Designer interview](https://www.commarts.com/webpicks/siena-film-foundation) — describes original striped custom preloader and WebGL slider. If only stripes appear, **cannot verify it advances** on the user's device; do not recommend waiting indefinitely. Keep live URL only as optional.
+
+**C / Love Letters to Cities reliable reference viewing path:**
+1. [Sayavera studio's original project case](https://sayavera.studio/en/docuweb-love-letters-to-cities/) — original credited designer, multiple actual visual screenshots and context; not an interactive clone.
+2. [Communication Arts photographic visual gallery](https://www.commarts.com/project/35081/love-letters-to-cities) — actual captured UI/photographs.
+3. [C-style alternative recorded contemporary cultural platform](https://www.landing.love/sites/generaladmission/) — General Admission, a recorded art/artist platform with whole-site video/screenshots; this is an analogous aesthetic reference, **not** the Thyssen exhibition.
+4. [A more radically sparse editorial portfolio full recording](https://www.landing.love/sites/arvinleeuwis-3/) — Arvin Leeuwis: designer case index; useful comparison for editorial minimalism (less exhibition-like).
+
+**IMPORTANT:** Do not ask user to score A versus C by comparing a broken loader to a real B experience. The preference for B is the only demonstrated live-experience preference so far; A/C can only be visually compared from accessible recordings/stills until proven functional.
+
+
 ## 1. External design research — what is real and what we infer
 
 ### R1 · Siena Film Foundation: filmic editorial
