@@ -47,7 +47,7 @@ SHOWTIME is a show-all creative portfolio of **actual work**, spanning event pro
 
 ## Publication/evidence discipline
 - **P** = verified public source, **O** = owner report, **A** = authenticated source/pixels, **H** = historical tested version, **U** = unknown. A publicly reachable link does not automatically verify dynamic engagement metrics, authorship, commercial outcomes or license rights.
-- TikTok viral URL is now exact; **views ~1.1M, not 1.3M**, owner-reported; not verified by TikTok API because public page is blocked.
+- TikTok viral URL is now exact; **views ~1.1M**, owner-reported; not verified by TikTok API because public page is blocked.
 - Drive confirms 6 long MP4s and 4 short OOH videos as real files; large MP4 frames/audio could not be extracted in this environment. Project IDs/roles of 3 Facebook MP4s were *later directly confirmed by owner*, not visually inspected.
 - No fabricated sales, customer acquisition, competition prizes, job titles, full-credit authorship, grades, stage duties, advertising spend or learner cohort performance.
 - Never expose private university participant transcripts or sensitive materials in the public portfolio.
