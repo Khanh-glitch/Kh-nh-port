@@ -87,3 +87,14 @@ New records:
 A 406KB standalone `Six Primordials Boss Lab` HTML file was also located in the user's Library and inspected at source-header level, but not functionally playtested. Video automation ZIPs referenced in earlier discussions remain unverified here. Keep all experimental status labels explicit.
 
 **No user action is currently required, and content collection is NOT finished or frozen.**
+
+## Learning Design & Academic Research — 08 Nov 2026
+
+The user reported: one-on-one mathematics tutoring of one learner who began with foundational gaps and reached their course target; occasional support with essays and thesis work; GPA 3.77; 100% of essays above 8 and 80% above 9 (sample size, grading scale, time frame and ownership unverified); and a repeatable personal method whose concrete steps have not yet been supplied. Do not invent credentials or convert the essay-grade percentages into tutoring-success metrics.
+
+An authored private connected-Drive graduation thesis draft was reviewed at the **topic/method** level only. Its subject compares event-production and attendee evaluation of AI-assisted event advertising visuals; methods include qualitative comparative research, semi-structured interviews, photo elicitation and Framework Method analysis. **No private participant information, source links, interviews or thesis excerpts were copied into the portfolio repo**, and the draft is not treated as peer-reviewed, graded or published.
+
+- `learning-research/learning-and-academic-research.json` — separated direct user claims from source-supported thesis methodology, with disclosure gates.
+- `learning-research/EXHIBIT_AND_COPY.md` — professional bilingual description and visual narrative; one research spotlight and a compact teaching vignette, not a fictitious tutoring consultancy.
+
+Publication remains on HOLD pending final owner copy review. **No additional input required now**; portfolio collection remains open.
