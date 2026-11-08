@@ -4,7 +4,7 @@ Updated: 2026-11-08. Data intake remains open. Do not merge or publish this bran
 
 ## 2 anchor games, two honest statuses
 - **APEX CHAOS:** publicly available HTML5 demo at https://realbae.itch.io/apex-chaos; verified from public indexed itch creator/project listing and SideProjectors. Does not establish retail launch, actual completed sales, online multiplayer, profitable revenue or substantial traction. Official portfolio CTA is *Play Demo*. Source record: apex-chaos.json.
-- **Soul of Hero:** project owner plans to launch before SHOWTIME completion, but launch has not happened/been verified in this intake. Godot project source: https://github.com/Khanh-glitch/Soul-of-Hero. Main branch README documents a prior action-RPG chapter slice and cannot be treated as the authoritative description of the later survival redesign and agent-branch integration. Switch to *Play* only with a verified released build. Source record: soul-of-hero.json.
+- **Ragnarok: The Last Island:** project owner plans to launch before SHOWTIME completion, but launch has not happened/been verified in this intake. Godot project source: https://github.com/Khanh-glitch/Soul-of-Hero. Main branch README documents a prior action-RPG chapter slice and cannot be treated as the authoritative description of the later survival redesign and agent-branch integration. Switch to *Play* only with a verified released build. Source record: soul-of-hero.json.
 
 ## No player/revenue metrics is a design choice, not a blocker
 **Do not make number cards like "0 players", "0 revenue", misleading badges such as "successful launch" or unsupported adoption claims.** Exclude an entire traction section until there is actual evidence. Prefer:
