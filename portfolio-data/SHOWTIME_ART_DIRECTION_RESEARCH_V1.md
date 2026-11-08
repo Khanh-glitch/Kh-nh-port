@@ -2,7 +2,13 @@
 **Date:** 08 Nov 2026  
 **Type:** Evidence-informed creative-direction study / NOT a UI design, HTML prototype, render or published website  
 **Inputs:** `SHOWTIME_EDITORIAL_MASTER_V1.md`, `SHOWTIME_EXPERIENCE_BLUEPRINT_V1.md`, authenticated source inventory of real works and photographs  
-**Status:** **Three options reviewed; one recommended for owner approval, none artistically locked.**
+**Status:** **Owner SELECTED B — SIGNAL / CUE ROOM.** Original A/C comparison below remains research only; live identity authority is the B specification.
+
+## OWNER DECISION — LOCKED B · SIGNAL / CUE ROOM (08 Nov 2026)
+
+**The owner explicitly selected B**, after experiencing the reference project. **A is rejected as the global identity; C is not the selected direction.** The old “consultant recommendation: A” and “pending owner choice” paragraphs below are **superseded historical research**, not live instructions.
+
+**Authoritative next artifact:** [SHOWTIME_VISUAL_IDENTITY_SPEC_B_V1.md](SHOWTIME_VISUAL_IDENTITY_SPEC_B_V1.md). B is the approved *territory*, not approval of any token, mockup, logo or site build. Respect original full-length media, source links and the no-UI boundary.
 
 ## 0. The brief and the non-negotiables
 
