@@ -1,17 +1,28 @@
-# SHOWTIME — CURRENT CONTROL (08 Nov 2026)
+# SHOWTIME — Current state / integration control (08 Nov 2026)
 
-**Art direction choice: B — SIGNAL / CUE ROOM [OWNER APPROVED].** The user explicitly picked B after reviewing interactive references. A/C are unselected reference territories. Do not ask again which aesthetic to choose.
+**Current milestone: CONTENT STRUCTURED FOR TEMPLATE INTEGRATION.** No website/UI has been designed or deployed, and no branch has been merged to production.
 
-**Authoritative design-concept reference:** [SHOWTIME_VISUAL_IDENTITY_SPEC_B_V1.md](SHOWTIME_VISUAL_IDENTITY_SPEC_B_V1.md). This specifies philosophy, candidate tokens, cue/motion grammar, differentiated per-work treatment, accessibility and acceptance gates. Tokens and logo are **proposals to visual-test**, not owner-approved final artwork. No interface, HTML, logo image, mockup, public site or deployment yet.
+## Canonical files (one job each)
 
-**Authoritative portfolio copy:** [SHOWTIME_EDITORIAL_MASTER_V1.md](SHOWTIME_EDITORIAL_MASTER_V1.md), ten case-study drafts with source/owner-role limits. Current game public name is **Ragnarok: The Last Island**, repo still named Soul-of-Hero; TikTok channel **Que Quá Quao** has ~1.1M-view linked post reported by owner.
+1. **Renderer-facing content:** `SHOWTIME_SITE_CONTENT_V1.json` — **single active website-content snapshot**: 6 sections, 25 unique works, VI/EN copy, home/featured, About, source links, status, archive/hold gates. For external builders, start with `README.md`.
+2. **Proof/long-form editorial:** `SHOWTIME_EDITORIAL_MASTER_V1.md`, then original topic JSON in `events/`, `social-media/`, `game-design/`, `digital-products/`, `music-performance/`, `learning-research/`, `creative-experiments/`.
+3. **Experience:** `SHOWTIME_EXPERIENCE_BLUEPRINT_V1.md`, Frontstage / Backstage / Proof, quick access + exploratory depth.
+4. **Owner-selected art direction:** `SHOWTIME_VISUAL_IDENTITY_SPEC_B_V1.md` — **B · Signal / Cue Room**. Previous A preference is superseded. Exact token colors, logo and final UI treatment remain unapproved.
+5. **Evidence references/history:** `SHOWTIME_ART_DIRECTION_RESEARCH_V1.md`, `EDITORIAL_CONTENT_MAP_V1_2026-11-08.md`, `CAPABILITY_PROOF_MATRIX_V1_2026-11-08.md` (not parallel current renderer copy).
 
-**Experience architecture:** [SHOWTIME_EXPERIENCE_BLUEPRINT_V1.md](SHOWTIME_EXPERIENCE_BLUEPRINT_V1.md): Frontstage / Backstage / Proof, quick recruiter path and free exploratory visit, media-native formats.
+## Owner decisions to preserve
 
-**Reference research:** [SHOWTIME_ART_DIRECTION_RESEARCH_V1.md](SHOWTIME_ART_DIRECTION_RESEARCH_V1.md); older preference for A superseded by explicit owner B selection.
+- Name **SHOWTIME**, personal interdisciplinary portfolio; not a fictitious studio/corporation.
+- Correct original names: **Que Quá Quao**; **Ragnarok: The Last Island** (old repo still named `Soul-of-Hero`).
+- ~1.1M linked TikTok views and 4K+ followers are **owner-reported**.
+- Keep original full-length video/audio; **do not cut** or assemble highlight reels. Still photographs may be curated.
+- No invented clients, roles, product shipping, student results, commercial metrics or screenshots.
+- Interactive games/products were built with AI assistance; do not imply manual authorship of every line of code.
+- Do not publish private media or participant data.
 
-**Owner media rule:** Keep existing original video and audio in full, do not create shortened highlight compilations. Photo stills may be curated. Respect permission/rights/private study data and proper source attribution.
+## Ready / pending
 
-**Next stage:** Only on express approval, develop visual identity explorations using authentic media. In the meantime, no additional questions are required from the owner, and intake remains open. No automatic UI/build authority follows from selecting B.
+**Ready:** structured content record and six public-facing work categories; real source links; independent section and relation IDs; bilingual first-pass editorial copy, protected archive/hold scope.  
+**Pending:** owner-approved direct professional contact method; real deployable image assets and applicable third-party rights; current playable product evidence for actively developing projects; media visual/audio QA where unavailable.
 
-**Keep old curation/data files as evidence sources, not competing design decisions.**
+The integrator may use these files to create a **private working template** when the owner requests it, but this note gives no permission to publish, merge, or invent missing sources.
