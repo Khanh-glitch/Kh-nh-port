@@ -64,3 +64,13 @@ Public video cross-check performed 05 Nov 2026 did not establish an event-specif
 Source-backed candidate case study saved to `portfolio-data/digital-products/eventflow-pro.json`. Product state: tested **browser-local demo with limitations**, not production SaaS or real buyer-adopted system. The portfolio will present the guided brief → needs → BOQ → human-pricing → simulated review → public PDF journey, source evidence, and the owner's AI-assisted product-building process, without claiming manual coding or unverified commercial outcomes.
 
 Reference repo: https://github.com/Khanh-glitch/eventflow-pro . Personal origin story / user-specific decisions still open; do not invent them. Event and Performance intake remain open to later media; no website template/deployment has been authorized.
+
+
+## Game Design intake — 08 Nov 2026
+
+Publicly playable **APEX CHAOS** and planned-before-portfolio-launch **Soul of Hero** are now staged as separate truthful records:
+- `game-design/apex-chaos.json` — public HTML5 demo at `https://realbae.itch.io/apex-chaos`, player/revenue numbers not claimed.
+- `game-design/soul-of-hero.json` — active Godot game, public release planned by owner but not yet confirmed; current game has evolved beyond old `main` README. No assumed launch or integrated features.
+- `game-design/GAME_DESIGN_SHOWCASE_POLICY.md` — gameplay/playable-first evidence, no invented traction and precise state/version boundaries.
+
+Neither project requires impressive sales or play counts to be included. The honest representation is playable demo vs developing game, then actual release when verified.
