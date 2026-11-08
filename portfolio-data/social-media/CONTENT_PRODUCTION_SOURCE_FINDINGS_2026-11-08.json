@@ -1,0 +1,116 @@
+{
+  "schema_version": "1.0",
+  "date": "2026-11-08",
+  "title": "Social Media & Content Production — source-grounded editorial audit",
+  "source_audit_result": "2 substantive text-based creative production workflows discovered + 3 unclassified MP4 source files",
+  "findings": [
+    {
+      "id": "elp-English-listening-podcast",
+      "working_title": "ELP — English Listening Podcast Content System",
+      "category": "AI-assisted audio/video content development",
+      "source": {
+        "provider": "Connected private Google Drive",
+        "document_title": "ELP",
+        "document_url": "REDACTED_FROM_PUBLIC_REPO",
+        "text_characters_inspected": 181869
+      },
+      "verified_from_document": [
+        "Master prompt for a 10–12-minute YouTube English-listening podcast, designed for Gen Z/young adults at A2+–B1.",
+        "Defines a two-host conversation between Kate and Jake, with American English, natural conversational structure, constructive debate and a restrained romantic dynamic.",
+        "Has structured input fields for topic, tone, debate mode, creative direction, optional research sources and quality controls.",
+        "References ElevenLabs as an intended AI voice production method; does not prove paid account, rendered audio or deployed provider integration.",
+        "Includes an example extended 'overthinking' conversation script and visual art prompt material; these are source outputs, not evidence of a published channel."
+      ],
+      "portfolio_skill_signals": [
+        "Prompt architecture",
+        "Audience segmentation",
+        "Editorial design for language level",
+        "Script modularity and retention planning",
+        "Structured creative QA",
+        "Cross-modal content planning"
+      ],
+      "owner_attribution": "NOT_INDEPENDENTLY_VERIFIED; document is in user's connected Drive, do not assert sole original authorship or delivered media",
+      "production_status": "SCRIPT_AND_PROMPT_WORKFLOW_DOCUMENT_CONFIRMED;PUBLISHED_EPISODES_NOT_VERIFIED",
+      "promotion_priority": "SUPPORTING_CASE_CANDIDATE",
+      "defensible_copy": "Tài liệu quy trình xây dựng nội dung podcast học tiếng Anh bằng AI: xác định người nghe, trình độ, giọng điệu, cấu trúc đối thoại và chuẩn đầu ra.",
+      "not_claimable": [
+        "A running YouTube channel with measured view count",
+        "Production of published videos",
+        "Original voice performances by the owner",
+        "Paid commercial AI automation pipeline"
+      ],
+      "rights": "PRIVATE_SOURCE_DOCUMENT;DON'T_PUBLISH_FULL_SCRIPT_OR_REFERENCE_MEDIA"
+    },
+    {
+      "id": "m2-happiness-content-prototype",
+      "working_title": "Happiness — Content / Editing / Voice-over Development Notes",
+      "category": "Creative content prototyping and production planning",
+      "source": {
+        "provider": "Connected private Google Drive",
+        "document_title": "M²",
+        "document_url": "REDACTED_FROM_PUBLIC_REPO",
+        "text_characters_inspected": 55985
+      },
+      "verified_from_document": [
+        "The opening 'Phân công dự án' table explicitly assigns the portfolio owner three planning rows for a project labelled 'Happiness': Content (Tạo nguyên mẫu), Edit (Thông số kỹ thuật), Voice over (Nghiên cứu).",
+        "Document contains narrative/script ideas, concept/storyboard-adjacent shot instructions, editing transitions, character dynamics and text references.",
+        "An external 2025 stick-figure AI tutorial is clearly attributed to Do Thanh Trung and linked as a reference; it is not proof of the owner's own original production.",
+        "Contains additional unrelated creative notes. Do not treat every excerpt as a separate complete project."
+      ],
+      "portfolio_skill_signals": [
+        "Role-aware production planning",
+        "Idea prototyping",
+        "Editing-spec thinking",
+        "Voiceover workflow research",
+        "Narrative/visual sequencing"
+      ],
+      "owner_attribution": "DOCUMENT_SELF-LABELS_PERSON_BY_NAME; PLANNED_SCOPE_ONLY",
+      "production_status": "WORKING_NOTES_AND_PLANNING_TABLE;NO_RENDERED_VIDEO_OR_PUBLISHED_LINK_VERIFIED",
+      "promotion_priority": "SUPPORTING_OR_ARCHIVE_CANDIDATE",
+      "defensible_copy": "Có tư liệu nội bộ về phát triển ý tưởng, phân công công việc nội dung, thông số dựng và nghiên cứu voice-over cho thử nghiệm 'Happiness'.",
+      "not_claimable": [
+        "A launched channel",
+        "An audience reach or monetization outcome",
+        "Completed voiceover/edit execution in full",
+        "Ownership of referenced external AI tutorial"
+      ],
+      "rights": "PRIVATE_NOTES_WITH_THIRD_PARTY_REFERENCES;NO_REHOST"
+    },
+    {
+      "id": "facebook-video-drive-trio",
+      "working_title": "Unsorted Facebook video source files",
+      "category": "Potential existing social video media",
+      "source": {
+        "provider": "Connected Google Drive SOCIAL MEDIA",
+        "inventory_path": "social-media/VIDEO_SOURCE_AUDIT_2026-11-08.json",
+        "files": 3,
+        "total_bytes": 913479983
+      },
+      "verified_from_document": [
+        "Three MP4 files each named FDown.vn_Tai_video_Facebook_720p (HD) with unique suffixes, uploaded to Drive on 2026-09-21.",
+        "One raw authenticated download succeeded, but container media inspection failed and no video frame/audio metadata was verified."
+      ],
+      "portfolio_skill_signals": [],
+      "owner_attribution": "UNKNOWN",
+      "production_status": "UNCLASSIFIED_UNINSPECTED_MP4_SOURCE",
+      "promotion_priority": "HOLD",
+      "defensible_copy": null,
+      "not_claimable": [
+        "Video authorship",
+        "Which project each belongs to",
+        "Engagement and performance",
+        "Video content or visual quality",
+        "Publication rights"
+      ],
+      "rights": "NOT_ESTABLISHED"
+    }
+  ],
+  "editorial_judgment": {
+    "relationship_to_existing_lanes": "ELP overlaps AI & Learning but is best represented primarily in Content Production as a workflow proof; 'Happiness' belongs Creative Production archive; video files stay unclassified. No duplicate project counts with Music, Event or Game.",
+    "primary_portfolio_section": "CONTENT & CREATIVE SYSTEMS",
+    "ranking": "ELP is the strongest presently evidenced content-system concept. It is a supporting artifact until an actual finished episode is linked/verified.",
+    "narrative_structure": "Audience problem → creative brief → storyboard / script architecture → review criteria → real deliverable (only when verified).",
+    "needed_publication_proof": "At least one final audio/video sample and explicit owner role/permission for any public product case study; the process document can be described in general terms without posting private scripts.",
+    "constraint": "Do not imply the entire 181k-character document was independently produced by owner; sources and authorship differ."
+  }
+}
