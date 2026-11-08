@@ -121,9 +121,10 @@
       "Inspect pricing stage without implying automated pricing",
       "Open source evidence"
     ],
-    "evidence_mode": "Separate tested demo functionality, pending features and user's own contribution."
+    "evidence_mode": "Separate tested demo functionality, pending features and user's own contribution.",
+    "versioning": "Treat prior demo screenshots as historical, all final UI captures as pending new-version evidence. Allow a verified Evolution comparison when ready."
   },
-  "remaining_owner_input": "Explain in plain words the real problem or experience that inspired EventFlow. No need for technical specs already in repository.",
+  "remaining_owner_input": "Optional origin/problem story; new architecture and visual details will be drawn from the rebuild when ready. Do not require the owner to freeze development for portfolio.",
   "risks": [
     "Repo status is local demo only",
     "Source case data is synthetic",
@@ -136,5 +137,17 @@
     "docs/review/buyer-handover-index.md",
     "docs/review/V1_FINAL_PRODUCT_ACCEPTANCE.md",
     "README_RUNBOOK.md"
-  ]
+  ],
+  "portfolio_lifecycle": {
+    "current_owner_reported_state": "ACTIVE_REBUILD",
+    "owner_report_date": "2026-11-08",
+    "status_display": "Rebuilding / Active Development",
+    "evaluation_basis": "USER_REPORTED; no assumption that a new version has been technically validated",
+    "historical_source_baseline": "Khanh-glitch/eventflow-pro local-demo source and tested snapshots are historical reference material only.",
+    "final_public_feature_status": "NOT_FIXED",
+    "content_intake": "CONTINUE",
+    "screenshots": "HISTORICAL_NOT_FINAL",
+    "interactive_demo": "DEFER_UNTIL_NEW_VERSION_VERIFIED",
+    "showcase_policy": "The portfolio may explain problem, ideation, tested historical prototype, iteration, and verified current state. Never portray old UI or tests as proof of the rebuild. Preserve version labels."
+  }
 }
