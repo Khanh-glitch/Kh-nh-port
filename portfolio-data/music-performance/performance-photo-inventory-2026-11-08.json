@@ -1,0 +1,311 @@
+{
+  "schema_version": "1.0",
+  "source": {
+    "type": "google_drive_folder",
+    "name": "Biểu diễn",
+    "folder_id": "19cJ47NU8SisT4vmFpjh_S8kPbWsJtXuu",
+    "url": "https://drive.google.com/drive/folders/19cJ47NU8SisT4vmFpjh_S8kPbWsJtXuu",
+    "access_verified": "2026-11-08",
+    "contents_count": 28,
+    "content_type": "image/jpeg",
+    "access": "Listed via authenticated Drive connector, then all 28 downloaded to review original pixels; no photographer consent inferred."
+  },
+  "analysis": {
+    "visual_review": "ALL_28_REVIEWED_USING_CONTACT_SHEETS",
+    "group_count": {
+      "solo": 7,
+      "band": 6,
+      "group_stage": 13,
+      "atmosphere": 2
+    },
+    "top_pick": {
+      "file": "NHP_0440.jpg",
+      "role": "hero_candidate",
+      "reason": "Vocal close-up with distinctive purple/magenta LED stage, strong expression and usable crop. User identity in photograph is not yet annotated."
+    },
+    "shortlist": "Eight editorial candidates: 1 hero + 7 signatures; 'signature' only visual curation, not claim of eight separate performances.",
+    "risk": "Many NHP_46xx images show one choreographed stage sequence, not separately credited shows. IMG_0122 and IMG_0124 are two angles/moments of the same stage setup. Event dates and show names not verified from EXIF or context."
+  },
+  "assets": [
+    {
+      "id": 1,
+      "original_filename": "485151201_971061691824942_1332598475522547008_n.jpg",
+      "drive_file_id": "1SQ5KdbykDwPevovWjoJuq0FU2GWA8hHk",
+      "source_url": "https://drive.google.com/file/d/1SQ5KdbykDwPevovWjoJuq0FU2GWA8hHk/view",
+      "visual_cluster": "band",
+      "curation_status": "archive",
+      "publication_status": "USER_PROVIDED_FOR_PORTFOLIO_REVIEW;RIGHTS_FOR_PUBLIC_COPY_NOT_SEPARATELY_VERIFIED",
+      "has_personal_identity_label": false
+    },
+    {
+      "id": 2,
+      "original_filename": "541769546_1211238801049305_7224504689246167515_n.jpg",
+      "drive_file_id": "1c9h-JgFumRCYOWlRBc8yI75V1MaJAkGH",
+      "source_url": "https://drive.google.com/file/d/1c9h-JgFumRCYOWlRBc8yI75V1MaJAkGH/view",
+      "visual_cluster": "band",
+      "curation_status": "signature",
+      "publication_status": "USER_PROVIDED_FOR_PORTFOLIO_REVIEW;RIGHTS_FOR_PUBLIC_COPY_NOT_SEPARATELY_VERIFIED",
+      "has_personal_identity_label": false
+    },
+    {
+      "id": 3,
+      "original_filename": "553659406_1397182342410589_1566341123544088399_n.jpg",
+      "drive_file_id": "16JFK_Fgh_ayDX9EJ5olaiiyBwnFiKNd0",
+      "source_url": "https://drive.google.com/file/d/16JFK_Fgh_ayDX9EJ5olaiiyBwnFiKNd0/view",
+      "visual_cluster": "band",
+      "curation_status": "archive",
+      "publication_status": "USER_PROVIDED_FOR_PORTFOLIO_REVIEW;RIGHTS_FOR_PUBLIC_COPY_NOT_SEPARATELY_VERIFIED",
+      "has_personal_identity_label": false
+    },
+    {
+      "id": 4,
+      "original_filename": "IMG_0122.jpg",
+      "drive_file_id": "1ZQI_3IYCqEsVal1lsv0WJcv-8kQM3j1C",
+      "source_url": "https://drive.google.com/file/d/1ZQI_3IYCqEsVal1lsv0WJcv-8kQM3j1C/view",
+      "visual_cluster": "band",
+      "curation_status": "signature",
+      "publication_status": "USER_PROVIDED_FOR_PORTFOLIO_REVIEW;RIGHTS_FOR_PUBLIC_COPY_NOT_SEPARATELY_VERIFIED",
+      "has_personal_identity_label": false
+    },
+    {
+      "id": 5,
+      "original_filename": "IMG_0124.jpg",
+      "drive_file_id": "1Y6HhK-X5lKlcNrvfg92cvP1OLTLl4HEh",
+      "source_url": "https://drive.google.com/file/d/1Y6HhK-X5lKlcNrvfg92cvP1OLTLl4HEh/view",
+      "visual_cluster": "band",
+      "curation_status": "alternate",
+      "publication_status": "USER_PROVIDED_FOR_PORTFOLIO_REVIEW;RIGHTS_FOR_PUBLIC_COPY_NOT_SEPARATELY_VERIFIED",
+      "has_personal_identity_label": false
+    },
+    {
+      "id": 6,
+      "original_filename": "z7299919185181_4a99da4a763db768d69330bddc9257f5.jpg",
+      "drive_file_id": "1VogzHhyjCCoyr5wY05Z2hC7MpU-7BH22",
+      "source_url": "https://drive.google.com/file/d/1VogzHhyjCCoyr5wY05Z2hC7MpU-7BH22/view",
+      "visual_cluster": "atmosphere",
+      "curation_status": "archive",
+      "publication_status": "USER_PROVIDED_FOR_PORTFOLIO_REVIEW;RIGHTS_FOR_PUBLIC_COPY_NOT_SEPARATELY_VERIFIED",
+      "has_personal_identity_label": false
+    },
+    {
+      "id": 7,
+      "original_filename": "IMG_3136.JPG",
+      "drive_file_id": "1afPjOncn-fZuccVoyIK7nms8NA31U6Fe",
+      "source_url": "https://drive.google.com/file/d/1afPjOncn-fZuccVoyIK7nms8NA31U6Fe/view",
+      "visual_cluster": "solo",
+      "curation_status": "archive",
+      "publication_status": "USER_PROVIDED_FOR_PORTFOLIO_REVIEW;RIGHTS_FOR_PUBLIC_COPY_NOT_SEPARATELY_VERIFIED",
+      "has_personal_identity_label": false
+    },
+    {
+      "id": 8,
+      "original_filename": "IMG_3564.jpg",
+      "drive_file_id": "1odPOIsAFhirhky2kJAhD5Sinr1Evktee",
+      "source_url": "https://drive.google.com/file/d/1odPOIsAFhirhky2kJAhD5Sinr1Evktee/view",
+      "visual_cluster": "solo",
+      "curation_status": "signature",
+      "publication_status": "USER_PROVIDED_FOR_PORTFOLIO_REVIEW;RIGHTS_FOR_PUBLIC_COPY_NOT_SEPARATELY_VERIFIED",
+      "has_personal_identity_label": false
+    },
+    {
+      "id": 9,
+      "original_filename": "IMG_3673.jpg",
+      "drive_file_id": "1liAXrwATPdIuQac6zKRp6kbpaxU2gBXE",
+      "source_url": "https://drive.google.com/file/d/1liAXrwATPdIuQac6zKRp6kbpaxU2gBXE/view",
+      "visual_cluster": "band",
+      "curation_status": "signature",
+      "publication_status": "USER_PROVIDED_FOR_PORTFOLIO_REVIEW;RIGHTS_FOR_PUBLIC_COPY_NOT_SEPARATELY_VERIFIED",
+      "has_personal_identity_label": false
+    },
+    {
+      "id": 10,
+      "original_filename": "IMG_20240611_184359.jpg",
+      "drive_file_id": "1S29CcnRC-puo68vsHikOHFH3tp-o6T89",
+      "source_url": "https://drive.google.com/file/d/1S29CcnRC-puo68vsHikOHFH3tp-o6T89/view",
+      "visual_cluster": "solo",
+      "curation_status": "signature",
+      "publication_status": "USER_PROVIDED_FOR_PORTFOLIO_REVIEW;RIGHTS_FOR_PUBLIC_COPY_NOT_SEPARATELY_VERIFIED",
+      "has_personal_identity_label": false
+    },
+    {
+      "id": 11,
+      "original_filename": "IMG_20240611_184440.jpg",
+      "drive_file_id": "1h28bxY7BkgbaXn7csjQFuTZwy9Ajht8x",
+      "source_url": "https://drive.google.com/file/d/1h28bxY7BkgbaXn7csjQFuTZwy9Ajht8x/view",
+      "visual_cluster": "solo",
+      "curation_status": "alternate",
+      "publication_status": "USER_PROVIDED_FOR_PORTFOLIO_REVIEW;RIGHTS_FOR_PUBLIC_COPY_NOT_SEPARATELY_VERIFIED",
+      "has_personal_identity_label": false
+    },
+    {
+      "id": 12,
+      "original_filename": "IMG_5229.jpg",
+      "drive_file_id": "1ZgtC15laxkmSrZo3OhfUrRZEJs3NIF6z",
+      "source_url": "https://drive.google.com/file/d/1ZgtC15laxkmSrZo3OhfUrRZEJs3NIF6z/view",
+      "visual_cluster": "atmosphere",
+      "curation_status": "archive",
+      "publication_status": "USER_PROVIDED_FOR_PORTFOLIO_REVIEW;RIGHTS_FOR_PUBLIC_COPY_NOT_SEPARATELY_VERIFIED",
+      "has_personal_identity_label": false
+    },
+    {
+      "id": 13,
+      "original_filename": "FB_IMG_1703772951559.jpg",
+      "drive_file_id": "1568_40xr1-KbP2uPWHJ2bpb9jqdu2fZ1",
+      "source_url": "https://drive.google.com/file/d/1568_40xr1-KbP2uPWHJ2bpb9jqdu2fZ1/view",
+      "visual_cluster": "solo",
+      "curation_status": "alternate",
+      "publication_status": "USER_PROVIDED_FOR_PORTFOLIO_REVIEW;RIGHTS_FOR_PUBLIC_COPY_NOT_SEPARATELY_VERIFIED",
+      "has_personal_identity_label": false
+    },
+    {
+      "id": 14,
+      "original_filename": "NHP_4680.jpg",
+      "drive_file_id": "1Hpkf6iHyguT3_hM9AdVaAMSKmvDNqCQ1",
+      "source_url": "https://drive.google.com/file/d/1Hpkf6iHyguT3_hM9AdVaAMSKmvDNqCQ1/view",
+      "visual_cluster": "group_stage",
+      "curation_status": "alternate",
+      "publication_status": "USER_PROVIDED_FOR_PORTFOLIO_REVIEW;RIGHTS_FOR_PUBLIC_COPY_NOT_SEPARATELY_VERIFIED",
+      "has_personal_identity_label": false
+    },
+    {
+      "id": 15,
+      "original_filename": "NHP_4684.jpg",
+      "drive_file_id": "1KdTiWAdfvnsynnuA6ikTrtTz730ho2eq",
+      "source_url": "https://drive.google.com/file/d/1KdTiWAdfvnsynnuA6ikTrtTz730ho2eq/view",
+      "visual_cluster": "group_stage",
+      "curation_status": "signature",
+      "publication_status": "USER_PROVIDED_FOR_PORTFOLIO_REVIEW;RIGHTS_FOR_PUBLIC_COPY_NOT_SEPARATELY_VERIFIED",
+      "has_personal_identity_label": false
+    },
+    {
+      "id": 16,
+      "original_filename": "NHP_4685.jpg",
+      "drive_file_id": "1kek1p4XfFA8DMG02HF_SebZKWE9evnoJ",
+      "source_url": "https://drive.google.com/file/d/1kek1p4XfFA8DMG02HF_SebZKWE9evnoJ/view",
+      "visual_cluster": "group_stage",
+      "curation_status": "alternate",
+      "publication_status": "USER_PROVIDED_FOR_PORTFOLIO_REVIEW;RIGHTS_FOR_PUBLIC_COPY_NOT_SEPARATELY_VERIFIED",
+      "has_personal_identity_label": false
+    },
+    {
+      "id": 17,
+      "original_filename": "NHP_4686.jpg",
+      "drive_file_id": "1iyOeakW3MLrkzKKwopVEfHKKbSXIkk9x",
+      "source_url": "https://drive.google.com/file/d/1iyOeakW3MLrkzKKwopVEfHKKbSXIkk9x/view",
+      "visual_cluster": "group_stage",
+      "curation_status": "alternate",
+      "publication_status": "USER_PROVIDED_FOR_PORTFOLIO_REVIEW;RIGHTS_FOR_PUBLIC_COPY_NOT_SEPARATELY_VERIFIED",
+      "has_personal_identity_label": false
+    },
+    {
+      "id": 18,
+      "original_filename": "IMG_20231205_103817.jpg",
+      "drive_file_id": "1O-riCQ7W1b5SdaTbmGZ4wlsPLXA3bx13",
+      "source_url": "https://drive.google.com/file/d/1O-riCQ7W1b5SdaTbmGZ4wlsPLXA3bx13/view",
+      "visual_cluster": "group_stage",
+      "curation_status": "alternate",
+      "publication_status": "USER_PROVIDED_FOR_PORTFOLIO_REVIEW;RIGHTS_FOR_PUBLIC_COPY_NOT_SEPARATELY_VERIFIED",
+      "has_personal_identity_label": false
+    },
+    {
+      "id": 19,
+      "original_filename": "IMG_20231205_103854.jpg",
+      "drive_file_id": "19m-4GvjyFMFrQzg9lV8TLeTsG3FYMNN2",
+      "source_url": "https://drive.google.com/file/d/19m-4GvjyFMFrQzg9lV8TLeTsG3FYMNN2/view",
+      "visual_cluster": "group_stage",
+      "curation_status": "alternate",
+      "publication_status": "USER_PROVIDED_FOR_PORTFOLIO_REVIEW;RIGHTS_FOR_PUBLIC_COPY_NOT_SEPARATELY_VERIFIED",
+      "has_personal_identity_label": false
+    },
+    {
+      "id": 20,
+      "original_filename": "IMG_20231225_210302.jpg",
+      "drive_file_id": "1d6jRhZatajisN_NfqVtZrfe5_X3VgOdo",
+      "source_url": "https://drive.google.com/file/d/1d6jRhZatajisN_NfqVtZrfe5_X3VgOdo/view",
+      "visual_cluster": "solo",
+      "curation_status": "archive",
+      "publication_status": "USER_PROVIDED_FOR_PORTFOLIO_REVIEW;RIGHTS_FOR_PUBLIC_COPY_NOT_SEPARATELY_VERIFIED",
+      "has_personal_identity_label": false
+    },
+    {
+      "id": 21,
+      "original_filename": "NHP_0440.jpg",
+      "drive_file_id": "1whRPXloNzN9SjDlkhWOtyY0cPGjzulTZ",
+      "source_url": "https://drive.google.com/file/d/1whRPXloNzN9SjDlkhWOtyY0cPGjzulTZ/view",
+      "visual_cluster": "solo",
+      "curation_status": "hero_candidate",
+      "publication_status": "USER_PROVIDED_FOR_PORTFOLIO_REVIEW;RIGHTS_FOR_PUBLIC_COPY_NOT_SEPARATELY_VERIFIED",
+      "has_personal_identity_label": false
+    },
+    {
+      "id": 22,
+      "original_filename": "NHP_4664.jpg",
+      "drive_file_id": "11iCQDVR2zINTe9fiR-mAOXmjle3WWD3F",
+      "source_url": "https://drive.google.com/file/d/11iCQDVR2zINTe9fiR-mAOXmjle3WWD3F/view",
+      "visual_cluster": "group_stage",
+      "curation_status": "alternate",
+      "publication_status": "USER_PROVIDED_FOR_PORTFOLIO_REVIEW;RIGHTS_FOR_PUBLIC_COPY_NOT_SEPARATELY_VERIFIED",
+      "has_personal_identity_label": false
+    },
+    {
+      "id": 23,
+      "original_filename": "NHP_4669.jpg",
+      "drive_file_id": "19tpS0iEfGJjKxyheCR9-n3IOplWiqW6i",
+      "source_url": "https://drive.google.com/file/d/19tpS0iEfGJjKxyheCR9-n3IOplWiqW6i/view",
+      "visual_cluster": "group_stage",
+      "curation_status": "context",
+      "publication_status": "USER_PROVIDED_FOR_PORTFOLIO_REVIEW;RIGHTS_FOR_PUBLIC_COPY_NOT_SEPARATELY_VERIFIED",
+      "has_personal_identity_label": false
+    },
+    {
+      "id": 24,
+      "original_filename": "NHP_4671.jpg",
+      "drive_file_id": "1SCcZbVkSf55vSzLBnrBCx9Y51ZRnTS0f",
+      "source_url": "https://drive.google.com/file/d/1SCcZbVkSf55vSzLBnrBCx9Y51ZRnTS0f/view",
+      "visual_cluster": "group_stage",
+      "curation_status": "alternate",
+      "publication_status": "USER_PROVIDED_FOR_PORTFOLIO_REVIEW;RIGHTS_FOR_PUBLIC_COPY_NOT_SEPARATELY_VERIFIED",
+      "has_personal_identity_label": false
+    },
+    {
+      "id": 25,
+      "original_filename": "NHP_4678.jpg",
+      "drive_file_id": "1DctoGzswLHvj7-OWGJlxv7dRW6eCxsht",
+      "source_url": "https://drive.google.com/file/d/1DctoGzswLHvj7-OWGJlxv7dRW6eCxsht/view",
+      "visual_cluster": "group_stage",
+      "curation_status": "signature",
+      "publication_status": "USER_PROVIDED_FOR_PORTFOLIO_REVIEW;RIGHTS_FOR_PUBLIC_COPY_NOT_SEPARATELY_VERIFIED",
+      "has_personal_identity_label": false
+    },
+    {
+      "id": 26,
+      "original_filename": "NHP_4679.jpg",
+      "drive_file_id": "1OqDqRVjKcEvuFnPadujqefEHT2nEoCm2",
+      "source_url": "https://drive.google.com/file/d/1OqDqRVjKcEvuFnPadujqefEHT2nEoCm2/view",
+      "visual_cluster": "group_stage",
+      "curation_status": "alternate",
+      "publication_status": "USER_PROVIDED_FOR_PORTFOLIO_REVIEW;RIGHTS_FOR_PUBLIC_COPY_NOT_SEPARATELY_VERIFIED",
+      "has_personal_identity_label": false
+    },
+    {
+      "id": 27,
+      "original_filename": "NHP_4687.jpg",
+      "drive_file_id": "1uu6KyaWGZFVeH7XEkEFFXcfku6CTdrgC",
+      "source_url": "https://drive.google.com/file/d/1uu6KyaWGZFVeH7XEkEFFXcfku6CTdrgC/view",
+      "visual_cluster": "group_stage",
+      "curation_status": "alternate",
+      "publication_status": "USER_PROVIDED_FOR_PORTFOLIO_REVIEW;RIGHTS_FOR_PUBLIC_COPY_NOT_SEPARATELY_VERIFIED",
+      "has_personal_identity_label": false
+    },
+    {
+      "id": 28,
+      "original_filename": "IMG_20231205_081852.jpg",
+      "drive_file_id": "1Z6lbR_1sywlj3p8cTQghgZP97bIbsv-6",
+      "source_url": "https://drive.google.com/file/d/1Z6lbR_1sywlj3p8cTQghgZP97bIbsv-6/view",
+      "visual_cluster": "group_stage",
+      "curation_status": "alternate",
+      "publication_status": "USER_PROVIDED_FOR_PORTFOLIO_REVIEW;RIGHTS_FOR_PUBLIC_COPY_NOT_SEPARATELY_VERIFIED",
+      "has_personal_identity_label": false
+    }
+  ]
+}
