@@ -1,7 +1,7 @@
 # SHOWTIME — Editorial Master v1
 **Working artifact · 08/11/2026 · Content-first, not UI design · Intake remains open**
 
-> **This is the current single editorial handoff for SHOWTIME.** Other `portfolio-data/**` files are source/evidence records and historical intake decisions, not competing live portfolio copy. The official public-facing game title is **Ragnarok: The Last Island**; the source repository is still named `Soul-of-Hero`. The creator channel is **Que Quá Quao**, not “Quê Quá Quao.”
+> **This is the current single editorial handoff for SHOWTIME.** Other `portfolio-data/**` files are source/evidence records and historical intake decisions, not competing live portfolio copy. The official public-facing game title is **Ragnarok: The Last Island**; the source repository is still named `Soul-of-Hero`. The creator channel’s official name is **Que Quá Quao**.
 
 ## 1. Editorial position
 
@@ -230,7 +230,7 @@ All claims carry one of five internal evidence labels: **P** public artifact/sou
 
 - Public source availability does not imply permission to reproduce photos, audio, or private participant records.
 - A university course project may be an excellent creative sample without pretending it was a client commission.
-- Use specific *reported* counts precisely: **Que Quá Quao ~1.1M views**, not 1.3M; 4K+ followers and “hundreds of thousands” likes are owner-reported.
+- Use specific *reported* counts precisely: **Que Quá Quao ~1.1M views**; 4K+ followers and “hundreds of thousands” likes are owner-reported.
 - Do not turn measured event-level funds or public attendance into personal results of a backstage/crew role.
 - Be candid about AI-assisted creation, distinguish conceptual authorship, creative direction, human contributions and actual implementation results.
 - MathPath's release-candidate verification is not validated paid-class enrollment. EventFlow and Ragnarok names do not imply production launch.
