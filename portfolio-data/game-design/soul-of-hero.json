@@ -1,0 +1,77 @@
+{
+  "schema_version": "1.0",
+  "id": "soul-of-hero",
+  "title": "Soul of Hero",
+  "portfolio_section": "GAME_DESIGN",
+  "intake_state": "ACTIVE_DEVELOPMENT",
+  "source_of_claims": {
+    "planned_launch": "USER_DIRECT_REPORT_2026_11_08",
+    "repository": "CONNECTED_GITHUB_READ",
+    "current_design": "USER_PROJECT_CONVERSATION_LAST_ISLAND_15_DAYS_PIVOT"
+  },
+  "launch": {
+    "status": "TARGETED_TO_LAUNCH_BEFORE_PORTFOLIO",
+    "public_release_url": null,
+    "release_date": null,
+    "verification_required": true,
+    "do_not_mark_released_until_verified": true
+  },
+  "repo": {
+    "url": "https://github.com/Khanh-glitch/Soul-of-Hero",
+    "main_readme_snapshot": "Main README reflects prior Chapter 1 action-RPG prototype; current work branches and survival direction have evolved beyond this document.",
+    "main_readme_as_final_authority": false
+  },
+  "game": {
+    "genre_direction": "Godot 4.7 2D top-down action RPG/survival project; active rework toward survival-oriented gameplay",
+    "design_state": "EVOLVING",
+    "examples_from_prior_stable_repo": [
+      "Playable Chapter 1 action RPG prototype and loot/progression/souls prototype per main README"
+    ],
+    "current_final_features": "DO_NOT_ASSERT_UNTIL_INTEGRATED_BUILD_VERIFIED"
+  },
+  "user_contribution": {
+    "self_description": "Vibecoder / AI-assisted creator and design director; verify exact first-person role in the current build",
+    "focus": [
+      "Player fantasy and experience",
+      "Survival systems and economy",
+      "Art / pixel/VFX direction",
+      "Gameplay systems and production coordination",
+      "Quality/acceptance gates"
+    ],
+    "no_invention": "Do not misrepresent collaborator/agent output as hand-written solo engineering or claim all isolated branches are integrated."
+  },
+  "showcase": {
+    "concept": "ENTER THE WORLD",
+    "desired_primary_action": "PLAY_PUBLIC_RELEASE_WHEN_VERIFIED",
+    "if_not_released": "Use accurate development label and verified actual captures; never fabricate playable demo.",
+    "sections": [
+      "Gameplay first",
+      "World and survival decisions",
+      "Combat/visual identity",
+      "Progression and systems",
+      "Before/after improvements supported by evidence",
+      "Development process"
+    ],
+    "media_plan": [
+      "Source-linked actual integrated game video",
+      "Actual Godot screenshots from latest accepted build",
+      "Playable export/link when live",
+      "Design sketches/asset provenance only when releasable"
+    ]
+  },
+  "metrics_policy": {
+    "sales_and_player_counts": "NO_MEANINGFUL_VERIFIABLE_VALUES_SUPPLIED;DO_NOT_INVENT_OR_MAKE_A_REQUIRED_FIELD",
+    "alternative_proof": [
+      "Verified release build",
+      "Continuous playable route",
+      "Demonstrable interaction",
+      "Design and iteration artifacts",
+      "Independent testers/feedback if later available"
+    ]
+  },
+  "editorial_state": {
+    "publication": "DO_NOT_PUBLISH",
+    "state": "WAIT_FOR_VALIDATED_NEW_BUILD_FOR_FINAL_VISUALS",
+    "source_integrity": "README_MAIN_OLDER_THAN_ACTIVE_DEVELOPMENT"
+  }
+}
