@@ -1,0 +1,100 @@
+{
+  "schema_version": "1.0",
+  "id": "learning-and-academic-research",
+  "section": "Learning Design & Academic Research",
+  "intake_status": "OPEN;FIRST_PASS_CURATED",
+  "public_release": "DO_NOT_PUBLISH_UNTIL_OWNER_REVIEW",
+  "editorial_priority": "SUPPORTING_EXHIBIT_WITH_ONE_RESEARCH_CASE_STUDY;NOT_A_TOP_LEVEL_HERO",
+  "positioning": {
+    "statement_vi": "Thiết kế lộ trình học cá nhân hóa, hỗ trợ công việc học thuật và thực hành nghiên cứu có cấu trúc.",
+    "statement_en": "Personalized learning support, academic project guidance, and structured qualitative research.",
+    "reason": "Show transferable skills (problem diagnosis, structured iteration, analysis, evidence review) rather than an inflated full-time teaching credential."
+  },
+  "user_reported_evidence": {
+    "tutoring": {
+      "fact": "Gia sư Toán 1:1 cho một người học mất căn bản, đạt mục tiêu môn học đã đặt ra.",
+      "subject": "Mathematics",
+      "learner_count": 1,
+      "starting_point": "FOUNDATIONAL_GAPS;USER_REPORTED",
+      "goal_outcome": "TARGET_COURSE_GOAL_ACHIEVED;USER_REPORTED",
+      "exact_target_grade": "NOT_SUPPLIED",
+      "date_or_duration": "NOT_SUPPLIED",
+      "credentials": "No teaching certificate or formal institutional appointment claimed.",
+      "portfolio_language_vi": "Hướng dẫn Toán 1:1 theo nhu cầu, hỗ trợ một người học củng cố nền tảng và đạt mục tiêu môn học.",
+      "portfolio_language_en": "Provided personalized one-on-one mathematics tutoring, helping a learner rebuild foundational understanding and meet their course goal."
+    },
+    "academic_support": {
+      "fact": "Có một số lần hỗ trợ tiểu luận và khóa luận.",
+      "frequency": "SEVERAL_OCCASIONS;NOT_COUNTED",
+      "boundaries": "No assumption of ghostwriting, authorship, proofreading service, thesis supervision or formally paid teaching; describe as academic support unless specific activities confirmed.",
+      "public_language_vi": "Hỗ trợ học thuật theo từng dự án cho một số bài tiểu luận và khóa luận.",
+      "public_language_en": "Provided project-based academic support across several essay and thesis workflows."
+    },
+    "reported_academic_results": {
+      "gpa": {
+        "value": 3.77,
+        "scale": "NOT_SPECIFIED",
+        "status": "USER_REPORTED;TRANSCRIPT_NOT_VERIFIED",
+        "public_display": "OPTIONAL_AFTER_SCALE_CONFIRMATION"
+      },
+      "essay_grades": {
+        "reported_all_above_8": true,
+        "reported_share_above_9": "80%",
+        "sample_size": "UNKNOWN",
+        "time_range": "UNKNOWN",
+        "grading_scale": "ASSUMED_10_FROM_EXPRESSION_BUT_NOT_VERIFIED",
+        "whose_assignments": "LIKELY_USER_SELF_ASSESSMENT;NOT_INDEPENDENTLY_ESTABLISHED",
+        "status": "USER_REPORTED_ONLY",
+        "public_display": "HOLD—do not use 100%/80% as a success-rate chart without denominator, period and ownership clarification."
+      }
+    },
+    "user_reports_methodology": "There is a personal method/process for tutoring and academic work. Exact steps were not supplied; do not represent a suggested process as the owner's verified operating method."
+  },
+  "source_supported_research": {
+    "source": "Connected private Google Drive authored thesis working document; title and method read 2026-11-08",
+    "title_vi": "Đánh giá nội dung thị giác quảng bá sự kiện có sự tham gia của AI tạo sinh: So sánh giữa nhóm phía sản xuất và người tham dự tại Thành phố Hồ Chí Minh",
+    "affiliation_as_in_draft": "University-level graduation thesis; author identified in document",
+    "document_status": "WORKING_DRAFT;NOT_PROOF_OF_SUBMISSION,FINAL_GRADE,PUBLICATION,OR_AWARD",
+    "methods_from_draft": [
+      "Exploratory and comparative qualitative design",
+      "Semi-structured interviews",
+      "Photo elicitation / visual stimulus",
+      "Framework Method qualitative analysis",
+      "Comparative analysis of production-side and attendee interpretations"
+    ],
+    "published_excerpt_policy": "Only high-level topic and method description; never expose participant transcripts, student IDs, instructor details, raw respondent data, or private Drive URLs.",
+    "strong_story": "Research into how creators and audiences assess AI-assisted event promotion visuals, combining the owner's event production knowledge with audience-oriented qualitative inquiry.",
+    "candidate_showcase_mode": "One editorial research case with question → study design → evidence organization → interpretation → limits; no invented findings or unverified data claims."
+  },
+  "visual_presentation": {
+    "section_label": "RESEARCH & LEARNING",
+    "page_role": "Secondary cross-disciplinary proof point nested in SHOWTIME's Archive or About / Ways of Thinking; visually complement Event + AI.",
+    "structure": [
+      "A single research showcase using a methodological diagram, safe graphic example and concise story (not raw data)",
+      "One compact 1:1 mathematics learning vignette: starting challenge → personalized support → user-reported goal achieved",
+      "Short academic support note; avoid presenting clients' work as owner's authorship",
+      "Optional small GPA fact after scale is confirmed"
+    ],
+    "recommended_interactions": [
+      "Explore how the same example visual may invite different evaluations; labeled as a conceptual illustration, not thesis experimental result",
+      "Expand a process card to show research choices and evidence discipline",
+      "Avoid pretend testimonials or faux numeric performance dashboards"
+    ],
+    "process_example_not_a_claim": [
+      "Diagnose baseline",
+      "Set measurable objective",
+      "Structure milestones",
+      "Practice and feedback",
+      "Review outcomes"
+    ],
+    "process_example_status": "DRAFT_EXPLANATORY_MODEL_PENDING_OWNER_VERIFICATION"
+  },
+  "restrictions": [
+    "Selective self-presentation is fine, but no invented certifications, student roster, teacher employment, participant success rates, academic distinctions, grades or completed thesis results.",
+    "Do not claim 100% student score improvement; 100%/80% described by user refers to essays but denominator and assignment owner are unspecified.",
+    "Respect academic integrity and privacy; avoid implying ghostwriting other students' submitted work.",
+    "Self-authored thesis is evidence of research process, not of external acceptance or publication.",
+    "Do not publish sensitive Drive document URLs or excerpts; no respondent-level material."
+  ],
+  "next_action": "No user input required to stage the supporting section. A future prepublication copy review can resolve GPA scale, exact tutoring method, and whether to display essay grade metrics."
+}
