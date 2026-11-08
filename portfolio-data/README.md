@@ -93,7 +93,7 @@ Reference repo: https://github.com/Khanh-glitch/eventflow-pro . Personal origin 
 
 ## Game Design intake — 08 Nov 2026
 
-Publicly playable **APEX CHAOS** and planned-before-portfolio-launch **Soul of Hero** are now staged as separate truthful records:
+Publicly playable **APEX CHAOS** and planned-before-portfolio-launch **Ragnarok: The Last Island** are now staged as separate truthful records:
 - `game-design/apex-chaos.json` — public HTML5 demo at `https://realbae.itch.io/apex-chaos`, player/revenue numbers not claimed.
 - `game-design/soul-of-hero.json` — active Godot game, public release planned by owner but not yet confirmed; current game has evolved beyond old `main` README. No assumed launch or integrated features.
 - `game-design/GAME_DESIGN_SHOWCASE_POLICY.md` — gameplay/playable-first evidence, no invented traction and precise state/version boundaries.
