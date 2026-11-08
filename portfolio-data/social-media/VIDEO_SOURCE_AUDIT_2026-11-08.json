@@ -18,13 +18,19 @@
       "modified": "2026-09-21T07:55:47.000Z",
       "raw_download": "SUCCEEDED_2026-11-08",
       "local_parse": "BLOCKED_CONTAINER_MEDIA_TOOLS_CLIENTERROR",
-      "role": "UNKNOWN",
-      "content": "NOT_INSPECTED",
+      "role": "USER_REPORTED",
+      "content": "USER_PROVIDED_CLASSIFICATION_ONLY;AUDIO_VIDEO_NOT_VISUALLY_REVIEWED",
       "drive_url": "https://drive.google.com/file/d/1sR4CaGBWVUNnmaIQK-gWbmYP_0W4KDko/view",
-      "editorial_classification": "UNCLASSIFIED",
+      "editorial_classification": "War Remnants Museum field project",
       "display_permission": "NOT_DETERMINED",
       "source_origin": "Downloaded Facebook video via FDown naming convention; not evidence of original ownership or uploader identity",
-      "next_validation": "Preview 3–6 frames plus duration/audio at the original MP4 when media extraction is available; then map to video/project/role."
+      "next_validation": "Preview 3–6 frames plus duration/audio at the original MP4 when media extraction is available; then map to video/project/role.",
+      "user_confirmed_project_type": "War Remnants Museum field project",
+      "user_confirmed_roles": [
+        "Project lead",
+        "Edit"
+      ],
+      "editorial_priority": "SUPPORTING"
     },
     {
       "id": "1Q8fq-i-Of1jMqeuFCPNCpLhZTatq4j4h",
@@ -34,13 +40,20 @@
       "modified": "2026-09-21T07:53:52.563Z",
       "raw_download": "DEFAULT_FETCH_ATTEMPTED;BINARY_ARTIFACT_MOUNTED_BUT_CONNECTOR_RESPONSE_TOO_LARGE",
       "local_parse": "NOT_PERFORMED;CONTAINER_TOOL_CLIENTERROR",
-      "role": "UNKNOWN",
-      "content": "NOT_INSPECTED",
+      "role": "USER_REPORTED",
+      "content": "USER_PROVIDED_CLASSIFICATION_ONLY;AUDIO_VIDEO_NOT_VISUALLY_REVIEWED",
       "drive_url": "https://drive.google.com/file/d/1Q8fq-i-Of1jMqeuFCPNCpLhZTatq4j4h/view",
-      "editorial_classification": "UNCLASSIFIED",
+      "editorial_classification": "China Town commercial video (course project)",
       "display_permission": "NOT_DETERMINED",
       "source_origin": "Downloaded Facebook video via FDown naming convention; not evidence of original ownership or uploader identity",
-      "next_validation": "If media-capable environment recovers, read frames and audio; a default fetch produced a 528,755,141-byte decoded message above the 67,108,864-byte limit, not video content."
+      "next_validation": "If media-capable environment recovers, read frames and audio; a default fetch produced a 528,755,141-byte decoded message above the 67,108,864-byte limit, not video content.",
+      "user_confirmed_project_type": "China Town commercial video (course project)",
+      "user_confirmed_roles": [
+        "Project lead",
+        "Voice-over",
+        "On-camera"
+      ],
+      "editorial_priority": "FEATURED_SECONDARY"
     },
     {
       "id": "1O5hcaN86PB4KGd9Sb476Mdahqgv6W-bY",
@@ -50,13 +63,22 @@
       "modified": "2026-09-21T07:23:29.726Z",
       "raw_download": "NOT_ATTEMPTED_TO_AVOID_ADDING_251MB_WITH_EXTRACTION_BLOCKED",
       "local_parse": "NOT_STARTED",
-      "role": "UNKNOWN",
-      "content": "NOT_INSPECTED",
+      "role": "USER_REPORTED",
+      "content": "USER_PROVIDED_CLASSIFICATION_ONLY;AUDIO_VIDEO_NOT_VISUALLY_REVIEWED",
       "drive_url": "https://drive.google.com/file/d/1O5hcaN86PB4KGd9Sb476Mdahqgv6W-bY/view",
-      "editorial_classification": "UNCLASSIFIED",
+      "editorial_classification": "Crowd effect social experiment",
       "display_permission": "NOT_DETERMINED",
       "source_origin": "Downloaded Facebook video via FDown naming convention; not evidence of original ownership or uploader identity",
-      "next_validation": "Preview 3–6 frames plus duration/audio at the original MP4 when media extraction is available; then map to video/project/role."
+      "next_validation": "Preview 3–6 frames plus duration/audio at the original MP4 when media extraction is available; then map to video/project/role.",
+      "user_confirmed_project_type": "Crowd effect social experiment",
+      "user_confirmed_roles": [
+        "Idea",
+        "Script",
+        "Experiment design",
+        "Voice-over",
+        "On-camera"
+      ],
+      "editorial_priority": "SUPPORTING"
     }
   ],
   "source_evidence": {
@@ -64,9 +86,10 @@
     "binary": "Google Drive authenticated fetch for first video; returns raw file reference; no visual frames were obtained",
     "failed_media_extraction": "Container and Python media inspection returned ClientError after raw 266MB file was fetched. Do not represent the file as viewed or playable.",
     "public_web": "Public Drive URL open is unavailable; not a reliable method for private media.",
-    "second_video_fetch_attempt": "An additional default Google Drive fetch of second MP4 attempted to inline content and failed at 528,755,141 decoded bytes > 67,108,864 limit; tool reported mounted artifact, but no analysis output. Do not retry default media fetch."
+    "second_video_fetch_attempt": "An additional default Google Drive fetch of second MP4 attempted to inline content and failed at 528,755,141 decoded bytes > 67,108,864 limit; tool reported mounted artifact, but no analysis output. Do not retry default media fetch.",
+    "owner_clarification_2026_11_08": "User supplied exact classification for all three MP4 IDs. Mapping is now known from owner despite failed video-frame extraction; source remains not visually reviewed."
   },
-  "release_decision": "HOLD_ALL_FILES_AS_UNCLASSIFIED_SOURCE; no evidence that any of these are user's videos, work product or permitted public portfolio media.",
-  "next_work": "Classify by extracted frames/video metadata when container-backed media inspection recovers or if actual original reel links are found via connected sources; avoid user chores until access options exhausted.",
+  "release_decision": "CATALOGUE_AS_OWNER_DESCRIBED_PROJECTS;VIDEO_CONTENT_AND_SPECIFIC_PRODUCTION_QUALITY_NOT_INDEPENDENTLY_VERIFIED;NO_UNAPPROVED_REHOST.",
+  "next_work": "Use curated Social Media Master record for hierarchy; actual playback QA and rights review only when presenting final sourced media.",
   "audited_by": "SHOWTIME editorial source audit; does not include technical codec or content inspection"
 }
