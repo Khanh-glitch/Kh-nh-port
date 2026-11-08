@@ -7,7 +7,7 @@
   "facts_and_proof_levels": {
     "owner": "Role/results and labels directly supplied by user; self-reported and not independently audited.",
     "drive": "Link metadata and filenames confirmed through authenticated Google Drive connector; video frames/audio not yet inspected.",
-    "tiktok": "Handle directly given by user; public profile and metric counts could not be independently fetched (TikTok blocks direct indexing).",
+    "tiktok": "Owner supplied direct TikTok post URL https://www.tiktok.com/@quequaquao/video/7530989283956559122. Approximately 1.1M views on it and >4000 followers are owner-reported; direct public count inspection was blocked, not externally certified.",
     "money": "Commission conversion should be omitted if not part of the proposed claim, but no substitute commercial performance may be fabricated."
   },
   "works": [
@@ -20,7 +20,8 @@
       "link_type": "creator_profile",
       "evidence": {
         "owner_confirmation": "Channel operated end-to-end by portfolio owner",
-        "external_metadata": "PUBLIC_TIKTOK_WEB_ACCESS_BLOCKED_OR_NOT_INDEXED; NO CURRENT COUNT VERIFIED"
+        "external_metadata": "PUBLIC_TIKTOK_WEB_ACCESS_BLOCKED_OR_NOT_INDEXED; NO CURRENT COUNT VERIFIED",
+        "external_video": "USER_PROVIDED_DIRECT_POST_URL; exact URL recorded, view/like counts not independently accessible through public web fetch (TikTok blocked)."
       },
       "roles": [
         "Content strategy and publishing plan",
@@ -32,13 +33,14 @@
       ],
       "owner_reported_results": {
         "followers": ">4000",
-        "best_video_views": ">1300000",
+        "best_video_views": "~1100000",
         "best_video_likes": "hundreds of thousands",
-        "specific_viral_video_id": null
+        "specific_viral_video_id": "7530989283956559122"
       },
-      "editorial_pitch": "Built and operated a short-form TikTok channel across concept, production, publishing and iteration, generating one breakout video with over 1.3 million views (owner-reported).",
+      "editorial_pitch": "Built and operated a short-form TikTok channel across concept, production, publishing and iteration. A linked breakout post reached approximately 1.1 million views (owner-reported).",
       "not_show": "Affiliate commission conversion—this is not a commerce case unless one is specifically commissioned; do not infer commercial ROI.",
-      "proof_gate": "Locate viral exact post link or screenshot of in-app analytics before independent public performance-stat verification."
+      "proof_gate": "Direct viral post URL supplied and stored. Live view/like count cannot be independently verified because TikTok page is inaccessible; use owner-reported 'approximately 1.1M' and update after later analytics review if available.",
+      "viral_post_url": "https://www.tiktok.com/@quequaquao/video/7530989283956559122"
     },
     {
       "key": "china-town",
