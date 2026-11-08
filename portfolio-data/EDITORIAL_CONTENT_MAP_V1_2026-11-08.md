@@ -1,3 +1,61 @@
+## EDITORIAL SYNTHESIS V1.2 — SHARED STORY / TARGET-ROLE EVIDENCE (08 Nov 2026)
+
+**Stage:** content strategy and evidence curation only. This section is the *current governing editorial decision*, not an instruction to design/build UI, and it does not close intake.
+
+### One coherent identity, multiple ways to prove it
+
+**Working identity (editorial candidate, not yet owner-approved brand tagline):** A multidisciplinary **creative producer and AI-assisted interactive-product builder** who works across live events, content, music, games and learning products.
+
+**Why this is defensible:** The same working pattern appears in materially different outputs: understand the audience and experience, shape an idea into production steps, use the available tools/collaborators, check actual behavior, and deliver an inspectable artifact. Do **not** stretch this into a claim of hand-coding every system, running a company, or producing verified commercial ROI.
+
+**Short Vietnamese intro candidate:**  
+> Tôi phát triển trải nghiệm từ ý tưởng đến sản phẩm có thể cảm nhận và tương tác — từ điều phối chương trình trực tiếp, sản xuất nội dung, biểu diễn âm nhạc đến thiết kế game và công cụ số bằng quy trình AI-assisted. Tôi quan tâm đến điều người dùng thực sự trải nghiệm, cách tổ chức công việc để tạo ra kết quả, và những gì có thể kiểm chứng bằng sản phẩm thật.
+
+**Short English intro candidate:**  
+> I create and direct experiences across live events, digital products, games, content and music. My work combines production thinking, creative execution and AI-assisted prototyping, with an emphasis on real user experience and tangible outputs.
+
+These are candidate descriptions to test against future owner direction; not public copy authorization.
+
+### The five proof pillars (content only; NOT a site navigation structure)
+
+| Pillar | Primary proof | Supporting proof | Editorial claim |
+|---|---|---|---|
+| **LIVE PRODUCTION** | Một Chút Yêu Thương 3, Bản Giao Hưởng Xanh; GET DOWNTOWN | EventFlow *historical* demo | Actual logistics, sidestage readiness, radio/cue coordination; not overall show leadership |
+| **CONTENT & AUDIENCE** | Quê Quá Quao; owner-reported ~1.1M-view [TikTok post](https://www.tiktok.com/@quequaquao/video/7530989283956559122), 4K+ followers | China Town; crowd experiment; museum film; VEINORA; OOH spec clips; voice samples | Full-cycle short-form content direction and transferable editing/voice/storytelling work |
+| **INTERACTIVE PRODUCTS & GAMES** | APEX CHAOS public playable demo; MathPath source-backed learning product | EventFlow rebuild; Soul of Hero planned release; Alphabet Engine, Six Primordials as labs | Real digital product/game outputs and design thinking; avoid launch/adoption and code-authorship inflation |
+| **MUSIC & PERFORMANCE** | “Nếu ngày mai” vocalist credit, “Mùa Hạ Thứ 18” composer credit; 28 performance photos with a confirmed hero subject | Social demo tapes, live archive | Published/sourced creative work and stage identity; no invented commercial music reach |
+| **RESEARCH & METHOD** | Qualitative graduation-thesis working draft; reported advanced-math tutoring success with one learner | ELP structured podcast content workflow, M² Happiness planning notes | Evidence-oriented creative decisions, structured learning and repeatable processes; not degrees/awards not granted or fake student cohorts |
+
+### Targeted emphasis without changing the facts
+
+1. **Event/Production recruiter:** lead with actual side-stage coordination at MCYT/BGHX and pre-show logistics at GDT; EventFlow only as proof of domain-informed toolmaking. Do not promote irrelevant follower counts as event metrics.
+2. **Social Media/Video/Creative recruiter or client:** lead with Quê Quá Quao's owner-confirmed viral **1.1M-view** video, 4K+ followers, strategy/edit/voice/management; China Town as course commercial-film leadership; finish with specialty editing, VO and OOH spec. No affiliate-conversion/GMV claims.
+3. **Game/Interactive/Creative Technology:** lead with playable APEX CHAOS and MathPath's test/source-backed learning product. Present Soul of Hero as versioned development until an actual released build is reachable. EventFlow is an active rebuild; previous demo is historical proof. Research and music can show breadth without drowning gameplay.
+4. **Music/Performing/Voice:** lead with official song and composer/performance sources; two VO samples demonstrate genre range; use real stage photographs. Quê Quá Quao provides media-production context, not proof of professional voice acting credits.
+5. **Research/Teaching/Learning design:** lead with MathPath's pedagogy and system constraints, then own qualitative thesis methods and narrowly scoped one-on-one tutoring. GPA and essay-grade percentages should only be used when their scales and scope are clear.
+
+### Priority verdicts after the complete Social source round
+
+**FEATURED, usable for editorial story now:** Quê Quá Quao (post directly linked, metrics owner-reported), APEX CHAOS public demo, Music & Performance, three production event cases, China Town course video. MathPath is a **strong featured product candidate**, with release-candidate facts source-backed but real public learner use not independently proved.
+
+**FEATURED, version-gated:** Soul of Hero following real release; EventFlow following rebuild/accepted experience.
+
+**SUPPORT / ARCHIVE:** crowd experiment, museum field film, VEINORA, voice reel, OOH concept shorts, ELP structured workflow, research/tutoring, Prompt To Play context, Alphabet Engine, Six Primordials, Happiness planning notes, older performance archive.
+
+**PRIVATE / HOLD:** personal interactive gift experience, unpublished raw thesis interview data, any asset whose consent/rights are unknown, inaccessible CovaraMaris shortcut contents, CapCut tools with no current reproduced output.
+
+**Minimal evidence still needed before publication (not a broad homework assignment):**
+- Actual play/video/audio QA where no frames have been reviewed.
+- Clear publication rights/credit for third-party photos, audio, people and private artifacts.
+- New release URL and true integrated features for SOH/EventFlow, and public learner access/status for MathPath.
+- Owner approval of the final positioning and exact role claims before publishing.
+- **Quê Quá Quao:** exact breakout post is now identified; current count remains owner reported because TikTok direct access was blocked. Do not keep asking which clip it is.
+
+**Stop rule:** For already-grounded works, no further source archaeology is required merely to keep the project moving. Move each case to short draft copy and proof links. A blocked high-effort video inspection should not prevent editorial completion of other cases.
+
+
+---
+
 # SHOWTIME — Evidence-backed Content Map v1
 **Date:** 08 Nov 2026  
 **Purpose:** editorial product of the *discovery / verification / curation* stage. This is NOT a UI design, code brief, public website launch or a freeze of user submissions.
