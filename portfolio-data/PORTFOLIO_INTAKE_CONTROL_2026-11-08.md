@@ -1,3 +1,16 @@
+## CURRENT EXPERIENCE CONCEPT — 08 Nov 2026
+
+**New deliverable:** `SHOWTIME_EXPERIENCE_BLUEPRINT_V1.md` (concept stage, not site design) created after the owner's explicit request to skip media clipping.
+
+**Owner decision:** No cuts/trimming/shortened showreels for existing video and voice work. The material is generally too short to justify cutting. Photo stills may be curated later. Use original full-length videos/audio or link to originals, with rights/format checks before public use. The earlier media highlight extraction/select-clip task is **CANCELLED**.
+
+**Proposed experience:** `The Show Is the Work`; a single SHOWTIME conceptual world with frontstage (real work), backstage (owner's actual role), proof (source links). Two discovery paths: a 30-second recruiter/client evidence pass and a free exploratory experience. The interactive layer must serve the actual work and must not slow access or require a 3D-game navigation prerequisite. Reference research includes Bruno Simon and makemepulse.
+
+**Next authorized step:** concept-level editorial/experience work. **Not authorized:** HTML, mockups, UI design, site build, publishing, or new 3D asset generation. A separate creative-direction choice is needed before any visual implementation.
+
+
+---
+
 ## CURRENT EDITORIAL ARTIFACT — 08 Nov 2026
 
 **Single source for narrative/portfolio copy:** `SHOWTIME_EDITORIAL_MASTER_V1.md`. This document is an internal status/operations guide only. Previously accumulated Content Maps and capability matrices are source/historical context, **not competing final content**.
