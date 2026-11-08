@@ -3,9 +3,19 @@
 **Status:** first-pass content direction, not final public copy, pending owner's later review.  
 **Design intent:** portray an interdisciplinary creative practitioner with strong learning, research and reasoning skills—not as a formally credentialed lecturer, full-time academic supervisor, or a massive tutoring business.
 
+## Editorial pivot after repository audit — 08 Nov 2026
+
+**MathPath is now a separate featured digital-product case** (see `../digital-products/mathpath.json`). It is no longer correct to treat Research & Learning solely as a tutoring/research sidebar. The public Learning/Research copy below remains a short supporting exhibit, while the product itself belongs with other Interactive Systems.
+
+- **Featured product:** MathPath — source-backed Living Board, seven-stage Chapter 1, K51 practice, Skill/Mastery, secure assessment and progress. It is a tested *release candidate*, not a verified commercially launched teaching platform.
+- **Related but distinct practice:** one-on-one Advanced Mathematics tutoring of one learner who reached their course goal, reported by owner. **Do not** claim this learner was a MathPath user or that the app was made for them without confirmation.
+- **Research:** private graduation-thesis draft on AI-assisted event-promotion visuals, with qualitative interview/photo elicitation/Framework Method; no private transcripts, invented results or public-submission claim.
+
+The following bilingual text is now a **supporting text block**, not the complete Learning showcase. The **MathPath product record is the current source of truth for product features and tests**.
+
 ## Position in portfolio
 
-- Put a single strong **Research & Learning** feature inside *The Archive / Ways of Thinking*. It must support **Event Production** and **AI & Creative Experiments**, not compete with the playable games, stage photography, published music and EventFlow.
+- Put **MathPath** as a feature within Digital Products and a compact **Research & Learning** story inside *The Archive / Ways of Thinking*. It must support **Event Production** and **AI & Creative Experiments**, not compete with the playable games, stage photography, published music and EventFlow.
 - Research and tutoring are two genuine but different competencies. Do not mix a student course outcome with the owner's own grades.
 - Instead of dozens of essay-grade metrics, show one excellent research **methodology** case and a concise one-to-one learning outcome.
 - Only include academic data when the methodology and source are safe to disclose; raw participant transcripts/interviews remain private.
