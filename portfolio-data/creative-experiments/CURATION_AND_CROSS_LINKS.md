@@ -36,7 +36,7 @@ Fallback **right now**: an event participation **candidate** in the private inta
 - A 406,210-byte `six-primordials-boss-lab-standalone.html` exists in the Project's connected Library and has been inspected at source-header level.
 - Source includes boss selection, a pixel-rendered battle canvas, a skill list, sprite/pose editor and interactive controls.
 - **Not verified:** pixel quality, runtime behavior, currently live game integration, original authorship attribution.
-- If the exhibit proceeds, put it beside **Soul of Hero** as a working design experiment / interactive artifact; don't count it as a separate released game.
+- If the exhibit proceeds, put it beside **Ragnarok: The Last Island** as a working design experiment / interactive artifact; don't count it as a separate released game.
 - A lightbox/station with authentic source and real interaction is more compelling than screenshots of code.
 
 ### C. AI VIDEO PRODUCTION EXPERIMENTS (hold for binary review)
@@ -57,7 +57,7 @@ Earlier project discussions referenced multiple CapCut-adjacent AI-assisted auto
 
 ## Editorial priority
 1. **Ready to turn into strong visible modules:** Event 3 sourced stories, Music's real Spotify/YouTube track and composer post, 28 verified live photographs, APEX CHAOS public playable demo.
-2. **Active but awaiting actual current state:** Soul of Hero planned launch; EventFlow Pro redesign.
+2. **Active but awaiting actual current state:** Ragnarok: The Last Island planned launch; EventFlow Pro redesign.
 3. **Source exists but needs review:** Prompt to Play game shortcut, standalone Boss Lab source and the unsorted social-media video archive.
 4. **Reference only:** Music Vibes mockup, generic room props, social debate still.
 5. **Future category:** Teaching / Academic / Research, based on authentic selected achievements instead of the entire private document dump.
