@@ -1,3 +1,24 @@
+## ADDENDUM — Independent repository audit / 08 Nov 2026
+
+The source audit expanded beyond the previous list, and **MathPath is a material correction to the SHOWTIME portfolio priorities**.
+
+**Verified by reading source repo documentation:**
+- `Khanh-glitch/MathPath`: substantial interactive math-learning product (Living Board, 7-stage Chapter 1, K51 10-question practice, Skill/Mastery, private grading, progress). October 2026 historical production-candidate audit reports 337 application tests and 14 browser contracts but paid classes were not yet opened. Current launch must be verified; **not an established paid education business**. Portfolio source record: `digital-products/mathpath.json`.
+- `Khanh-glitch/alphabet-engine` and `alphabet-engine-godot`: a **single evolving game systems experiment** where letters produce words and physical effects. Source intentions only; no verified Godot slice or release. `game-design/alphabet-engine.json`.
+- `Khanh-glitch/qu-sn-ts`: personally sensitive interactive audio/storytelling source with 3D/audio/filmstrip/lyrics in README. Keep **PRIVATE OPT-IN** candidate, publish no private imagery/audio/recipient information. `creative-experiments/private-interactive-storytelling-candidate.json`.
+- `TEAMWORK` repository has only minimal README in this audit, no verified creative deliverable.
+- `APEX-CHAOS-ASSET-VAULT` describes raw creative candidates and rejected assets, not automatically approved runtime art. Do not indiscriminately pull that into the public portfolio.
+- Public search for `CovaraMaris` did not reveal an independently verifiable project page. It remains unknown, not a contest result.
+
+**New portfolio editorial output:** `CAPABILITY_PROOF_MATRIX_V1_2026-11-08.md` connects Event Production, Creative Technologist, Game Design, Content Production, Research/Learning, and Music to concrete evidence without duplicating projects. `EDITORIAL_CONTENT_MAP_V1_2026-11-08.md` revised to prioritize MathPath.
+
+**Social media blocker remains technical:** first 266MB MP4 received as binary but container extraction unavailable; second attempted as default inline fetch and failed a >64MB message limit. Both remain visually uninspected. Do NOT retry huge inline-base64 downloads; next extraction must be file-backed with a functioning media-capable runtime.
+
+**No user input currently required. No interface work authorized.**
+
+
+---
+
 ## EXECUTION ROUND COMPLETED — Social / AI source audit and Content Map v1 (08 Nov 2026)
 
 The previously assigned tasks have been **executed in this conversation**, not just planned.
