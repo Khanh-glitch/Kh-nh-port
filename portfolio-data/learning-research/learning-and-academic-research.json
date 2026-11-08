@@ -4,7 +4,7 @@
   "section": "Learning Design & Academic Research",
   "intake_status": "OPEN;FIRST_PASS_CURATED",
   "public_release": "DO_NOT_PUBLISH_UNTIL_OWNER_REVIEW",
-  "editorial_priority": "SUPPORTING_EXHIBIT_WITH_ONE_RESEARCH_CASE_STUDY;NOT_A_TOP_LEVEL_HERO",
+  "editorial_priority": "SUPPORTING_RESEARCH_AND_TUTORING_EXHIBIT;MATHPATH_FEATURED_IN_DIGITAL_PRODUCTS",
   "positioning": {
     "statement_vi": "Thiết kế lộ trình học cá nhân hóa, hỗ trợ công việc học thuật và thực hành nghiên cứu có cấu trúc.",
     "statement_en": "Personalized learning support, academic project guidance, and structured qualitative research.",
@@ -96,5 +96,15 @@
     "Self-authored thesis is evidence of research process, not of external acceptance or publication.",
     "Do not publish sensitive Drive document URLs or excerpts; no respondent-level material."
   ],
-  "next_action": "No user input required to stage the supporting section. A future prepublication copy review can resolve GPA scale, exact tutoring method, and whether to display essay grade metrics."
+  "next_action": "No user input required to stage the supporting section. A future prepublication copy review can resolve GPA scale, exact tutoring method, and whether to display essay grade metrics.",
+  "related_product": {
+    "id": "mathpath",
+    "record": "../digital-products/mathpath.json",
+    "source_repo": "https://github.com/Khanh-glitch/MathPath",
+    "reviewed_in_this_intake": "README; production audit & rebuild docs",
+    "relevance": "A substantial math-learning product connecting learning design, progression/assessment, gamification and AI-assisted software-making.",
+    "exact_causal_relationship_to_tutoring": "NOT_CONFIRMED; do not assert MathPath was built for the one learner",
+    "editorial_owner": "MathPath is featured as a digital product, while tutoring remains a compact human-outcome vignette under Research & Learning.",
+    "caveat": "The paid-class commercial workflow is a release candidate, not proven commercially launched."
+  }
 }
