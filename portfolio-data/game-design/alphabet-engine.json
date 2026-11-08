@@ -1,0 +1,40 @@
+{
+  "schema_version": "1.0",
+  "id": "alphabet-engine",
+  "title": "Alphabet Engine",
+  "source": {
+    "browser_prototype": {
+      "repository": "https://github.com/Khanh-glitch/alphabet-engine",
+      "readme": "Systemic roguelite autobattler where letters form words, words become physical weapons, and combat creates cascades",
+      "inspection": "README_ONLY; playable prototype and working rules not tested"
+    },
+    "godot_redesign": {
+      "repository": "https://github.com/Khanh-glitch/alphabet-engine-godot",
+      "engine": "Godot 4.7.2",
+      "readme_goal": "2.5D fixed-camera oblique top-down vertical slice with communal alphabet economy, word recipes, physical manifestations and semantic interactions",
+      "inspection": "README_GOAL_ONLY; linked design documents unavailable on default branch in current audit"
+    }
+  },
+  "current_state": "CONCEPT_AND_IN_PROGRESS_VERTICAL_SLICE;NO_VERIFIED_RELEASE",
+  "personal_role": "Owner's connected repositories, but no independently verified first-person implementation role; likely AI-assisted design direction, needs optional later copy approval.",
+  "unique_mechanic": "Word construction drives tactical objects and emergent combat loops instead of traditional pickup/skill-only combat.",
+  "curation": {
+    "home_section": "GAME DESIGN — SYSTEMIC EXPERIMENTS",
+    "tier": "ARCHIVE_FEATURE_CANDIDATE",
+    "why": "Distinct systems-design idea adds creative breadth beyond Apex Chaos and Soul of Hero, but needs an actual gameplay proof to outrank them.",
+    "what_to_show_if_verified": [
+      "Rule explanation from actual source/vertical slice",
+      "Real gameplay of letters → word → object → interaction → combat cascade",
+      "Limits of player agency and build freedom"
+    ],
+    "do_not_claim": [
+      "Shipped game",
+      "Playable vertical slice validated",
+      "Complete metagame",
+      "Working word-to-object VFX solely from README"
+    ],
+    "not_duplicate": "Do not count two repositories as two separate portfolio games."
+  },
+  "status": "SOURCE_FOUND_NO_RUNTIME_ACCEPTANCE",
+  "publication": "DO_NOT_PUBLISH"
+}
