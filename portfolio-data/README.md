@@ -74,3 +74,16 @@ Publicly playable **APEX CHAOS** and planned-before-portfolio-launch **Soul of H
 - `game-design/GAME_DESIGN_SHOWCASE_POLICY.md` — gameplay/playable-first evidence, no invented traction and precise state/version boundaries.
 
 Neither project requires impressive sales or play counts to be included. The honest representation is playable demo vs developing game, then actual release when verified.
+
+## AI & Creative Experiments / consolidated control — 08 Nov 2026
+
+The assistant has verified three still images on GitHub's `new` branch: a VNG Prompt To Play event-work photograph, a social/group-activity still, and the Music Vibes portfolio concept. The connected Drive `A.I/Prompt to Play - VNG Contest` folder lists two **shortcuts**, `In Action` and `CovaraMaris - Game Project`, but their contents cannot be opened with the current Drive connector (403; target not exposed). No standalone contest game build or personal team role is verified. VNG's own 2026 article confirms contest context, not the user's achievement or award.
+
+New records:
+- `creative-experiments/source-inventory-2026-11-08.json` — 5 differentiated candidates, source URLs/IDs, scope and proof limits.
+- `creative-experiments/CURATION_AND_CROSS_LINKS.md` — design/use-policy for genuine interaction exhibits and cross-lane deduplication.
+- `PORTFOLIO_INTAKE_CONTROL_2026-11-08.md` — current readiness and action requirements across the whole portfolio.
+
+A 406KB standalone `Six Primordials Boss Lab` HTML file was also located in the user's Library and inspected at source-header level, but not functionally playtested. Video automation ZIPs referenced in earlier discussions remain unverified here. Keep all experimental status labels explicit.
+
+**No user action is currently required, and content collection is NOT finished or frozen.**
