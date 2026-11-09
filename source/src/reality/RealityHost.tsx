@@ -61,6 +61,8 @@ export function RealityHost() {
     warmStarted: false,
     warmTex: [] as THREE.Texture[],
     warmMesh: [] as THREE.Object3D[],
+    warmCompilePending: false,
+    warmErrors: 0,
     warmPass: 0, // 0: đang upload tex/compile, 1: đang bật 1 frame silent shadow warm, 2: xong hoàn toàn
   }).current
 
@@ -212,8 +214,9 @@ export function RealityHost() {
         if (needCompile) S.warmMesh.push(o)
       })
     }
+    // Prepare Piano sheets and GoldZone before the hidden UEH campus.
+    if (hostRoot.current) for (const child of hostRoot.current.children) if (child !== ueh.current) scan(child)
     scan(ueh.current)
-    scan(hostRoot.current)
   }
 
   useEffect(() => {
@@ -255,28 +258,34 @@ export function RealityHost() {
     const st = useReality.getState()
     rt.t = state.clock.elapsedTime
 
-    // --- 1. Chuẩn bị GPU phân bổ đều từng frame trong Intro/đầu phiên (1 texture hoặc 1 shader/frame) ---
-    if (S.warmPass < 2) {
-      if (S.warmTex.length > 0) {
+    // --- 1. Intro-only GPU preflight. No synchronous shader compilation during gameplay.
+    if (S.warmPass < 2 && useStore.getState().phase === 'intro') {
+      if (S.warmTex.length) {
         const tex = S.warmTex.shift()!
-        gl.initTexture(tex)
-      } else if (S.warmMesh.length > 0) {
+        try { gl.initTexture(tex) } catch (err) { S.warmErrors++; console.warn('[Piano preflight] texture', err) }
+      } else if (S.warmMesh.length && !S.warmCompilePending) {
         const obj = S.warmMesh.shift()!
-        gl.compile(obj, camera, scene)
-      } else if (st.phase === 'idle' && ueh.current) {
+        S.warmCompilePending = true
+        if (typeof gl.compileAsync === 'function') {
+          void gl.compileAsync(obj, camera, scene).catch(err => {
+            S.warmErrors++
+            console.warn('[Piano preflight] shader', err)
+          }).finally(() => { S.warmCompilePending = false })
+        } else {
+          try { gl.compile(obj, camera, scene) }
+          catch (err) { S.warmErrors++; console.warn('[Piano preflight] shader fallback', err) }
+          S.warmCompilePending = false
+        }
+      } else if (!S.warmCompilePending && st.phase === 'idle' && ueh.current) {
         if (S.warmPass === 0) {
-          // Bật UEH đúng 1 frame khi uRW.z === 0 để GPU bind shadow shader & VAO (fragment tự discard, không vẽ gì)
           ueh.current.visible = true
           S.warmPass = 1
         } else {
           ueh.current.visible = false
           S.warmPass = 2
         }
-      } else {
-        S.warmPass = 2
       }
     }
-
     // --- 2. Hiện diện của người chơi quanh đàn ---
     const dist = Math.hypot(player.pos.x - CENTER.x, player.pos.z - CENTER.z)
     const pt = 1 - ease.smooth(8, 15, dist)

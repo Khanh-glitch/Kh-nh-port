@@ -10,6 +10,7 @@ import { pianoLocal, CENTER } from './site'
 import { TRACK_LIST, type TrackDef } from './tracks'
 import { dismissReality, requestReality, rt, useReality } from './state'
 import { music } from './music'
+import { useStore } from '../store'
 import { NOISE_GLSL, WU } from './kit'
 
 const SLOT = [
@@ -234,8 +235,8 @@ function GoldZone() {
     const k = rt.presence
     mat.uniforms.uK.value = k
     motes.m.uniforms.uK.value = k
-    if (mesh.current) mesh.current.visible = k > 0.01
-    if (pts.current) pts.current.visible = k > 0.01
+    if (mesh.current) mesh.current.visible = k > 0.01 || useStore.getState().phase === 'intro'
+    if (pts.current) pts.current.visible = k > 0.01 || useStore.getState().phase === 'intro'
   })
   return (
     <group position={[CENTER.x, 0, CENTER.z]}>
