@@ -465,6 +465,59 @@ class AudioEngine {
     this.tone(bus.input, 'sine', 90, 35, 0.9, 0.8, t)
     this.noiseBurst(bus.input, 0.5, 'lowpass', 600, 0.7, 0.5, t, 80)
   }
+  laserSweep(bus: Bus, dur = 2.0) {
+    if (!this.started) return
+    const t = this.ctx.currentTime
+    this.tone(bus.input, 'sawtooth', 110, 440, dur, 0.14, t, 0.15)
+    this.tone(bus.input, 'sine', 330, 880, dur, 0.09, t, 0.2)
+    this.noiseBurst(bus.input, dur, 'bandpass', 1200, 3.2, 0.16, t, 3600)
+  }
+  materializeChime(bus: Bus, pitch = 1) {
+    if (!this.started) return
+    const t = this.ctx.currentTime
+    ;[60, 67, 72, 76].forEach((m, i) => {
+      const f = mtof(m) * pitch
+      this.tone(bus.input, 'triangle', f, f, 1.3, 0.14, t + i * 0.06, 0.01)
+    })
+  }
+  retractSweep(bus: Bus) {
+    if (!this.started) return
+    const t = this.ctx.currentTime
+    this.tone(bus.input, 'sawtooth', 520, 95, 0.9, 0.16, t, 0.04)
+    this.noiseBurst(bus.input, 0.8, 'bandpass', 2400, 2.0, 0.14, t, 380)
+  }
+  newbotDash(bus: Bus) {
+    if (!this.started) return
+    const t = this.ctx.currentTime
+    this.tone(bus.input, 'sawtooth', 260, 95, 0.24, 0.22, t, 0.005)
+    this.noiseBurst(bus.input, 0.18, 'bandpass', 1800, 1.4, 0.3, t, 400)
+    this.tone(bus.input, 'sine', 130, 45, 0.35, 0.5, t + 0.18, 0.004)
+    this.noiseBurst(bus.input, 0.14, 'highpass', 2400, 0.8, 0.25, t + 0.18)
+  }
+  newbotShield(bus: Bus) {
+    if (!this.started) return
+    const t = this.ctx.currentTime
+    this.tone(bus.input, 'sine', 180, 540, 0.75, 0.2, t, 0.05)
+    this.tone(bus.input, 'triangle', 360, 720, 0.65, 0.12, t + 0.05, 0.05)
+  }
+  pixelSlash(bus: Bus) {
+    if (!this.started) return
+    const t = this.ctx.currentTime
+    this.noiseBurst(bus.input, 0.09, 'bandpass', 2400, 1.5, 0.28, t, 700)
+    this.tone(bus.input, 'square', 480, 140, 0.11, 0.12, t, 0.002)
+  }
+  pixelLoot(bus: Bus) {
+    if (!this.started) return
+    const t = this.ctx.currentTime
+    this.tone(bus.input, 'square', 987.77, 987.77, 0.09, 0.08, t, 0.002)
+    this.tone(bus.input, 'square', 1318.51, 1318.51, 0.22, 0.09, t + 0.08, 0.002)
+  }
+  pixelBoss(bus: Bus) {
+    if (!this.started) return
+    const t = this.ctx.currentTime
+    this.tone(bus.input, 'sawtooth', 110, 55, 0.65, 0.22, t, 0.02)
+    this.noiseBurst(bus.input, 0.45, 'lowpass', 700, 0.8, 0.35, t, 120)
+  }
   ping(bus: Bus) {
     if (!this.started) return
     const t = this.ctx.currentTime

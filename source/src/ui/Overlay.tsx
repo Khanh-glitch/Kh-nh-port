@@ -283,6 +283,27 @@ function PanelView() {
             </div>
           )}
 
+          {p.slotNote && (
+            <div className="mt-6 rounded-2xl border border-dashed border-white/20 bg-white/[0.03] px-4 py-3 text-[12px] leading-relaxed text-white/65">
+              <span className="mr-2 font-semibold uppercase tracking-[0.2em]" style={{ color: p.accent }}>
+                NEXT PHASE ·
+              </span>
+              {p.slotNote}
+            </div>
+          )}
+
+          {p.action && (
+            <a
+              href={p.action.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-5 flex w-full items-center justify-center rounded-xl px-5 py-3.5 text-xs font-bold tracking-[0.25em] text-black transition hover:brightness-110"
+              style={{ background: p.accent }}
+            >
+              {p.action.label}
+            </a>
+          )}
+
           <div className="mt-6 flex flex-wrap gap-2">
             {p.tags.map((t) => (
               <span key={t} className="rounded-full border border-white/15 px-3 py-1 text-[11px] tracking-wider text-white/70">

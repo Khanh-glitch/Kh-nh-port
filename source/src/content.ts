@@ -4,6 +4,8 @@ export type PanelId =
   | 'piano'
   | 'rubik'
   | 'robot'
+  | 'apex'
+  | 'ragnarok'
   | 'cinema'
   | 'stage'
   | 'products'
@@ -25,6 +27,8 @@ export interface PanelContent {
   items: PanelItem[]
   tags: string[]
   accent: string
+  action?: { label: string; url: string }
+  slotNote?: string
 }
 
 export const STUDIO = {
@@ -129,25 +133,74 @@ export const PANELS: Record<PanelId, PanelContent> = {
   },
   robot: {
     id: 'robot',
-    kicker: 'INTERACTIVE · KINETIC · ROBOTICS',
+    kicker: 'GAME SHOWCASE · LASER SUMMONING · PROMPT TO PLAY',
     title: 'Colossus',
-    subtitle: 'Cỗ máy khổng lồ làm khán giả dừng bước.',
+    subtitle: 'Cỗ máy triệu hồi thế giới game bằng tia laser.',
     body: [
-      'Colossus cao 12 mét, đầu luôn quay theo người đứng gần nhất, ngực là màn hình LED hiển thị dữ liệu sự kiện trực tiếp. Hãy đứng dưới chân và nhấn vào để nó chào bạn.',
-      'Chúng tôi chế tạo các tác phẩm kinetic và robot biểu diễn cho khai trương trung tâm thương mại, triển lãm công nghệ và lễ hội ánh sáng.',
+      'Colossus đóng vai trò trạm trình diễn game ngay trên đĩa bay: khi được kích hoạt, robot xoay thân, hướng hai tay phát tia laser xuống hai bệ phóng để dựng hình 3D theo thời gian thực cho APEX CHAOS và Ragnarok: The Last Island.',
+      'Khu vực này cũng gắn với hành trình làm game có AI hỗ trợ (vibecoding) và trải nghiệm Prompt to Play — nơi ý tưởng thiết kế được biến thành sản phẩm chơi được và kiểm thử trực tiếp.',
     ],
     stats: [
+      { k: 'Thế giới triệu hồi', v: '02' },
+      { k: 'Chế độ dựng hình', v: '3D Laser' },
       { k: 'Chiều cao', v: '12 m' },
-      { k: 'Trục chuyển động', v: '24' },
-      { k: 'Lượt tương tác', v: '410K' },
     ],
     items: [
-      { name: 'Colossus One', meta: 'Robot trình diễn', desc: 'Đầu tracking bằng camera, tay vẫy bằng điều khiển DMX.' },
-      { name: 'Kinetic Rain', meta: 'Điêu khắc kinetic', desc: '1.200 quả cầu LED treo trên tời, tạo sóng chuyển động.' },
-      { name: 'Meet the Machine', meta: 'Activation', desc: 'Gian hàng tương tác cho thương hiệu công nghệ tại CES Asia.' },
+      { name: 'APEX CHAOS · NEWBOT', meta: 'Bệ trái · Playable Demo', desc: 'Mô hình 3D đầy đủ của NEWBOT cùng hai kỹ năng đặc trưng A1 Dash Lock & A2 Armor Surge.' },
+      { name: 'Ragnarok: The Last Island', meta: 'Bệ phải · Pixel Survival', desc: 'Tiểu cảnh đảo sinh tồn 3D giữ trọn chất pixel-art với vòng lặp đánh quái – nhặt đồ – đốt lửa trại.' },
+      { name: 'Prompt to Play', meta: 'AI-Assisted Jam', desc: 'Định hướng game design & phối hợp nhóm tạo prototype tương tác trong thời gian giới hạn.' },
     ],
-    tags: ['Robotics', 'Kinetic', 'Activation', 'Installation'],
+    tags: ['Game Showcase', 'Laser Fabrication', 'AI-Assisted', 'Prompt to Play'],
     accent: '#ff8a3d',
+    slotNote: 'Kiến trúc trưng bày đã sẵn sàng để gắn luồng bot tự chơi và cho phép người xem tiếp quản điều khiển trực tiếp trong giai đoạn tiếp theo.',
+  },
+  apex: {
+    id: 'apex',
+    kicker: 'GAME 01 · 2D ARENA COMBAT · PLAYABLE DEMO',
+    title: 'APEX CHAOS',
+    subtitle: 'Choose a fighter. Change the fight.',
+    body: [
+      'APEX CHAOS là game đấu trường 2D chạy trên trình duyệt với bản sắc nhân vật rõ nét, cơ chế nhặt vũ khí đa dạng và các chế độ Solo vs BOT, Local 1v1 và BOT WAVE PvE.',
+      'Nhân vật đang đứng trước mặt bạn là NEWBOT — cỗ máy bị vứt bỏ tại Scrap Basin nhưng tự lắp lại mình để chiến đấu. Hãy nhấn vào NEWBOT để kích hoạt chiêu thức A1 Target Lock Dash, A2 Armor Core Surge hoặc Arsenal Overdrive.',
+    ],
+    stats: [
+      { k: 'Nhân vật tiêu biểu', v: 'NEWBOT' },
+      { k: 'Chế độ chơi', v: 'Solo · 1v1 · Wave' },
+      { k: 'Trạng thái', v: 'Playable Demo' },
+    ],
+    items: [
+      { name: 'A1 · Target Lock & Dash', meta: 'Kỹ năng 1', desc: 'Khóa mục tiêu bằng tia ngắm hổ phách, lao tới kẹp giáp với cặp càng cơ khí khổng lồ.' },
+      { name: 'A2 · Armor Core Surge', meta: 'Kỹ năng 2', desc: 'Mở các tấm giáp vai & hàm, kích hoạt đường năng lượng và khiên lõi Scrap.' },
+      { name: 'Scrap Basin Arsenal', meta: 'Hệ thống chiến đấu', desc: 'Phát triển theo hướng AI-assisted, tập trung vào cảm giác ra đòn, nhịp đấu và cân bằng nhân vật.' },
+    ],
+    tags: ['APEX CHAOS', 'NEWBOT', 'Arena Combat', 'HTML5 Demo'],
+    accent: '#ff941f',
+    action: { label: 'CHƠI DEMO APEX CHAOS ↗', url: 'https://apex-chaos.pages.dev/' },
+    slotNote: 'Sẵn sàng tích hợp: Bot tự đấu trong Scrap Basin & chế độ người xem tiếp quản điều khiển.',
+  },
+  ragnarok: {
+    id: 'ragnarok',
+    kicker: 'GAME 02 · PIXEL SURVIVAL RPG · IN DEVELOPMENT',
+    title: 'Ragnarok: The Last Island',
+    subtitle: 'Một hòn đảo nơi mọi lựa chọn sinh tồn đều để lại hậu quả.',
+    body: [
+      'Ragnarok: The Last Island (repo Soul-of-Hero) là dự án game nhập vai – sinh tồn góc nhìn từ trên xuống theo phong cách pixel-art, kết hợp khám phá, khai thác tài nguyên, chế tạo, chiến đấu và đối đầu biến cố theo mùa.',
+      'Tiểu cảnh đảo nổi 3D này tái hiện trực tiếp nhịp sống trên đảo: anh hùng tự di chuyển cày tài nguyên, né đòn quái thú, tung nhát chém PixelFX, mở rương báu và hồi phục bên đống lửa trại. Nhấn vào đảo để triệu hồi Boss Surge & đổi bầu không khí đảo.',
+    ],
+    stats: [
+      { k: 'Phong cách', v: 'Pixel-Art 2.5D' },
+      { k: 'Nền tảng', v: 'Godot 4.7 / Web' },
+      { k: 'Trạng thái', v: 'In Development' },
+    ],
+    items: [
+      { name: 'Vòng lặp Sinh tồn & Cày đồ', meta: 'Core Loop', desc: 'Thu thập quặng & tinh thể, hạ quái vật đảo, nhặt vật phẩm rơi và nâng cấp trang bị.' },
+      { name: 'PixelFX & Đấu Boss', meta: 'Combat Identity', desc: 'Dấu hiệu báo đòn (tell), lướt né, hiệu ứng chém pixel sắc nét và hệ thống Elder Boss.' },
+      { name: 'Hệ thống Mùa & Hậu quả', meta: 'World Rules', desc: 'Nhịp ngày/đêm, chuyển mùa và sinh thái tài nguyên ảnh hưởng trực tiếp tới chiến thuật.' },
+    ],
+    tags: ['Ragnarok', 'Soul-of-Hero', 'Pixel Art', 'Survival RPG'],
+    accent: '#5dffb0',
+    action: { label: 'XEM REPO SOUL-OF-HERO ↗', url: 'https://github.com/Khanh-glitch/Soul-of-Hero' },
+    slotNote: 'Sẵn sàng tích hợp: Bot auto-grind & takeover trực tiếp ngay trên đảo nổi.',
   },
   cinema: {
     id: 'cinema',
