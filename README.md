@@ -1,5 +1,8 @@
 # ORBITA — Final / Low First + Protected High
 
+> **Cloudflare Pages:** deploy the current integrated ORBITA from repository root with `node scripts/build-pages.mjs` and output `dist-pages`. See [CLOUDFLARE_PAGES.md](CLOUDFLARE_PAGES.md). Do **not** deploy an old Vite rebuild from `source/`.
+
+
 **Nền:** `ORBITA_FROM_ORIGINAL_ORB_ONLY` (bản bạn đã chọn), không dùng các bản V2, V3, SMAA hay giảm chất lượng vũ trụ.
 
 ## Mở nhanh
