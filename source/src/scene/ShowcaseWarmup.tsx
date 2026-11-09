@@ -25,6 +25,9 @@ export function ShowcaseWarmup() {
       meshes: 0,
       sprites: 0,
       beams: 0,
+      variants: [] as { name: string; ms: number; programs: number }[],
+      extraApexLights: 0,
+      extraRagLights: 0,
       textureMaps: 0,
       gpuSynced: false,
       durationMs: 0,
@@ -58,10 +61,22 @@ export function ShowcaseWarmup() {
       stage.fog = scene.fog
       stage.background = null
       const stageNow = stage
+      // First APEX reveal enables a previously hidden PointLight.
+      // Compile the real light-count variants before the first laser.
+      const baseVisibleLights = new Set<THREE.Object3D>()
+      const extraLights = (root: THREE.Object3D | undefined | null): THREE.Light[] => {
+        const list: THREE.Light[] = []
+        root?.traverse(obj => {
+          if (!(obj as THREE.Light).isLight || baseVisibleLights.has(obj)) return
+          list.push((obj as THREE.Light).clone(false))
+        })
+        return list
+      }
       // Preserve shadow/light-dependent shader defines, unlike the previous
       // purely unlit proxy collection.
       scene.traverseVisible(object => {
         if (!(object as THREE.Light).isLight) return
+        baseVisibleLights.add(object)
         const light = (object as THREE.Light).clone(false)
         stageNow.add(light)
       })
@@ -113,10 +128,24 @@ export function ShowcaseWarmup() {
         // Program compilation alone cannot remove the first-draw upload hitch.
         // Compile first, then issue the actual draw calls offscreen to upload
         // vertex/index/instance buffers, textures and renderer-side VAOs.
-        if (typeof gl.compileAsync === 'function') {
-          try { await gl.compileAsync(stageNow, camera) }
-          catch { gl.compile(stageNow, camera) }
-        } else gl.compile(stageNow, camera)
+                const compileVariant = async (name: string, lights: THREE.Light[]) => {
+          const t0 = performance.now()
+          lights.forEach(light => stageNow.add(light))
+          try {
+            if (typeof gl.compileAsync === 'function') {
+              try { await gl.compileAsync(stageNow, camera) }
+              catch { gl.compile(stageNow, camera) }
+            } else gl.compile(stageNow, camera)
+            info.variants.push({ name, ms: Math.round(performance.now() - t0), programs: gl.info.programs?.length ?? 0 })
+          } finally { lights.forEach(light => stageNow.remove(light)) }
+        }
+        await compileVariant('dormant', [])
+        const apexLights = extraLights(roots[0])
+        const ragLights = extraLights(roots[1])
+        info.extraApexLights = apexLights.length
+        info.extraRagLights = ragLights.length
+        if (apexLights.length) await compileVariant('laser-apex', apexLights)
+        if (apexLights.length || ragLights.length) await compileVariant('laser-ragnarok', [...apexLights, ...ragLights])
         if (disposed) return
         info.status = 'uploading'
         target = new THREE.WebGLRenderTarget(96, 96, { depthBuffer: true, stencilBuffer: false })
