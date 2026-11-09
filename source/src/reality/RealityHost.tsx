@@ -286,6 +286,14 @@ export function RealityHost() {
         }
       }
     }
+        // Never leave the silent UEH preflight pass visible if the visitor starts
+    // walking between its two intro frames.
+    if (S.warmPass < 2 && useStore.getState().phase !== 'intro' && st.phase === 'idle') {
+      if (ueh.current) ueh.current.visible = false
+      S.warmTex.length = 0
+      S.warmMesh.length = 0
+      S.warmPass = 2
+    }
     // --- 2. Hiện diện của người chơi quanh đàn ---
     const dist = Math.hypot(player.pos.x - CENTER.x, player.pos.z - CENTER.z)
     const pt = 1 - ease.smooth(8, 15, dist)
