@@ -6,6 +6,7 @@ import { Cinema } from './Cinema'
 import { Stage } from './Stage'
 import { Products } from './Products'
 import { Beacon } from './Beacon'
+import { VngGallery } from './VngGallery'
 
 export function Exhibits() {
   return (
@@ -14,6 +15,7 @@ export function Exhibits() {
       <Piano />
       <Rubik />
       <Robot />
+      <VngGallery />
       <Cinema />
       <Stage />
       <Products />
