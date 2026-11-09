@@ -39,3 +39,12 @@ The experiment now ensures **both URLs take the same profiling code path**, and 
 For a controlled comparison, fully close the other tab before each test, reload, wait for a known status, trigger once, then retract and trigger again. Repeat with the order reversed, not in simultaneous tabs. Report status at click, max frame delta, programDelta and whether the stutter was perceived. A 3D screenshot equality check still requires browser capture; this is not visual acceptance.
 
 No visual settings, model/geometry, material, shadows or effects are changed by this diagnostic commit.
+## R2: evidence-driven adjustments from user cold-click reports (2026-11-10)
+
+With no hash: warmup READY / gpuSynced, 120 meshes + 11 sprites, duration **8,014 ms**, 3 compile variants around 2,002 ms each, click callback 2 ms, first-test 3 samples including **6,270 ms rAF gap**, and **+19 programDelta**. With hash: warmup READY / gpuSynced, 895 ms with variants 217/128/153 ms, callback 2 ms, worst **358 ms**, 65 frames, and **+20 programDelta**. These observations DO NOT establish a 6-second GPU block: two tabs were used and browser background throttling can cause long rAF intervals; the test lacked `visibilityState`.
+
+Code-level defect established: previous staged `compileVariant` prepared three different lighting permutations but called `gl.render(stageNow, camera)` only ONCE after all extra lights had been removed. Thus only dormant lighting received the real offscreen draw, while APEX/Ragnarok first-draw upload happened on click.
+
+This round renders **all three lighting variants offscreen** (same true geometries/materials, same original shaders, same visuals), and records `visibilityAtStart`, `pageHiddenAtClick`, `hiddenDuringProfile`, `visibilityTransitions` and per-frame focus/hidden state. It does not claim that the GPU-driver hitch is eliminated. A subsequent report should compare programDelta and foreground-only frame gaps; **do not interpret rAF interval as GPU duration**.
+
+Still requires actual foreground cold-start browser comparison, visual screenshot acceptance and separate-process retest. Do not merge just because CI passes.

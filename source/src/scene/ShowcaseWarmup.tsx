@@ -26,6 +26,9 @@ export function ShowcaseWarmup() {
       sprites: 0,
       beams: 0,
       variants: [] as { name: string; ms: number; programs: number }[],
+      drawnVariants: [] as Array<{ name: string; programs: number }>,
+      visibilityAtStart: document.visibilityState,
+      hadFocusAtStart: document.hasFocus(),
       extraApexLights: 0,
       extraRagLights: 0,
       textureMaps: 0,
@@ -184,7 +187,20 @@ export function ShowcaseWarmup() {
         gl.setViewport(0, 0, 96, 96)
         gl.setScissorTest(false)
         gl.clear(true, true, false)
-        gl.render(stageNow, camera)
+        const drawVariant = (name: string, lights: THREE.Light[]) => {
+          lights.forEach(light => stageNow.add(light))
+          try {
+            gl.clear(true, true, false)
+            gl.render(stageNow, camera)
+            info.drawnVariants.push({ name, programs: gl.info.programs?.length ?? 0 })
+          } finally {
+            lights.forEach(light => stageNow.remove(light))
+          }
+        }
+        // Compile + ACTUALLY draw each lighting variant offscreen (no visible quality changes).
+        drawVariant('dormant', [])
+        drawVariant('laser-apex', apexLights)
+        drawVariant('laser-ragnarok', [...apexLights, ...ragLights])
         // Use a non-blocking GPU fence, not synchronous gl.readPixels.
         // Restore the public render target BEFORE awaiting so R3F keeps rendering.
         if (typeof gl.readRenderTargetPixelsAsync === 'function') {

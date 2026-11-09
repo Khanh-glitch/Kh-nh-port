@@ -127,7 +127,11 @@ export function Robot() {
     running: false, started: 0, frames: 0, maxFrameMs: 0, frameMsSum: 0,
     warmStatusAtClick: '',
     clickHandlerMs: 0,
-    framesTrace: [] as Array<{ atMs: number; dtMs: number; programs: number; mode: ArenaMode }>,
+    framesTrace: [] as Array<{ atMs: number; dtMs: number; programs: number; mode: ArenaMode; hidden: boolean; focused: boolean }>,
+    pageHiddenAtClick: false,
+    pageFocusedAtClick: true,
+    hiddenDuringProfile: false,
+    visibilityTransitions: 0,
   }).current
   const st = useRef({
     mode: 'dormant' as ArenaMode,
@@ -148,7 +152,17 @@ export function Robot() {
     focusedGame: 'NONE' as 'NONE' | 'APEX CHAOS' | 'RAGNAROK',
   }).current
 
-  const tmp = useMemo(
+  useEffect(() => {
+    const onVisibility = () => {
+      if (!coldProbe.running) return
+      coldProbe.visibilityTransitions++
+      if (document.hidden) coldProbe.hiddenDuringProfile = true
+    }
+    document.addEventListener('visibilitychange', onVisibility)
+    return () => document.removeEventListener('visibilitychange', onVisibility)
+  }, [])
+
+    const tmp = useMemo(
     () => ({
       a: new THREE.Vector3(),
       b: new THREE.Vector3(),
@@ -305,6 +319,10 @@ export function Robot() {
       coldProbe.frameMsSum = 0
       coldProbe.clickHandlerMs = 0
       coldProbe.framesTrace.length = 0
+      coldProbe.pageHiddenAtClick = document.hidden
+      coldProbe.pageFocusedAtClick = document.hasFocus()
+      coldProbe.hiddenDuringProfile = document.hidden
+      coldProbe.visibilityTransitions = 0
       coldProbe.warmStatusAtClick = warm?.status ?? 'not-started'
       console.info('[Colossus] Laser clicked; GPU warmup status:', coldProbe.warmStatusAtClick)
     }
@@ -444,6 +462,7 @@ export function Robot() {
       const atMs = Math.round(performance.now() - coldProbe.started)
       if (coldProbe.framesTrace.length < 190) coldProbe.framesTrace.push({
         atMs, dtMs: Math.round(dtMs), programs: state.gl.info.programs?.length ?? 0, mode: st.mode,
+        hidden: document.hidden, focused: document.hasFocus(),
       })
       if (atMs > 3000) {
         coldProbe.running = false
@@ -454,6 +473,10 @@ export function Robot() {
           warmStatusAtClick: coldProbe.warmStatusAtClick,
           warmup: (window as unknown as { __orbitaColossusWarmup?: unknown }).__orbitaColossusWarmup,
           clickHandlerMs: coldProbe.clickHandlerMs,
+          pageHiddenAtClick: coldProbe.pageHiddenAtClick,
+          pageFocusedAtClick: coldProbe.pageFocusedAtClick,
+          hiddenDuringProfile: coldProbe.hiddenDuringProfile,
+          visibilityTransitions: coldProbe.visibilityTransitions,
           totalFrames: coldProbe.frames,
           maxFrameMs: Math.round(coldProbe.maxFrameMs),
           avgFrameMs: Math.round(coldProbe.frameMsSum / Math.max(1, coldProbe.frames)),

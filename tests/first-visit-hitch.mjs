@@ -56,3 +56,10 @@ const warmup = source['source/src/scene/ShowcaseWarmup.tsx']
 assert.ok(warmup.includes('menniverse-laser-probe') && warmup.includes('Copy laser report'), 'comparable no-console HUD')
 
 assert.ok(!source['source/src/scene/ShowcaseWarmup.tsx'].includes("location.hash.includes('colossus-profile')"), 'startup prewarm identical regardless of hash')
+
+const showWarm = source['source/src/scene/ShowcaseWarmup.tsx']
+assert.ok(showWarm.includes("drawVariant('laser-apex', apexLights)"), 'APEX actually drawn offscreen, not compiled only')
+assert.ok(showWarm.includes("drawVariant('laser-ragnarok', [...apexLights, ...ragLights])"), 'Ragnarok lighting actually drawn offscreen')
+assert.ok(showWarm.includes('visibilityAtStart'), 'prewarm records tab state')
+assert.ok(source['source/src/scene/Robot.tsx'].includes('hiddenDuringProfile'), 'tab throttling tracked')
+assert.ok(source['source/src/scene/Robot.tsx'].includes('visibilityTransitions'), 'tab change events counted')
