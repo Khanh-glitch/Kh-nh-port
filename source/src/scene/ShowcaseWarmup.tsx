@@ -231,9 +231,8 @@ export function ShowcaseWarmup() {
         stage = null
         info.durationMs = Math.round(performance.now() - started)
         info.programsAfter = gl.info.programs?.length ?? 0
-        if (location.hash.includes('colossus-profile')) {
-          console.info('[Colossus] GPU startup prewarm:', { ...info })
-        }
+        // No URL-hash-specific startup work: use identical warmup execution.
+        // The experimental LASER LAB overlay reads this same info on both URLs.
       }
     }
 

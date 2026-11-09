@@ -54,3 +54,5 @@ assert.ok(!robot.includes("if (window.location.hash.includes('colossus-profile')
 assert.ok(robot.includes('__orbitaColossusProfiles'), 'record repeated cold/warm trials')
 const warmup = source['source/src/scene/ShowcaseWarmup.tsx']
 assert.ok(warmup.includes('menniverse-laser-probe') && warmup.includes('Copy laser report'), 'comparable no-console HUD')
+
+assert.ok(!source['source/src/scene/ShowcaseWarmup.tsx'].includes("location.hash.includes('colossus-profile')"), 'startup prewarm identical regardless of hash')
