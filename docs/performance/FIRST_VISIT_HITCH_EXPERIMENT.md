@@ -29,3 +29,13 @@ This commit is a mitigation experiment, NOT confirmed GPU/fps acceptance. The re
 The warmup now compiles **dormant**, **laser-apex**, and **laser-ragnarok** shader program variants to match the point lights that first become visible inside the exhibit. Run the site with `#colossus-profile`, activate the Colossus laser **once**, then inspect `window.__orbitaColossusProfile` in DevTools. It records `clickHandlerMs`, `programDelta`, `longFrames`, and `warmup.variants` with compile times/program counts. For repeated activation, retract and trigger again; compare the two reports. If clickHandlerMs is small and new shader programs appear together with a first-frame spike, prioritize actual scene variant preparation over React/UI changes.
 
 The data is diagnostic, not a substitute for a GPU trace. Regular visitors do not record per-frame probe arrays.
+
+## Controlled A/B after two-tab observations
+
+User feedback: two separate Cloudflare tabs; the URL with `#colossus-profile` appeared smoother. Tabs are confounded by activation order, cache/GPU resource sharing and background scheduling. Neither URL changes fidelity.
+
+The experiment now ensures **both URLs take the same profiling code path**, and both display a small LASER LAB badge (experimental builds only, not production). It shows current prewarm status, registered laser beam count, click callback time, worst frame dt and newly created shader program count. A **Copy laser report** button copies warmup and repeated summon history, without DevTools.
+
+For a controlled comparison, fully close the other tab before each test, reload, wait for a known status, trigger once, then retract and trigger again. Repeat with the order reversed, not in simultaneous tabs. Report status at click, max frame delta, programDelta and whether the stutter was perceived. A 3D screenshot equality check still requires browser capture; this is not visual acceptance.
+
+No visual settings, model/geometry, material, shadows or effects are changed by this diagnostic commit.

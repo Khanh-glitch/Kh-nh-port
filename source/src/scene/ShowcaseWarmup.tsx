@@ -37,7 +37,33 @@ export function ShowcaseWarmup() {
     }
     // Browser diagnostic: __orbitaColossusWarmup shows whether a cold click
     // raced initialization. With #colossus-profile, this is logged as well.
-    Object.assign(window as unknown as { __orbitaColossusWarmup: typeof info }, { __orbitaColossusWarmup: info })
+    Object.assign(window as unknown as { __orbitaColossusWarmup: typeof info }, { __orbitaColossusWarmup: info }) 
+    // Preview-only diagnostics: both / and /#colossus-profile execute identical code.
+    // The overlay does not alter renderer, shader, pixel ratio or scene.
+    const badge = document.createElement('section')
+    badge.id = 'menniverse-laser-probe'
+    badge.setAttribute('aria-label', 'Laser preflight diagnostics')
+    badge.style.cssText = 'position:fixed;left:12px;bottom:12px;z-index:30000;max-width:340px;padding:10px 12px;border:1px solid #4ac9de;border-radius:8px;background:rgba(3,10,24,.92);color:#d8f6ff;font:12px/1.5 system-ui,sans-serif;box-shadow:0 6px 30px #0008;pointer-events:auto'
+    const label = document.createElement('div')
+    const copy = document.createElement('button')
+    copy.textContent = 'Copy laser report'
+    copy.type = 'button'
+    copy.style.cssText = 'margin-top:6px;padding:3px 8px;background:#12354d;border:1px solid #4ac9de;border-radius:4px;color:#e2f9ff;cursor:pointer;font:inherit'
+    const updateBadge = () => {
+      const result = (window as unknown as { __orbitaColossusProfile?: { clickHandlerMs?: number; maxFrameMs?: number; programDelta?: number } }).__orbitaColossusProfile
+      const perf = result ? ` | click ${result.clickHandlerMs}ms | worst ${result.maxFrameMs}ms | +${result.programDelta} shaders` : ' | trigger laser to measure'
+      label.textContent = `LASER LAB · prewarm: ${info.status} · beams ${info.beams}${perf}`
+    }
+    copy.onclick = () => {
+      const w = window as unknown as { __orbitaColossusProfiles?: unknown[]; __orbitaColossusProfile?: unknown }
+      const record = { build: 'laser-ab-experiment', hash: location.hash, prewarm: info, profiles: w.__orbitaColossusProfiles ?? [], lastProfile: w.__orbitaColossusProfile ?? null }
+      const text = JSON.stringify(record, null, 2)
+      navigator.clipboard?.writeText(text).then(() => { copy.textContent = 'Copied' }).catch(() => { copy.textContent = 'See Console'; console.info('[Laser report]', text) })
+    }
+    badge.append(label, copy)
+    document.body.appendChild(badge)
+    updateBadge()
+    const hudTimer = window.setInterval(updateBadge, 500)
 
     const warm = async () => {
       if (disposed) return
@@ -218,6 +244,8 @@ export function ShowcaseWarmup() {
       cancelTimeout = window.setTimeout(() => { void warm() }, 80)
     })
     return () => {
+      window.clearInterval(hudTimer)
+      badge.remove()
       disposed = true
       cancelAnimationFrame(raf)
       clearTimeout(cancelTimeout)

@@ -48,3 +48,9 @@ assert.ok(experience.includes('Bloom intensity={low ? 0.9 : 1.25}'), 'bloom sett
 console.log('[FIRST_VISIT_HITCH] 4 embedded JS modules parse; source parity and visual settings: PASS')
 
 assert.ok(source['source/src/scene/Robot.tsx'].includes('__orbitaColossusProfile'), 'GPU preflight and click-time trace instrumented')
+
+const robot = source['source/src/scene/Robot.tsx']
+assert.ok(!robot.includes("if (window.location.hash.includes('colossus-profile'))"), 'same activation timeline regardless of hash')
+assert.ok(robot.includes('__orbitaColossusProfiles'), 'record repeated cold/warm trials')
+const warmup = source['source/src/scene/ShowcaseWarmup.tsx']
+assert.ok(warmup.includes('menniverse-laser-probe') && warmup.includes('Copy laser report'), 'comparable no-console HUD')

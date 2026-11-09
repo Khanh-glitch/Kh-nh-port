@@ -295,7 +295,8 @@ export function Robot() {
   }
 
   const startSummonAll = (single?: 'apex' | 'rag') => {
-    if (window.location.hash.includes('colossus-profile')) {
+    // IMPORTANT: no hash-dependent work. Both URLs follow the same code path.
+    {
       const warm = (window as unknown as { __orbitaColossusWarmup?: { status?: string } }).__orbitaColossusWarmup
       coldProbe.running = true
       coldProbe.started = performance.now()
@@ -461,6 +462,10 @@ export function Robot() {
           trace,
         }
         ;(window as unknown as { __orbitaColossusProfile: typeof report }).__orbitaColossusProfile = report
+        const w = window as unknown as { __orbitaColossusProfiles?: Array<typeof report> }
+        const history = (w.__orbitaColossusProfiles ??= [])
+        history.push(report)
+        if (history.length > 8) history.shift()
         console.info('[Colossus] First-trigger CPU/GPU profile:', report)
       }
     }
