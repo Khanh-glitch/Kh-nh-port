@@ -11,7 +11,10 @@ const source = Object.fromEntries([
 ].map(p => [p, read(p)]))
 
 const html = read('index.html')
-const match = html.match(/<script id="orbita-embedded-map" type="application\\/json">([\\s\\S]*?)<\\/script>/)
+const tag = '<script id="orbita-embedded-map" type="application/json">'
+const begin = html.indexOf(tag)
+const finish = begin < 0 ? -1 : html.indexOf('</script>', begin + tag.length)
+const match = begin < 0 || finish < 0 ? null : [null, html.slice(begin + tag.length, finish)]
 assert.ok(match, 'standalone ESM map is present')
 const modules = JSON.parse(match[1])
 assert.ok(Object.keys(modules).length >= 56, 'all public modules are retained')
