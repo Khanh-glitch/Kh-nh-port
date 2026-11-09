@@ -784,10 +784,10 @@ export function Robot() {
       </group>
 
       {/* Dynamic Laser Fabrication Beams (aimed at active plinth!) */}
-      <mesh ref={beamL} geometry={laserGeo} material={laserMatApex} visible={false} />
-      <mesh ref={beamR} geometry={laserGeo} material={laserMatRag} visible={false} />
-      <mesh ref={beamEye} geometry={laserGeo} material={laserMatRag} visible={false} />
-      <sprite ref={impactFlare} scale={[2.5, 2.5, 1]} visible={false}>
+      <mesh name="colossus-warm-beam-left" ref={beamL} geometry={laserGeo} material={laserMatApex} visible={false} />
+      <mesh name="colossus-warm-beam-right" ref={beamR} geometry={laserGeo} material={laserMatRag} visible={false} />
+      <mesh name="colossus-warm-beam-eye" ref={beamEye} geometry={laserGeo} material={laserMatRag} visible={false} />
+      <sprite name="colossus-warm-impact" ref={impactFlare} scale={[2.5, 2.5, 1]} visible={false}>
         <spriteMaterial map={glow} color="#38d9ff" transparent opacity={0.85} blending={THREE.AdditiveBlending} depthWrite={false} />
       </sprite>
 

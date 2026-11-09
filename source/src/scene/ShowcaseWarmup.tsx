@@ -24,6 +24,7 @@ export function ShowcaseWarmup() {
       status: 'scheduled',
       meshes: 0,
       sprites: 0,
+      beams: 0,
       textureMaps: 0,
       gpuSynced: false,
       durationMs: 0,
@@ -39,6 +40,11 @@ export function ShowcaseWarmup() {
       if (disposed) return
       const roots = ['apex-showcase-root', 'ragnarok-showcase-root']
         .map(name => scene.getObjectByName(name))
+      // These laser meshes belong to Robot, not the two showcase root groups.
+      const beamNames = ['colossus-warm-beam-left', 'colossus-warm-beam-right', 'colossus-warm-beam-eye', 'colossus-warm-impact']
+      const beams = beamNames.map(name => scene.getObjectByName(name)).filter((o): o is THREE.Object3D => !!o)
+      info.beams = beams.length
+      roots.push(...beams)
       if (roots.some(root => !root)) {
         info.status = 'missing-roots'
         return
@@ -54,7 +60,7 @@ export function ShowcaseWarmup() {
       const stageNow = stage
       // Preserve shadow/light-dependent shader defines, unlike the previous
       // purely unlit proxy collection.
-      scene.traverse(object => {
+      scene.traverseVisible(object => {
         if (!(object as THREE.Light).isLight) return
         const light = (object as THREE.Light).clone(false)
         stageNow.add(light)
@@ -102,6 +108,7 @@ export function ShowcaseWarmup() {
       const oldScissorTest = gl.getScissorTest()
       const oldXR = gl.xr.enabled
       const oldAutoClear = gl.autoClear
+      let restored = false
       try {
         // Program compilation alone cannot remove the first-draw upload hitch.
         // Compile first, then issue the actual draw calls offscreen to upload
@@ -123,23 +130,38 @@ export function ShowcaseWarmup() {
         gl.setScissorTest(false)
         gl.clear(true, true, false)
         gl.render(stageNow, camera)
-        // One-pixel readback is a deliberate synchronization barrier. It
-        // prevents previously queued driver shader/buffer work from migrating
-        // into the visitor's first laser-animation frame.
-        gl.readRenderTargetPixels(target, 0, 0, 1, 1, new Uint8Array(4))
-        info.gpuSynced = true
-        info.status = 'ready' 
+        // Use a non-blocking GPU fence, not synchronous gl.readPixels.
+        // Restore the public render target BEFORE awaiting so R3F keeps rendering.
+        if (typeof gl.readRenderTargetPixelsAsync === 'function') {
+          const fence = gl.readRenderTargetPixelsAsync(target, 0, 0, 1, 1, new Uint8Array(4))
+          gl.setRenderTarget(oldTarget)
+          gl.setViewport(oldViewport)
+          gl.setScissor(oldScissor)
+          gl.setScissorTest(oldScissorTest)
+          gl.xr.enabled = oldXR
+          gl.autoClear = oldAutoClear
+          restored = true
+          info.status = 'gpu-pending'
+          await fence
+          info.gpuSynced = true
+          info.status = 'ready'
+        } else {
+          gl.getContext().flush()
+          info.status = 'submitted-no-async-readback'
+        } 
       } catch (err) {
         info.status = 'failed'
         info.error = String(err)
         console.warn('[Colossus] GPU prewarm failed; normal rendering preserved:', err)
       } finally {
+        if (!restored) {
         gl.setRenderTarget(oldTarget)
         gl.setViewport(oldViewport)
         gl.setScissor(oldScissor)
         gl.setScissorTest(oldScissorTest)
         gl.xr.enabled = oldXR
         gl.autoClear = oldAutoClear
+        }
         target?.dispose()
         target = null
         // Clones share original source materials and geometries: dispose only
