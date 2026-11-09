@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
 import * as THREE from 'three'
 import { useStore } from '../store'
-import { player, input, getTargets, getInteractive, canvasRef, resolveCollisions, type Interactive } from '../world'
+import { passesInteractiveFilter, player, input, getTargets, getInteractive, canvasRef, resolveCollisions, type Interactive } from '../world'
 import { DISC_R, EYE, EXHIBIT_LIST } from '../layout'
 import { audio } from '../audio'
 import type { PanelId } from '../content'
@@ -95,6 +95,7 @@ export function Player() {
     ray.far = 70
     const hits = ray.intersectObjects(getTargets(), false)
     for (const h of hits) {
+      if (!passesInteractiveFilter(h.object)) continue
       const it = getInteractive(h.object)
       if (it && h.distance <= it.maxDist) return { it, hit: h }
     }

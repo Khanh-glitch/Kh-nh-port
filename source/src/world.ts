@@ -24,6 +24,12 @@ export function registerInteractive(obj: THREE.Object3D, get: () => Interactive)
   }
 }
 export const getTargets = () => targetList
+// Bộ lọc tương tác tùy chọn (Reality Rewrite dùng để vô hiệu hóa tương tác "ma" của vật thể đã bị biến đổi).
+let interactiveFilter: ((o: THREE.Object3D) => boolean) | null = null
+export const setInteractiveFilter = (f: ((o: THREE.Object3D) => boolean) | null) => {
+  interactiveFilter = f
+}
+export const passesInteractiveFilter = (o: THREE.Object3D) => !interactiveFilter || interactiveFilter(o)
 export const getInteractive = (o: THREE.Object3D) => registry.get(o)?.()
 
 // ---------- Trạng thái người chơi dùng chung ----------

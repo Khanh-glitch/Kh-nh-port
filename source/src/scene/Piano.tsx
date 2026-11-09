@@ -8,6 +8,7 @@ import { rand, rbox } from '../gfx'
 import { Hit } from './Hit'
 import { Label } from './Label'
 import { PadRing, Spot, mats, useWorldColliders, worldPos } from './common'
+import { rt } from '../reality/state'
 
 const ex = EXHIBITS.piano
 const S = 1.5
@@ -320,9 +321,9 @@ export function Piano() {
     const now = audio.started ? audio.ctx.currentTime : 0
 
     // --- tự chơi ---
-    if (audio.started && audio.pianoReady && bus) {
+    if (audio.started && bus) {
       if (sim.userPause && performance.now() > sim.pausedUntil) sim.userPause = false
-      const paused = sim.userPause || sim.manualPause
+      const paused = sim.userPause || sim.manualPause || rt.suppressAutoPlay
       if (!paused) sim.ph += dt
       const horizon = sim.ph + 0.25
       while (sim.idx < score.events.length && score.events[sim.idx].t < horizon) {
@@ -388,7 +389,7 @@ export function Piano() {
 
   const lidAngle = 0.78
   return (
-    <group position={[ex.x, 0, ex.z]} rotation={[0, ex.rotY, 0]}>
+    <group position={[ex.x, 0, ex.z]} rotation={[0, ex.rotY, 0]} userData={{ rwKeep: true }}>
       <PadRing radius={6.2} color={ex.color} />
       <Spot position={[2, 15, 3]} target={[0, 0.8, 0]} color="#ffe2b8" intensity={750} angle={0.42} distance={45} />
       <Label title="Grand Piano" sub="Live Music · Âm thanh 3D" color={ex.color} position={[0, 5.4, 0]} scale={1.1} />

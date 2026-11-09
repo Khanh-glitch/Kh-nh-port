@@ -11,6 +11,7 @@ import { Player } from './Player'
 import { Exhibits } from './Exhibits'
 import { player } from '../world'
 import { highGuard } from '../highGuard'
+import { RealityHost } from '../reality/RealityHost'
 
 function Lights() {
   const light = useRef<THREE.DirectionalLight>(null)
@@ -111,6 +112,7 @@ export function Experience() {
         <Platform />
         <Exhibits />
         <Player />
+        <RealityHost />
         <Post low={low} />
       </Suspense>
     </Canvas>
