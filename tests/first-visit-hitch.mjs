@@ -46,3 +46,5 @@ const experience = read('source/src/scene/Experience.tsx')
 assert.ok(experience.includes('shadow-mapSize={[2048, 2048]}'), 'shadow resolution unchanged')
 assert.ok(experience.includes('Bloom intensity={low ? 0.9 : 1.25}'), 'bloom settings unchanged')
 console.log('[FIRST_VISIT_HITCH] 4 embedded JS modules parse; source parity and visual settings: PASS')
+
+assert.ok(source['source/src/scene/Robot.tsx'].includes('__orbitaColossusProfile'), 'GPU preflight and click-time trace instrumented')

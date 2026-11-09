@@ -23,3 +23,9 @@ No reductions in: 3D meshes, polygon counts, shader detail, shadow map, textures
 5. Verify re-entering Piano, summoning/retracting twice, switching between APEX/Ragnarok, and Hex → retract; no permanently visible UEH in idle.
 
 This commit is a mitigation experiment, NOT confirmed GPU/fps acceptance. The remaining risk is that other first-use materials/shadow variants or external browser drivers might still introduce shader compile stalls. Do not merge solely on static tests.
+
+## New laser cold-start diagnostics (only with #colossus-profile)
+
+The warmup now compiles **dormant**, **laser-apex**, and **laser-ragnarok** shader program variants to match the point lights that first become visible inside the exhibit. Run the site with `#colossus-profile`, activate the Colossus laser **once**, then inspect `window.__orbitaColossusProfile` in DevTools. It records `clickHandlerMs`, `programDelta`, `longFrames`, and `warmup.variants` with compile times/program counts. For repeated activation, retract and trigger again; compare the two reports. If clickHandlerMs is small and new shader programs appear together with a first-frame spike, prioritize actual scene variant preparation over React/UI changes.
+
+The data is diagnostic, not a substitute for a GPU trace. Regular visitors do not record per-frame probe arrays.

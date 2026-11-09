@@ -126,6 +126,8 @@ export function Robot() {
   const coldProbe = useRef({
     running: false, started: 0, frames: 0, maxFrameMs: 0, frameMsSum: 0,
     warmStatusAtClick: '',
+    clickHandlerMs: 0,
+    framesTrace: [] as Array<{ atMs: number; dtMs: number; programs: number; mode: ArenaMode }>,
   }).current
   const st = useRef({
     mode: 'dormant' as ArenaMode,
@@ -300,10 +302,17 @@ export function Robot() {
       coldProbe.frames = 0
       coldProbe.maxFrameMs = 0
       coldProbe.frameMsSum = 0
+      coldProbe.clickHandlerMs = 0
+      coldProbe.framesTrace.length = 0
       coldProbe.warmStatusAtClick = warm?.status ?? 'not-started'
       console.info('[Colossus] Laser clicked; GPU warmup status:', coldProbe.warmStatusAtClick)
     }
-    const bus = busRef.current
+    // Separate immediate JS/audio callback cost from first-draw GPU cost.
+    const recordClick = () => {
+      if (!coldProbe.running) return
+      coldProbe.clickHandlerMs = Math.round(performance.now() - coldProbe.started)
+    }
+        const bus = busRef.current
     if (single === 'apex') {
       st.singleOnly = true
       st.mode = 'summon_apex'
@@ -317,6 +326,7 @@ export function Robot() {
         audio.laserSweep(bus, 2.3)
       }
       toast('Colossus: Đang dùng laser dựng APEX CHAOS…')
+      recordClick()
       return
     }
     if (single === 'rag') {
@@ -332,6 +342,7 @@ export function Robot() {
         audio.laserSweep(bus, 2.3)
       }
       toast('Colossus: Đang dùng laser dựng RAGNAROK…')
+      recordClick()
       return
     }
     st.singleOnly = false
@@ -350,6 +361,7 @@ export function Robot() {
       audio.laserSweep(bus, 2.4)
     }
     toast('Colossus kích hoạt — Đang dựng hình 3D bằng laser!')
+      recordClick()
   }
 
   const startRetract = () => {
@@ -425,21 +437,34 @@ export function Robot() {
   useFrame((state, dtRaw) => {
     if (coldProbe.running) {
       coldProbe.frames++
-      coldProbe.frameMsSum += dtRaw * 1000
-      coldProbe.maxFrameMs = Math.max(coldProbe.maxFrameMs, dtRaw * 1000)
-      if (performance.now() - coldProbe.started > 3000) {
+      const dtMs = dtRaw * 1000
+      coldProbe.frameMsSum += dtMs
+      coldProbe.maxFrameMs = Math.max(coldProbe.maxFrameMs, dtMs)
+      const atMs = Math.round(performance.now() - coldProbe.started)
+      if (coldProbe.framesTrace.length < 190) coldProbe.framesTrace.push({
+        atMs, dtMs: Math.round(dtMs), programs: state.gl.info.programs?.length ?? 0, mode: st.mode,
+      })
+      if (atMs > 3000) {
         coldProbe.running = false
-        console.info('[Colossus] First-activation 3s frame profile:', {
-          warmupAtClick: coldProbe.warmStatusAtClick,
-          frames: coldProbe.frames,
+        const trace = coldProbe.framesTrace
+        const initial = trace[0]?.programs ?? 0
+        const final = trace.at(-1)?.programs ?? initial
+        const report = {
+          warmStatusAtClick: coldProbe.warmStatusAtClick,
+          warmup: (window as unknown as { __orbitaColossusWarmup?: unknown }).__orbitaColossusWarmup,
+          clickHandlerMs: coldProbe.clickHandlerMs,
+          totalFrames: coldProbe.frames,
           maxFrameMs: Math.round(coldProbe.maxFrameMs),
           avgFrameMs: Math.round(coldProbe.frameMsSum / Math.max(1, coldProbe.frames)),
-          // Compare against repeated activation with #colossus-profile.
-          note: 'Use this result to distinguish cold GPU resources from recurring simulation cost.',
-        })
+          programDelta: final - initial,
+          longFrames: trace.filter(x => x.dtMs >= 34),
+          trace,
+        }
+        ;(window as unknown as { __orbitaColossusProfile: typeof report }).__orbitaColossusProfile = report
+        console.info('[Colossus] First-trigger CPU/GPU profile:', report)
       }
     }
-    const dt = Math.min(dtRaw, 0.05)
+        const dt = Math.min(dtRaw, 0.05)
     const t = state.clock.elapsedTime
     const now = performance.now() / 1000
     const cam = state.camera.position
