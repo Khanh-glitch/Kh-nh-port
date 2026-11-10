@@ -185,11 +185,10 @@ export function ShowcaseWarmup({ arenaState }: { arenaState: { mode: string } })
         }
       }
       try {
-        if (typeof gl.compileAsync === 'function') {
-          const begin = performance.now()
-          await gl.compileAsync(stageNow, camera)
-          info.variants.push({ name:'stable-light', ms:Math.round(performance.now()-begin), programs:gl.info.programs?.length ?? 0 })
-        }
+        // Do not compile all models in one uninterruptible GPU task.
+        // The four laser proxies are rendered FIRST, one object per paint,
+        // then all remaining showcase textures/meshes incrementally.
+        info.variants.push({ name:'laser-priority-incremental', ms:0, programs:gl.info.programs?.length ?? 0 })
         const apexLights = extraLights(showcaseRoots[0])
         const ragLights = extraLights(showcaseRoots[1])
         info.extraApexLights = apexLights.length
