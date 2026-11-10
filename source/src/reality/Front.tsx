@@ -67,6 +67,14 @@ void main(){
 }`
 
 export function HexLattice() {
+  const meshRef = useRef<THREE.Mesh>(null)
+  // Lossless idle gate: latticeVS explicitly sends every vertex outside the
+  // clip volume when uRW.z < 0.5. Skip its instanced GPU draw entirely then.
+  // Re-enable on the exact shader threshold; all geometry/shaders stay intact.
+  useFrame(() => {
+    const mesh = meshRef.current
+    if (mesh) mesh.visible = RW.uRW.value.z >= 0.5
+  })
   const low = useStore((s) => s.quality) === 'low'
   const { geo, count } = useMemo(() => {
     const S = HEX_S * (low ? 1 : 1)
@@ -103,7 +111,7 @@ export function HexLattice() {
       }),
     [],
   )
-  return <mesh geometry={geo} material={mat} frustumCulled={false} renderOrder={20} userData={{ rwKeep: true, count }} />
+  return <mesh ref={meshRef} visible={false} geometry={geo} material={mat} frustumCulled={false} renderOrder={20} userData={{ rwKeep: true, count }} />
 }
 
 // ---------------------------------------------------------------- bức tường khuông nhạc
@@ -171,6 +179,13 @@ void main(){
 }`
 
 export function StaffWall() {
+  const meshRef = useRef<THREE.Mesh>(null)
+  // wallVS likewise discards EVERY vertex whenever uRW.z < 0.5. Do not
+  // submit its 160x24 wall mesh until the original GLSL can show a pixel.
+  useFrame(() => {
+    const mesh = meshRef.current
+    if (mesh) mesh.visible = RW.uRW.value.z >= 0.5
+  })
   const mat = useMemo(
     () =>
       new THREE.ShaderMaterial({
@@ -190,7 +205,7 @@ export function StaffWall() {
     g.translate(0, 0.5, 0)
     return g
   }, [])
-  return <mesh geometry={geo} material={mat} frustumCulled={false} renderOrder={21} userData={{ rwKeep: true }} />
+  return <mesh ref={meshRef} visible={false} geometry={geo} material={mat} frustumCulled={false} renderOrder={21} userData={{ rwKeep: true }} />
 }
 
 // ---------------------------------------------------------------- cột sáng + cầu năng lượng khi bốc cháy
