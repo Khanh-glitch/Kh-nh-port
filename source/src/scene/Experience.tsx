@@ -74,6 +74,12 @@ function HighGateMeter() {
 export function Experience() {
   const quality = useStore((s) => s.quality)
   const low = quality === 'low'
+  // BENCHMARK BRANCH ONLY: compare cold-frame cost of integrated render layers.
+  // All production paths retain their complete appearance.
+  const flags = window.location.hash
+  const qaNoPost = flags.includes('qa-no-post')
+  const qaNoReality = flags.includes('qa-no-reality')
+  const qaNoPhenomena = flags.includes('qa-no-phenomena')
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -108,12 +114,12 @@ export function Experience() {
       <Suspense fallback={null}>
         <Sky />
         <Lights />
-        <Phenomena />
+        {!qaNoPhenomena && <Phenomena />}
         <Platform />
         <Exhibits />
         <Player />
-        <RealityHost />
-        <Post low={low} />
+        {!qaNoReality && <RealityHost />}
+        {!qaNoPost && <Post low={low} />}
       </Suspense>
     </Canvas>
   )
