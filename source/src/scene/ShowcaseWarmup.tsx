@@ -39,6 +39,8 @@ export function ShowcaseWarmup({ arenaState }: { arenaState: { mode: string } })
       materializeShadersPrimed: 0,
       materializeShaderGpuSynced: false,
       materializeShaderMs: 0,
+      materializeCompileMode: 'not-started',
+      materializeVariantKeys: [] as string[],
       laserBatchCpuMs: 0,
       showcaseDrawBatches: 0,
       deferredShowcaseFrames: 0,
@@ -282,48 +284,49 @@ export function ShowcaseWarmup({ arenaState }: { arenaState: { mode: string } })
         }
         if (interrupted()) { info.status='cancelled-on-summon'; return }
 
-        // First-click traces consistently showed TWO new materialization
-        // variants (mesh with UVs and without UVs), even when lasers were hot.
-        // Prime one real source mesh per geometry-attribute variant, under
-        // the frozen production light rig / output color space.
-        // Do not wait for the full 120-mesh showcase queue to start.
+        // The first-click cache keys differ by MATERIAL MAP DEFINES, not by
+        // the mere presence of a UV buffer. Almost all geometry has UVs;
+        // classifying only geometry.uv incorrectly selected ONE representative.
+        // Compile the actual Standard/Basic material variants, using source
+        // geometry and full production light rig, without any visible mutation.
         const materializeVariants = new Map<string, THREE.Object3D>()
         for (const proxy of proxies.slice(beams.length)) {
           const mesh = proxy as THREE.Mesh
           if (!mesh.isMesh || (mesh as THREE.InstancedMesh).isInstancedMesh) continue
           const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material]
-          if (!mats.some(mat => mat?.userData?.orbitaMaterialize)) continue
-          const uv = mesh.geometry.getAttribute('uv') ? 'uv' : 'no-uv'
-          if (!materializeVariants.has(uv)) materializeVariants.set(uv, proxy)
+          const material = mats.find(mat => mat?.userData?.orbitaMaterialize)
+          if (!material) continue
+          const maps = material as THREE.MeshStandardMaterial
+          const mapped = !!(maps.map?.isTexture && mesh.geometry.getAttribute('uv'))
+          const shaderFamily = material.type === 'MeshBasicMaterial' ? 'basic' : 'physical'
+          const variant = shaderFamily + ':' + (mapped ? 'mapped' : 'unmapped')
+          if (!materializeVariants.has(variant)) materializeVariants.set(variant, proxy)
         }
         if (materializeVariants.size > 0) {
           info.status = 'materialize-shaders'
+          info.materializeVariantKeys = [...materializeVariants.keys()]
           if (!await nextPaint('laser')) { info.status='cancelled-on-summon'; return }
+          if (interrupted()) { info.status='cancelled-on-summon'; return }
           const startedMaterialize = performance.now()
           const representatives = [...materializeVariants.values()]
           representatives.forEach(proxy => { proxy.visible = true })
           try {
+            // Only selected representative meshes are visible in the private
+            // stage. Parallel compile avoids the old 4-5 second synchronous
+            // GL.render that raced user input in software-backed Chrome.
+            // Keep the same offscreen output color-space shader cache variant.
+            let compiled: Promise<void> = Promise.resolve()
             withTarget(() => {
-              gl.clear(true, true, false)
-              gl.render(stageNow, camera)
+              compiled = gl.compileAsync(stageNow, camera)
             })
+            info.materializeCompileMode = 'compileAsync'
+            await compiled
           } finally {
             representatives.forEach(proxy => { proxy.visible = false })
           }
           info.materializeShadersPrimed = representatives.length
+          info.materializeShaderGpuSynced = true // program compiled; geometry upload remains deferred
           info.materializeShaderMs = Math.round(performance.now() - startedMaterialize)
-          info.uploadedProxies += representatives.length
-          if (typeof gl.readRenderTargetPixelsAsync === 'function') {
-            let materialFence: Promise<unknown> = Promise.resolve()
-            withTarget(() => {
-              materialFence = gl.readRenderTargetPixelsAsync(target!, 0, 0, 1, 1, new Uint8Array(4))
-            })
-            info.status = 'materialize-gpu-pending'
-            await materialFence
-            info.materializeShaderGpuSynced = true
-          } else {
-            gl.getContext().flush()
-          }
         }
         if (interrupted()) { info.status='cancelled-on-summon'; return }
 
