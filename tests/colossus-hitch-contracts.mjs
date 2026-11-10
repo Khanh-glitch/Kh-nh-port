@@ -39,3 +39,5 @@ assert.match(landingSource,/gl\.compileAsync\(scene,cameras\[1\]\)/, 'spawn shad
 assert.match(landingSource,/gl\.render\(scene,camera\)/, 'actual scene submitted to private framebuffer')
 assert.match(landingSource,/readRenderTargetPixelsAsync\(target/, 'GPU completion fence included')
 assert.match(warm,/waitForLandingPreflight/, 'Colossus GPU upload waits for landing preflight instead of racing it')
+assert.doesNotMatch(warm,/performance\.now\(\)-start<3500[\s\S]*?__orbitaLandingPrewarm/, 'Colossus does not time out into a competing landing GPU preflight');
+assert.match(warm,/while\(!interrupted\(\)\)\s*\{\s*const landing/, 'Colossus waits cooperatively for terminal landing status');
