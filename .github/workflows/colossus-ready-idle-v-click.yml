@@ -1,7 +1,7 @@
 name: Colossus Metal fully-ready same-session idle vs click
 on:
   push:
-    branches: [fix/colossus-frame-budget-prewarm]
+    branches: [fix/colossus-frame-budget-prewarm, fix/colossus-hitch-only]
     paths:
       - 'scripts/colossus-ready-idle-v-click.mjs'
       - '.github/workflows/colossus-ready-idle-v-click.yml'
@@ -27,7 +27,8 @@ jobs:
         fragment: [legacy]
         apexShadow: [normal]
         geometry: [stable]
-        native: [legacy, native, native2]
+        native: [native2]
+        pixels: [96, 960]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -52,6 +53,7 @@ jobs:
           COLOSSUS_APEX_SHADOW_VARIANT: ${{ matrix.apexShadow }}
           COLOSSUS_GEOMETRY_VARIANT: ${{ matrix.geometry }}
           COLOSSUS_NATIVE_VARIANT: ${{ matrix.native }}
+          COLOSSUS_NATIVE_PIXELS: ${{ matrix.pixels }}
         run: |
           python3 -m http.server 4173 --bind 127.0.0.1 --directory dist-pages >/tmp/colossus-ready-idle.log 2>&1 &
           for n in {1..30}; do
@@ -62,6 +64,6 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: colossus-ready-idle-v-click-${{ matrix.native }}-${{ matrix.exhibit }}-trial-${{ matrix.trial }}
+          name: colossus-ready-idle-v-click-${{ matrix.native }}-${{ matrix.pixels }}px-trial-${{ matrix.trial }}
           path: browser-evidence/
           if-no-files-found: warn

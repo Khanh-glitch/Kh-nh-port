@@ -51,6 +51,12 @@ export function ShowcaseWarmup({ arenaState }: { arenaState: { mode: string } })
       nativeSceneRepeats: new URLSearchParams(location.search).get('colossusNativePreflight') === 'double' ? 2 : 1,
       nativeScenePasses: 0,
       nativeScenePeakCpuMs: 0,
+      nativePreflightWidth: [96,512,960].includes(
+        Number(new URLSearchParams(location.search).get('colossusNativeTarget') || 96))
+          ? Number(new URLSearchParams(location.search).get('colossusNativeTarget') || 96)
+          : 96,
+      nativePreflightHeight: 0,
+      nativePreflightGpuFence: false,
       fullyLitMeshesPrimed: 0,
       fullyLitBatches: 0,
       uploadedProxies: 0,
@@ -387,7 +393,7 @@ export function ShowcaseWarmup({ arenaState }: { arenaState: { mode: string } })
 
       // Capture/restores the *current* framebuffer on each independent pass.
       // Never keep a private target bound across requestAnimationFrame/await.
-      const withTarget = (fn: () => void) => {
+      const withTarget = (fn: () => void, outputTarget: THREE.WebGLRenderTarget | null = target) => {
         const prevTarget = gl.getRenderTarget()
         const prevViewport = gl.getViewport(new THREE.Vector4()).clone()
         const prevScissor = gl.getScissor(new THREE.Vector4()).clone()
@@ -397,8 +403,8 @@ export function ShowcaseWarmup({ arenaState }: { arenaState: { mode: string } })
         try {
           gl.xr.enabled = false
           gl.autoClear = true
-          gl.setRenderTarget(target)
-          gl.setViewport(0, 0, targetSize, targetSize)
+          gl.setRenderTarget(outputTarget)
+          gl.setViewport(0, 0, outputTarget?.width ?? targetSize, outputTarget?.height ?? targetSize)
           gl.setScissorTest(false)
           fn()
         } finally {
@@ -611,6 +617,23 @@ export function ShowcaseWarmup({ arenaState }: { arenaState: { mode: string } })
             info.status = 'native-scene-preflight-missing-primitives'
             return
           }
+          // The old preflight used only a 96x96 color attachment even though
+          // the real exhibit fills a full 1280x720 viewport. An alternate
+          // full-size private target lets us prove whether the remaining cold
+          // click is first-use of the full color/depth compositor path.
+          // All 131 earlier proxy draws stay at 96px for frame-budget safety.
+          const nativeWidth = info.nativePreflightWidth
+          const nativeHeight = nativeWidth === 96 ? 96 : Math.round(nativeWidth * 9 / 16)
+          info.nativePreflightHeight = nativeHeight
+          const nativeTarget = nativeWidth === targetSize && nativeHeight === targetSize
+            ? target
+            : new THREE.WebGLRenderTarget(nativeWidth, nativeHeight,
+              { depthBuffer: true, stencilBuffer: false })
+          if (nativeTarget !== target) nativeTarget.texture.colorSpace = gl.outputColorSpace
+          const priorAspect = camera.aspect
+          camera.aspect = nativeWidth / nativeHeight
+          camera.updateProjectionMatrix()
+          try {
           for (const content of contents) {
             for (let repeat = 0; repeat < info.nativeSceneRepeats; repeat++) {
             // Do not leave the live sun/camera mutated across nextPaint().
@@ -649,7 +672,7 @@ export function ShowcaseWarmup({ arenaState }: { arenaState: { mode: string } })
                   }
                 }
               })
-              withTarget(() => { gl.clear(true,true,false); gl.render(scene,camera) })
+              withTarget(() => { gl.clear(true,true,false); gl.render(scene,camera) }, nativeTarget)
               info.nativeScenePeakCpuMs = Math.max(info.nativeScenePeakCpuMs,
                 Math.round(performance.now() - startNative))
               info.nativeScenePasses++
@@ -664,6 +687,11 @@ export function ShowcaseWarmup({ arenaState }: { arenaState: { mode: string } })
               sun.updateMatrixWorld(true)
             }
             }
+          }
+          } finally {
+            camera.aspect = priorAspect
+            camera.updateProjectionMatrix()
+            if (nativeTarget !== target) nativeTarget.dispose()
           }
         }
         if (interrupted()) { info.status='cancelled-on-summon'; return }
