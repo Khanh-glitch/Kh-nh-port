@@ -7,7 +7,7 @@ import { FONT, beamGeometry, beamMaterial, canvasTex, rand, roundRect } from '..
 import { Hit } from './Hit'
 import { Label } from './Label'
 import { PadRing, isFacing } from './common'
-import { createMaterializeUniforms, patchMaterialize } from './materialize'
+import { collectScanCullMeshes, updateScanCullMeshes, createMaterializeUniforms, patchMaterialize } from './materialize'
 import { applyUV, getRagnarokAtlas } from './ragnarokSprites'
 import { RagnarokWeather } from './RagnarokWeather'
 import type { ShowcaseProps } from './ApexShowcase'
@@ -68,6 +68,7 @@ function RagnarokShowcaseImpl({ position, worldPosition, rotationY, summoned, sc
   const treeRefs = useRef<Array<THREE.Group | null>>([])
   const weatherRef = useRef<Weather>(0)
   const islandGroup = useRef<THREE.Group>(null)
+  const scanCullEntries = useRef<ReturnType<typeof collectScanCullMeshes> | null>(null)
   const scanRingRef = useRef<THREE.Mesh>(null)
   const holoBeamRef = useRef<THREE.Mesh>(null)
   const hudCardRef = useRef<THREE.Mesh>(null)
@@ -100,6 +101,20 @@ function RagnarokShowcaseImpl({ position, worldPosition, rotationY, summoned, sc
 
   const atlas = useMemo(() => getRagnarokAtlas(), [])
   const matUniforms = useMemo(() => createMaterializeUniforms('#5dffb0'), [])
+  useEffect(() => {
+    if (islandGroup.current) {
+      // Dynamic pixel actors have independent visibility/ability rules.
+      // Culling only controls otherwise-static, shader-clipped island meshes.
+      const skip = new Set<THREE.Object3D>()
+      for (const x of [heroMesh.current, monsterMesh.current, bossMesh.current,
+        fireMesh.current, chestMesh.current, slashMesh.current,
+        coinMesh.current, gemMesh.current, popupMesh.current]) {
+        if (x) skip.add(x)
+      }
+      scanCullEntries.current = collectScanCullMeshes(islandGroup.current, skip)
+    }
+    return () => { scanCullEntries.current = null }
+  }, [])
 
   // Pre-build static UVs for trees & crystal node
   const treePineGeo = useMemo(() => {
@@ -622,6 +637,15 @@ function RagnarokShowcaseImpl({ position, worldPosition, rotationY, summoned, sc
     if (hk !== sim.lastHudKey) {
       sim.lastHudKey = hk
       drawHud(isAct)
+    }
+    // A shader-discarded mesh consumes no pixels. Reveal the static island
+    // geometry only as its world-space bounds intersect the EXISTING scanline
+    // and hologram band; character/combat visibility remains untouched.
+    if (islandGroup.current && scanCullEntries.current) {
+      if (prog > 0.19 && prog < 0.999)
+        updateScanCullMeshes(islandGroup.current, scanCullEntries.current, scanWorldYRef.current, matUniforms.uWireHeight.value, false)
+      else if (prog >= 0.999)
+        updateScanCullMeshes(islandGroup.current, scanCullEntries.current, scanWorldYRef.current, matUniforms.uWireHeight.value, true)
     }
     // Freeze shader light-count without changing the original visible lighting.
     // Anchors retain the animated island position; only zero-intensity lights
