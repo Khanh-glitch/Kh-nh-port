@@ -25,6 +25,7 @@ const targets = [
   'scene/ShowcaseWarmup',
   'scene/Robot',
   'scene/materialize',
+  'scene/Experience',
 ]
 const checkInternal = (name) => {
   const normalized = name.replace(/\\/g, '/').replace(/\.(tsx?|jsx?)$/, '')
@@ -65,5 +66,5 @@ if (updated === html) {
   console.log('[ORBITA] Standalone ESM map already synchronized')
 } else {
   writeFileSync(htmlPath, updated)
-  console.log('[ORBITA] Synchronized five Colossus source modules into integrated index.html')
+  console.log('[ORBITA] Synchronized six Colossus source modules into integrated index.html')
 }
