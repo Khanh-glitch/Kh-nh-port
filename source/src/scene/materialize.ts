@@ -38,17 +38,14 @@ export function patchMaterialize<T extends THREE.Material>(mat: T, uniforms: Mat
   const earlyVariant = typeof window !== 'undefined'
     ? new URLSearchParams(window.location.search).get('colossusEarlyDiscardProbe')
     : null
-  const earlyDiscardProbe = earlyVariant === 'on' || earlyVariant === 'fast' || earlyVariant === 'holo'
-  const fastBoundProbe = earlyVariant === 'fast' || earlyVariant === 'holo'
-  const holoReturnProbe = earlyVariant === 'holo'
+  const earlyDiscardProbe = earlyVariant === 'on' || earlyVariant === 'fast'
+  const fastBoundProbe = earlyVariant === 'fast'
   // Keep the original cache identity for every production material.
   mat.customProgramCacheKey = () => 'orbita-materialize-shared-v1'
   // The opt-in experiment is a distinct shared GLSL program family.
-  if (earlyDiscardProbe) mat.customProgramCacheKey = () => holoReturnProbe
-    ? 'orbita-materialize-holo-after-normal-v5'
-    : fastBoundProbe
-      ? 'orbita-materialize-fast-bound-v3'
-      : 'orbita-materialize-early-reject-v2'
+  if (earlyDiscardProbe) mat.customProgramCacheKey = () => fastBoundProbe
+    ? 'orbita-materialize-fast-bound-v3'
+    : 'orbita-materialize-early-reject-v2'
   mat.onBeforeCompile = (shader) => {
     shader.uniforms.uScanY = uniforms.uScanY
     shader.uniforms.uWireHeight = uniforms.uWireHeight
@@ -115,35 +112,6 @@ export function patchMaterialize<T extends THREE.Material>(mat: T, uniforms: Mat
         '#include <clipping_planes_fragment>',
         `#include <clipping_planes_fragment>
         if (uComplete < 0.999 && (vMatWorldPos.y - uScanY) > uWireHeight + 0.04) discard;`,
-      )
-    }
-    if (holoReturnProbe) {
-      // Prior alpha-test hook changed 55 pixels near the wire edge, likely
-      // by skipping derivative-dependent normal mapping in adjacent quads.
-      // In lit shaders defer the early-return until AFTER normal_fragment_maps;
-      // Basic materials have no normal chunk so use alphatest as before.
-      const holoHook = mat.type === 'MeshBasicMaterial'
-        ? '#include <alphatest_fragment>'
-        : '#include <normal_fragment_maps>'
-      shader.fragmentShader = shader.fragmentShader.replace(
-        holoHook,
-        `${holoHook}
-        if (uComplete < 0.999) {
-          float wireRipple = sin(vMatWorldPos.x * 14.0 + uTime * 4.5) * cos(vMatWorldPos.z * 14.0 - uTime * 3.8) * 0.035;
-          float wireDy = (vMatWorldPos.y - uScanY) + wireRipple;
-          if (wireDy > uWireHeight) discard;
-          if (wireDy > 0.0) {
-            float wireGY = step(0.84, abs(sin(vMatWorldPos.y * 22.0)));
-            float wireGX = step(0.86, abs(sin(vMatWorldPos.x * 18.0)));
-            float wireGZ = step(0.86, abs(sin(vMatWorldPos.z * 18.0)));
-            float wireGrid = clamp(wireGY + wireGX * 0.8 + wireGZ * 0.8, 0.0, 1.0);
-            if (wireGrid < 0.25 && wireDy > 0.1) discard;
-            float wireFade = clamp(1.0 - wireDy / max(0.05, uWireHeight), 0.0, 1.0);
-            vec3 wireHolo = uColor * (0.9 + 1.2 * wireGrid) * (0.35 + 0.65 * wireFade);
-            gl_FragColor = vec4(clamp(wireHolo, 0.0, 3.0), 1.0);
-            return;
-          }
-        }`,
       )
     }
     if (earlyDiscardProbe) {

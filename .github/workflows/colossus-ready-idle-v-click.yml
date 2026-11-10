@@ -22,7 +22,7 @@ jobs:
         trial: [1, 2]
         shadow: [normal]
         exhibit: [normal]
-        early: [legacy, fast, holo]
+        early: [legacy, early, fast]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

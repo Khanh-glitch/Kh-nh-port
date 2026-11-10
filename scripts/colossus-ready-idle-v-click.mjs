@@ -11,7 +11,7 @@ const page = await browser.newPage({viewport:{width:1280,height:720},deviceScale
 const errors=[]
 page.on('pageerror',e=>errors.push(e.message))
 const earlyVariant=process.env.COLOSSUS_EARLY_VARIANT || 'legacy'
-if(!['legacy','early','fast','holo'].includes(earlyVariant))throw Error('Unknown early-discard variant')
+if(!['legacy','early','fast'].includes(earlyVariant))throw Error('Unknown early-discard variant')
 const exhibitVariant=process.env.COLOSSUS_EXHIBIT_VARIANT || 'normal'
 if(!['normal','noExhibits','noLaser'].includes(exhibitVariant)) throw Error('Unknown exhibit/laser diagnostic')
 const shadowVariant=process.env.COLOSSUS_SHADOW_VARIANT || 'normal'
@@ -22,7 +22,6 @@ if(exhibitVariant==='noExhibits')targetUrl.searchParams.set('colossusExhibitProb
 if(exhibitVariant==='noLaser')targetUrl.searchParams.set('colossusLaserProbe','off')
 if(earlyVariant==='early')targetUrl.searchParams.set('colossusEarlyDiscardProbe','on')
 if(earlyVariant==='fast')targetUrl.searchParams.set('colossusEarlyDiscardProbe','fast')
-if(earlyVariant==='holo')targetUrl.searchParams.set('colossusEarlyDiscardProbe','holo')
 const url=targetUrl.toString()
 try {
   await page.goto(url,{waitUntil:'domcontentloaded',timeout:120000})
