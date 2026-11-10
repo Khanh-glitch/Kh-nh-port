@@ -563,7 +563,11 @@ export function RealityHost() {
     const warmOpportunity = S.warmHealthyPaints >= 2
     if (warmOpportunity) S.warmHealthyPaints = 0
     if (S.warmPass < 2 && (st.phase === 'idle' || st.phase === 'ignite') && warmOpportunity) {
-      if (S.warmCritical.length && !S.warmCompilePending) {
+      // Interleave critical program compilation and texture uploads. An
+      // all-shader-first queue can leave every large UEH texture cold when a
+      // visitor activates the piano after only a few seconds.
+      if (S.warmCritical.length && !S.warmCompilePending &&
+          (S.warmShaderDone <= S.warmTextureDone || !S.warmTex.length)) {
         const obj=S.warmCritical.shift()!
         S.warmCompilePending=true
         if(typeof gl.compileAsync==='function') {
