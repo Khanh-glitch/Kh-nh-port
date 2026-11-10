@@ -90,8 +90,8 @@ function ArrivalCockpit() {
       </mesh>
       {[-1, 1].map((side) => (
         <group key={side}>
-          <mesh position={[side * 1.87, 0.04, 0]} rotation={[0, 0, side * -0.2]} renderOrder={25}>
-            <boxGeometry args={[0.09, 2.7, 0.12]} />
+          <mesh position={[side * 1.87, 0.36, 0]} rotation={[0, 0, side * -0.1]} renderOrder={25}>
+            <boxGeometry args={[0.075, 3.45, 0.11]} />
             <meshBasicMaterial color="#172d48" depthTest={false} depthWrite={false} />
           </mesh>
           <mesh position={[side * 1.84, -0.58, 0.22]} renderOrder={27}>
@@ -104,8 +104,8 @@ function ArrivalCockpit() {
           </mesh>
         </group>
       ))}
-      <mesh position={[0, 1.17, 0]} renderOrder={25}>
-        <boxGeometry args={[4.1, 0.12, 0.12]} />
+      <mesh position={[0, 2.15, 0]} renderOrder={25}>
+        <boxGeometry args={[4.1, 0.10, 0.12]} />
         <meshBasicMaterial color="#1a3852" depthTest={false} depthWrite={false} />
       </mesh>
       <mesh position={[0, -1.02, 0.56]} renderOrder={28}>

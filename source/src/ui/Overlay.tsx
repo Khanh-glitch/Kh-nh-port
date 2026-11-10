@@ -25,6 +25,50 @@ function Intro() {
   // Fictional cockpit range tracks measured GPU readiness monotonically.
   const simulatedRange = Math.round(250 + (1 - arrivalProgress) * 11950)
   const touch = useStore((s) => s.touch)
+  if (arrival) return (
+    <div className="pointer-events-none absolute inset-0 z-30 flex flex-col justify-between overflow-hidden bg-[radial-gradient(ellipse_at_center,transparent_44%,rgba(1,4,12,0.53)_100%)] px-5 py-5 font-sans text-white sm:px-9 sm:py-7">
+      {/* Unlike the legacy headline overlay, this HUD leaves the entire
+          windscreen clear; the real ORBITA platform stays visible outside. */}
+      <div className="flex w-full items-start justify-between gap-3 text-[10px] uppercase tracking-[0.23em]">
+        <div className="rounded-lg border border-cyan-200/20 bg-[#081524bd] p-3 backdrop-blur-sm">
+          <div className="font-semibold text-cyan-100">ORBITA <span className="text-white/45">// ARRIVAL SYSTEM</span></div>
+          <div className="mt-1 text-[9px] text-white/45">AUTOPILOT • EXPLORATION MODE</div>
+        </div>
+        <div className="rounded-lg border border-cyan-200/20 bg-[#081524bd] p-3 text-right backdrop-blur-sm">
+          <div className="font-semibold text-white">LÊ QUỐC KHÁNH</div>
+          <div className="mt-1 text-[9px] text-cyan-200/70">CREATIVE TECH · INTERACTIVE WORLDS</div>
+        </div>
+      </div>
+      <div className="relative mx-auto flex h-12 w-12 items-center justify-center opacity-70" aria-hidden="true">
+        <div className="absolute h-11 w-11 rounded-full border border-cyan-300/25"/>
+        <div className="absolute h-1 w-1 rounded-full bg-cyan-200 shadow-[0_0_18px_#71e8ff]"/>
+        <div className="absolute h-px w-16 bg-cyan-200/20"/>
+        <div className="absolute h-16 w-px bg-cyan-200/20"/>
+      </div>
+      <div className="grid w-full grid-cols-1 items-end gap-3 pb-3 sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] sm:gap-5">
+        <div className="rounded-xl border border-cyan-300/20 bg-[#081524cb] px-4 py-3 font-mono backdrop-blur-md">
+          <div className="text-[9px] tracking-[0.25em] text-cyan-100/50">APPROACH TELEMETRY</div>
+          <div className="mt-1 flex items-baseline justify-between gap-2">
+            <span className="text-sm font-medium text-white">ORBITA</span>
+            <span className="text-xs tabular-nums text-cyan-100">{simulatedRange.toLocaleString('vi-VN')} U</span>
+          </div>
+          <div className="mt-3 h-[3px] overflow-hidden bg-white/10">
+            <div className="h-full bg-gradient-to-r from-cyan-400 to-violet-400 transition-[width] duration-300" style={{width: `${Math.round(arrivalProgress*100)}%`}}/>
+          </div>
+          <div className="mt-2 text-[9px] tracking-wide text-cyan-100/65">{ready ? arrivalStage : `AUDIO LINK · ${Math.round(loading*100)}%`}</div>
+        </div>
+        <button data-testid="arrival-land" disabled={!canLand} onClick={startGame}
+          className="pointer-events-auto rounded-full border border-cyan-200/50 bg-[#0b2947d9] px-7 py-4 text-xs font-bold tracking-[0.18em] text-white shadow-[0_0_25px_#32b5df33] backdrop-blur-md transition hover:border-white hover:bg-cyan-500/25 disabled:cursor-wait disabled:border-white/20 disabled:opacity-65 sm:mb-2">
+          {canLand ? 'HẠ CÁNH · KHÁM PHÁ ORBITA' : ready ? 'ĐANG GIỮ QUỸ ĐẠO' : 'ĐANG KẾT NỐI'}
+        </button>
+        <div className="hidden rounded-xl border border-cyan-300/20 bg-[#081524cb] px-4 py-3 text-right font-mono backdrop-blur-md sm:block">
+          <div className="text-[9px] tracking-[0.25em] text-cyan-100/50">MISSION SYSTEMS</div>
+          <div className="mt-1 text-sm text-white">GPU {Math.round(arrivalProgress * 100)}% <span className="text-cyan-300">·</span> AUDIO {Math.round(loading*100)}%</div>
+          <div className="mt-2 text-[9px] text-cyan-100/65">FULL GEOMETRY · NATIVE SHADOWS · NO DOWNGRADE</div>
+        </div>
+      </div>
+    </div>
+  )
   return (
     <div className="absolute inset-0 z-30 flex flex-col items-center justify-between overflow-hidden px-6 py-8 text-white">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(2,4,14,0.1)_0%,rgba(2,3,10,0.55)_55%,rgba(1,2,6,0.92)_100%)]" />
