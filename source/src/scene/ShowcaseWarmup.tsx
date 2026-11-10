@@ -199,8 +199,9 @@ export function ShowcaseWarmup() {
         }
         // Compile + ACTUALLY draw each lighting variant offscreen (no visible quality changes).
         drawVariant('dormant', [])
-        drawVariant('laser-apex', apexLights)
-        drawVariant('laser-ragnarok', [...apexLights, ...ragLights])
+        // The exhibit light rig is already visible to Three from page load.
+        // No APEX/Ragnarok light-count permutations remain; rendering identical
+        // variants here only blocks startup without preparing any new shader.
         // Use a non-blocking GPU fence, not synchronous gl.readPixels.
         // Restore the public render target BEFORE awaiting so R3F keeps rendering.
         if (typeof gl.readRenderTargetPixelsAsync === 'function') {
