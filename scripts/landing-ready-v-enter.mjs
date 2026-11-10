@@ -19,11 +19,12 @@ try{
  await page.goto(url,{waitUntil:'domcontentloaded',timeout:120000})
  await page.waitForFunction(()=>{
   const landing=window.__orbitaLandingPrewarm
-  const w=window.__orbitaColossusWarmup
   const btn=[...document.querySelectorAll('button')].find(b=>b.textContent?.includes('BƯỚC VÀO'))
+  // This is a LANDING frame-pacing gate. The Colossus queue deliberately
+  // follows landing preparation and may remain deferred on a busy renderer;
+  // demanding 131/131 here deadlocks the landing-only A/B on slow GPUs.
   return landing &&
     (landing.status==='ready'||landing.status==='disabled') &&
-    w?.status==='ready'&&w.uploadedProxies===w.totalProxies&&w.totalProxies>=120 &&
     btn&&!btn.disabled
  },null,{timeout:180000,polling:250})
  report.before=await page.evaluate(()=>{
@@ -32,7 +33,9 @@ try{
   const dbg=gl?.getExtension('WEBGL_debug_renderer_info')
   return {landing:window.__orbitaLandingPrewarm,
     renderer:gl?.getParameter(dbg?.UNMASKED_RENDERER_WEBGL??gl.RENDERER),
-    colossus:window.__orbitaColossusWarmup?.status}
+    colossus:{status:window.__orbitaColossusWarmup?.status,
+      uploaded:window.__orbitaColossusWarmup?.uploadedProxies,
+      total:window.__orbitaColossusWarmup?.totalProxies}}
  })
  if(!/Metal/.test(String(report.before.renderer))||/SwiftShader/.test(String(report.before.renderer)))
   throw Error('Actual Metal backend not confirmed: '+report.before.renderer)
