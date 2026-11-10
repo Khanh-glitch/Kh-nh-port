@@ -45,7 +45,7 @@ export function patchMaterialize<T extends THREE.Material>(mat: T, uniforms: Mat
   mat.customProgramCacheKey = () => 'orbita-materialize-shared-v1'
   // The opt-in experiment is a distinct shared GLSL program family.
   if (earlyDiscardProbe) mat.customProgramCacheKey = () => holoReturnProbe
-    ? 'orbita-materialize-holo-direct-v4'
+    ? 'orbita-materialize-holo-after-normal-v5'
     : fastBoundProbe
       ? 'orbita-materialize-fast-bound-v3'
       : 'orbita-materialize-early-reject-v2'
@@ -118,12 +118,16 @@ export function patchMaterialize<T extends THREE.Material>(mat: T, uniforms: Mat
       )
     }
     if (holoReturnProbe) {
-      // Exact same hologram pixels as the final dithering_fragment override.
-      // Those pixels NEVER use PBR output, so bypass all lighting calculations
-      // after texture/alpha test, preserving RGB, alpha and laser wire-grid.
+      // Prior alpha-test hook changed 55 pixels near the wire edge, likely
+      // by skipping derivative-dependent normal mapping in adjacent quads.
+      // In lit shaders defer the early-return until AFTER normal_fragment_maps;
+      // Basic materials have no normal chunk so use alphatest as before.
+      const holoHook = mat.type === 'MeshBasicMaterial'
+        ? '#include <alphatest_fragment>'
+        : '#include <normal_fragment_maps>'
       shader.fragmentShader = shader.fragmentShader.replace(
-        '#include <alphatest_fragment>',
-        `#include <alphatest_fragment>
+        holoHook,
+        `${holoHook}
         if (uComplete < 0.999) {
           float wireRipple = sin(vMatWorldPos.x * 14.0 + uTime * 4.5) * cos(vMatWorldPos.z * 14.0 - uTime * 3.8) * 0.035;
           float wireDy = (vMatWorldPos.y - uScanY) + wireRipple;
