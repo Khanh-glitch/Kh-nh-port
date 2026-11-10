@@ -58,7 +58,7 @@ assert.ok(warmup.includes('menniverse-laser-probe') && warmup.includes('Copy las
 assert.ok(source['source/src/scene/ShowcaseWarmup.tsx'].includes("const diagnosticsVisible = window.location.hash.includes('colossus-profile')"), 'profile hash controls diagnostic HUD only, not warmup code path')
 
 const showWarm = source['source/src/scene/ShowcaseWarmup.tsx']
-assert.ok(showWarm.includes('info.uploadedProxies++'), 'actual geometry upload must be split into individual frame-sized work items')
+assert.ok(showWarm.includes('info.uploadedProxies += batch.length'), 'showcase geometry is prepared in small frame-budgeted batches')
 assert.ok(showWarm.includes('cancelled-on-summon') && showWarm.includes('arenaState.mode'), 'prewarm cancels rather than blocking the first laser')
 assert.ok(showWarm.includes('const withTarget = (fn:'), 'every offscreen draw restores public renderer state')
 assert.ok(!showWarm.includes("drawVariant('laser-apex', apexLights)"), 'no redundant offscreen light permutation after stabilizing lights')
@@ -94,9 +94,15 @@ assert.ok(!mat.includes('orbita-materialize-${tag}'), 'unique decorative tags mu
 assert.ok(showWarm.includes("const roots: THREE.Object3D[] = [...beams, ...(showcaseRoots as THREE.Object3D[])]"), 'laser emitters must be GPU-primed before the larger models')
 assert.ok(showWarm.includes('window.setTimeout(() => { void warm() }, 0)'), 'async first-use work must not wait for a potentially stalled first render frame')
 
-assert.ok(showWarm.includes("for (const proxy of proxies.slice(0, beams.length))"), 'actual laser VBO uploads precede showcases')
-assert.ok(showWarm.includes("for (const texture of priorityTextures)"), 'laser impact textures upload before other showcase textures')
-assert.ok(showWarm.indexOf("info.status = 'laser-geometry'") < showWarm.indexOf("info.status = 'showcase-textures'"), 'beam first ordering enforced')
+assert.ok(showWarm.includes('const laserProxies = proxies.slice(0, beams.length)'), 'all four laser drawables are first priority')
+assert.ok(showWarm.includes('laserProxies.forEach(proxy => { proxy.visible = true })') &&
+  showWarm.includes('laserProxies.forEach(proxy => { proxy.visible = false })'), 'critical lasers share one private render pass')
+assert.ok(showWarm.includes('info.laserSubmitted = true') && showWarm.includes('info.laserGpuSynced = true') &&
+  showWarm.includes('info.laserReady = true'), 'laser GPU completion differs from command submission')
+assert.ok(showWarm.includes('const SHOWCASE_BATCH_SIZE = 4') && showWarm.includes('info.showcaseDrawBatches++'),
+  'optional showcase uploads are batched')
+assert.ok(showWarm.includes('for (const texture of priorityTextures)'), 'laser impact textures upload before exhibits')
+assert.ok(showWarm.indexOf("info.status = 'laser-geometry'") < showWarm.indexOf("info.status = 'showcase-textures'"), 'beam-first ordering enforced')
 
 assert.ok(showWarm.includes('target.texture.colorSpace = gl.outputColorSpace'), 'private warmup must compile the same color-space shader variant as visible canvas')
 
@@ -111,8 +117,9 @@ assert.ok(cooperativeBudget.includes("smoothPaints >= 3"), 'showcase work requir
 assert.ok(cooperativeBudget.includes("isInputPending"), 'yield to queued user input')
 assert.ok(cooperativeBudget.includes('document.visibilityState'), 'no GPU background prewarm in hidden tab')
 assert.ok(cooperativeBudget.includes('laserReady = true'), 'laser readiness is recorded after real proxy uploads')
-assert.ok(cooperativeBudget.includes("uploadTexture(texture, 'showcase')") && cooperativeBudget.includes("uploadProxy(proxy, 'showcase')"), 'all nonlaser texture and mesh uploads budget guarded')
-assert.ok(cooperativeBudget.includes("uploadTexture(texture, 'laser')") && cooperativeBudget.includes("uploadProxy(proxy, 'laser')"), 'all laser assets remain prioritized')
+assert.ok(cooperativeBudget.includes('await uploadTexture(texture)') && cooperativeBudget.includes("nextPaint('showcase')"), 'optional GPU work obeys frame budget')
+assert.ok(cooperativeBudget.includes("await nextPaint('laser')") &&
+  cooperativeBudget.includes('laserProxies.forEach(proxy => { proxy.visible = true })'), 'laser requires one priority paint opportunity')
 
 const clickClock = read('source/src/scene/Robot.tsx')
 assert.ok(clickClock.includes('lastPostClickFrameAt'), 'cold trigger profile has its own post-click callback clock')

@@ -34,6 +34,10 @@ export function ShowcaseWarmup({ arenaState }: { arenaState: { mode: string } })
       totalProxies: 0,
       uploadedProxies: 0,
       laserReady: false,
+      laserSubmitted: false,
+      laserGpuSynced: false,
+      laserBatchCpuMs: 0,
+      showcaseDrawBatches: 0,
       deferredShowcaseFrames: 0,
       maxSampledFrameMs: 0,
       gpuSynced: false,
@@ -230,52 +234,83 @@ export function ShowcaseWarmup({ arenaState }: { arenaState: { mode: string } })
         // Prepare the actual beam and flare resources FIRST. Previously all
         // 14 exhibit textures could block the four laser proxies even though
         // the visitor sees only those proxies at the start of fabrication.
-        const uploadTexture = async (texture: THREE.Texture, priority: 'laser' | 'showcase'): Promise<boolean> => {
-          if (!await nextPaint(priority)) return false
-          if (interrupted()) return false
-          try { gl.initTexture(texture) } catch { /* Normal renderer can retry. */ }
-          return true
-        }
+        // Prime all four latency-critical laser drawables in one offscreen pass.
+        // Previously each beam waited for a separate requestAnimationFrame.
         info.status = 'laser-textures'
+        if (!await nextPaint('laser')) { info.status='cancelled-on-summon'; return }
         for (const texture of priorityTextures) {
-          if (!await uploadTexture(texture, 'laser')) { info.status='cancelled-on-summon'; return }
+          if (interrupted()) { info.status='cancelled-on-summon'; return }
+          try { gl.initTexture(texture) } catch { /* Visible renderer can retry. */ }
         }
         target = new THREE.WebGLRenderTarget(96, 96, { depthBuffer:true, stencilBuffer:false })
-        // Default render-target colorSpace is NoColorSpace, while the visible
-        // canvas is sRGB. Output-color-space is part of Three's GPU program
-        // cache key: a mismatched private target can prepare the WRONG shader
-        // variant even when mesh, material and lights are identical.
-        // Match the production framebuffer ONLY inside this private target.
         target.texture.colorSpace = gl.outputColorSpace
         proxies.forEach(proxy => { proxy.visible = false })
-        const uploadProxy = async (proxy: THREE.Object3D, priority: 'laser' | 'showcase'): Promise<boolean> => {
-          if (!await nextPaint(priority)) return false
+        const laserProxies = proxies.slice(0, beams.length)
+        if (interrupted()) { info.status='cancelled-on-summon'; return }
+        info.status = 'laser-geometry'
+        const laserBatchStarted = performance.now()
+        laserProxies.forEach(proxy => { proxy.visible = true })
+        try {
+          withTarget(() => {
+            gl.clear(true, true, false)
+            gl.render(stageNow, camera)
+          })
+        } finally {
+          laserProxies.forEach(proxy => { proxy.visible = false })
+        }
+        info.laserBatchCpuMs = Math.round(performance.now() - laserBatchStarted)
+        info.uploadedProxies += laserProxies.length
+        info.laserSubmitted = true
+
+        // GPU command submission is not readiness. Use asynchronous readback
+        // as a nonblocking completion fence for the critical laser batch.
+        if (typeof gl.readRenderTargetPixelsAsync === 'function') {
+          let laserFence: Promise<unknown> = Promise.resolve()
+          withTarget(() => {
+            laserFence = gl.readRenderTargetPixelsAsync(target!, 0, 0, 1, 1, new Uint8Array(4))
+          })
+          info.status = 'laser-gpu-pending'
+          await laserFence
+          info.laserGpuSynced = true
+          info.laserReady = true
+        } else {
+          gl.getContext().flush()
+          info.status = 'laser-submitted-no-fence'
+        }
+        if (interrupted()) { info.status='cancelled-on-summon'; return }
+
+        // Optional showcase work never blocks laser readiness. Small batches
+        // reduce the previous 120 independent three-frame scheduling windows.
+        // All original live geometry, materials and render settings are intact.
+        const uploadTexture = async (texture: THREE.Texture): Promise<boolean> => {
+          if (!await nextPaint('showcase')) return false
           if (interrupted()) return false
-          proxy.visible = true
+          try { gl.initTexture(texture) } catch { /* Visible renderer can retry. */ }
+          return true
+        }
+        info.status = 'showcase-textures'
+        for (const texture of textures) {
+          if (priorityTextures.has(texture)) continue
+          if (!await uploadTexture(texture)) { info.status='cancelled-on-summon'; return }
+        }
+        info.status = 'showcase-geometry'
+        const showcaseProxies = proxies.slice(beams.length)
+        const SHOWCASE_BATCH_SIZE = 4
+        for (let i = 0; i < showcaseProxies.length; i += SHOWCASE_BATCH_SIZE) {
+          if (!await nextPaint('showcase')) { info.status='cancelled-on-summon'; return }
+          if (interrupted()) { info.status='cancelled-on-summon'; return }
+          const batch = showcaseProxies.slice(i, i + SHOWCASE_BATCH_SIZE)
+          batch.forEach(proxy => { proxy.visible = true })
           try {
             withTarget(() => {
               gl.clear(true, true, false)
               gl.render(stageNow, camera)
             })
           } finally {
-            proxy.visible = false
+            batch.forEach(proxy => { proxy.visible = false })
           }
-          info.uploadedProxies++
-          return true
-        }
-        info.status = 'laser-geometry'
-        for (const proxy of proxies.slice(0, beams.length)) {
-          if (!await uploadProxy(proxy, 'laser')) { info.status='cancelled-on-summon'; return }
-        }
-        info.laserReady = true
-        info.status = 'showcase-textures'
-        for (const texture of textures) {
-          if (priorityTextures.has(texture)) continue
-          if (!await uploadTexture(texture, 'showcase')) { info.status='cancelled-on-summon'; return }
-        }
-        info.status = 'showcase-geometry'
-        for (const proxy of proxies.slice(beams.length)) {
-          if (!await uploadProxy(proxy, 'showcase')) { info.status='cancelled-on-summon'; return }
+          info.uploadedProxies += batch.length
+          info.showcaseDrawBatches++
         }
         info.drawnVariants.push({ name:'incremental', programs:gl.info.programs?.length ?? 0 })
         if (interrupted()) { info.status='cancelled-on-summon'; return }
