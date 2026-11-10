@@ -181,5 +181,5 @@ assert.ok(read('scripts/sync-colossus-standalone.mjs').includes("'scene/Experien
 
 
 assert.ok(experience.includes("get('colossusOpaqueCanvas') === '1'"), 'opaque canvas A/B only via diagnostic parameter')
-assert.ok(experience.includes('alpha: !opaqueCanvasProbe'), 'normal visitor retains previous WebGL alpha context')
+assert.ok(experience.includes('if (!opaqueCanvasProbe) return base') && experience.includes('alpha: false, canvas: canvas as HTMLCanvasElement'), 'opaque A/B factory constructs WebGL context while normal visitor retains original options')
 assert.ok(!experience.includes('shadow-mapSize={[1024, 1024]}'), 'opacity test must not downgrade production shadows')
