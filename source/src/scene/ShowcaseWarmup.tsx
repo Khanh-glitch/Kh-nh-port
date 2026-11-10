@@ -47,8 +47,14 @@ export function ShowcaseWarmup({ arenaState }: { arenaState: { mode: string } })
         new URLSearchParams(location.search).get('colossusDeepPrewarm') === 'on',
       deepWorldPrewarm: new URLSearchParams(location.search).get('colossusDeepPrewarm') === 'on',
       longestPrivateBatchCpuMs: 0,
-      nativeScenePrewarm: ['on','double'].includes(new URLSearchParams(location.search).get('colossusNativePreflight') ?? ''),
-      nativeSceneRepeats: new URLSearchParams(location.search).get('colossusNativePreflight') === 'double' ? 2 : 1,
+      // Production hitch-only candidate: stage each real shadow-casting exhibit
+      // twice BEFORE click, on the private 96px target. Metal A/B reduced
+      // cold-click maxima from 1133ms to 517-583ms while keeping intro idle
+      // under the 120ms gate. Full-res 960px improved click only slightly but
+      // caused a 300ms intro frame, so retain safe 96px as the default.
+      // ?colossusNativePreflight=off restores the old preflight for A/B.
+      nativeScenePrewarm: new URLSearchParams(location.search).get('colossusNativePreflight') !== 'off',
+      nativeSceneRepeats: new URLSearchParams(location.search).get('colossusNativePreflight') === 'on' ? 1 : 2,
       nativeScenePasses: 0,
       nativeScenePeakCpuMs: 0,
       nativePreflightWidth: [96,512,960].includes(

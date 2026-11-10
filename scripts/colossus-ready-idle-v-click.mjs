@@ -34,6 +34,7 @@ const targetUrl=new URL(process.env.COLOSSUS_SMOKE_URL || 'http://127.0.0.1:4173
 if(shadowVariant==='off')targetUrl.searchParams.set('colossusShadowProbe','off')
 if(apexShadowVariant==='off')targetUrl.searchParams.set('colossusApexShadowProbe','off')
 if(geometryVariant==='legacy')targetUrl.searchParams.set('colossusGeometryProbe','legacy')
+if(nativeVariant==='legacy')targetUrl.searchParams.set('colossusNativePreflight','off')
 if(nativeVariant==='native')targetUrl.searchParams.set('colossusNativePreflight','on')
 if(nativeVariant==='native2')targetUrl.searchParams.set('colossusNativePreflight','double')
 if(nativePixels!==96)targetUrl.searchParams.set('colossusNativeTarget',String(nativePixels))
