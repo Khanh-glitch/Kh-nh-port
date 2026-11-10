@@ -36,6 +36,9 @@ export function ShowcaseWarmup({ arenaState }: { arenaState: { mode: string } })
       laserReady: false,
       laserSubmitted: false,
       laserGpuSynced: false,
+      materializeShadersPrimed: 0,
+      materializeShaderGpuSynced: false,
+      materializeShaderMs: 0,
       laserBatchCpuMs: 0,
       showcaseDrawBatches: 0,
       deferredShowcaseFrames: 0,
@@ -276,6 +279,51 @@ export function ShowcaseWarmup({ arenaState }: { arenaState: { mode: string } })
         } else {
           gl.getContext().flush()
           info.status = 'laser-submitted-no-fence'
+        }
+        if (interrupted()) { info.status='cancelled-on-summon'; return }
+
+        // First-click traces consistently showed TWO new materialization
+        // variants (mesh with UVs and without UVs), even when lasers were hot.
+        // Prime one real source mesh per geometry-attribute variant, under
+        // the frozen production light rig / output color space.
+        // Do not wait for the full 120-mesh showcase queue to start.
+        const materializeVariants = new Map<string, THREE.Object3D>()
+        for (const proxy of proxies.slice(beams.length)) {
+          const mesh = proxy as THREE.Mesh
+          if (!mesh.isMesh || (mesh as THREE.InstancedMesh).isInstancedMesh) continue
+          const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material]
+          if (!mats.some(mat => mat?.userData?.orbitaMaterialize)) continue
+          const uv = mesh.geometry.getAttribute('uv') ? 'uv' : 'no-uv'
+          if (!materializeVariants.has(uv)) materializeVariants.set(uv, proxy)
+        }
+        if (materializeVariants.size > 0) {
+          info.status = 'materialize-shaders'
+          if (!await nextPaint('laser')) { info.status='cancelled-on-summon'; return }
+          const startedMaterialize = performance.now()
+          const representatives = [...materializeVariants.values()]
+          representatives.forEach(proxy => { proxy.visible = true })
+          try {
+            withTarget(() => {
+              gl.clear(true, true, false)
+              gl.render(stageNow, camera)
+            })
+          } finally {
+            representatives.forEach(proxy => { proxy.visible = false })
+          }
+          info.materializeShadersPrimed = representatives.length
+          info.materializeShaderMs = Math.round(performance.now() - startedMaterialize)
+          info.uploadedProxies += representatives.length
+          if (typeof gl.readRenderTargetPixelsAsync === 'function') {
+            let materialFence: Promise<unknown> = Promise.resolve()
+            withTarget(() => {
+              materialFence = gl.readRenderTargetPixelsAsync(target!, 0, 0, 1, 1, new Uint8Array(4))
+            })
+            info.status = 'materialize-gpu-pending'
+            await materialFence
+            info.materializeShaderGpuSynced = true
+          } else {
+            gl.getContext().flush()
+          }
         }
         if (interrupted()) { info.status='cancelled-on-summon'; return }
 

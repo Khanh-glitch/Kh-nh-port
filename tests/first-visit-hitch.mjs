@@ -127,3 +127,11 @@ assert.ok(clickClock.includes('frameAt - coldProbe.started'), 'first sample star
 assert.ok(clickClock.includes('frameAt - coldProbe.lastPostClickFrameAt'), 'later samples measure only post-click gaps')
 assert.ok(clickClock.includes('firstFrameFromClickMs'), 'first input-to-rAF latency is reported')
 assert.ok(clickClock.includes('firstBeamFrameAtMs'), 'time to first actual submitted laser geometry is observable')
+
+// The two materialization program variants must be primed ahead of the
+// frame-budgeted, opportunistic exhibit queue; do not downgrade shader fidelity.
+assert.ok(showWarm.includes("const materializeVariants = new Map<string, THREE.Object3D>()"))
+assert.ok(showWarm.includes("mesh.geometry.getAttribute('uv') ? 'uv' : 'no-uv'"))
+assert.ok(showWarm.includes('info.materializeShadersPrimed = representatives.length'))
+assert.ok(showWarm.includes('info.materializeShaderGpuSynced = true'))
+assert.ok(showWarm.indexOf("info.status = 'materialize-shaders'") < showWarm.indexOf("info.status = 'showcase-textures'"))
