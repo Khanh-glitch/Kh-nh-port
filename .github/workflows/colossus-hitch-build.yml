@@ -1,0 +1,43 @@
+name: Colossus hitch-only build and source contracts
+on:
+  push:
+    branches: [fix/colossus-hitch-only]
+    paths-ignore: ['docs/**']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build-source:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: source/package-lock.json
+      - run: npm ci --prefix source
+      - name: Typecheck and existing Colossus contract tests
+        run: |
+          cd source && npx tsc --noEmit
+          cd ..
+          node tests/colossus-regression.mjs
+      - name: Build source and exact standalone embed
+        run: |
+          npm run build --prefix source
+          node scripts/sync-colossus-standalone.mjs
+          node scripts/build-pages.mjs
+      - name: Verify actual changed GLSL/warmup in deployed standalone module map
+        run: |
+          node --input-type=module <<'EOF'
+          import {readFileSync} from 'node:fs'
+          const html=readFileSync('dist-pages/index.html','utf8')
+          const match=html.match(/<script id="orbita-embedded-map" type="application\/json">([\s\S]*?)<\/script>/)
+          if(!match)throw Error('Standalone import map missing')
+          const map=JSON.parse(match[1])
+          const warm=Buffer.from(map['orbita/scene/ShowcaseWarmup'].split(',')[1],'base64').toString('utf8')
+          if(!warm.includes('nativePreflightWidth')||!warm.includes('nativePassMode')||!warm.includes('nativeHologramPasses'))
+            throw Error('Standalone still has old GPU prewarm source')
+          console.log('PASS: exact warmup candidate embedded in standalone.')
+          EOF
