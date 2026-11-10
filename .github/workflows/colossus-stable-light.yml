@@ -1,8 +1,8 @@
-name: Colossus laser-priority integrated verification
+name: Colossus frame-budgeted prewarm verification
 on:
   push:
     branches:
-      - fix/colossus-laser-priority-progressive
+      - fix/colossus-frame-budget-prewarm
   workflow_dispatch:
 permissions:
   contents: write
@@ -51,7 +51,7 @@ jobs:
             git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
             git add index.html
             git commit -m "build(colossus): synchronize fixed laser code into preview HTML"
-            git push origin HEAD:fix/colossus-laser-priority-progressive
+            git push origin HEAD:fix/colossus-frame-budget-prewarm
           else
             echo "Integrated preview HTML is already up to date."
           fi
