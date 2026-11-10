@@ -126,7 +126,7 @@ export function Robot() {
   const btnRefs = useRef<(THREE.Mesh | null)[]>([])
 
   const coldProbe = useRef({
-    running: false, started: 0, frames: 0, maxFrameMs: 0, frameMsSum: 0,
+    running: false, started: 0, lastPostClickFrameAt: 0, firstBeamFrameAtMs: null as number | null, frames: 0, maxFrameMs: 0, frameMsSum: 0,
     warmStatusAtClick: '',
     clickHandlerMs: 0,
     framesTrace: [] as Array<{ atMs: number; dtMs: number; programs: number; mode: ArenaMode; hidden: boolean; focused: boolean }>,
@@ -365,6 +365,8 @@ export function Robot() {
       coldProbe.running = true
       coldProbe.started = performance.now()
       coldProbe.frames = 0
+      coldProbe.lastPostClickFrameAt = 0
+      coldProbe.firstBeamFrameAtMs = null
       coldProbe.maxFrameMs = 0
       coldProbe.frameMsSum = 0
       coldProbe.clickHandlerMs = 0
@@ -509,10 +511,17 @@ export function Robot() {
   useFrame((state, dtRaw) => {
     if (coldProbe.running) {
       coldProbe.frames++
-      const dtMs = dtRaw * 1000
+      // R3F dtRaw on the FIRST post-click frame includes time BEFORE the
+      // input event. Never charge that pre-click gap to trigger latency.
+      // Time first callback from click, then subsequent callback-to-callback.
+      const frameAt = performance.now()
+      const atMs = Math.round(frameAt - coldProbe.started)
+      const dtMs = coldProbe.lastPostClickFrameAt > 0
+        ? frameAt - coldProbe.lastPostClickFrameAt
+        : frameAt - coldProbe.started
+      coldProbe.lastPostClickFrameAt = frameAt
       coldProbe.frameMsSum += dtMs
       coldProbe.maxFrameMs = Math.max(coldProbe.maxFrameMs, dtMs)
-      const atMs = Math.round(performance.now() - coldProbe.started)
       if (coldProbe.framesTrace.length < 190) coldProbe.framesTrace.push({
         atMs, dtMs: Math.round(dtMs), programs: state.gl.info.programs?.length ?? 0, mode: st.mode,
         hidden: document.hidden, focused: document.hasFocus(),
@@ -528,6 +537,9 @@ export function Robot() {
           warmStatusAtClick: coldProbe.warmStatusAtClick,
           warmup: (window as unknown as { __orbitaColossusWarmup?: unknown }).__orbitaColossusWarmup,
           clickHandlerMs: coldProbe.clickHandlerMs,
+          firstFrameFromClickMs: trace[0]?.atMs ?? null,
+          firstBeamFrameAtMs: coldProbe.firstBeamFrameAtMs,
+          frameMeasureOrigin: 'performance.now at click; never prior R3F dtRaw',
           pageHiddenAtClick: coldProbe.pageHiddenAtClick,
           pageFocusedAtClick: coldProbe.pageFocusedAtClick,
           hiddenDuringProfile: coldProbe.hiddenDuringProfile,
@@ -723,6 +735,15 @@ export function Robot() {
       orientBeam(beamL.current, tmp.a, tmp.tgt, laserColor)
       orientBeam(beamR.current, tmp.b, tmp.tgt, laserColor)
       orientBeam(beamEye.current, tmp.c, tmp.tgt, '#a6ecff')
+      // Records when the real R3F callback first submitted visible laser
+      // geometry. This is NOT a claim of display-present timing.
+      if (coldProbe.started > 0 && coldProbe.firstBeamFrameAtMs === null && beamL.current?.visible) {
+        coldProbe.firstBeamFrameAtMs = Math.round(performance.now() - coldProbe.started)
+        const latest = (window as unknown as {
+          __orbitaColossusProfile?: { firstBeamFrameAtMs: number | null }
+        }).__orbitaColossusProfile
+        if (latest) latest.firstBeamFrameAtMs = coldProbe.firstBeamFrameAtMs
+      }
       if (impactFlare.current) {
         impactFlare.current.visible = true
         impactFlare.current.position.copy(tmp.tgt)
