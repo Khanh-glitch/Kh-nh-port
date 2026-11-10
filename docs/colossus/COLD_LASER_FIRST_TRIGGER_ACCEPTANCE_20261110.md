@@ -53,3 +53,11 @@ Cold first activation of Colossus laser, APEX CHAOS and Ragnarok must not freeze
 - Do not alter `main`/production until zero perceptible hitch and intact visual fidelity are demonstrated; every rejection must lead to a corrective experiment or explicit named blocker.
 
 **Next actual work:** determine whether postprocessing contributes materially to the remaining Metal-virtualized stall; if not, profile actual dynamic shadow/render passes rather than adding warmup. Avoid rerunning rejected APEX-priority or full-shadow-prewarm ideas without new evidence.
+
+## 2026-11-10 compositor and GPU synchronization follow-up
+
+- **Opt-in `Post` A/B** ([6-run Metal matrix](https://github.com/Khanh-glitch/Kh-nh-port/actions/runs/42776366240), `49435d3`): original full postprocessing (3 runs) worst first-click callback gaps **853 / 882 / 1130 ms**, new programs **0/0/0**. Removing all postprocessing only for diagnosis gave **969 / 1180 / 1214 ms** but two new shader programs in each run; not an exact shader-matched comparison, thus NO evidence to remove Bloom, post effects, or tone mapping. The production default retains everything.
+- **Chrome trace (not yet fully ready)** ([raw trace and attribution](https://github.com/Khanh-glitch/Kh-nh-port/actions/runs/42777147920/artifacts/13743554945), `96fdd93`): 48,706 events with 25,064 GPU/viz/graphics-category events. A 916-ms `SkiaOutputSurfaceImplOnGpu::SwapBuffers` / `IOSurfaceImageBacking::WaitForCommandsToBeScheduled` chain and a 495-ms `GLES2Implementation::GetProgramiv` / command-buffer wait were captured, along with a 750-ms main-thread animation-frame task. **Causal limitation:** `warmupAtClick=scheduled`; these timings might include unfinished shader linking and are NOT proof of identical behavior after fully ready, nor of a defect on the user's actual GPU. Tracing itself perturbs timing.
+- **After-full-ready trace** ([workflow](https://github.com/Khanh-glitch/Kh-nh-port/actions/workflows/colossus-gpu-trace.yml), `b8e3d64`): requires `status=ready`, `gpuSynced=true`, `uploadedProxies>=totalProxies` before beginning trace, otherwise fails closed. Record the result before claiming specific root cause.
+- **Policy unchanged:** no production visual quality reductions, no main merge, no false-green. Do not treat Apple Paravirtual Metal as real user-device hardware certification.
+
