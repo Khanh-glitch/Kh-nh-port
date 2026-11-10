@@ -158,12 +158,30 @@ function ApexShowcaseImpl({ position, worldPosition, rotationY, summoned, scanPr
 
   const matUniforms = useMemo(() => createMaterializeUniforms('#ff9b30'), [])
   useEffect(() => {
+    const shadowCasters: THREE.Mesh[] = []
     if (newbotRoot.current) {
+      // TEST ONLY: isolate the model's shadow-pass cost without touching
+      // global 2048px shadows, color meshes, or other exhibits. Restore every
+      // original caster flag on unmount. Never enabled by default.
+      if (new URLSearchParams(window.location.search).get('colossusApexShadowProbe') === 'off') {
+        newbotRoot.current.traverse(o => {
+          const m = o as THREE.Mesh
+          if (!m.isMesh || !m.castShadow) return
+          shadowCasters.push(m)
+          m.castShadow = false
+        })
+      }
       const skip = new Set<THREE.Object3D>()
       if (shieldRef.current) skip.add(shieldRef.current)
       scanCullEntries.current = collectScanCullMeshes(newbotRoot.current, skip)
     }
-    return () => { scanCullEntries.current = null }
+    ;(window as unknown as { __orbitaApexShadowProbe?: unknown }).__orbitaApexShadowProbe = {
+      modelShadowCastersSuppressed: shadowCasters.length,
+    }
+    return () => {
+      for (const mesh of shadowCasters) mesh.castShadow = true
+      scanCullEntries.current = null
+    }
   }, [])
 
   const materials = useMemo(() => {

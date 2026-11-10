@@ -24,7 +24,8 @@ jobs:
         shadow: [normal]
         exhibit: [normal]
         early: [legacy]
-        fragment: [legacy, deep]
+        fragment: [legacy]
+        apexShadow: [normal, off]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -46,6 +47,7 @@ jobs:
           COLOSSUS_EXHIBIT_VARIANT: ${{ matrix.exhibit }}
           COLOSSUS_EARLY_VARIANT: ${{ matrix.early }}
           COLOSSUS_FULL_LIT_VARIANT: ${{ matrix.fragment }}
+          COLOSSUS_APEX_SHADOW_VARIANT: ${{ matrix.apexShadow }}
         run: |
           python3 -m http.server 4173 --bind 127.0.0.1 --directory dist-pages >/tmp/colossus-ready-idle.log 2>&1 &
           for n in {1..30}; do
@@ -56,6 +58,6 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: colossus-ready-idle-v-click-${{ matrix.fragment }}-${{ matrix.exhibit }}-trial-${{ matrix.trial }}
+          name: colossus-ready-idle-v-click-${{ matrix.apexShadow }}-${{ matrix.exhibit }}-trial-${{ matrix.trial }}
           path: browser-evidence/
           if-no-files-found: warn
