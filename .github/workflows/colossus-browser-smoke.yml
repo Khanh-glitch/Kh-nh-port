@@ -1,0 +1,31 @@
+name: Colossus unattended browser smoke
+on:
+  push:
+    branches:
+      - experiment/colossus-no-prewarm
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: source/package-lock.json
+      - run: npm ci --prefix source
+      - name: Install browser controller, use runner Chrome
+        run: npm install --prefix source --no-save --package-lock=false playwright@1.56.1
+      - name: Check deployed preview browser startup and robot first input
+        run: node scripts/colossus-browser-smoke.mjs
+      - name: Keep screenshots and performance data even when smoke fails
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: colossus-browser-evidence
+          path: browser-evidence/
+          if-no-files-found: warn
