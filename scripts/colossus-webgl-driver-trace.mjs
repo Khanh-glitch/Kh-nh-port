@@ -51,7 +51,7 @@ let outcome
 try{
   await page.goto(target+'/#at=0,-27,0,20&autostart&skip',{waitUntil:'domcontentloaded',timeout:120000})
   await page.waitForFunction(()=>!!document.querySelector('canvas'),null,{timeout:120000,polling:1000})
-  await page.waitForTimeout(3500)
+  await page.waitForTimeout(7000)
   const prior=await page.evaluate(()=>({warmup:window.__orbitaColossusWarmup,status:document.visibilityState}))
   const clicked=await page.evaluate(()=>{
     const trace=window.__glDriverTrace
@@ -64,7 +64,8 @@ try{
     canvas.dispatchEvent(new PointerEvent('pointerup',obj))
     return !!canvas
   })
-  await page.waitForTimeout(9000)
+  await page.waitForFunction(() => !!window.__orbitaColossusProfile, null, {timeout:100000,polling:1000})
+  await page.waitForTimeout(1000)
   outcome=await page.evaluate(()=>{
     const t=window.__glDriverTrace;t.active=false
     return {gpuCalls:t.total,slowCalls:t.slow,profile:window.__orbitaColossusProfile,afterWarmup:window.__orbitaColossusWarmup}
