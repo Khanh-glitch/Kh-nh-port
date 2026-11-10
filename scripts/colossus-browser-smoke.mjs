@@ -32,6 +32,7 @@ try {
     const gl=canvas?.getContext('webgl2')
     return {
       canvas:!!canvas,webgl2:!!gl,contextLost:gl?.isContextLost(),
+      gpuRenderer:gl ? gl.getParameter(gl.getExtension('WEBGL_debug_renderer_info')?.UNMASKED_RENDERER_WEBGL ?? gl.RENDERER) : null,
       warmup:window.__orbitaColossusWarmup,
       verifiedCandidate: typeof window.__orbitaColossusWarmup?.laserSubmitted === 'boolean' &&
         typeof window.__orbitaColossusWarmup?.showcaseDrawBatches === 'number',
@@ -55,19 +56,36 @@ try {
   await page.waitForFunction(() => !!window.__orbitaColossusProfile, null, {
     timeout: 100000, polling: 1000
   })
+  // A successful click handler or a completed 3-second telemetry profile is
+  // NOT proof that the player ever saw the beam. Continue waiting for the
+  // source's actual first visible beam submission before evaluating outcomes.
+  await page.waitForFunction(() => window.__orbitaColossusProfile?.firstBeamFrameAtMs != null, null, {
+    timeout: 25000, polling: 250
+  }).catch(() => {})
   await page.waitForTimeout(300)
   const after=await page.evaluate(() => ({
     warmup:window.__orbitaColossusWarmup,
     profile:window.__orbitaColossusProfile || null,
     historyLength:window.__orbitaColossusProfiles?.length || 0,
   }))
+  const softwareStutter = !after.profile ||
+    (after.profile.maxFrameMs ?? Infinity) > 120 ||
+    (after.profile.firstFrameFromClickMs ?? Infinity) > 120 ||
+    after.profile.firstBeamFrameAtMs == null
   const report={
-    url,abVariant,commit:process.env.GITHUB_SHA ?? 'local',elapsedMs:Date.now()-t0,attempted,before,after,
+    url,abVariant,commit:process.env.GITHUB_SHA ?? 'local',
+    performanceVerdict: softwareStutter ? 'UNACCEPTED_SOFTWARE_GPU' : 'MEASURED_NOT_HARDWARE_CERTIFIED',
+    elapsedMs:Date.now()-t0,attempted,before,after,
     errors,netFailed,
     notes:'NO screenshots before the click: avoid GPU readback contaminating first-laser measurement. Headless SwiftShader, not a real hardware certification'
   }
   writeFileSync('browser-evidence/summary.json',JSON.stringify(report,null,2))
+  // Readback/screenshots must happen AFTER the timing window.
+  try { await page.screenshot({path:'browser-evidence/after-laser.png', timeout:90000}) }
+  catch(err) { console.warn('After-trigger screenshot unavailable:',String(err)) }
   console.log(JSON.stringify({
+    performanceVerdict:report.performanceVerdict,
+    gpuRenderer:before.gpuRenderer,
     canvas:before.canvas,webgl2:before.webgl2,contextLost:before.contextLost,
     verifiedCandidate:before.verifiedCandidate,
     abVariant,
@@ -101,6 +119,14 @@ try {
   if(after.profile?.frameMeasureOrigin !== 'performance.now at click; never prior R3F dtRaw') process.exitCode=8
   if(after.profile?.trace?.length && Math.abs(after.profile.trace[0].dtMs - after.profile.trace[0].atMs) > 2) process.exitCode=7
   if(after.profile && !(after.profile.trace || []).some(x => x.mode === 'summon_apex' || x.mode === 'summon_rag')) process.exitCode=5
+  if(after.profile?.firstBeamFrameAtMs == null) {
+    console.error('UNACCEPTED: no visible beam submission recorded within extra 25 seconds')
+    process.exitCode=11
+  }
+  if(softwareStutter) {
+    console.error('UNACCEPTED: software-GPU first-trigger hitch exceeds 120ms; do not merge on source CI green')
+    process.exitCode=12
+  }
 } catch(e) {
   console.error('Browser smoke could not complete', e)
   process.exitCode=4

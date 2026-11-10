@@ -1,8 +1,5 @@
 name: Colossus prewarm causal idle A-B
 on:
-  push:
-    branches:
-      - fix/colossus-frame-budget-prewarm
   workflow_dispatch:
 permissions:
   contents: read

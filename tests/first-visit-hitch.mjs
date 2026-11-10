@@ -143,3 +143,8 @@ assert.ok(showWarm.includes("new URLSearchParams(location.search).get('colossusP
 assert.ok(showWarm.includes('MAX_LASER_PREFLIGHT_WAIT_MS = 2500'), 'laser preflight must not compete with overloaded visible renderer')
 assert.ok(showWarm.includes("info.status = 'prewarm-skipped-busy-renderer'"), 'budget backoff exposed in diagnostics')
 assert.ok(showWarm.includes('healthyLaserPaints >= 2'), 'laser GPU work requires healthy idle frames')
+
+const smokeSource = read('scripts/colossus-browser-smoke.mjs')
+assert.ok(smokeSource.includes('window.__orbitaColossusProfile?.firstBeamFrameAtMs != null'), 'browser CI must witness actual first laser submission')
+assert.ok(smokeSource.includes('UNACCEPTED_SOFTWARE_GPU') && smokeSource.includes('process.exitCode=12'), 'slow software GPU cannot become false-green acceptance')
+assert.ok(showWarm.includes('materializeProgramsCompiled = true') && !showWarm.includes('materializeShaderGpuSynced = true'), 'compileAsync must never claim GPU geometry-ready')

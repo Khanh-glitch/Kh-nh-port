@@ -37,6 +37,7 @@ export function ShowcaseWarmup({ arenaState }: { arenaState: { mode: string } })
       laserSubmitted: false,
       laserGpuSynced: false,
       materializeShadersPrimed: 0,
+      materializeProgramsCompiled: false,
       materializeShaderGpuSynced: false,
       materializeShaderMs: 0,
       materializeCompileMode: 'not-started',
@@ -352,7 +353,7 @@ export function ShowcaseWarmup({ arenaState }: { arenaState: { mode: string } })
             representatives.forEach(proxy => { proxy.visible = false })
           }
           info.materializeShadersPrimed = representatives.length
-          info.materializeShaderGpuSynced = true // program compiled; geometry upload remains deferred
+          info.materializeProgramsCompiled = true // program compilation only; NO geometry fence claim
           info.materializeShaderMs = Math.round(performance.now() - startedMaterialize)
         }
         if (interrupted()) { info.status='cancelled-on-summon'; return }
