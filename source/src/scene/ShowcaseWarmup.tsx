@@ -34,6 +34,9 @@ export function ShowcaseWarmup({ arenaState }: { arenaState: { mode: string } })
       totalProxies: 0,
       uploadedProxies: 0,
       laserReady: false,
+      earlyShaderCompileStatus: 'not-started',
+      earlyShaderCompileMs: 0,
+      earlyShaderVariantKeys: [] as string[],
       laserSubmitted: false,
       laserGpuSynced: false,
       materializeShadersPrimed: 0,
@@ -128,6 +131,98 @@ export function ShowcaseWarmup({ arenaState }: { arenaState: { mode: string } })
         info.deferredShowcaseFrames++
       }
     }
+    // Metal/true-hardware shader compilation is cheap to submit asynchronously,
+    // whereas full VBO/VAO offscreen draws can saturate the visible renderer.
+    // Compile ONLY representative real shader variants before the heavier
+    // frame-budget gate. Skip software GL backends to avoid their multi-second
+    // compile/driver stalls. No live material, geometry or visibility changes.
+    const precompileCriticalShaders = async () => {
+      if (interrupted()) return
+      const ctx = gl.getContext()
+      const dbg = ctx.getExtension('WEBGL_debug_renderer_info')
+      const rendererName = dbg ? String(ctx.getParameter(dbg.UNMASKED_RENDERER_WEBGL)) : ''
+      if (/SwiftShader|llvmpipe|Software/i.test(rendererName)) {
+        info.earlyShaderCompileStatus = 'software-skipped'
+        return
+      }
+      const names = ['apex-showcase-root','ragnarok-showcase-root']
+      const roots = names.map(n => scene.getObjectByName(n))
+      if (roots.some(r => !r)) { info.earlyShaderCompileStatus = 'missing-roots'; return }
+      const chosen = new Map<string, THREE.Mesh>()
+      for (const root of roots) root!.traverse(obj => {
+        const mesh = obj as THREE.Mesh
+        if (!mesh.isMesh || (mesh as THREE.InstancedMesh).isInstancedMesh) return
+        const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material]
+        const mat = mats.find(m => m?.userData?.orbitaMaterialize)
+        if (!mat) return
+        const mapped = !!((mat as THREE.MeshStandardMaterial).map?.isTexture && mesh.geometry.getAttribute('uv'))
+        const family = mat.type === 'MeshBasicMaterial' ? 'basic' : 'physical'
+        const kind = family + ':' + (mapped ? 'mapped' : 'unmapped')
+        if (!chosen.has(kind)) chosen.set(kind, mesh)
+      })
+      if (!chosen.size) { info.earlyShaderCompileStatus = 'missing-materials'; return }
+      const stageEarly = new THREE.Scene()
+      stageEarly.environment = scene.environment
+      stageEarly.fog = scene.fog
+      const lights: THREE.Light[] = []
+      scene.traverseVisible(obj => {
+        if (!(obj as THREE.Light).isLight) return
+        const copy = (obj as THREE.Light).clone(false)
+        if (copy.castShadow && (copy as THREE.Light & {shadow?: THREE.LightShadow}).shadow) {
+          (copy as THREE.Light & {shadow: THREE.LightShadow}).shadow.mapSize.set(64,64)
+        }
+        stageEarly.add(copy)
+        lights.push(copy)
+      })
+      for (const mesh of chosen.values()) {
+        const proxy = mesh.clone(false)
+        proxy.position.set(0,0,0)
+        proxy.rotation.set(0,0,0)
+        proxy.scale.setScalar(1)
+        proxy.visible = true
+        proxy.frustumCulled = false
+        stageEarly.add(proxy)
+      }
+      const cameraEarly = new THREE.PerspectiveCamera(60,1,0.01,200)
+      cameraEarly.position.set(0,0,12)
+      cameraEarly.lookAt(0,0,0)
+      const privateTarget = new THREE.WebGLRenderTarget(96,96,{depthBuffer:true,stencilBuffer:false})
+      privateTarget.texture.colorSpace = gl.outputColorSpace
+      const oldTarget = gl.getRenderTarget()
+      const viewport = gl.getViewport(new THREE.Vector4()).clone()
+      const scissor = gl.getScissor(new THREE.Vector4()).clone()
+      const scissorTest = gl.getScissorTest()
+      const xr = gl.xr.enabled
+      const startedAt = performance.now()
+      info.earlyShaderVariantKeys = [...chosen.keys()]
+      try {
+        info.earlyShaderCompileStatus = 'compiling'
+        let compilePromise: Promise<void> = Promise.resolve()
+        try {
+          gl.xr.enabled = false
+          gl.setRenderTarget(privateTarget)
+          gl.setViewport(0,0,96,96)
+          gl.setScissorTest(false)
+          compilePromise = gl.compileAsync(stageEarly,cameraEarly)
+        } finally {
+          gl.setRenderTarget(oldTarget)
+          gl.setViewport(viewport)
+          gl.setScissor(scissor)
+          gl.setScissorTest(scissorTest)
+          gl.xr.enabled = xr
+        }
+        await compilePromise
+        info.earlyShaderCompileStatus = 'compiled'
+      } catch (err) {
+        info.earlyShaderCompileStatus = 'failed'
+        info.error = String(err)
+      } finally {
+        info.earlyShaderCompileMs = Math.round(performance.now() - startedAt)
+        privateTarget.dispose()
+        lights.forEach(l => (l as THREE.Light & {shadow?: THREE.LightShadow}).shadow?.dispose())
+        stageEarly.clear()
+      }
+    }
     const warm = async () => {
       // Experimental A/B isolation only. Production/default code path remains
       // exactly the same: no visual settings, materials or geometry altered.
@@ -136,6 +231,11 @@ export function ShowcaseWarmup({ arenaState }: { arenaState: { mode: string } })
         return
       }
       if (interrupted()) { info.status = 'cancelled-on-summon'; return }
+      // Prepare cache keys asynchronously on an actual GPU even if the
+      // expensive geometry-prewarm budget never opens. The visible scene is
+      // untouched; subsequent first-draw VBO work remains frame-gated.
+      await precompileCriticalShaders()
+      if (interrupted()) { info.status='cancelled-on-summon'; return }
       // BEFORE cloning/traversing the 131 proxies and production lights,
       // require healthy render frames. A saturated renderer must not spend
       // additional CPU/GPU time even constructing temporary warmup objects.

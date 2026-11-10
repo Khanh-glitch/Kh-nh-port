@@ -150,3 +150,8 @@ assert.ok(smokeSource.includes('UNACCEPTED_SOFTWARE_GPU') && smokeSource.include
 assert.ok(showWarm.includes('materializeProgramsCompiled = true') && !showWarm.includes('materializeShaderGpuSynced = true'), 'compileAsync must never claim GPU geometry-ready')
 
 assert.ok(showWarm.indexOf("info.status = 'budget-preflight'") < showWarm.indexOf("const showcaseRoots ="), 'GPU frame-budget gate precedes expensive scene proxy construction')
+
+assert.ok(showWarm.includes('const precompileCriticalShaders = async () =>'), 'GPU programs precompiled separately from expensive full proxy draw')
+assert.ok(showWarm.includes("info.earlyShaderCompileStatus = 'software-skipped'"), 'software rasterizer cannot be overloaded by eager shader compile')
+assert.ok(showWarm.includes("compilePromise = gl.compileAsync(stageEarly,cameraEarly)"), 'real shader variants are compiled asynchronously on GPU with matching output color space')
+assert.ok(showWarm.indexOf('await precompileCriticalShaders()') < showWarm.indexOf("info.status = 'budget-preflight'"), 'shader precompile precedes heavy geometry frame gate')
