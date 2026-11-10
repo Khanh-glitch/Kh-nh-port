@@ -2,7 +2,7 @@ name: Colossus unattended browser smoke
 on:
   push:
     branches:
-      - fix/colossus-laser-priority-progressive
+      - fix/colossus-frame-budget-prewarm
   workflow_dispatch:
 permissions:
   contents: read
