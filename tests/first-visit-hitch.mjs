@@ -84,3 +84,7 @@ assert.ok(detailedProbe.includes('browserTasks'), 'long task attribution capture
 const lateTasks = source['source/src/scene/Robot.tsx']
 assert.ok(lateTasks.includes('browserTasks: coldProbe.browserTasks'), 'late observer entries remain visible in copied report')
 assert.ok(lateTasks.includes('coldProbe.browserTasks = []'), 'task arrays isolated for repeat summon runs')
+
+const mat = read('source/src/scene/materialize.ts')
+assert.ok(mat.includes("mat.customProgramCacheKey = () => 'orbita-materialize-shared-v1'"), 'same-GLSL materialization materials reuse shader programs')
+assert.ok(!mat.includes('orbita-materialize-${tag}'), 'unique decorative tags must not split identical shader programs')
