@@ -103,3 +103,10 @@ assert.ok(showWarm.includes('target.texture.colorSpace = gl.outputColorSpace'), 
 assert.ok(!showWarm.includes('await gl.compileAsync(stageNow, camera)'), 'whole-scene compile is forbidden on latency-sensitive route')
 assert.ok(showWarm.includes("name:'laser-priority-incremental'"), 'priority laser compile occurs per drawable')
 assert.ok(apex.includes('updateScanCullMeshes(') && rag.includes('updateScanCullMeshes('), 'both projection scenes progressively render only shader-visible geometry')
+
+const front = read('source/src/reality/Front.tsx')
+assert.ok(front.includes('if (h < 0.03 || uRW.z < 0.5)'), 'lattice shader discards all pixels when uRW.z < 0.5')
+assert.ok(front.includes('if (r < 0.5 || uRW.z < 0.5)'), 'staff shader discards all pixels when uRW.z < 0.5')
+assert.equal((front.match(/mesh.visible = RW.uRW.value.z >= 0.5/g) || []).length, 2, 'both offscreen meshes must skip draw only at identical original shader threshold')
+assert.ok(front.includes('ref={meshRef} visible={false} geometry={geo} material={mat} frustumCulled={false} renderOrder={20}'), 'lattice is hidden during dormant')
+assert.ok(front.includes('ref={meshRef} visible={false} geometry={geo} material={mat} frustumCulled={false} renderOrder={21}'), 'staff wall is hidden during dormant')
