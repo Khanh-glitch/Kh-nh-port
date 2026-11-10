@@ -16,7 +16,6 @@ export function ShowcaseWarmup({ arenaState }: { arenaState: { mode: string } })
 
   useEffect(() => {
     let disposed = false
-    let raf = 0
     let cancelTimeout = 0
     let stage: THREE.Scene | null = null
     let target: THREE.WebGLRenderTarget | null = null
@@ -255,17 +254,15 @@ export function ShowcaseWarmup({ arenaState }: { arenaState: { mode: string } })
       }
     }
 
-    // Execute early during the landing phase, NOT after an arbitrary idle
-    // timeout. This gives a visitor walking across the 60m disc a fully hot
-    // exhibit before reaching Colossus. GPU work is paid once, at startup.
-    raf = requestAnimationFrame(() => {
-      cancelTimeout = window.setTimeout(() => { void warm() }, 80)
-    })
+    // Schedule after this React mount task, not after the first renderer rAF.
+    // Waiting for the first 3D rAF can take seconds on slow GPUs and let the
+    // visitor click BEFORE any laser beam has been primed. Actual GPU uploads
+    // still yield to each subsequent browser paint and stop on summon.
+    cancelTimeout = window.setTimeout(() => { void warm() }, 0)
     return () => {
       window.clearInterval(hudTimer)
       badge.remove()
       disposed = true
-      cancelAnimationFrame(raf)
       clearTimeout(cancelTimeout)
       target?.dispose()
       stage?.clear()
