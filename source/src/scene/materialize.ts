@@ -24,9 +24,14 @@ export function createMaterializeUniforms(color: THREE.ColorRepresentation): Mat
  * laser-fabrication scanline & holographic blueprint grid shader.
  * When uComplete >= 0.999, renders standard PBR with zero clipping.
  */
-export function patchMaterialize<T extends THREE.Material>(mat: T, uniforms: MaterializeUniforms, tag: string): T {
+export function patchMaterialize<T extends THREE.Material>(mat: T, uniforms: MaterializeUniforms, _tag: string): T {
   mat.side = THREE.DoubleSide
-  mat.customProgramCacheKey = () => `orbita-materialize-${tag}`
+  // Every material uses identical injected GLSL. The renderer already keys
+  // differences in map, material type, lighting, skinning and vertex defines.
+  // A per-material tag here incorrectly multiplies shader programs and
+  // first-summon compilation. Uniforms remain PER MATERIAL, never shared by
+  // this program-cache deduplication.
+  mat.customProgramCacheKey = () => 'orbita-materialize-shared-v1'
   mat.onBeforeCompile = (shader) => {
     shader.uniforms.uScanY = uniforms.uScanY
     shader.uniforms.uWireHeight = uniforms.uWireHeight
