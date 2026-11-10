@@ -26,6 +26,7 @@ export function createMaterializeUniforms(color: THREE.ColorRepresentation): Mat
  */
 export function patchMaterialize<T extends THREE.Material>(mat: T, uniforms: MaterializeUniforms, _tag: string): T {
   mat.side = THREE.DoubleSide
+  mat.userData.orbitaMaterialize = true
   // Every material uses identical injected GLSL. The renderer already keys
   // differences in map, material type, lighting, skinning and vertex defines.
   // A per-material tag here incorrectly multiplies shader programs and
@@ -91,4 +92,56 @@ export function patchMaterialize<T extends THREE.Material>(mat: T, uniforms: Mat
       )
   }
   return mat
+}
+
+
+/**
+ * Exact draw-call culling for the unmodified materialization shader.
+ * The shader discards every fragment whose world Y is higher than
+ * uScanY + uWireHeight (+/- the 0.035 ripple). Such a mesh has ZERO visible
+ * pixels, so skipping its draw/initial VBO upload until the scan reaches it
+ * cannot change the intended rendered image. Culling uses conservative
+ * world-space AABBs and leaves separately animated/effect meshes alone.
+ */
+export interface ScanCullEntry {
+  mesh: THREE.Mesh
+  localBounds: THREE.Box3
+  worldBounds: THREE.Box3
+}
+export function collectScanCullMeshes(root: THREE.Object3D, skip: ReadonlySet<THREE.Object3D> = new Set()): ScanCullEntry[] {
+  const entries: ScanCullEntry[] = []
+  root.traverse(obj => {
+    // Instanced meshes need per-instance bounds, so leave them to their
+    // existing animation/visibility owner rather than using one geometry box.
+    if (skip.has(obj) || !(obj as THREE.Mesh).isMesh || (obj as THREE.InstancedMesh).isInstancedMesh || !obj.visible) return
+    const mesh = obj as THREE.Mesh
+    const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material]
+    if (!mats.length || mats.some(m => !m?.userData?.orbitaMaterialize)) return
+    const geometry = mesh.geometry
+    if (!geometry.boundingBox) geometry.computeBoundingBox()
+    if (!geometry.boundingBox) return
+    entries.push({ mesh, localBounds: geometry.boundingBox, worldBounds: new THREE.Box3() })
+  })
+  return entries
+}
+export function updateScanCullMeshes(
+  root: THREE.Object3D,
+  entries: readonly ScanCullEntry[],
+  scanWorldY: number,
+  wireHeight: number,
+  complete: boolean,
+): void {
+  if (complete) {
+    for (const entry of entries) entry.mesh.visible = true
+    return
+  }
+  // Animated transforms are refreshed once and bounds are conservative:
+  // a mesh is culled ONLY when no point of its geometry could reach the
+  // existing shader's visible band. This preserves world-Y scan silhouettes.
+  root.updateWorldMatrix(true, true)
+  const edgeY = scanWorldY + wireHeight + 0.06
+  for (const entry of entries) {
+    entry.worldBounds.copy(entry.localBounds).applyMatrix4(entry.mesh.matrixWorld)
+    entry.mesh.visible = entry.worldBounds.min.y <= edgeY
+  }
 }
