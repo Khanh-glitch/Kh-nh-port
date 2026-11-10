@@ -5,6 +5,9 @@ on:
     paths:
       - 'scripts/colossus-ready-idle-v-click.mjs'
       - '.github/workflows/colossus-ready-idle-v-click.yml'
+      - 'source/src/scene/ApexShowcase.tsx'
+      - 'source/src/scene/RagnarokShowcase.tsx'
+      - 'source/src/scene/Robot.tsx'
   workflow_dispatch:
 permissions:
   contents: read
@@ -16,7 +19,8 @@ jobs:
       fail-fast: false
       matrix:
         trial: [1, 2]
-        shadow: [normal, off]
+        shadow: [normal]
+        exhibit: [normal, noExhibits, noLaser]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -35,6 +39,7 @@ jobs:
         env:
           COLOSSUS_SMOKE_URL: http://127.0.0.1:4173/#at=0,-27,0,20&autostart&skip
           COLOSSUS_SHADOW_VARIANT: ${{ matrix.shadow }}
+          COLOSSUS_EXHIBIT_VARIANT: ${{ matrix.exhibit }}
         run: |
           python3 -m http.server 4173 --bind 127.0.0.1 --directory dist-pages >/tmp/colossus-ready-idle.log 2>&1 &
           for n in {1..30}; do
@@ -45,6 +50,6 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: colossus-ready-idle-v-click-${{ matrix.shadow }}-trial-${{ matrix.trial }}
+          name: colossus-ready-idle-v-click-${{ matrix.exhibit }}-${{ matrix.shadow }}-trial-${{ matrix.trial }}
           path: browser-evidence/
           if-no-files-found: warn

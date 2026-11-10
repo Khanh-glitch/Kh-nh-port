@@ -383,7 +383,10 @@ function RagnarokShowcaseImpl({ position, worldPosition, rotationY, summoned, sc
       plinthRef.current.visible = plinthReveal > 0.0001
       plinthRef.current.scale.set(plinthReveal, Math.max(0.0001, plinthReveal), plinthReveal)
     }
-    if (exhibitRef.current) exhibitRef.current.visible = prog > 0.19
+    // CI-only causal isolation; normal portfolio renders the entire original island.
+    const omitExhibitForProbe = typeof window !== 'undefined' &&
+      new URLSearchParams(window.location.search).get('colossusExhibitProbe') === 'off'
+    if (exhibitRef.current) exhibitRef.current.visible = prog > 0.19 && !omitExhibitForProbe
     if (titleRef.current) {
       const titleReveal = THREE.MathUtils.smoothstep(prog, 0.83, 0.99)
       titleRef.current.visible = titleReveal > 0.001

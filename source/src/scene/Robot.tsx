@@ -745,6 +745,15 @@ export function Robot() {
       orientBeam(beamL.current, tmp.a, tmp.tgt, laserColor)
       orientBeam(beamR.current, tmp.b, tmp.tgt, laserColor)
       orientBeam(beamEye.current, tmp.c, tmp.tgt, '#a6ecff')
+      // Diagnostic ONLY: isolate the 3 laser draws from the first-visible
+      // showcase and shadow/compositor workload. Never active in production.
+      const omitLaserForProbe = typeof window !== 'undefined' &&
+        new URLSearchParams(window.location.search).get('colossusLaserProbe') === 'off'
+      if (omitLaserForProbe) {
+        if (beamL.current) beamL.current.visible = false
+        if (beamR.current) beamR.current.visible = false
+        if (beamEye.current) beamEye.current.visible = false
+      }
       // Records when the real R3F callback first submitted visible laser
       // geometry. This is NOT a claim of display-present timing.
       if (coldProbe.started > 0 && coldProbe.firstBeamFrameAtMs === null && beamL.current?.visible) {
@@ -755,7 +764,7 @@ export function Robot() {
         if (latest) latest.firstBeamFrameAtMs = coldProbe.firstBeamFrameAtMs
       }
       if (impactFlare.current) {
-        impactFlare.current.visible = true
+        impactFlare.current.visible = !omitLaserForProbe
         impactFlare.current.position.copy(tmp.tgt)
         impactFlare.current.scale.setScalar(2.4 + Math.sin(t * 24) * 0.6)
         ;(impactFlare.current.material as THREE.SpriteMaterial).color.set(laserColor)

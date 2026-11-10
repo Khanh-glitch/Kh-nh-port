@@ -10,10 +10,14 @@ const browser = await chromium.launch({
 const page = await browser.newPage({viewport:{width:1280,height:720},deviceScaleFactor:1})
 const errors=[]
 page.on('pageerror',e=>errors.push(e.message))
+const exhibitVariant=process.env.COLOSSUS_EXHIBIT_VARIANT || 'normal'
+if(!['normal','noExhibits','noLaser'].includes(exhibitVariant)) throw Error('Unknown exhibit/laser diagnostic')
 const shadowVariant=process.env.COLOSSUS_SHADOW_VARIANT || 'normal'
 if(!['normal','off'].includes(shadowVariant))throw Error('Unknown shadow variant')
 const targetUrl=new URL(process.env.COLOSSUS_SMOKE_URL || 'http://127.0.0.1:4173/#at=0,-27,0,20&autostart&skip')
 if(shadowVariant==='off')targetUrl.searchParams.set('colossusShadowProbe','off')
+if(exhibitVariant==='noExhibits')targetUrl.searchParams.set('colossusExhibitProbe','off')
+if(exhibitVariant==='noLaser')targetUrl.searchParams.set('colossusLaserProbe','off')
 const url=targetUrl.toString()
 try {
   await page.goto(url,{waitUntil:'domcontentloaded',timeout:120000})
@@ -100,14 +104,14 @@ try {
       })).slice(0,32)
     }
   })
-  const report={sha:process.env.GITHUB_SHA??'local',shadowVariant,before,clicked,result,errors,
-    verdict:result.afterClick.maxMs<=120&&result.firstBeamMs!=null&&result.firstBeamMs<500
+  const report={sha:process.env.GITHUB_SHA??'local',shadowVariant,exhibitVariant,before,clicked,result,errors,
+    verdict:result.afterClick.maxMs<=120&&(exhibitVariant==='noLaser'||(result.firstBeamMs!=null&&result.firstBeamMs<500))
       ? 'SMOOTH_VIRTUAL_MEASURED_NOT_REAL_GPU_CERTIFIED' : 'HITCH_NOT_ACCEPTED',
     limits:'Same-session idle vs click rAF callback comparison on Apple Paravirtual Metal. rAF is not presented frame timing and no physical device is certified; no visual settings changed.'}
   console.log('READY_IDLE_V_CLICK '+JSON.stringify(report))
   writeFileSync('browser-evidence/ready-idle-v-click.json',JSON.stringify(report,null,2))
   await page.screenshot({path:'browser-evidence/ready-idle-v-click.png',timeout:60000})
-  if(errors.length || !clicked || result.firstBeamMs==null)process.exitCode=3
+  if(errors.length || !clicked || (exhibitVariant!=='noLaser'&&result.firstBeamMs==null))process.exitCode=3
   else if(report.verdict==='HITCH_NOT_ACCEPTED')process.exitCode=12
 } catch(e){
   console.error('READY_IDLE_V_CLICK_BLOCKED',String(e))

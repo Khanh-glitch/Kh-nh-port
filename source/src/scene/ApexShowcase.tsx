@@ -326,7 +326,10 @@ function ApexShowcaseImpl({ position, worldPosition, rotationY, summoned, scanPr
     matUniforms.uScanY.value = scanWorldYRef.current
     matUniforms.uComplete.value = prog >= 0.999 ? 1.0 : 0.0
 
-    if (exhibitRef.current) exhibitRef.current.visible = prog > 0.005
+    // CI-only causal isolation of the materializing 3D exhibit. Default unchanged.
+    const omitExhibitForProbe = typeof window !== 'undefined' &&
+      new URLSearchParams(window.location.search).get('colossusExhibitProbe') === 'off'
+    if (exhibitRef.current) exhibitRef.current.visible = prog > 0.005 && !omitExhibitForProbe
     const plinthReveal = THREE.MathUtils.smoothstep(prog, 0.005, 0.17)
     if (plinthRef.current) {
       plinthRef.current.visible = plinthReveal > 0.0001
