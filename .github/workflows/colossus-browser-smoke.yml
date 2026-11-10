@@ -2,7 +2,7 @@ name: Colossus unattended browser smoke
 on:
   push:
     branches:
-      - experiment/colossus-first-draw-combined
+      - experiment/colossus-chunked-firstdraw
   workflow_dispatch:
 permissions:
   contents: read
