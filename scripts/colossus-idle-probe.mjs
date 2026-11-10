@@ -58,7 +58,30 @@ try {
     }
   })
   let lateClick = null
+  let readiness = null
   if (process.env.COLOSSUS_IDLE_THEN_CLICK === '1') {
+    const requireFullyReady = process.env.COLOSSUS_READY_GATE === '1'
+    if (requireFullyReady) {
+      const waitStart = Date.now()
+      const reached = await page.waitForFunction(() => window.__orbitaColossusWarmup?.status === 'ready', null, {
+        timeout: 45000, polling: 250
+      }).then(() => true, () => false)
+      readiness = await page.evaluate(() => {
+        const w = window.__orbitaColossusWarmup
+        return {status:w?.status, laserReady:w?.laserReady, gpuSynced:w?.gpuSynced,
+          uploadedProxies:w?.uploadedProxies, totalProxies:w?.totalProxies,
+          earlyShaderCompileStatus:w?.earlyShaderCompileStatus}
+      })
+      readiness.waitMs = Date.now() - waitStart
+      readiness.confirmed = reached && readiness.status === 'ready' && readiness.gpuSynced === true &&
+        readiness.totalProxies > 0 && readiness.uploadedProxies >= readiness.totalProxies
+      console.log('FULL_READINESS '+JSON.stringify({variant,gpuMode,readiness}))
+      if (!readiness.confirmed) process.exitCode = 14
+    }
+    // We do not silently label a timeout as "fully warm".
+    if (requireFullyReady && !readiness.confirmed) {
+      lateClick = {dispatched:false, readyBeforeClick:false, verdict:'BLOCKED_FULL_READINESS_NOT_REACHED'}
+    } else {
     const dispatched = await page.evaluate(() => {
       const canvas = document.querySelector('canvas')
       if (!canvas) return false
@@ -72,8 +95,10 @@ try {
     const profile = await page.evaluate(() => window.__orbitaColossusProfile || null)
     lateClick = {
       dispatched,
-      readyBeforeClick:data.warmup?.status === 'ready',
-      statusBeforeClick:data.warmup?.status,
+      readyBeforeClick:requireFullyReady ? readiness.confirmed : data.warmup?.status === 'ready',
+      statusBeforeClick:requireFullyReady ? readiness.status : data.warmup?.status,
+      readinessWaitMs:readiness?.waitMs ?? 0,
+      totalProxiesReady:readiness?.totalProxies ?? data.warmup?.totalProxies ?? 0,
       maxFrameMs:profile?.maxFrameMs ?? null,
       firstFrameMs:profile?.firstFrameFromClickMs ?? null,
       firstBeamMs:profile?.firstBeamFrameAtMs ?? null,
@@ -82,8 +107,9 @@ try {
     }
     console.log('DELAYED_CLICK '+JSON.stringify({variant,gpuMode,lateClick}))
     if (lateClick.verdict === 'UNACCEPTED_STUTTER') process.exitCode=12
+    }
   }
-  const report = {commit:process.env.GITHUB_SHA,variant,gpuMode,url:url.toString(),data,lateClick,errors,
+  const report = {commit:process.env.GITHUB_SHA,variant,gpuMode,url:url.toString(),data,readiness,lateClick,errors,
     note:'ANGLE GPU fingerprint recorded. Snapshot AFTER timing. Metal Paravirtual is not bare physical-GPU certification.'}
   writeFileSync('browser-evidence/idle-summary.json',JSON.stringify(report,null,2))
   console.log('IDLE_PROBE '+JSON.stringify({variant,gpuMode,commit:report.commit, ...data, warmup:{status:data.warmup?.status,laserReady:data.warmup?.laserReady,earlyShaderCompileStatus:data.warmup?.earlyShaderCompileStatus}}))

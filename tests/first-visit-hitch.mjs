@@ -167,3 +167,7 @@ assert.ok(showWarm.includes('gl.shadowMap.enabled = originalShadows'), 'shadow A
 const delayedClick = read('scripts/colossus-idle-probe.mjs')
 assert.ok(delayedClick.includes('COLOSSUS_IDLE_THEN_CLICK') && delayedClick.includes('DELAYED_CLICK'), 'late first-click test must capture GPU-readiness after 9s idle')
 assert.ok(delayedClick.includes('UNACCEPTED_STUTTER'), 'late-click measurement must not present stutter as acceptance')
+
+const readyTest = read('scripts/colossus-idle-probe.mjs')
+assert.ok(readyTest.includes("COLOSSUS_READY_GATE === '1'") && readyTest.includes("window.__orbitaColossusWarmup?.status === 'ready'"), 'full-prewarm diagnosis gates click on actual ready status')
+assert.ok(readyTest.includes('uploadedProxies >= readiness.totalProxies') && readyTest.includes('BLOCKED_FULL_READINESS_NOT_REACHED'), 'full prewarm does not claim success or trigger before all GPU proxies are uploaded')

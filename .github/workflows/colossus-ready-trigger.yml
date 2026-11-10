@@ -1,0 +1,52 @@
+name: Colossus Metal full-prewarm readiness proof
+on:
+  push:
+    branches: [fix/colossus-frame-budget-prewarm]
+    paths:
+      - 'scripts/colossus-idle-probe.mjs'
+      - '.github/workflows/colossus-ready-trigger.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  ready-trigger:
+    runs-on: macos-15
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        trial: [1, 2, 3]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: source/package-lock.json
+      - run: npm ci --prefix source
+      - run: npm install --prefix source --no-save --package-lock=false playwright@1.56.1
+      - run: cd source && npx playwright install chromium
+      - name: Build exact candidate integrated HTML
+        run: |
+          node scripts/sync-colossus-standalone.mjs
+          node scripts/build-pages.mjs
+      - name: Click ONLY after completed GPU prewarm, or report a blocker
+        env:
+          COLOSSUS_SMOKE_URL: http://127.0.0.1:4173/#at=0,-27,0,20&autostart&skip
+          COLOSSUS_GPU_MODE: metal
+          COLOSSUS_AB_VARIANT: enabled
+          COLOSSUS_IDLE_THEN_CLICK: '1'
+          COLOSSUS_READY_GATE: '1'
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 --directory dist-pages >/tmp/colossus-ready.log 2>&1 &
+          for n in {1..30}; do
+            if curl -fsS -o /dev/null http://127.0.0.1:4173/; then break; fi
+            sleep 1
+          done
+          node scripts/colossus-idle-probe.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: colossus-complete-prewarm-trial-${{ matrix.trial }}
+          path: browser-evidence/
+          if-no-files-found: warn
