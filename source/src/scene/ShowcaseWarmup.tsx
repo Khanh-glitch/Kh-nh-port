@@ -242,7 +242,7 @@ export function ShowcaseWarmup({ arenaState }: { arenaState: { mode: string } })
       info.earlyShaderVariantKeys = [...chosen.keys()]
       try {
         info.earlyShaderCompileStatus = 'compiling'
-        let compilePromise: Promise<void> = Promise.resolve()
+        let compilePromise: Promise<unknown> = Promise.resolve()
         try {
           gl.xr.enabled = false
           gl.setRenderTarget(privateTarget)
@@ -517,7 +517,7 @@ export function ShowcaseWarmup({ arenaState }: { arenaState: { mode: string } })
             // stage. Parallel compile avoids the old 4-5 second synchronous
             // GL.render that raced user input in software-backed Chrome.
             // Keep the same offscreen output color-space shader cache variant.
-            let compiled: Promise<void> = Promise.resolve()
+            let compiled: Promise<unknown> = Promise.resolve()
             withTarget(() => {
               compiled = gl.compileAsync(stageNow, camera)
             })
