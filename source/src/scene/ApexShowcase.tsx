@@ -7,7 +7,7 @@ import { FONT, beamGeometry, beamMaterial, canvasTex, glowTexture, rand, rbox, r
 import { Hit } from './Hit'
 import { Label } from './Label'
 import { PadRing } from './common'
-import { createMaterializeUniforms, patchMaterialize } from './materialize'
+import { collectScanCullMeshes, updateScanCullMeshes, createMaterializeUniforms, patchMaterialize } from './materialize'
 
 export interface ShowcaseProps {
   position: [number, number, number]
@@ -123,6 +123,7 @@ function ApexShowcaseImpl({ position, worldPosition, rotationY, summoned, scanPr
   const eyeLightWorld = useMemo(() => new THREE.Vector3(), [])
   const plinthRef = useRef<THREE.Group>(null)
   const newbotRoot = useRef<THREE.Group>(null)
+  const scanCullEntries = useRef<ReturnType<typeof collectScanCullMeshes> | null>(null)
   const upperBody = useRef<THREE.Group>(null)
   const chinRef = useRef<THREE.Mesh>(null)
   const cheekL = useRef<THREE.Mesh>(null)
@@ -156,6 +157,14 @@ function ApexShowcaseImpl({ position, worldPosition, rotationY, summoned, scanPr
   }).current
 
   const matUniforms = useMemo(() => createMaterializeUniforms('#ff9b30'), [])
+  useEffect(() => {
+    if (newbotRoot.current) {
+      const skip = new Set<THREE.Object3D>()
+      if (shieldRef.current) skip.add(shieldRef.current)
+      scanCullEntries.current = collectScanCullMeshes(newbotRoot.current, skip)
+    }
+    return () => { scanCullEntries.current = null }
+  }, [])
 
   const materials = useMemo(() => {
     const armorTex = makeNewbotArmorTex()
@@ -453,6 +462,16 @@ function ApexShowcaseImpl({ position, worldPosition, rotationY, summoned, scanPr
     if (hk !== state.lastHudKey) {
       state.lastHudKey = hk
       drawHud(state.mode, isAct)
+    }
+    // The scan shader discards EVERY pixel above its wire-height band.
+    // Defer mesh draw/first-use VBO upload until its conservative world AABB
+    // intersects that band, spreading the previously all-at-once first scan
+    // across animation frames. Actual shader/colors/geometry are unchanged.
+    if (newbotRoot.current && scanCullEntries.current) {
+      if (prog > 0.005 && prog < 0.999)
+        updateScanCullMeshes(newbotRoot.current, scanCullEntries.current, scanWorldYRef.current, matUniforms.uWireHeight.value, false)
+      else if (prog >= 0.999)
+        updateScanCullMeshes(newbotRoot.current, scanCullEntries.current, scanWorldYRef.current, matUniforms.uWireHeight.value, true)
     }
     // Maintain the ORIGINAL world-space light position while keeping the light
     // in the always-visible root. This freezes the scene-wide point-light count:
