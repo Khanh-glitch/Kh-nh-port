@@ -64,6 +64,11 @@ export function RealityHost() {
     warmMesh: [] as THREE.Object3D[],
     warmCompilePending: false,
     warmErrors: 0,
+    warmShaderDone: 0,
+    warmTextureDone: 0,
+    warmShaderTotal: 0,
+    warmTextureTotal: 0,
+    warmHealthyPaints: 0,
     warmPass: 0, // 0: đang upload tex/compile, 1: đang bật 1 frame silent shadow warm, 2: xong hoàn toàn
   }).current
 
@@ -454,6 +459,8 @@ export function RealityHost() {
     // Prepare Piano sheets and GoldZone before the hidden UEH campus.
     if (hostRoot.current) for (const child of hostRoot.current.children) if (child !== ueh.current) scan(child)
     scan(ueh.current)
+    S.warmShaderTotal = S.warmMesh.length
+    S.warmTextureTotal = S.warmTex.length
     recordHexTiming('warm-queue-build', started)
   }
 
@@ -497,13 +504,21 @@ export function RealityHost() {
     rt.t = state.clock.elapsedTime
 
     // --- 1. Intro-only GPU preflight. No synchronous shader compilation during gameplay.
-    if (S.warmPass < 2 && st.phase === 'idle' &&
-        (useStore.getState().phase === 'intro' ||
-         (useStore.getState().phase === 'playing' && rawDt <= 0.05 &&
-          document.visibilityState === 'visible'))) {
+    const pendingShaderInput = (navigator as Navigator & {
+      scheduling?:{isInputPending?:()=>boolean}
+    }).scheduling?.isInputPending?.() ?? false
+    const shaderHealthy = rawDt > 0 && rawDt <= 0.10 &&
+      document.visibilityState === 'visible' && !pendingShaderInput
+    S.warmHealthyPaints = shaderHealthy ? S.warmHealthyPaints + 1 : 0
+    const warmOpportunity = S.warmHealthyPaints >= 2
+    if (warmOpportunity) S.warmHealthyPaints = 0
+    if (S.warmPass < 2 && st.phase === 'idle' && warmOpportunity) {
       if (S.warmTex.length) {
         const tex = S.warmTex.shift()!
-        try { gl.initTexture(tex) } catch (err) { S.warmErrors++; console.warn('[Piano preflight] texture', err) }
+        try {
+          gl.initTexture(tex)
+          S.warmTextureDone++
+        } catch (err) { S.warmErrors++; console.warn('[Piano preflight] texture', err) }
       } else if (S.warmMesh.length && !S.warmCompilePending) {
         const obj = S.warmMesh.shift()!
         S.warmCompilePending = true
@@ -511,11 +526,12 @@ export function RealityHost() {
           void gl.compileAsync(obj, camera, scene).catch(err => {
             S.warmErrors++
             console.warn('[Piano preflight] shader', err)
-          }).finally(() => { S.warmCompilePending = false })
+          }).finally(() => { S.warmCompilePending = false; S.warmShaderDone++ })
         } else {
           try { gl.compile(obj, camera, scene) }
           catch (err) { S.warmErrors++; console.warn('[Piano preflight] shader fallback', err) }
           S.warmCompilePending = false
+          S.warmShaderDone++
         }
       } else if (!S.warmCompilePending) {
         // The old one-frame ENTIRE-UEH visibility preflight caused a large
@@ -524,7 +540,17 @@ export function RealityHost() {
         S.warmPass = 2
       }
     }
-        // Continue the cooperative material/texture queue AFTER entering the
+        ;(window as unknown as {__orbitaHexShaderPrep?: unknown}).__orbitaHexShaderPrep = {
+      status: S.warmPass === 2 ? 'complete-or-interrupted' : S.warmCompilePending ? 'compiling' : 'warming',
+      totalShaders: S.warmShaderTotal,
+      totalTextures: S.warmTextureTotal,
+      compiledShaders: S.warmShaderDone,
+      uploadedTextures: S.warmTextureDone,
+      remainingShaders: S.warmMesh.length,
+      remainingTextures: S.warmTex.length,
+      errors: S.warmErrors,
+    }
+    // Continue the cooperative material/texture queue AFTER entering the
     // world: the old intro-exit handler discarded every remaining UEH shader
     // before the visitor could reach the piano. That forced first-HEX
     // material compilation on the interaction frame. There is no more
