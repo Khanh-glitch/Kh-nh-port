@@ -1,0 +1,43 @@
+name: HEX standalone source parity + build (branch only)
+on:
+  push:
+    branches: [fix/hex-hitch-no-visual-loss]
+    paths: ['source/src/reality/RealityHost.tsx','source/src/reality/Front.tsx','scripts/sync-hex-standalone.mjs','.github/workflows/hex-sync-build.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: hex-sync-source
+  cancel-in-progress: true
+jobs:
+  sync:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/hex-hitch-no-visual-loss
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci --prefix source
+      - name: Compile unchanged full quality Vite scene
+        run: npm run build --prefix source
+      - name: Synchronize the REAL published ORBITA standalone
+        run: |
+          node scripts/sync-hex-standalone.mjs
+          node scripts/build-pages.mjs
+          node tests/first-visit-hitch.mjs
+          git diff --check
+      - name: Commit synchronized standalone to HEX candidate branch only
+        run: |
+          if ! git diff --quiet -- index.html; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add index.html
+            git commit -m "build(hex): publish source-matched Reality Rewrite GPU prewarm in standalone"
+            git push origin HEAD:fix/hex-hitch-no-visual-loss
+          else
+            echo "Standalone HTML matches source"
+          fi
