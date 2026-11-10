@@ -58,8 +58,19 @@ assert.ok(warmup.includes('menniverse-laser-probe') && warmup.includes('Copy las
 assert.ok(!source['source/src/scene/ShowcaseWarmup.tsx'].includes("location.hash.includes('colossus-profile')"), 'startup prewarm identical regardless of hash')
 
 const showWarm = source['source/src/scene/ShowcaseWarmup.tsx']
-assert.ok(showWarm.includes("drawVariant('laser-apex', apexLights)"), 'APEX actually drawn offscreen, not compiled only')
-assert.ok(showWarm.includes("drawVariant('laser-ragnarok', [...apexLights, ...ragLights])"), 'Ragnarok lighting actually drawn offscreen')
+assert.ok(showWarm.includes("drawVariant('dormant', [])"), 'stable rig still draws the actual resources offscreen')
+assert.ok(!showWarm.includes("drawVariant('laser-apex', apexLights)"), 'no redundant offscreen light permutation after stabilizing lights')
+assert.ok(!showWarm.includes("drawVariant('laser-ragnarok', [...apexLights, ...ragLights])"), 'no duplicate render for an identical shader permutation')
+const apex = read('source/src/scene/ApexShowcase.tsx')
+const rag = read('source/src/scene/RagnarokShowcase.tsx')
+assert.ok(apex.includes('ref={showcaseRootRef}') && apex.includes('ref={eyeLightAnchor}'), 'APEX keeps original animated light transform via anchor')
+assert.ok(rag.includes('ref={fireLightAnchor}') && rag.includes('ref={islandLightAnchor}'), 'Ragnarok lights follow floating island anchors')
+assert.ok(apex.includes('intensity = prog > 0.005 ? 5.5 : 0'), 'APEX light dormant dark and revealed at original intensity')
+assert.ok(rag.includes('prog > 0.19 ? (isAct ? 14 : 0)'), 'Ragnarok fire light dormant dark and original active intensity')
+assert.ok(rag.includes('prog > 0.19 ? (sim.weather === 2'), 'Ragnarok island light dormant dark and original weather response')
+assert.ok(!apex.includes('<pointLight position={[0, 0.05, 0.95]}'), 'APEX animated light no longer disappears from the light rig')
+assert.ok(!rag.includes('<pointLight ref={fireLight} position='), 'Ragnarok light no longer nested under hidden island')
+
 assert.ok(showWarm.includes('visibilityAtStart'), 'prewarm records tab state')
 assert.ok(source['source/src/scene/Robot.tsx'].includes('hiddenDuringProfile'), 'tab throttling tracked')
 assert.ok(source['source/src/scene/Robot.tsx'].includes('visibilityTransitions'), 'tab change events counted')
