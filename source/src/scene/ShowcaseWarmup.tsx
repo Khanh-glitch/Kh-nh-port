@@ -181,11 +181,12 @@ export function ShowcaseWarmup({ arenaState }: { arenaState: { mode: string } })
         }
       }
       try {
-        if (typeof gl.compileAsync === 'function') {
-          const begin = performance.now()
-          await gl.compileAsync(stageNow, camera)
-          info.variants.push({ name:'stable-light', ms:Math.round(performance.now()-begin), programs:gl.info.programs?.length ?? 0 })
-        }
+        // NEVER compile all 131 objects in one uninterruptible driver task.
+        // Each private render below compiles and uploads ONE real material/mesh,
+        // then returns the browser to the next paint. This bounds the
+        // preflight's interference with the actual first-laser animation.
+        // The real shaders and shadow/light program keys are unchanged.
+        info.variants.push({ name:'one-mesh-per-paint', ms:0, programs:gl.info.programs?.length ?? 0 })
         const apexLights = extraLights(showcaseRoots[0])
         const ragLights = extraLights(showcaseRoots[1])
         info.extraApexLights = apexLights.length
