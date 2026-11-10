@@ -1,0 +1,51 @@
+name: ORBITA first entry idle vs landing GPU preflight
+on:
+  push:
+    branches: [fix/colossus-hitch-only]
+    paths:
+      - 'source/src/scene/Experience.tsx'
+      - 'source/src/scene/ShowcaseWarmup.tsx'
+      - 'scripts/landing-ready-v-enter.mjs'
+      - '.github/workflows/orbita-first-landing.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  enter:
+    runs-on: macos-15
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        variant: [off, enabled]
+        trial: [1, 2]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: source/package-lock.json
+      - run: npm ci --prefix source
+      - run: npm install --prefix source --no-save --package-lock=false playwright@1.56.1
+      - run: cd source && npx playwright install chromium
+      - name: Build source into original deployed standalone
+        run: |
+          node scripts/sync-colossus-standalone.mjs
+          node scripts/build-pages.mjs
+      - name: Observe true first-landing frame pacing with all quality retained
+        env:
+          LANDING_GPU_VARIANT: ${{ matrix.variant }}
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 --directory dist-pages >/tmp/landing-preflight.log 2>&1 &
+          for n in {1..30}; do
+            if curl -fsS -o /dev/null http://127.0.0.1:4173/; then break; fi
+            sleep 1
+          done
+          node scripts/landing-ready-v-enter.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: orbita-landing-${{ matrix.variant }}-${{ matrix.trial }}
+          path: browser-evidence/
+          if-no-files-found: warn
