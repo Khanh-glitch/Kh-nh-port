@@ -69,6 +69,13 @@ export function RealityHost() {
   const tmp = useMemo(() => new THREE.Vector3(), [])
   const tc = useMemo(() => new THREE.Color(), [])
   const tc2 = useMemo(() => new THREE.Color(), [])
+  const recordHexTiming = (step: string, started: number) => {
+    if (typeof window === 'undefined' || new URLSearchParams(location.search).get('hexProfile') !== '1') return
+    const host = window as unknown as {__orbitaHexTimings?: Array<{step:string;ms:number;at:number}>}
+    const rows = host.__orbitaHexTimings ?? (host.__orbitaHexTimings = [])
+    rows.push({ step, ms: Math.round((performance.now()-started)*10)/10, at: Math.round(performance.now()) })
+    if (rows.length > 100) rows.shift()
+  }
 
   // Tách riêng vật liệu dùng chung trên các đối tượng cần giữ nguyên (như Grand Piano dùng chung mats.lacquer/gold/silver)
   // để patchOld KHÔNG bao giờ vô tình cắt mất thân đàn, nắp đàn, chân và bàn đạp!
@@ -108,6 +115,7 @@ export function RealityHost() {
   }
 
   const patchAll = () => {
+    const started = performance.now()
     isolateKeepMaterials()
     const visit = (o: THREE.Object3D) => {
       if (o.userData?.rwKeep) return
@@ -116,9 +124,11 @@ export function RealityHost() {
       o.children.forEach(visit)
     }
     visit(scene)
+    recordHexTiming('patch-all', started)
   }
 
   const collect = () => {
+    const started = performance.now()
     S.managed.length = 0
     S.lights.length = 0
     scene.updateMatrixWorld(true)
@@ -152,6 +162,7 @@ export function RealityHost() {
     }
     visit(scene)
     S.envI = (scene as unknown as { environmentIntensity?: number }).environmentIntensity ?? 1
+    recordHexTiming('collect', started)
   }
 
   const restoreAll = () => {
@@ -178,6 +189,7 @@ export function RealityHost() {
   // Hàng đợi chuẩn bị tài nguyên UEH phân bổ đều (texture + shader) để KHÔNG khựng khi lại gần đàn lần đầu
   const buildWarmQueues = () => {
     if (S.warmStarted) return
+    const started = performance.now()
     S.warmStarted = true
     const seenTex = new Set<THREE.Texture>()
     const seenMat = new Set<THREE.Material>()
@@ -217,6 +229,7 @@ export function RealityHost() {
     // Prepare Piano sheets and GoldZone before the hidden UEH campus.
     if (hostRoot.current) for (const child of hostRoot.current.children) if (child !== ueh.current) scan(child)
     scan(ueh.current)
+    recordHexTiming('warm-queue-build', started)
   }
 
   useEffect(() => {
@@ -308,7 +321,9 @@ export function RealityHost() {
         audio.prepare()
         collect()
         patchAll()
+        const reelStarted = performance.now()
         reel.use(st.track!)
+        recordHexTiming('reel-use-call', reelStarted)
         S.lastTrack = st.track
         S.lastSwitchSeq = st.switchSeq
         toast(`Triệu hồi · ${TRACKS[st.track!].title}`, 2400)
