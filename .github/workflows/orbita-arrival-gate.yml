@@ -1,0 +1,50 @@
+name: ORBITA arrival honest GPU readiness and landing smoke
+on:
+  push:
+    branches: [fix/colossus-frame-budget-prewarm]
+    paths:
+      - 'source/src/store.ts'
+      - 'source/src/scene/Player.tsx'
+      - 'source/src/scene/Experience.tsx'
+      - 'source/src/scene/ShowcaseWarmup.tsx'
+      - 'source/src/ui/Overlay.tsx'
+      - 'scripts/sync-colossus-standalone.mjs'
+      - 'scripts/orbita-arrival-smoke.mjs'
+      - '.github/workflows/orbita-arrival-gate.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  arrival-gpu:
+    runs-on: macos-15
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: source/package-lock.json
+      - run: npm ci --prefix source
+      - run: npm install --prefix source --no-save --package-lock=false playwright@1.56.1
+      - run: cd source && npx playwright install chromium
+      - name: Build real deployed standalone with matching source
+        run: |
+          node scripts/sync-colossus-standalone.mjs
+          node scripts/build-pages.mjs
+      - name: Assert GPU readiness before landing and collect frame evidence
+        env:
+          ARRIVAL_URL: http://127.0.0.1:4173/?arrival=on#at=0,-27,0,20&skip
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 --directory dist-pages >/tmp/orbita-arrival.log 2>&1 &
+          for n in {1..30}; do
+            if curl -fsS -o /dev/null http://127.0.0.1:4173/; then break; fi
+            sleep 1
+          done
+          node scripts/orbita-arrival-smoke.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: orbita-real-gpu-arrival-and-landing-evidence
+          path: browser-evidence/
+          if-no-files-found: warn

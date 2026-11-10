@@ -53,6 +53,7 @@ function Intro() {
         )}
         <div className="mt-9 flex flex-col items-center gap-3 animate-[fadeUp_1.1s_0.4s_ease-out_both]">
           <button
+            data-testid="arrival-land"
             disabled={!canLand}
             onClick={startGame}
             className="group relative overflow-hidden rounded-full border border-white/30 bg-white/10 px-10 py-4 text-sm font-semibold tracking-[0.3em] text-white backdrop-blur-md transition hover:scale-[1.04] hover:border-white/70 hover:bg-white/20 disabled:cursor-wait disabled:opacity-60"
