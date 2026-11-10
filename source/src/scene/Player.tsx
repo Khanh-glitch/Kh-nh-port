@@ -38,6 +38,15 @@ export function startGame() {
   // by a synthetic click, shortcut, or an outdated audio-only ready flag.
   const arrivalEnabled = new URLSearchParams(window.location.search).get('arrival') === 'on'
   if (arrivalEnabled && (!s.ready || !s.arrivalReady || !s.arrivalApproachSettled)) return
+  // Browser-only technical evidence: sample the actual R3F landing transition.
+  // Separate CPU callbacks from rAF compositor gaps without changing visuals.
+  if (arrivalEnabled) {
+    ;(window as unknown as { __orbitaLandingTrace?: unknown }).__orbitaLandingTrace = {
+      startedAt: performance.now(), lastAt: 0, samples: [] as Array<{
+        atMs: number; gapMs: number; transition: number; x: number; y: number; z: number
+      }>,
+    }
+  }
   void audio.start()
   s.setPhase('playing')
   s.setPaused(false)
@@ -263,6 +272,26 @@ export function Player() {
     const dt = Math.min(dtRaw, 0.05)
     const s = useStore.getState()
     const t = state.clock.elapsedTime
+    const trace = (window as unknown as { __orbitaLandingTrace?: {
+      startedAt: number; lastAt: number; samples: Array<{
+        atMs: number; gapMs: number; transition: number; x: number; y: number; z: number
+      }>
+    }}).__orbitaLandingTrace
+    if (trace && trace.samples.length < 320) {
+      const now = performance.now()
+      const elapsed = now - trace.startedAt
+      if (elapsed > 0 && elapsed < 8500) {
+        trace.samples.push({
+          atMs: Math.round(elapsed),
+          gapMs: trace.lastAt ? Math.round(now - trace.lastAt) : 0,
+          transition: Math.round(trans.t * 1000)/1000,
+          x: Math.round(camera.position.x * 10)/10,
+          y: Math.round(camera.position.y * 10)/10,
+          z: Math.round(camera.position.z * 10)/10,
+        })
+        trace.lastAt = now
+      }
+    }
 
     if (s.phase === 'intro') {
       const a = 0.6 + t * 0.045

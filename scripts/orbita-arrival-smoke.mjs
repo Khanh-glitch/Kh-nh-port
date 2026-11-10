@@ -73,9 +73,14 @@ try{
  await page.waitForTimeout(4500)
  report.afterLanding=await page.evaluate(()=>{
   const data=window.__arrivalFrameEvidence?.samples||[]
+  const steps=window.__orbitaLandingTrace?.samples||[]
+  const topR3f=[...steps].sort((a,b)=>b.gapMs-a.gapMs).slice(0,8)
   return {frames:data.length,maxFrameGapMs:Math.max(0,...data),
    framesOver120ms:data.filter(x=>x>120).length,
    frameP95Ms:[...data].sort((a,b)=>a-b)[Math.floor((data.length-1)*.95)]??null,
+   r3fFrames:steps.length,
+   r3fMaxGapMs:Math.max(0,...steps.map(s=>s.gapMs)),
+   worstR3fFrames:topR3f,
    canvasStillPresent:!!document.querySelector('canvas')}
  })
  await page.screenshot({path:'browser-evidence/orbita-arrival-landed.png',timeout:60000})
