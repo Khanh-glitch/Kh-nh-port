@@ -72,17 +72,20 @@ try {
     profile:window.__orbitaColossusProfile || null,
     historyLength:window.__orbitaColossusProfiles?.length || 0,
   }))
-  const realGpuVerified = gpuMode === 'metal' && /Metal|Apple M1|Apple GPU/i.test(String(before.gpuRenderer ?? '')) && !/SwiftShader|Software|llvmpipe/i.test(String(before.gpuRenderer ?? ''))
+  const metalBackendVerified = gpuMode === 'metal' && /Metal|Apple M1|Apple GPU/i.test(String(before.gpuRenderer ?? '')) && !/SwiftShader|Software|llvmpipe/i.test(String(before.gpuRenderer ?? ''))
+  const virtualGpu = /Paravirtual|Virtual/i.test(String(before.gpuRenderer ?? ''))
+  // ANGLE Metal Renderer: Apple Paravirtual device is NOT bare-metal evidence.
+  const realGpuVerified = metalBackendVerified && !virtualGpu
   const softwareStutter = !after.profile ||
     (after.profile.maxFrameMs ?? Infinity) > 120 ||
     (after.profile.firstFrameFromClickMs ?? Infinity) > 120 ||
     after.profile.firstBeamFrameAtMs == null
   const report={
     url,abVariant,commit:process.env.GITHUB_SHA ?? 'local',
-    gpuMode, realGpuVerified,
+    gpuMode, metalBackendVerified, virtualGpu, realGpuVerified,
     performanceVerdict: softwareStutter
-      ? (realGpuVerified ? 'UNACCEPTED_METAL_HARDWARE' : 'UNACCEPTED_SOFTWARE_GPU')
-      : (realGpuVerified ? 'METAL_MEASUREMENT_PENDING_VISUAL_PARITY' : 'MEASURED_NOT_HARDWARE_CERTIFIED'),
+      ? (metalBackendVerified ? (virtualGpu ? 'UNACCEPTED_METAL_VIRTUALIZED' : 'UNACCEPTED_METAL_HARDWARE') : 'UNACCEPTED_SOFTWARE_GPU')
+      : (realGpuVerified ? 'HARDWARE_MEASUREMENT_PENDING_VISUAL_PARITY' : 'NOT_HARDWARE_CERTIFIED'),
     elapsedMs:Date.now()-t0,attempted,before,after,
     errors,netFailed,
     notes:'NO screenshots before the click: avoid GPU readback contaminating first-laser measurement. Headless SwiftShader, not a real hardware certification'
@@ -93,7 +96,7 @@ try {
   catch(err) { console.warn('After-trigger screenshot unavailable:',String(err)) }
   console.log(JSON.stringify({
     performanceVerdict:report.performanceVerdict,
-    gpuMode, realGpuVerified,
+    gpuMode, metalBackendVerified, virtualGpu, realGpuVerified,
     gpuRenderer:before.gpuRenderer,
     canvas:before.canvas,webgl2:before.webgl2,contextLost:before.contextLost,
     verifiedCandidate:before.verifiedCandidate,
@@ -135,8 +138,8 @@ try {
     console.error('UNACCEPTED: no visible beam submission recorded within extra 25 seconds')
     process.exitCode=11
   }
-  if(gpuMode === 'metal' && !realGpuVerified) {
-    console.error('UNFIT_HARDWARE_PROBE: Metal GPU not actually exposed; reject any hardware PASS claim')
+  if(gpuMode === 'metal' && !metalBackendVerified) {
+    console.error('UNFIT_HARDWARE_PROBE: Metal backend not exposed; reject any Metal measurement')
     process.exitCode=13
   }
   if(softwareStutter) {

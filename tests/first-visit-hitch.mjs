@@ -140,7 +140,9 @@ assert.ok(!showWarm.includes("info.materializeShaderMs = Math.round(performance.
 
 assert.ok(showWarm.includes("new URLSearchParams(location.search).get('colossusPrewarm') === 'off'"), 'diagnostic A/B no-prewarm variant exists without modifying production default')
 
-assert.ok(showWarm.includes('MAX_LASER_PREFLIGHT_WAIT_MS = 2500'), 'laser preflight must not compete with overloaded visible renderer')
+assert.ok(showWarm.includes('MAX_LASER_PREFLIGHT_WAIT_MS = 3500'), 'bounded laser warmup window despite overloaded renderer')
+assert.ok(showWarm.includes('adaptiveBudget') && showWarm.includes('recentFrameMs.length >= 4'), 'warmup gate adapts to measured baseline and ignores first-frame noise')
+assert.ok(showWarm.includes('Math.min(100, Math.max(50, median * 1.35))'), 'adaptive budget is hard-capped to 100ms')
 assert.ok(showWarm.includes("info.status = 'prewarm-skipped-busy-renderer'"), 'budget backoff exposed in diagnostics')
 assert.ok(showWarm.includes('healthyLaserPaints >= 2'), 'laser GPU work requires healthy idle frames')
 
@@ -155,3 +157,6 @@ assert.ok(showWarm.includes('const precompileCriticalShaders = async () =>'), 'G
 assert.ok(showWarm.includes("info.earlyShaderCompileStatus = 'software-skipped'"), 'software rasterizer cannot be overloaded by eager shader compile')
 assert.ok(showWarm.includes("compilePromise = gl.compileAsync(stageEarly,cameraEarly)"), 'real shader variants are compiled asynchronously on GPU with matching output color space')
 assert.ok(showWarm.indexOf('await precompileCriticalShaders()') < showWarm.indexOf("info.status = 'budget-preflight'"), 'shader precompile precedes heavy geometry frame gate')
+
+const gpuSmoke = read('scripts/colossus-browser-smoke.mjs')
+assert.ok(gpuSmoke.includes('metalBackendVerified') && gpuSmoke.includes('virtualGpu'), 'Metal paravirtual device must not be represented as bare physical GPU')

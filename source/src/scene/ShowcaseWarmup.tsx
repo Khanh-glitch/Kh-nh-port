@@ -47,6 +47,8 @@ export function ShowcaseWarmup({ arenaState }: { arenaState: { mode: string } })
       materializeVariantKeys: [] as string[],
       laserBatchCpuMs: 0,
       deferredLaserFrames: 0,
+      adaptiveFrameBudgetMs: 50,
+      measuredMedianFrameMs: 0,
       showcaseDrawBatches: 0,
       deferredShowcaseFrames: 0,
       maxSampledFrameMs: 0,
@@ -96,8 +98,12 @@ export function ShowcaseWarmup({ arenaState }: { arenaState: { mode: string } })
     let previousPaintAt = 0
     let smoothPaints = 0
     let healthyLaserPaints = 0
-    const budgetClockStart = performance.now()
-    const MAX_LASER_PREFLIGHT_WAIT_MS = 2500
+    let budgetClockStart = performance.now()
+    const recentFrameMs: number[] = []
+    // Based on actual Metal idle traces: normal 67-83ms frames were being
+    // rejected by the old fixed 50ms gate, so the 131 VBOs never warmed.
+    // Learn a bounded local median instead; never accept >100ms "healthy".
+    const MAX_LASER_PREFLIGHT_WAIT_MS = 3500
     // Do not submit an additional offscreen GPU workload if the renderer's
     // own visible frames are already late. The production 3D visuals are
     // untouched. Both laser and optional work must yield to user input.
@@ -112,8 +118,17 @@ export function ShowcaseWarmup({ arenaState }: { arenaState: { mode: string } })
           scheduling?: { isInputPending?: () => boolean }
         }).scheduling
         const pendingInput = scheduling?.isInputPending?.() ?? false
+        if (frameMs > 0 && frameMs < 200) {
+          recentFrameMs.push(frameMs)
+          if (recentFrameMs.length > 12) recentFrameMs.shift()
+        }
+        const sorted = [...recentFrameMs].sort((a, b) => a - b)
+        const median = sorted.length ? sorted[Math.floor(sorted.length / 2)] : 16.7
+        const adaptiveBudget = Math.min(100, Math.max(50, median * 1.35))
+        info.measuredMedianFrameMs = Math.round(median)
+        info.adaptiveFrameBudgetMs = Math.round(adaptiveBudget)
         const healthyPaint = document.visibilityState === 'visible' && !pendingInput &&
-          frameMs > 0 && frameMs <= 50
+          recentFrameMs.length >= 4 && frameMs > 0 && frameMs <= adaptiveBudget
         if (priority === 'laser') {
           healthyLaserPaints = healthyPaint ? healthyLaserPaints + 1 : 0
           if (healthyLaserPaints >= 2) { healthyLaserPaints = 0; return true }
@@ -236,6 +251,9 @@ export function ShowcaseWarmup({ arenaState }: { arenaState: { mode: string } })
       // untouched; subsequent first-draw VBO work remains frame-gated.
       await precompileCriticalShaders()
       if (interrupted()) { info.status='cancelled-on-summon'; return }
+      // Shader compile is independently asynchronous. Measure the budget from
+      // when GL geometry work is actually eligible, not from React mount.
+      budgetClockStart = performance.now()
       // BEFORE cloning/traversing the 131 proxies and production lights,
       // require healthy render frames. A saturated renderer must not spend
       // additional CPU/GPU time even constructing temporary warmup objects.
