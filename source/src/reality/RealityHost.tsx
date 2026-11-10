@@ -7,6 +7,7 @@ import { useFrame, useThree } from '@react-three/fiber'
 import * as THREE from 'three'
 import { audio } from '../audio'
 import { setInteractiveFilter, player } from '../world'
+import { EXHIBITS } from '../layout'
 import { useStore, toast } from '../store'
 import { FRONT_MAX, RW, ease, frontReached, patchOld } from './mask'
 import { CENTER } from './site'
@@ -100,6 +101,7 @@ export function RealityHost() {
     stage.environment = scene.environment
     stage.fog = scene.fog
     const proxies: THREE.Object3D[] = []
+    const priorities = new Map<THREE.Object3D, number>()
     hexCull.length = 0
     const cullCenter = new THREE.Vector3()
     const cullScale = new THREE.Vector3()
@@ -150,8 +152,14 @@ export function RealityHost() {
         dst.instanceMatrix = src.instanceMatrix
         dst.instanceColor = src.instanceColor
       }
+      source.updateWorldMatrix(true, false)
+      const wp = new THREE.Vector3().setFromMatrixPosition(source.matrixWorld)
+      priorities.set(proxy,Math.hypot(wp.x-CENTER.x,wp.z-CENTER.z))
       proxies.push(proxy)
     })
+    // The innermost surfaces are revealed FIRST by the original radial scan.
+    // Warm their exact source geometry before distant buildings/foliage.
+    proxies.sort((a,b)=>(priorities.get(a)??0)-(priorities.get(b)??0))
     // Keep shader light-count/shadow defines representative of the real stage.
     scene.traverseVisible(o => {
       if (!(o as THREE.Light).isLight) return
@@ -219,8 +227,15 @@ export function RealityHost() {
       'submitted-no-fence','prewarm-skipped-busy-renderer',
       'diagnostic-prewarm-disabled','cancelled-on-summon',
       'submitted-no-async-readback']
+    const hexDistance = Math.hypot(player.pos.x-CENTER.x,player.pos.z-CENTER.z)
+    const robotDistance = Math.hypot(player.pos.x-EXHIBITS.robot.x,
+      player.pos.z-EXHIBITS.robot.z)
+    // Do not compete with Colossus when the visitor is headed to it.
+    // When already much closer to the piano, reserve spare healthy frames
+    // for the HEX world the visitor is about to activate.
+    const hexPriority = hexDistance < 36 && hexDistance + 10 < robotDistance
     if ((landing && !terminal.includes(landing.status)) ||
-        (colossus && !terminal.includes(colossus.status))) {
+        (colossus && !terminal.includes(colossus.status) && !hexPriority)) {
       h.info.status = 'waiting-for-other-preflights'
       return
     }
@@ -234,7 +249,7 @@ export function RealityHost() {
     if (h.healthyPaints < 3) { h.info.deferredFrames++; return }
     h.healthyPaints = 0
     const stage = h.stage, target = h.target
-    const batch = h.proxies.slice(h.index, h.index + 3)
+    const batch = h.proxies.slice(h.index, h.index + 6)
     const oldTarget = gl.getRenderTarget()
     const viewport = gl.getViewport(new THREE.Vector4()).clone()
     const scissor = gl.getScissor(new THREE.Vector4()).clone()
