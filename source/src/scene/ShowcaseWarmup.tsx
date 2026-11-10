@@ -87,7 +87,7 @@ export function ShowcaseWarmup({ arenaState }: { arenaState: { mode: string } })
       if (showcaseRoots.some(root => !root) || beams.length !== 4) { info.status = 'missing-roots'; return }
       // Cold click requires the 3 beam VBOs + impact flare FIRST, not after
       // the 120 exhibit meshes. Keep all original meshes and full quality.
-      const roots: THREE.Object3D[] = [...beams, ...showcaseRoots as THREE.Object3D[]]
+      const roots: THREE.Object3D[] = [...beams, ...(showcaseRoots as THREE.Object3D[])]
 
       const started = performance.now()
       info.status = 'compiling'
