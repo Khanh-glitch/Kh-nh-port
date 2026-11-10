@@ -19,11 +19,13 @@ function Intro() {
   const ready = useStore((s) => s.ready)
   const arrivalReady = useStore((s) => s.arrivalReady)
   const arrivalProgress = useStore((s) => s.arrivalProgress)
+  const arrivalApproach = useStore((s) => s.arrivalApproach)
+  const arrivalApproachSettled = useStore((s) => s.arrivalApproachSettled)
   const arrivalStage = useStore((s) => s.arrivalStage)
   const arrival = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('arrival') === 'on'
-  const canLand = ready && (!arrival || arrivalReady)
+  const canLand = ready && (!arrival || (arrivalReady && arrivalApproachSettled))
   // Fictional cockpit range tracks measured GPU readiness monotonically.
-  const simulatedRange = Math.round(250 + (1 - arrivalProgress) * 11950)
+  const simulatedRange = Math.round(250 + (1 - arrivalApproach) * 11950)
   const touch = useStore((s) => s.touch)
   if (arrival) return (
     <div className="pointer-events-none absolute inset-0 z-30 flex flex-col justify-between overflow-hidden bg-[radial-gradient(ellipse_at_center,transparent_44%,rgba(1,4,12,0.53)_100%)] px-5 py-5 font-sans text-white sm:px-9 sm:py-7">
@@ -55,7 +57,7 @@ function Intro() {
           <div className="mt-3 h-[3px] overflow-hidden bg-white/10">
             <div className="h-full bg-gradient-to-r from-cyan-400 to-violet-400 transition-[width] duration-300" style={{width: `${Math.round(arrivalProgress*100)}%`}}/>
           </div>
-          <div className="mt-2 text-[9px] tracking-wide text-cyan-100/65">{ready ? arrivalStage : `AUDIO LINK · ${Math.round(loading*100)}%`}</div>
+          <div className="mt-2 text-[9px] tracking-wide text-cyan-100/65">{ready ? arrivalReady && !arrivalApproachSettled ? 'FINAL APPROACH · ĐANG TIẾP CẬN BÃI ĐÁP' : arrivalStage : `AUDIO LINK · ${Math.round(loading*100)}%`}</div>
         </div>
         <button data-testid="arrival-land" disabled={!canLand} onClick={startGame}
           className="pointer-events-auto rounded-full border border-cyan-200/50 bg-[#0b2947d9] px-7 py-4 text-xs font-bold tracking-[0.18em] text-white shadow-[0_0_25px_#32b5df33] backdrop-blur-md transition hover:border-white hover:bg-cyan-500/25 disabled:cursor-wait disabled:border-white/20 disabled:opacity-65 sm:mb-2">

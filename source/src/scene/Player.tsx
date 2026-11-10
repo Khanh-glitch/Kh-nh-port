@@ -37,7 +37,7 @@ export function startGame() {
   // The arrival gate is real: a disabled landing button must not be bypassed
   // by a synthetic click, shortcut, or an outdated audio-only ready flag.
   const arrivalEnabled = new URLSearchParams(window.location.search).get('arrival') === 'on'
-  if (arrivalEnabled && (!s.ready || !s.arrivalReady)) return
+  if (arrivalEnabled && (!s.ready || !s.arrivalReady || !s.arrivalApproachSettled)) return
   void audio.start()
   s.setPhase('playing')
   s.setPaused(false)
@@ -87,6 +87,8 @@ export function Player() {
   const bob = useRef(0)
   const lastStep = useRef(0)
   const trans = useRef({ active: false, t: 0, fromP: new THREE.Vector3(), fromQ: new THREE.Quaternion(), lastPhase: 'intro' }).current
+  const approachDistance = useRef(430)
+  const lastFlightUpdate = useRef(0)
   const tmpQ = useMemo(() => new THREE.Quaternion(), [])
   const tmpE = useMemo(() => new THREE.Euler(0, 0, 0, 'YXZ'), [])
   const tmpV = useMemo(() => new THREE.Vector3(), [])
@@ -265,11 +267,27 @@ export function Player() {
     if (s.phase === 'intro') {
       const a = 0.6 + t * 0.045
       const arrivalEnabled = new URLSearchParams(window.location.search).get('arrival') === 'on'
-      // Distance depends on ACTUAL upload/readback readiness, not elapsed time
-      // or the piano progress. Hold orbit while the GPU is not ready.
+      // Real GPU milestones control the target distance, but not the camera
+      // velocity. Exponential damping avoids visible teleports when async GPU
+      // progress jumps from 20% to 80% in a single microtask.
       const approach = arrivalEnabled ? s.arrivalProgress : 1
-      const distance = 88 + (1 - approach) * 342
-      camera.position.set(Math.sin(a) * distance, 17 + Math.sin(t * 0.17) * 4 + (1 - approach) * 25, Math.cos(a) * distance)
+      const targetDistance = 88 + (1 - approach) * 342
+      if (arrivalEnabled) {
+        const k = 1 - Math.exp(-2.6 * dt)
+        approachDistance.current += (targetDistance - approachDistance.current) * k
+        if (Math.abs(approachDistance.current - targetDistance) < 0.07)
+          approachDistance.current = targetDistance
+        const closeness = Math.max(0, Math.min(1, (430 - approachDistance.current)/342))
+        const settled = s.arrivalReady && Math.abs(approachDistance.current - 88) < 1.2
+        if ((t - lastFlightUpdate.current > 0.14 && closeness - s.arrivalApproach > 0.005) ||
+            (settled && !s.arrivalApproachSettled)) {
+          s.setArrivalApproach(closeness, settled)
+          lastFlightUpdate.current = t
+        }
+      }
+      const distance = arrivalEnabled ? approachDistance.current : 88
+      const visualApproach = Math.max(0, Math.min(1, (430 - distance)/342))
+      camera.position.set(Math.sin(a) * distance, 17 + Math.sin(t * 0.17) * 4 + (1 - visualApproach) * 25, Math.cos(a) * distance)
       lookTarget.set(0, 6, 0)
       camera.lookAt(lookTarget)
       audio.update(camera)

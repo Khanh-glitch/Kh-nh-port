@@ -16,6 +16,8 @@ interface State {
   arrivalProgress: number
   arrivalStage: string
   arrivalReady: boolean
+  arrivalApproach: number
+  arrivalApproachSettled: boolean
   locked: boolean
   freeMouse: boolean
   paused: boolean
@@ -28,6 +30,7 @@ interface State {
   setLoading: (v: number) => void
   setReady: () => void
   setArrivalReadiness: (progress: number, stage: string, ready: boolean) => void
+  setArrivalApproach: (progress: number, settled: boolean) => void
   setPhase: (p: 'intro' | 'playing') => void
   setLocked: (v: boolean) => void
   setFree: (v: boolean) => void
@@ -46,6 +49,8 @@ export const useStore = create<State>((set) => ({
   arrivalProgress: 0,
   arrivalStage: 'ĐANG KHỞI TẠO',
   arrivalReady: false,
+  arrivalApproach: 0,
+  arrivalApproachSettled: false,
   locked: false,
   freeMouse: false,
   paused: false,
@@ -60,7 +65,12 @@ export const useStore = create<State>((set) => ({
   setArrivalReadiness: (progress, stage, ready) => set((state) => {
     const p = Math.max(0, Math.min(ready ? 1 : 0.99, progress))
     if (state.arrivalProgress === p && state.arrivalStage === stage && state.arrivalReady === ready) return state
-    return { arrivalProgress: p, arrivalStage: stage, arrivalReady: ready }
+    return { arrivalProgress: Math.max(state.arrivalProgress,p), arrivalStage: stage, arrivalReady: ready }
+  }),
+  setArrivalApproach: (progress, settled) => set((state) => {
+    const p = Math.max(state.arrivalApproach, Math.min(1, Math.max(0,progress)))
+    if (p === state.arrivalApproach && settled === state.arrivalApproachSettled) return state
+    return {arrivalApproach:p,arrivalApproachSettled:settled}
   }),
   setPhase: (phase) => set({ phase }),
   setLocked: (locked) => set({ locked }),
