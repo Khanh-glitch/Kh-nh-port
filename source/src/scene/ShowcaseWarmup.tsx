@@ -128,13 +128,14 @@ export function ShowcaseWarmup({ arenaState }: { arenaState: { mode: string } })
     // Renderer-side geometry uploads are spread over animation frames (one
     // actual mesh per private draw), keeping source mesh/material/texture data.
     const interrupted = () => disposed || arenaState.mode !== 'dormant'
-    // First-visit/landing is the earliest user-visible choke point. Do not
-    // submit the 131-object Colossus GPU upload queue in parallel with its
-    // bounded two-camera offscreen preflight. Colossus remains responsive:
-    // this waits at most 3.5s and cancels immediately on a summon click.
+    // First landing owns initial GPU preparation. A 3.5-second timeout used
+    // to let the 131-object Colossus queue overlap a still-compiling landing
+    // scene (Metal has observed >4-second waits between healthy frames).
+    // Wait for a TERMINAL landing state instead of racing two GPU warmups.
+    // This yields to the browser and never blocks a visitor's click; summon,
+    // unmount, or the landing scene's own phase cancellation aborts the wait.
     const waitForLandingPreflight = async () => {
-      const start = performance.now()
-      while(!interrupted() && performance.now()-start<3500){
+      while(!interrupted()){
         const landing=(window as unknown as {
           __orbitaLandingPrewarm?:{status:string}
         }).__orbitaLandingPrewarm
