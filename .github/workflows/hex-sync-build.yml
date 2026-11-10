@@ -32,12 +32,23 @@ jobs:
           git diff --check
       - name: Commit synchronized standalone to HEX candidate branch only
         run: |
-          if ! git diff --quiet -- index.html; then
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          # A performance branch may advance while this workflow builds.
+          # Always regenerate the standalone from the LATEST source before push.
+          for attempt in 1 2 3; do
+            git fetch origin fix/hex-hitch-no-visual-loss
+            git reset --hard origin/fix/hex-hitch-no-visual-loss
+            node scripts/sync-hex-standalone.mjs
+            node tests/hex-preservation.mjs
+            git diff --check
+            if git diff --quiet -- index.html; then
+              echo "Standalone HTML matches latest source"
+              exit 0
+            fi
             git add index.html
             git commit -m "build(hex): publish source-matched Reality Rewrite GPU prewarm in standalone"
-            git push origin HEAD:fix/hex-hitch-no-visual-loss
-          else
-            echo "Standalone HTML matches source"
-          fi
+            if git push origin HEAD:fix/hex-hitch-no-visual-loss; then exit 0; fi
+            echo "Branch advanced during HEX sync; rebuilding from latest source"
+          done
+          exit 1
