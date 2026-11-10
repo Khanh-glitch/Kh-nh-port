@@ -79,13 +79,15 @@ export function ShowcaseWarmup({ arenaState }: { arenaState: { mode: string } })
     })
     const warm = async () => {
       if (interrupted()) { info.status = 'cancelled-on-summon'; return }
-      const roots = ['apex-showcase-root', 'ragnarok-showcase-root']
+      const showcaseRoots = ['apex-showcase-root', 'ragnarok-showcase-root']
         .map(name => scene.getObjectByName(name))
       const beamNames = ['colossus-warm-beam-left', 'colossus-warm-beam-right', 'colossus-warm-beam-eye', 'colossus-warm-impact']
       const beams = beamNames.map(name => scene.getObjectByName(name)).filter((o): o is THREE.Object3D => !!o)
       info.beams = beams.length
-      roots.push(...beams)
-      if (roots.some(root => !root)) { info.status = 'missing-roots'; return }
+      if (showcaseRoots.some(root => !root) || beams.length !== 4) { info.status = 'missing-roots'; return }
+      // Cold click requires the 3 beam VBOs + impact flare FIRST, not after
+      // the 120 exhibit meshes. Keep all original meshes and full quality.
+      const roots: THREE.Object3D[] = [...beams, ...showcaseRoots as THREE.Object3D[]]
 
       const started = performance.now()
       info.status = 'compiling'
@@ -185,8 +187,8 @@ export function ShowcaseWarmup({ arenaState }: { arenaState: { mode: string } })
           await gl.compileAsync(stageNow, camera)
           info.variants.push({ name:'stable-light', ms:Math.round(performance.now()-begin), programs:gl.info.programs?.length ?? 0 })
         }
-        const apexLights = extraLights(roots[0])
-        const ragLights = extraLights(roots[1])
+        const apexLights = extraLights(showcaseRoots[0])
+        const ragLights = extraLights(showcaseRoots[1])
         info.extraApexLights = apexLights.length
         info.extraRagLights = ragLights.length
         // The frozen visible light rig should make both extra arrays empty.
