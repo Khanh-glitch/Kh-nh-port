@@ -35,12 +35,17 @@ export function patchMaterialize<T extends THREE.Material>(mat: T, uniforms: Mat
   // Opt-in experiment; default retains original shaders until frame and visual
   // parity gates pass. Move ONLY the rejection of zero-visible-pixel fragments
   // ahead of costly PBR lighting; keep the final color equation unchanged.
-  const earlyDiscardProbe = typeof window !== 'undefined' &&
-    new URLSearchParams(window.location.search).get('colossusEarlyDiscardProbe') === 'on'
+  const earlyVariant = typeof window !== 'undefined'
+    ? new URLSearchParams(window.location.search).get('colossusEarlyDiscardProbe')
+    : null
+  const earlyDiscardProbe = earlyVariant === 'on' || earlyVariant === 'fast'
+  const fastBoundProbe = earlyVariant === 'fast'
   // Keep the original cache identity for every production material.
   mat.customProgramCacheKey = () => 'orbita-materialize-shared-v1'
   // The opt-in experiment is a distinct shared GLSL program family.
-  if (earlyDiscardProbe) mat.customProgramCacheKey = () => 'orbita-materialize-early-reject-v2'
+  if (earlyDiscardProbe) mat.customProgramCacheKey = () => fastBoundProbe
+    ? 'orbita-materialize-fast-bound-v3'
+    : 'orbita-materialize-early-reject-v2'
   mat.onBeforeCompile = (shader) => {
     shader.uniforms.uScanY = uniforms.uScanY
     shader.uniforms.uWireHeight = uniforms.uWireHeight
@@ -98,6 +103,17 @@ export function patchMaterialize<T extends THREE.Material>(mat: T, uniforms: Mat
           }
         }`,
       )
+    if (fastBoundProbe) {
+      // Strictly conservative upper bound: ripple amplitude <= 0.035.
+      // Above wireHeight + 0.04 the ORIGINAL shader necessarily discards,
+      // so reject BEFORE texture sampling and PBR without any sine/cosine.
+      // This does not cull fragments near the actual laser band.
+      shader.fragmentShader = shader.fragmentShader.replace(
+        '#include <clipping_planes_fragment>',
+        `#include <clipping_planes_fragment>
+        if (uComplete < 0.999 && (vMatWorldPos.y - uScanY) > uWireHeight + 0.04) discard;`,
+      )
+    }
     if (earlyDiscardProbe) {
       // Alpha/texture sampling has already occurred, but lighting has not.
       // The original end-of-fragment discard and final color math remain

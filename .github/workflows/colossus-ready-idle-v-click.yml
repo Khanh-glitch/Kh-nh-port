@@ -19,10 +19,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        trial: [1, 2, 3]
+        trial: [1, 2]
         shadow: [normal]
         exhibit: [normal]
-        early: [legacy, early]
+        early: [legacy, early, fast]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
