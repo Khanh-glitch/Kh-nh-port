@@ -1,8 +1,8 @@
-name: Colossus first-draw combined preview
+name: Colossus chunked shader preview
 on:
   push:
     branches:
-      - experiment/colossus-first-draw-combined
+      - experiment/colossus-chunked-firstdraw
   workflow_dispatch:
 permissions:
   contents: write
@@ -46,7 +46,7 @@ jobs:
             git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
             git add index.html
             git commit -m "build(colossus): synchronize fixed laser code into preview HTML"
-            git push origin HEAD:experiment/colossus-first-draw-combined
+            git push origin HEAD:experiment/colossus-chunked-firstdraw
           else
             echo "Integrated preview HTML is already up to date."
           fi
