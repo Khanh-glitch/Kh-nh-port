@@ -37,7 +37,7 @@ export function startGame() {
   // The arrival gate is real: a disabled landing button must not be bypassed
   // by a synthetic click, shortcut, or an outdated audio-only ready flag.
   const arrivalEnabled = new URLSearchParams(window.location.search).get('arrival') === 'on'
-  if (!s.ready || (arrivalEnabled && !s.arrivalReady)) return
+  if (arrivalEnabled && (!s.ready || !s.arrivalReady)) return
   void audio.start()
   s.setPhase('playing')
   s.setPaused(false)
