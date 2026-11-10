@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en"><head><meta charset="UTF-8"/><title>Colossus shader pixel parity fixture</title>
+<style>body{margin:0;background:#080c18;color:#fff;font:12px system-ui}canvas{display:block}</style></head>
+<body>
+<script type="module">
+import * as THREE from 'three'
+import {createMaterializeUniforms,patchMaterialize} from '../src/scene/materialize.ts'
+
+const W=480,H=360
+const scene=new THREE.Scene()
+scene.background=new THREE.Color('#070b18')
+const camera=new THREE.PerspectiveCamera(50,W/H,0.1,100)
+camera.position.set(4,3.6,8)
+camera.lookAt(0,1.15,0)
+const renderer=new THREE.WebGLRenderer({antialias:false,preserveDrawingBuffer:true,powerPreference:'high-performance'})
+renderer.setPixelRatio(1)
+renderer.setSize(W,H,false)
+renderer.shadowMap.enabled=true
+renderer.shadowMap.type=THREE.PCFSoftShadowMap
+renderer.outputColorSpace=THREE.SRGBColorSpace
+renderer.toneMapping=THREE.NoToneMapping
+document.body.append(renderer.domElement)
+const ambient=new THREE.AmbientLight('#91bfff',0.6)
+scene.add(ambient)
+const sun=new THREE.DirectionalLight('#fff3d7',2.4)
+sun.position.set(3,8,5)
+sun.castShadow=true
+sun.shadow.mapSize.set(256,256)
+sun.shadow.camera.near=1
+sun.shadow.camera.far=35
+sun.shadow.camera.left=-8
+sun.shadow.camera.right=8
+sun.shadow.camera.top=8
+sun.shadow.camera.bottom=-8
+scene.add(sun,sun.target)
+const floor=new THREE.Mesh(new THREE.PlaneGeometry(14,14),new THREE.MeshStandardMaterial({color:'#1b3041',roughness:0.65}))
+floor.rotation.x=-Math.PI/2
+floor.receiveShadow=true
+scene.add(floor)
+const texCanvas=document.createElement('canvas')
+texCanvas.width=texCanvas.height=128
+const ctx=texCanvas.getContext('2d')
+for(let y=0;y<8;y++)for(let x=0;x<8;x++){
+  ctx.fillStyle=(x+y)%2===0?'#ffe1ac':'#5876a2'
+  ctx.fillRect(x*16,y*16,16,16)
+}
+const tex=new THREE.CanvasTexture(texCanvas)
+tex.colorSpace=THREE.SRGBColorSpace
+const uniforms=createMaterializeUniforms('#62f8ff')
+uniforms.uTime.value=3.25
+const materials=[
+ patchMaterialize(new THREE.MeshStandardMaterial({map:tex,metalness:0.25,roughness:0.4}),uniforms,'mapped-pbr'),
+ patchMaterialize(new THREE.MeshStandardMaterial({color:'#ff9c5a',metalness:0.65,roughness:0.3}),uniforms,'flat-pbr'),
+ patchMaterialize(new THREE.MeshBasicMaterial({map:tex,transparent:true,alphaTest:0.1}),uniforms,'mapped-basic'),
+ patchMaterialize(new THREE.MeshBasicMaterial({color:'#58eeaf'}),uniforms,'flat-basic')
+]
+const meshes=[
+ new THREE.Mesh(new THREE.BoxGeometry(1.1,2.1,1.15),materials[0]),
+ new THREE.Mesh(new THREE.SphereGeometry(0.92,32,24),materials[1]),
+ new THREE.Mesh(new THREE.PlaneGeometry(1.8,1.85),materials[2]),
+ new THREE.Mesh(new THREE.CylinderGeometry(0.48,0.62,2.65,32),materials[3])
+]
+meshes[0].position.set(-1.3,1.25,0)
+meshes[1].position.set(1.25,1.25,0)
+meshes[2].position.set(0,1.15,1.45)
+meshes[2].rotation.y=0.22
+meshes[3].position.set(0,1.35,-1.45)
+for(const mesh of meshes){mesh.castShadow=true;mesh.receiveShadow=true;scene.add(mesh)}
+const target=new THREE.WebGLRenderTarget(W,H,{depthBuffer:true,stencilBuffer:false})
+target.texture.colorSpace=renderer.outputColorSpace
+window.__materializeParityReady=true
+window.__materializeShaderKeys=materials.map(mat=>mat.customProgramCacheKey())
+window.__captureMaterializeParity=(pct)=>{
+ const p=Math.max(0,Math.min(1,pct))
+ uniforms.uScanY.value=0.35+p*2.8
+ uniforms.uComplete.value=p>=0.999?1:0
+ renderer.setRenderTarget(target)
+ renderer.render(scene,camera)
+ const bytes=new Uint8Array(W*H*4)
+ renderer.readRenderTargetPixels(target,0,0,W,H,bytes)
+ renderer.setRenderTarget(null)
+ renderer.render(scene,camera)
+ let binary=''
+ for(let i=0;i<bytes.length;i+=16384)binary+=String.fromCharCode(...bytes.subarray(i,i+16384))
+ return {rgba:btoa(binary),width:W,height:H}
+}
+</script></body></html>
