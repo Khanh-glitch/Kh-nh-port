@@ -63,3 +63,9 @@ assert.ok(showWarm.includes("drawVariant('laser-ragnarok', [...apexLights, ...ra
 assert.ok(showWarm.includes('visibilityAtStart'), 'prewarm records tab state')
 assert.ok(source['source/src/scene/Robot.tsx'].includes('hiddenDuringProfile'), 'tab throttling tracked')
 assert.ok(source['source/src/scene/Robot.tsx'].includes('visibilityTransitions'), 'tab change events counted')
+
+const detailedProbe = source['source/src/scene/Robot.tsx']
+assert.ok(detailedProbe.includes('newPrograms'), 'shader identities captured')
+assert.ok(detailedProbe.includes('reactCommits'), 'React reconciliation captured')
+assert.ok(detailedProbe.includes("'long-animation-frame'"), 'LoAF profiling attempted')
+assert.ok(detailedProbe.includes('browserTasks'), 'long task attribution captured')

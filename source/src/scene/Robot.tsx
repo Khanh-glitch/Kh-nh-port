@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useFrame } from '@react-three/fiber'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useFrame, useThree } from '@react-three/fiber'
 import * as THREE from 'three'
 import { EXHIBITS } from '../layout'
 import { audio, type Bus } from '../audio'
@@ -75,6 +75,8 @@ function Arm({
 }
 
 export function Robot() {
+  const renderStartedAt = performance.now()
+  const { gl } = useThree()
   const head = useRef<THREE.Group>(null)
   const torso = useRef<THREE.Group>(null)
   const armR = useRef<THREE.Group>(null)
@@ -132,6 +134,9 @@ export function Robot() {
     pageFocusedAtClick: true,
     hiddenDuringProfile: false,
     visibilityTransitions: 0,
+    programsAtClick: [] as Array<{ id: number; name: string; key: string }>,
+    reactCommits: [] as Array<{ atMs: number; durationMs: number; mode: ArenaMode }>,
+    browserTasks: [] as Array<{ type: string; atMs: number; durationMs: number; blockingMs: number; scripts: Array<{ durationMs: number; invoker: string; sourceURL: string }> }>,
   }).current
   const st = useRef({
     mode: 'dormant' as ArenaMode,
@@ -160,6 +165,51 @@ export function Robot() {
     }
     document.addEventListener('visibilitychange', onVisibility)
     return () => document.removeEventListener('visibilitychange', onVisibility)
+  }, [])
+
+    // Read-only diagnostic probes: never alter the scene or visual quality.
+  const programSnapshot = () => (gl.info.programs ?? []).map((program, index) => {
+    const p = program as unknown as { id?: number; name?: string; cacheKey?: string }
+    return { id: p.id ?? index, name: p.name ?? '', key: String(p.cacheKey ?? '').slice(0, 500) }
+  })
+  useLayoutEffect(() => {
+    if (!coldProbe.running || coldProbe.reactCommits.length >= 16) return
+    coldProbe.reactCommits.push({
+      atMs: Math.round(performance.now() - coldProbe.started),
+      durationMs: Math.round(performance.now() - renderStartedAt),
+      mode: st.mode,
+    })
+  })
+  useEffect(() => {
+    if (typeof PerformanceObserver !== 'function') return
+    const observers: PerformanceObserver[] = []
+    for (const type of ['longtask', 'long-animation-frame']) {
+      try {
+        const observer = new PerformanceObserver(list => {
+          for (const entry of list.getEntries()) {
+            if (!coldProbe.running || entry.startTime < coldProbe.started - 40 || coldProbe.browserTasks.length >= 30) continue
+            const e = entry as PerformanceEntry & {
+              blockingDuration?: number
+              scripts?: Array<{ duration?: number; invoker?: string; sourceURL?: string }>
+            }
+            coldProbe.browserTasks.push({
+              type: entry.entryType,
+              atMs: Math.round(entry.startTime - coldProbe.started),
+              durationMs: Math.round(entry.duration),
+              blockingMs: Math.round(e.blockingDuration ?? 0),
+              scripts: (e.scripts ?? []).slice(0, 4).map(x => ({
+                durationMs: Math.round(x.duration ?? 0),
+                invoker: String(x.invoker ?? '').slice(0, 140),
+                sourceURL: String(x.sourceURL ?? '').slice(0, 140),
+              })),
+            })
+          }
+        })
+        observer.observe({ type, buffered: false })
+        observers.push(observer)
+      } catch { /* feature unsupported */ }
+    }
+    return () => observers.forEach(observer => observer.disconnect())
   }, [])
 
     const tmp = useMemo(
@@ -323,6 +373,9 @@ export function Robot() {
       coldProbe.pageFocusedAtClick = document.hasFocus()
       coldProbe.hiddenDuringProfile = document.hidden
       coldProbe.visibilityTransitions = 0
+      coldProbe.programsAtClick = programSnapshot()
+      coldProbe.reactCommits.length = 0
+      coldProbe.browserTasks.length = 0
       coldProbe.warmStatusAtClick = warm?.status ?? 'not-started'
       console.info('[Colossus] Laser clicked; GPU warmup status:', coldProbe.warmStatusAtClick)
     }
@@ -469,7 +522,9 @@ export function Robot() {
         const trace = coldProbe.framesTrace
         const initial = trace[0]?.programs ?? 0
         const final = trace.at(-1)?.programs ?? initial
-        const report = {
+        const programIdsAtClick = new Set(coldProbe.programsAtClick.map(p => p.id))
+        const newPrograms = programSnapshot().filter(p => !programIdsAtClick.has(p.id))
+                const report = {
           warmStatusAtClick: coldProbe.warmStatusAtClick,
           warmup: (window as unknown as { __orbitaColossusWarmup?: unknown }).__orbitaColossusWarmup,
           clickHandlerMs: coldProbe.clickHandlerMs,
@@ -481,6 +536,9 @@ export function Robot() {
           maxFrameMs: Math.round(coldProbe.maxFrameMs),
           avgFrameMs: Math.round(coldProbe.frameMsSum / Math.max(1, coldProbe.frames)),
           programDelta: final - initial,
+          newPrograms,
+          reactCommits: [...coldProbe.reactCommits],
+          browserTasks: [...coldProbe.browserTasks],
           longFrames: trace.filter(x => x.dtMs >= 34),
           trace,
         }

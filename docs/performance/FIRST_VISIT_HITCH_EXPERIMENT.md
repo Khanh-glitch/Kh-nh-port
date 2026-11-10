@@ -48,3 +48,8 @@ Code-level defect established: previous staged `compileVariant` prepared three d
 This round renders **all three lighting variants offscreen** (same true geometries/materials, same original shaders, same visuals), and records `visibilityAtStart`, `pageHiddenAtClick`, `hiddenDuringProfile`, `visibilityTransitions` and per-frame focus/hidden state. It does not claim that the GPU-driver hitch is eliminated. A subsequent report should compare programDelta and foreground-only frame gaps; **do not interpret rAF interval as GPU duration**.
 
 Still requires actual foreground cold-start browser comparison, visual screenshot acceptance and separate-process retest. Do not merge just because CI passes.
+
+## R3 — isolate 11 missing GPU programs / 5.139s foreground pause
+R2 user log: READY after 10,427ms prewarm, three real offscreen lighting variants drawn; first click 2ms, delta +11 shader programs, interval 5,139ms between rAF callbacks with tab visible/focused throughout. This is NOT proof of a 5s GPU call; no main-thread attribution was previously recorded. Startup prewarm at 10s is unacceptable as a final solution.
+
+R3 adds read-only profiling of **newProgram id/name/cacheKey**, **React render/commit durations**, and browser **LongTask / Long Animation Frame attribution** when supported. It adds ZERO more GPU prewarm passes and retains every existing asset/material/shadow/quality setting. This is a diagnostic build; next fix must identify the exact 11 programs or the relevant long task rather than building more broad variants. Keep main unchanged, require browser validation.
