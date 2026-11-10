@@ -5,12 +5,9 @@ const { chromium } = require('../source/node_modules/playwright')
 const raw = process.env.COLOSSUS_SMOKE_URL
 if (!raw) throw new Error('COLOSSUS_SMOKE_URL missing')
 const variant = process.env.COLOSSUS_AB_VARIANT ?? 'enabled'
-const shadowWarm = process.env.COLOSSUS_SHADOW_WARM ?? 'small'
-if (!['small','full'].includes(shadowWarm)) throw new Error('Invalid shadow warm mode')
 if (!['enabled', 'disabled'].includes(variant)) throw new Error('Invalid variant')
 const url = new URL(raw)
 if (variant === 'disabled') url.searchParams.set('colossusPrewarm', 'off')
-if (shadowWarm === 'full') url.searchParams.set('colossusShadowWarm', 'full')
 mkdirSync('browser-evidence', { recursive: true })
 const gpuMode = process.env.COLOSSUS_GPU_MODE ?? 'swiftshader'
 const browser = await chromium.launch({
@@ -60,11 +57,37 @@ try {
       firstGaps:p.gaps.slice(0,30), longestGaps:gaps.slice(-12)
     }
   })
-  const report = {commit:process.env.GITHUB_SHA,variant,shadowWarm,gpuMode,url:url.toString(),data,errors,
-    note:'GPU backend is explicitly fingerprinted. No user interaction in this trial. Visual screenshot captured AFTER timing sample.'}
+  let lateClick = null
+  if (process.env.COLOSSUS_IDLE_THEN_CLICK === '1') {
+    const dispatched = await page.evaluate(() => {
+      const canvas = document.querySelector('canvas')
+      if (!canvas) return false
+      const r = canvas.getBoundingClientRect()
+      const p = {bubbles:true,cancelable:true,clientX:r.left+r.width/2,clientY:r.top+r.height/2,pointerId:1,pointerType:'mouse',isPrimary:true}
+      for (const type of ['pointermove','pointerdown','pointerup']) canvas.dispatchEvent(new PointerEvent(type,p))
+      return true
+    })
+    await page.waitForFunction(() => !!window.__orbitaColossusProfile, null, {timeout:120000,polling:500}).catch(() => {})
+    await page.waitForFunction(() => window.__orbitaColossusProfile?.firstBeamFrameAtMs != null, null, {timeout:25000,polling:250}).catch(() => {})
+    const profile = await page.evaluate(() => window.__orbitaColossusProfile || null)
+    lateClick = {
+      dispatched,
+      readyBeforeClick:data.warmup?.status === 'ready',
+      statusBeforeClick:data.warmup?.status,
+      maxFrameMs:profile?.maxFrameMs ?? null,
+      firstFrameMs:profile?.firstFrameFromClickMs ?? null,
+      firstBeamMs:profile?.firstBeamFrameAtMs ?? null,
+      newPrograms:profile?.programDelta ?? null,
+      verdict:profile?.maxFrameMs != null && profile.maxFrameMs < 120 && profile?.firstBeamFrameAtMs != null && profile.firstBeamFrameAtMs < 500 ? 'SMOOTH_MEASURED_VIRTUAL_GPU' : 'UNACCEPTED_STUTTER'
+    }
+    console.log('DELAYED_CLICK '+JSON.stringify({variant,gpuMode,lateClick}))
+    if (lateClick.verdict === 'UNACCEPTED_STUTTER') process.exitCode=12
+  }
+  const report = {commit:process.env.GITHUB_SHA,variant,gpuMode,url:url.toString(),data,lateClick,errors,
+    note:'ANGLE GPU fingerprint recorded. Snapshot AFTER timing. Metal Paravirtual is not bare physical-GPU certification.'}
   writeFileSync('browser-evidence/idle-summary.json',JSON.stringify(report,null,2))
-  console.log('IDLE_PROBE '+JSON.stringify({variant,shadowWarm,gpuMode,commit:report.commit, ...data, warmup:{status:data.warmup?.status,laserReady:data.warmup?.laserReady,earlyShaderCompileStatus:data.warmup?.earlyShaderCompileStatus}}))
-  await page.screenshot({path:'browser-evidence/colossus-idle.png',timeout:90000})
+  console.log('IDLE_PROBE '+JSON.stringify({variant,gpuMode,commit:report.commit, ...data, warmup:{status:data.warmup?.status,laserReady:data.warmup?.laserReady,earlyShaderCompileStatus:data.warmup?.earlyShaderCompileStatus}}))
+  await page.screenshot({path:'browser-evidence/colossus-idle-then-click.png',timeout:90000})
   if(errors.length || !data.validWebgl || data.contextLost) process.exitCode=2
 } catch(err) {
   console.error('Idle probe failed:',err)

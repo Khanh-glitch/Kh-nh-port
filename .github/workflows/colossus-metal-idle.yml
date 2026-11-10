@@ -16,7 +16,7 @@ jobs:
       fail-fast: false
       matrix:
         trial: [1, 2, 3]
-        shadowWarm: [small, full]
+        prewarm: [enabled, disabled]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -30,12 +30,12 @@ jobs:
       - run: |
           node scripts/sync-colossus-standalone.mjs
           node scripts/build-pages.mjs
-      - name: Measure idle Metal frame intervals without input
+      - name: Measure 9-second idle Metal frames THEN cold first laser
         env:
           COLOSSUS_SMOKE_URL: http://127.0.0.1:4173/#at=0,-27,0,20&autostart&skip
           COLOSSUS_GPU_MODE: metal
-          COLOSSUS_AB_VARIANT: enabled
-          COLOSSUS_SHADOW_WARM: ${{ matrix.shadowWarm }}
+          COLOSSUS_AB_VARIANT: ${{ matrix.prewarm }}
+          COLOSSUS_IDLE_THEN_CLICK: '1'
         run: |
           python3 -m http.server 4173 --bind 127.0.0.1 --directory dist-pages >/tmp/colossus-metal-idle.log 2>&1 &
           for n in {1..30}; do
@@ -46,6 +46,6 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: colossus-metal-idle-${{ matrix.shadowWarm }}-${{ matrix.trial }}
+          name: colossus-metal-idle-${{ matrix.prewarm }}-${{ matrix.trial }}
           path: browser-evidence/
           if-no-files-found: warn

@@ -164,5 +164,6 @@ assert.ok(gpuSmoke.includes('metalBackendVerified') && gpuSmoke.includes('virtua
 assert.ok(showWarm.includes("get('colossusShadowProbe') === 'off'"), 'shadow A/B is opt-in only')
 assert.ok(showWarm.includes('gl.shadowMap.enabled = originalShadows'), 'shadow A/B restores the global renderer setting')
 
-assert.ok(showWarm.includes("get('colossusShadowWarm') === 'full'"), 'full-resolution shadow warm is an explicit A/B only')
-assert.ok(showWarm.includes('if (copy.castShadow && shadow && !fullShadowWarm) shadow.mapSize.set(64, 64)'), 'production and private low-cost shadow warm remain unchanged by default')
+const delayedClick = read('scripts/colossus-idle-probe.mjs')
+assert.ok(delayedClick.includes('COLOSSUS_IDLE_THEN_CLICK') && delayedClick.includes('DELAYED_CLICK'), 'late first-click test must capture GPU-readiness after 9s idle')
+assert.ok(delayedClick.includes('UNACCEPTED_STUTTER'), 'late-click measurement must not present stutter as acceptance')
