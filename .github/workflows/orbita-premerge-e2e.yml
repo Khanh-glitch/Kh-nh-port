@@ -1,0 +1,48 @@
+name: ORBITA premerge full-route E2E main vs 4454511
+on:
+  push:
+    branches: [audit/colossus-visual-parity-4454511]
+    paths: ['.github/workflows/orbita-premerge-e2e.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  browser:
+    runs-on: macos-15
+    timeout-minutes: 28
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          ref: 8dd5dedb5b4078ba2a867fa5787993819d9e6350
+          path: baseline
+      - uses: actions/checkout@v4
+        with:
+          ref: 4454511b31913531856549659bf55628ffc25578
+          path: candidate
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build the actual standalone deploys, never stale previews
+        run: |
+          (cd baseline && node scripts/build-pages.mjs)
+          (cd candidate && node scripts/build-pages.mjs)
+          npm ci --prefix candidate/source
+          npm install --prefix candidate/source --no-save --package-lock=false playwright@1.56.1
+          (cd candidate/source && npx playwright install chromium)
+      - name: Test user routes and interactions on both versions in real browser
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 --directory baseline/dist-pages >/tmp/baseline.log 2>&1 &
+          python3 -m http.server 4174 --bind 127.0.0.1 --directory candidate/dist-pages >/tmp/candidate.log 2>&1 &
+          for n in {1..60}; do
+            if curl -fsS -o /dev/null http://127.0.0.1:4173/ && curl -fsS -o /dev/null http://127.0.0.1:4174/; then break; fi
+            sleep 1
+          done
+          node scripts/orbita-premerge-end-to-end.mjs
+      - name: Publish all screenshots and failure information, also on failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: orbita-premerge-e2e-main-v-4454511
+          path: premerge-evidence/
+          if-no-files-found: warn
