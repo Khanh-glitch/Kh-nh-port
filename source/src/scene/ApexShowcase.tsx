@@ -1,4 +1,4 @@
-import { memo, useEffect, useMemo, useRef } from 'react'
+import { memo, useEffect, useLayoutEffect, useMemo, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { audio, type Bus } from '../audio'
@@ -26,6 +26,119 @@ export interface ShowcaseProps {
 type AbilityMode = 0 | 1 | 2 // 0: Idle/Patrol, 1: A1 Target Lock & Dash Clamp, 2: A2 Armor Core Surge
 const LEGACY_ROUNDED_GEOMETRY = typeof window !== 'undefined' &&
   new URLSearchParams(window.location.search).get('colossusGeometryProbe') === 'legacy'
+
+
+/**
+ * GPU draw-call consolidation for EXPLICITLY TAGGED, stationary, opaque
+ * sibling NEWBOT plates only. It never merges animated refs, transparent
+ * effects or objects across joints. We bake each tagged mesh's local transform
+ * into its vertices; the replacement mesh remains under the SAME animated
+ * parent, uses the SAME material and casts/receives the SAME shadows.
+ *
+ * For comparison the old tree is available behind colossusBatchProbe=legacy.
+ * No geometry/resolution/material/light/shadow quality is reduced.
+ */
+function mergeTaggedArmorSiblings(root: THREE.Object3D) {
+  const undo: Array<() => void> = []
+  const parents: THREE.Object3D[] = []
+  root.traverse(o => { parents.push(o) })
+  let savedDraws = 0
+  let totalParts = 0
+  for (const parent of parents) {
+    const eligible = parent.children.filter(o => {
+      const mesh = o as THREE.Mesh
+      return mesh.isMesh && !((mesh as THREE.InstancedMesh).isInstancedMesh) &&
+        mesh.visible && mesh.children.length === 0 &&
+        mesh.userData.colossusMergeStatic === true &&
+        !Array.isArray(mesh.material) && !mesh.material.transparent &&
+        mesh.material.alphaTest === 0 &&
+        Object.keys(mesh.geometry.morphAttributes).length === 0
+    }) as THREE.Mesh[]
+    const buckets = new Map<string, THREE.Mesh[]>()
+    for (const m of eligible) {
+      const key = [
+        m.material.uuid, m.castShadow ? 1 : 0, m.receiveShadow ? 1 : 0,
+        m.renderOrder, m.frustumCulled ? 1 : 0, m.layers.mask,
+      ].join('|')
+      const arr = buckets.get(key) ?? []
+      arr.push(m)
+      buckets.set(key, arr)
+    }
+    for (const group of buckets.values()) {
+      if (group.length < 2) continue
+      // Restrict to mesh groups whose POSITION/NORMAL/UV attributes are
+      // homogeneous Float32 arrays. Fall back to the original meshes if not.
+      const copies = group.map(m => {m.updateMatrix();return m.geometry.clone().applyMatrix4(m.matrix)})
+      try {
+        const names = Object.keys(copies[0].attributes).sort()
+        if (!names.includes('position') || !names.includes('normal')) continue
+        const valid = copies.every(g =>
+          Object.keys(g.attributes).sort().join('|') === names.join('|') &&
+          names.every(n => {
+            const a=g.getAttribute(n), first=copies[0].getAttribute(n)
+            return a.itemSize===first.itemSize && a.normalized===first.normalized &&
+              a.array instanceof Float32Array && first.array instanceof Float32Array
+          }))
+        if (!valid) continue
+        const geometry = new THREE.BufferGeometry()
+        let vertexCount = 0, indexCount = 0
+        for (const g of copies) {
+          vertexCount += g.getAttribute('position').count
+          indexCount += g.index?.count ?? g.getAttribute('position').count
+        }
+        for (const name of names) {
+          const first=copies[0].getAttribute(name)
+          const values=new Float32Array(vertexCount * first.itemSize)
+          let cursor=0
+          for (const g of copies) {
+            const original=g.getAttribute(name).array as Float32Array
+            values.set(original,cursor)
+            cursor += original.length
+          }
+          geometry.setAttribute(name,new THREE.BufferAttribute(values,first.itemSize,first.normalized))
+        }
+        const indices = vertexCount > 65535 ? new Uint32Array(indexCount) : new Uint16Array(indexCount)
+        let vertexOffset=0,indexOffset=0
+        for (const g of copies) {
+          const count=g.getAttribute('position').count
+          const source=g.index
+          if (source) {
+            for(let j=0;j<source.count;j++)indices[indexOffset++]=source.getX(j)+vertexOffset
+          } else {
+            for(let j=0;j<count;j++)indices[indexOffset++]=j+vertexOffset
+          }
+          vertexOffset+=count
+        }
+        geometry.setIndex(new THREE.BufferAttribute(indices,1))
+        geometry.computeBoundingBox()
+        geometry.computeBoundingSphere()
+        const combined = new THREE.Mesh(geometry,group[0].material)
+        combined.name='newbot-batched-opaque'
+        combined.castShadow=group[0].castShadow
+        combined.receiveShadow=group[0].receiveShadow
+        combined.renderOrder=group[0].renderOrder
+        combined.frustumCulled=group[0].frustumCulled
+        combined.layers.mask=group[0].layers.mask
+        for(const mesh of group)mesh.visible=false
+        parent.add(combined)
+        totalParts += group.length
+        savedDraws += group.length-1
+        undo.push(()=>{
+          parent.remove(combined)
+          geometry.dispose()
+          for(const mesh of group)mesh.visible=true
+        })
+      } finally {
+        for(const copy of copies)copy.dispose()
+      }
+    }
+  }
+  ;(window as unknown as {__orbitaApexBatch?:unknown}).__orbitaApexBatch={
+    originalParts:totalParts,drawsSavedPerPass:savedDraws,
+    merged:savedDraws>0,
+  }
+  return () => { for(let i=undo.length-1;i>=0;i--)undo[i]() }
+}
 
 function makeNewbotArmorTex() {
   const S = 512
@@ -172,7 +285,8 @@ function ApexShowcaseImpl({ position, worldPosition, rotationY, summoned, scanPr
       return geometry
     }
   }, [])
-  useEffect(() => {
+  useLayoutEffect(() => {
+    let restoreBatch: (() => void) | null = null
     const shadowCasters: THREE.Mesh[] = []
     if (newbotRoot.current) {
       // TEST ONLY: isolate the model's shadow-pass cost without touching
@@ -186,6 +300,8 @@ function ApexShowcaseImpl({ position, worldPosition, rotationY, summoned, scanPr
           m.castShadow = false
         })
       }
+      const batchLegacy = new URLSearchParams(window.location.search).get('colossusBatchProbe') === 'legacy'
+      if (!batchLegacy) restoreBatch = mergeTaggedArmorSiblings(newbotRoot.current)
       const skip = new Set<THREE.Object3D>()
       if (shieldRef.current) skip.add(shieldRef.current)
       scanCullEntries.current = collectScanCullMeshes(newbotRoot.current, skip)
@@ -196,6 +312,7 @@ function ApexShowcaseImpl({ position, worldPosition, rotationY, summoned, scanPr
     return () => {
       for (const mesh of shadowCasters) mesh.castShadow = true
       scanCullEntries.current = null
+      restoreBatch?.()
     }
   }, [])
 
@@ -589,7 +706,7 @@ function ApexShowcaseImpl({ position, worldPosition, rotationY, summoned, scanPr
           {/* Upper Body Pod + Head + Caliper Arms */}
           <group ref={upperBody} position={[0, 0.88, 0]}>
             {/* Dark Inner Chassis Core */}
-            <mesh geometry={roundedBox(1.12, 1.02, 0.96, 0.24)} material={materials.dark} castShadow />
+            <mesh userData={{colossusMergeStatic:true}} geometry={roundedBox(1.12, 1.02, 0.96, 0.24)} material={materials.dark} castShadow />
 
             {/* Obsidian Recessed Visor Cavity */}
             <mesh position={[0, 0.04, 0.36]} geometry={roundedBox(0.78, 0.5, 0.34, 0.06)} material={materials.cavity} />
@@ -604,13 +721,14 @@ function ApexShowcaseImpl({ position, worldPosition, rotationY, summoned, scanPr
             <group ref={eyeLightAnchor} position={[0, 0.05, 0.95]} />
 
             {/* Dorsal Vertical Crest Fin */}
-            <mesh position={[0, 0.68, 0.02]} rotation={[-0.22, 0, 0]} geometry={roundedBox(0.18, 0.58, 0.78, 0.04)} material={materials.armor} castShadow />
-            <mesh position={[0, 0.72, 0.32]} rotation={[-0.22, 0, 0]} geometry={roundedBox(0.12, 0.48, 0.14, 0.02)} material={materials.orange} />
+            <mesh userData={{colossusMergeStatic:true}} position={[0, 0.68, 0.02]} rotation={[-0.22, 0, 0]} geometry={roundedBox(0.18, 0.58, 0.78, 0.04)} material={materials.armor} castShadow />
+            <mesh userData={{colossusMergeStatic:true}} position={[0, 0.72, 0.32]} rotation={[-0.22, 0, 0]} geometry={roundedBox(0.12, 0.48, 0.14, 0.02)} material={materials.orange} />
 
             {/* Overhanging Angled Brow Cowl Plates */}
             {[-1, 1].map((s) => (
               <mesh
                 key={s}
+                userData={{colossusMergeStatic:true}}
                 position={[s * 0.34, 0.34, 0.24]}
                 rotation={[0.28, s * -0.26, s * -0.22]}
                 geometry={roundedBox(0.56, 0.26, 0.76, 0.05)}
@@ -626,11 +744,11 @@ function ApexShowcaseImpl({ position, worldPosition, rotationY, summoned, scanPr
 
             {/* 3 Chest Status Ticks */}
             {[-0.14, 0, 0.14].map((x, idx) => (
-              <mesh key={idx} position={[x, -0.22, 0.53]} geometry={roundedBox(0.08, 0.04, 0.04, 0.01)} material={materials.orange} />
+              <mesh key={idx} userData={{colossusMergeStatic:true}} position={[x, -0.22, 0.53]} geometry={roundedBox(0.08, 0.04, 0.04, 0.01)} material={materials.orange} />
             ))}
 
             {/* Back Pack / Exhaust */}
-            <mesh position={[0, 0.05, -0.52]} geometry={roundedBox(0.84, 0.68, 0.36, 0.08)} material={materials.dark} castShadow />
+            <mesh userData={{colossusMergeStatic:true}} position={[0, 0.05, -0.52]} geometry={roundedBox(0.84, 0.68, 0.36, 0.08)} material={materials.dark} castShadow />
 
             {/* Telescopic Hydraulic Struts (torso -> shoulder hubs) */}
             {[-1, 1].map((s) => (
