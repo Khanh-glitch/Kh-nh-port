@@ -53,7 +53,7 @@ for(const variant of variants){
   await page.waitForTimeout(1600)
   await page.screenshot({path:'visual-evidence/'+variant.name+'-laser-mid.png',timeout:90000,animations:'disabled'})
   report.images.push('laser-mid')
-  await page.waitForTimeout(12000)
+  await page.waitForTimeout(30000)
   await page.screenshot({path:'visual-evidence/'+variant.name+'-both-summoned.png',timeout:90000,animations:'disabled'})
   report.images.push('both-summoned')
   report.final=await page.evaluate(()=>({
