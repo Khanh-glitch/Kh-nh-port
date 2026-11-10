@@ -133,9 +133,12 @@ export function patchMaterial(mat: THREE.Material, mode: 'old' | 'new', opts: Ne
         float rwEd0; vRWg = rwX((rwM * vec4(0.0,0.0,0.0,1.0)).xyz, rwEd0);
       `
       vs = vertCommon + vs.replace(/void\s+main\s*\(\s*\)\s*\{/, (s) => s + inst)
+      // Lossless dormant fast path: when uRW.z <= 0.5, the old world never
+      // clips or lights its front. Skip costly rwX hex/hash evaluation entirely;
+      // restore the exact original calculation as soon as the Piano front runs.
       const test =
         mode === 'old'
-          ? 'float rwE; float rwx = rwX(vRWp, rwE); if (uRW.z > 0.5 && rwx > 0.0) discard;'
+          ? 'float rwE = 0.0; float rwx = -1.0; if (uRW.z > 0.5) rwx = rwX(vRWp, rwE); if (uRW.z > 0.5 && rwx > 0.0) discard;'
           : 'float rwE; float rwx = rwX(vRWp, rwE); if (uRW.z < 0.5 || rwx < 0.0) discard;'
       fs = fragCommon + fs.replace(/void\s+main\s*\(\s*\)\s*\{/, (s) => s + test)
     } else {
@@ -169,7 +172,7 @@ export function patchMaterial(mat: THREE.Material, mode: 'old' | 'new', opts: Ne
         )
       const head =
         mode === 'old'
-          ? 'float rwE; float rwx = rwX(vRWp, rwE); if (uRW.z > 0.5 && rwx > 0.0) discard;'
+          ? 'float rwE = 0.0; float rwx = -1.0; if (uRW.z > 0.5) rwx = rwX(vRWp, rwE); if (uRW.z > 0.5 && rwx > 0.0) discard;'
           : 'float rwE; float rwx = rwX(vRWp, rwE); if (uRW.z < 0.5 || rwx < 0.0) discard;'
       fs = fragCommon + fs.replace('#include <clipping_planes_fragment>', `#include <clipping_planes_fragment>\n${head}`)
 
