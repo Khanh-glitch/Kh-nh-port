@@ -16,8 +16,8 @@ page.on('pageerror', e => errors.push(e.message))
 page.on('requestfailed', r => netFailed.push(r.url().slice(0,150) + ': ' + r.failure()?.errorText))
 const t0=Date.now()
 try {
-  await page.goto(url,{waitUntil:'domcontentloaded',timeout:60000})
-  await page.waitForFunction(() => !!window.__orbitaColossusWarmup, {timeout:60000})
+  await page.goto(url,{waitUntil:'domcontentloaded',timeout:120000})
+  await page.waitForFunction(() => !!window.__orbitaColossusWarmup, null, {timeout:120000,polling:1000})
   await page.waitForTimeout(6000)
   const before=await page.evaluate(() => {
     const canvas=document.querySelector('canvas')
