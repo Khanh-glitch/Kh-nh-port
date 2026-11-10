@@ -487,6 +487,11 @@ export function RealityHost() {
         ...mats.map(mat => {
           const p = mat as THREE.MeshStandardMaterial
           return [mat.type,mat.customProgramCacheKey(),
+            // Two custom ShaderMaterials can share the same default cache key
+            // while containing completely different GLSL (rain/reel/sparks).
+            // Compile BOTH original programs rather than wrongly deduplicating.
+            mat instanceof THREE.ShaderMaterial ?
+              mat.vertexShader+'@@'+mat.fragmentShader : '',
             p.map?'map':'nomap',p.normalMap?'normal':'',
             p.bumpMap?'bump':'',p.roughnessMap?'rough':'',
             p.alphaMap?'alpha':'',p.emissiveMap?'emissive':'',
