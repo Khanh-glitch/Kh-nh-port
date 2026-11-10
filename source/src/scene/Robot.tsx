@@ -10,7 +10,6 @@ import { Label } from './Label'
 import { PadRing, Spot, mats, useWorldColliders, worldPos } from './common'
 import { ApexShowcase } from './ApexShowcase'
 import { RagnarokShowcase } from './RagnarokShowcase'
-import { ShowcaseWarmup } from './ShowcaseWarmup'
 import { openPanel } from './Player'
 import { addCollider } from '../world'
 
@@ -903,7 +902,9 @@ export function Robot() {
       </sprite>
 
       {/* Shader/texture preflight runs at idle, never in the summon click. */}
-      <ShowcaseWarmup />
+      {/* A/B CONTROL: keep complete original visuals but disable the competing
+          131-object offscreen warmup. This isolates whether first-laser hitch was
+          caused by the prewarm itself. Real showcase meshes/shaders untouched. */}
 
       {/* Flanking Game Showcases */}
       <ApexShowcase
