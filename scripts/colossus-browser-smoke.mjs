@@ -2,7 +2,7 @@ import { createRequire } from 'node:module'
 import { mkdirSync, writeFileSync } from 'node:fs'
 const require = createRequire(import.meta.url)
 const { chromium } = require('../source/node_modules/playwright')
-const url = 'https://2a544cd9.menniverse.pages.dev/#at=0,-27,0,20&autostart&skip'
+const url = 'https://107d7b2c.menniverse.pages.dev/#at=0,-27,0,20&autostart&skip'
 mkdirSync('browser-evidence', { recursive: true })
 const browser = await chromium.launch({
   channel: 'chrome',
@@ -78,6 +78,7 @@ try {
   if(!before.canvas || !before.webgl2) process.exitCode=2
   if(errors.length) process.exitCode=3
   if(!after.profile) process.exitCode=4
+  if(after.profile?.frameMeasureOrigin !== 'performance.now at click; never prior R3F dtRaw') process.exitCode=8
   if(after.profile?.trace?.length && Math.abs(after.profile.trace[0].dtMs - after.profile.trace[0].atMs) > 2) process.exitCode=7
   if(after.profile && !(after.profile.trace || []).some(x => x.mode === 'summon_apex' || x.mode === 'summon_rag')) process.exitCode=5
 } catch(e) {
