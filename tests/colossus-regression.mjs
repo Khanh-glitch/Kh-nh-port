@@ -68,3 +68,7 @@ assert.match(arrivalPlayer, /arrivalProgress/, 'approach camera uses real GPU pr
 assert.match(arrivalOverlay, /disabled=\{!canLand\}/, 'arrival button cannot land before GPU readiness')
 assert.match(arrivalWarmup, /info\.nativeScenePasses === expectedNative/, 'native scene pass counted before ready')
 assert.match(arrivalWarmup, /info\.gpuSynced/, 'GPU fence required before granting landing')
+
+const arrivalGpu = read('source/src/scene/ShowcaseWarmup.tsx')
+assert.match(arrivalGpu, /landingScenePasses === 2/, 'landing requires genuine native scene passes')
+assert.match(arrivalGpu, /target!\.setSize\(640, 360\)/, 'landing prewarms original 16:9 view')

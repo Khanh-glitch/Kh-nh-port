@@ -56,6 +56,12 @@ export function ShowcaseWarmup({ arenaState }: { arenaState: { mode: string } })
         new URLSearchParams(location.search).get('colossusNativePreflight') === 'double') ? 2 : 1,
       nativeScenePasses: 0,
       nativeScenePeakCpuMs: 0,
+      // Landing uses a DIFFERENT visible viewpoint from the two game bays.
+      // Native shadow prewarm there is separately measured and can be opted out.
+      arrivalLandingPreflight: arrivalEnabled &&
+        new URLSearchParams(location.search).get('arrivalLandingPreflight') !== 'off',
+      landingScenePasses: 0,
+      landingScenePeakCpuMs: 0,
       fullyLitMeshesPrimed: 0,
       fullyLitBatches: 0,
       uploadedProxies: 0,
@@ -100,14 +106,19 @@ export function ShowcaseWarmup({ arenaState }: { arenaState: { mode: string } })
       const expectedNative = 2 * info.nativeSceneRepeats
       if (info.nativeScenePrewarm)
         progress = Math.max(progress, 0.75 + 0.19 * Math.min(1, info.nativeScenePasses / expectedNative))
-      if (info.status === 'gpu-pending') progress = 0.97
+      if (info.arrivalLandingPreflight && info.nativeScenePasses === expectedNative)
+        progress = Math.max(progress, 0.94 + 0.035 * Math.min(1, info.landingScenePasses / 2))
+      if (info.status === 'gpu-pending') progress = 0.99
       const verified = info.status === 'ready' && info.gpuSynced &&
         info.uploadedProxies >= info.totalProxies && info.totalProxies >= 120 &&
-        (!info.nativeScenePrewarm || info.nativeScenePasses === expectedNative)
-      const stage = verified ? 'GPU VERIFIED · HẠ CÁNH ĐƯỢC PHÉP'
+        (!info.nativeScenePrewarm || info.nativeScenePasses === expectedNative) &&
+        (!info.arrivalLandingPreflight || info.landingScenePasses === 2)
+      const stage = verified ? 'TÀI NGUYÊN GPU ĐÃ SẴN SÀNG · HẠ CÁNH ĐƯỢC PHÉP'
         : info.status === 'failed' || info.status === 'missing-roots' ||
           info.status === 'prewarm-skipped-busy-renderer' || info.status === 'native-scene-preflight-missing-primitives'
           ? 'GIỮ QUỸ ĐẠO · GPU CHƯA SẴN SÀNG'
+        : info.arrivalLandingPreflight && info.nativeScenePasses >= expectedNative
+          ? 'ĐANG CHUẨN BỊ BÃI ĐÁP 3D'
         : info.nativeScenePrewarm && info.nativeScenePasses > 0 ? 'ĐANG CHUẨN BỊ SHADOW THỰC'
         : info.uploadedProxies > 0 ? 'ĐANG NẠP HÌNH HỌC 3D'
         : 'ĐANG BIÊN DỊCH VẬT LIỆU GPU'
@@ -433,7 +444,7 @@ export function ShowcaseWarmup({ arenaState }: { arenaState: { mode: string } })
           gl.xr.enabled = false
           gl.autoClear = true
           gl.setRenderTarget(target)
-          gl.setViewport(0, 0, targetSize, targetSize)
+          gl.setViewport(0, 0, target!.width, target!.height)
           gl.setScissorTest(false)
           fn()
         } finally {
@@ -698,6 +709,43 @@ export function ShowcaseWarmup({ arenaState }: { arenaState: { mode: string } })
               sun.target.updateMatrixWorld(true)
               sun.updateMatrixWorld(true)
             }
+            }
+          }
+        }
+        // ARRIVAL ONLY: the native game-bay passes do NOT prewarm the actual
+        // SPAWN (0,1.7,46) view. Submit a pair of full-world offscreen 16:9
+        // landing views at 640x360, with real 2048px world shadows and original
+        // material/texture/geometry. No decimation, no production framebuffer
+        // changes, no camera mutation across await. Frame-gated per pass.
+        if (info.arrivalLandingPreflight) {
+          target!.setSize(640, 360)
+          for (let pass = 0; pass < 2; pass++) {
+            if (!await nextPaint('showcase')) { info.status='cancelled-on-summon'; return }
+            if (interrupted()) { info.status='cancelled-on-summon'; return }
+            const priorPos = camera.position.clone()
+            const priorQuat = camera.quaternion.clone()
+            const priorAspect = camera.aspect
+            const priorFov = camera.fov
+            const priorFar = camera.far
+            const startedLanding = performance.now()
+            try {
+              camera.position.set(0, 1.7, 46)
+              camera.quaternion.identity() // player yaw/pitch 0 faces -Z
+              camera.aspect = 16 / 9
+              camera.fov = 72
+              camera.far = 9000
+              camera.updateProjectionMatrix()
+              withTarget(() => { gl.clear(true, true, false); gl.render(scene, camera) })
+              info.landingScenePasses++
+              info.landingScenePeakCpuMs = Math.max(info.landingScenePeakCpuMs,
+                Math.round(performance.now() - startedLanding))
+            } finally {
+              camera.position.copy(priorPos)
+              camera.quaternion.copy(priorQuat)
+              camera.aspect = priorAspect
+              camera.fov = priorFov
+              camera.far = priorFar
+              camera.updateProjectionMatrix()
             }
           }
         }

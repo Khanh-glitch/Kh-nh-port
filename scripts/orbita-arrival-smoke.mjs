@@ -10,8 +10,12 @@ const browser=await chromium.launch({
 const page=await browser.newPage({viewport:{width:1280,height:720},deviceScaleFactor:1})
 const failures=[]
 page.on('pageerror',e=>failures.push(e.message))
-const url=process.env.ARRIVAL_URL||'http://127.0.0.1:4173/?arrival=on#at=0,-27,0,20&skip'
-const report={sha:process.env.GITHUB_SHA||'local',url,errors:failures,initial:null,ready:null,afterLanding:null}
+const landingVariant=process.env.ARRIVAL_LANDING_VARIANT||'primed'
+if(!['primed','legacy'].includes(landingVariant))throw Error('Unknown landing variant')
+const targetUrl=new URL(process.env.ARRIVAL_URL||'http://127.0.0.1:4173/?arrival=on#at=0,-27,0,20&skip')
+if(landingVariant==='legacy')targetUrl.searchParams.set('arrivalLandingPreflight','off')
+const url=targetUrl.toString()
+const report={sha:process.env.GITHUB_SHA||'local',url,landingVariant,errors:failures,initial:null,ready:null,afterLanding:null}
 try{
  await page.goto(url,{waitUntil:'domcontentloaded',timeout:120000})
  const button=page.getByTestId('arrival-land')
@@ -27,7 +31,8 @@ try{
   const w=window.__orbitaColossusWarmup
   return w?.status==='ready'&&w.gpuSynced===true&&w.totalProxies>=120&&
     w.uploadedProxies===w.totalProxies&&w.nativeScenePrewarm===true&&
-    w.nativeSceneRepeats===2&&w.nativeScenePasses===4
+    w.nativeSceneRepeats===2&&w.nativeScenePasses===4&&
+    w.landingScenePasses===(window.location.search.includes('arrivalLandingPreflight=off')?0:2)
  },null,{timeout:180000,polling:250})
  await page.waitForFunction(()=>{
   const b=document.querySelector('[data-testid="arrival-land"]')
@@ -41,7 +46,8 @@ try{
   return {label:document.querySelector('[data-testid="arrival-land"]')?.textContent?.trim(),
     gpu:gl?.getParameter(dbg?.UNMASKED_RENDERER_WEBGL??gl.RENDERER),
     status:w.status,gpuSynced:w.gpuSynced,proxies:w.uploadedProxies,
-    totalProxies:w.totalProxies,nativePasses:w.nativeScenePasses}
+    totalProxies:w.totalProxies,nativePasses:w.nativeScenePasses,
+    landingScenePasses:w.landingScenePasses,landingScenePeakCpuMs:w.landingScenePeakCpuMs}
  })
  if(!/Metal/.test(String(report.ready.gpu))||/SwiftShader/.test(String(report.ready.gpu)))
   throw Error('GPU not Metal: '+report.ready.gpu)

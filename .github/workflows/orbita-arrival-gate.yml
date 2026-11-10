@@ -18,6 +18,10 @@ jobs:
   arrival-gpu:
     runs-on: macos-15
     timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        landing: [legacy, primed]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -35,6 +39,7 @@ jobs:
       - name: Assert GPU readiness before landing and collect frame evidence
         env:
           ARRIVAL_URL: http://127.0.0.1:4173/?arrival=on#at=0,-27,0,20&skip
+          ARRIVAL_LANDING_VARIANT: ${{ matrix.landing }}
         run: |
           python3 -m http.server 4173 --bind 127.0.0.1 --directory dist-pages >/tmp/orbita-arrival.log 2>&1 &
           for n in {1..30}; do
@@ -45,6 +50,6 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: orbita-real-gpu-arrival-and-landing-evidence
+          name: orbita-arrival-landing-${{ matrix.landing }}-evidence
           path: browser-evidence/
           if-no-files-found: warn
