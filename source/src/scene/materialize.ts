@@ -27,6 +27,9 @@ export function createMaterializeUniforms(color: THREE.ColorRepresentation): Mat
 export function patchMaterialize<T extends THREE.Material>(mat: T, uniforms: MaterializeUniforms, _tag: string): T {
   mat.side = THREE.DoubleSide
   mat.userData.orbitaMaterialize = true
+  // Allow a strictly synchronous PRIVATE GPU preflight to exercise fully-lit
+  // fragments, then restore this exact mutable uniform before the live render.
+  mat.userData.orbitaMaterializeUniforms = uniforms
   // Every material uses identical injected GLSL. The renderer already keys
   // differences in map, material type, lighting, skinning and vertex defines.
   // A per-material tag here incorrectly multiplies shader programs and

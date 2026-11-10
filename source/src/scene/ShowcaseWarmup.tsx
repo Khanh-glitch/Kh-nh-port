@@ -43,6 +43,9 @@ export function ShowcaseWarmup({ arenaState }: { arenaState: { mode: string } })
       extraRagLights: 0,
       textureMaps: 0,
       totalProxies: 0,
+      fullLitPrewarm: new URLSearchParams(location.search).get('colossusFullLitPrewarm') === 'on',
+      fullyLitMeshesPrimed: 0,
+      fullyLitBatches: 0,
       uploadedProxies: 0,
       laserReady: false,
       earlyShaderCompileStatus: 'not-started',
@@ -509,17 +512,47 @@ export function ShowcaseWarmup({ arenaState }: { arenaState: { mode: string } })
         info.status = 'showcase-geometry'
         const showcaseProxies = proxies.slice(beams.length)
         const SHOWCASE_BATCH_SIZE = 4
+        // The existing 96px proxy warmup can upload ALL geometry while leaving
+        // every custom hologram material clipped by uComplete=0. This candidate
+        // verifies whether priming the SAME complete PBR path before the actual
+        // first visible scan avoids first-fragment GPU scheduling. No scene
+        // mutation persists across frames; shader, texture and shadows of the
+        // original portfolio are unchanged. OFF by default until measured.
+        const renderRealFragments = info.fullLitPrewarm
+        const temporarilyMaterialize = (batch: THREE.Object3D[]) => {
+          const restore: Array<{ uniform: { value: number }; old: number }> = []
+          if (!renderRealFragments) return restore
+          const visited = new Set<object>()
+          for (const obj of batch) {
+            const mesh = obj as THREE.Mesh
+            const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material]
+            for (const material of materials) {
+              const u = material?.userData?.orbitaMaterializeUniforms as
+                | { uComplete: { value: number } }
+                | undefined
+              if (!u || visited.has(u.uComplete)) continue
+              visited.add(u.uComplete)
+              restore.push({ uniform: u.uComplete, old: u.uComplete.value })
+              u.uComplete.value = 1
+              info.fullyLitMeshesPrimed++
+            }
+          }
+          return restore
+        }
         for (let i = 0; i < showcaseProxies.length; i += SHOWCASE_BATCH_SIZE) {
           if (!await nextPaint('showcase')) { info.status='cancelled-on-summon'; return }
           if (interrupted()) { info.status='cancelled-on-summon'; return }
           const batch = showcaseProxies.slice(i, i + SHOWCASE_BATCH_SIZE)
           batch.forEach(proxy => { proxy.visible = true })
+          const savedUniforms = temporarilyMaterialize(batch)
           try {
             withTarget(() => {
               gl.clear(true, true, false)
               gl.render(stageNow, camera)
             })
+            if (savedUniforms.length) info.fullyLitBatches++
           } finally {
+            for (const entry of savedUniforms) entry.uniform.value = entry.old
             batch.forEach(proxy => { proxy.visible = false })
           }
           info.uploadedProxies += batch.length

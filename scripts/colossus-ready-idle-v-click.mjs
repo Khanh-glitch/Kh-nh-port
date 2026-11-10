@@ -14,10 +14,13 @@ const earlyVariant=process.env.COLOSSUS_EARLY_VARIANT || 'legacy'
 if(!['legacy','early','fast'].includes(earlyVariant))throw Error('Unknown early-discard variant')
 const exhibitVariant=process.env.COLOSSUS_EXHIBIT_VARIANT || 'normal'
 if(!['normal','noExhibits','noLaser'].includes(exhibitVariant)) throw Error('Unknown exhibit/laser diagnostic')
+const fullLitVariant=process.env.COLOSSUS_FULL_LIT_VARIANT || 'legacy'
+if(!['legacy','lit'].includes(fullLitVariant))throw Error('Unknown complete-fragment variant')
 const shadowVariant=process.env.COLOSSUS_SHADOW_VARIANT || 'normal'
 if(!['normal','off'].includes(shadowVariant))throw Error('Unknown shadow variant')
 const targetUrl=new URL(process.env.COLOSSUS_SMOKE_URL || 'http://127.0.0.1:4173/#at=0,-27,0,20&autostart&skip')
 if(shadowVariant==='off')targetUrl.searchParams.set('colossusShadowProbe','off')
+if(fullLitVariant==='lit')targetUrl.searchParams.set('colossusFullLitPrewarm','on')
 if(exhibitVariant==='noExhibits')targetUrl.searchParams.set('colossusExhibitProbe','off')
 if(exhibitVariant==='noLaser')targetUrl.searchParams.set('colossusLaserProbe','off')
 if(earlyVariant==='early')targetUrl.searchParams.set('colossusEarlyDiscardProbe','on')
@@ -39,7 +42,9 @@ try {
     const w=window.__orbitaColossusWarmup
     return {renderer,webgl:!!gl,contextLost:gl?.isContextLost(),warmup:{
       status:w?.status,laserReady:w?.laserReady,gpuSynced:w?.gpuSynced,
-      totalProxies:w?.totalProxies,uploadedProxies:w?.uploadedProxies
+      totalProxies:w?.totalProxies,uploadedProxies:w?.uploadedProxies,
+      fullLitPrewarm:w?.fullLitPrewarm,fullyLitBatches:w?.fullyLitBatches,
+      fullyLitMeshesPrimed:w?.fullyLitMeshesPrimed
     }}
   })
   if(!/Metal/.test(String(before.renderer)) || /SwiftShader/.test(String(before.renderer)))
@@ -108,7 +113,7 @@ try {
       })).slice(0,32)
     }
   })
-  const report={sha:process.env.GITHUB_SHA??'local',shadowVariant,exhibitVariant,earlyVariant,before,clicked,result,errors,
+  const report={sha:process.env.GITHUB_SHA??'local',shadowVariant,exhibitVariant,earlyVariant,fullLitVariant,before,clicked,result,errors,
     verdict:result.afterClick.maxMs<=120&&(exhibitVariant==='noLaser'||(result.firstBeamMs!=null&&result.firstBeamMs<500))
       ? 'SMOOTH_VIRTUAL_MEASURED_NOT_REAL_GPU_CERTIFIED' : 'HITCH_NOT_ACCEPTED',
     limits:'Same-session idle vs click rAF callback comparison on Apple Paravirtual Metal. rAF is not presented frame timing and no physical device is certified; no visual settings changed.'}
