@@ -524,10 +524,14 @@ export function RealityHost() {
         S.warmPass = 2
       }
     }
-        // Never leave the silent UEH preflight pass visible if the visitor starts
-    // walking between its two intro frames.
-    if (S.warmPass < 2 && useStore.getState().phase !== 'intro' && st.phase === 'idle') {
-      if (ueh.current) ueh.current.visible = false
+        // Continue the cooperative material/texture queue AFTER entering the
+    // world: the old intro-exit handler discarded every remaining UEH shader
+    // before the visitor could reach the piano. That forced first-HEX
+    // material compilation on the interaction frame. There is no more
+    // full-world visibility preflight to clean up at intro exit.
+    if (S.warmPass < 2 && st.phase !== 'idle') {
+      // Stop GPU prep immediately on an actual user activation; all future
+      // rendering follows the authentic HEX sweep/materialization state.
       S.warmTex.length = 0
       S.warmMesh.length = 0
       S.warmPass = 2
