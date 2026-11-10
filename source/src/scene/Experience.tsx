@@ -74,6 +74,10 @@ function HighGateMeter() {
 export function Experience() {
   const quality = useStore((s) => s.quality)
   const low = quality === 'low'
+  // DIAGNOSTIC ONLY: compare first-laser GPU scheduling with/without the
+  // composer. Normal portfolio path always retains Bloom/AA/tonemapping.
+  const postProbeOff = typeof window !== 'undefined' &&
+    new URLSearchParams(window.location.search).get('colossusPostProbe') === 'off'
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -113,7 +117,7 @@ export function Experience() {
         <Exhibits />
         <Player />
         <RealityHost />
-        <Post low={low} />
+        {!postProbeOff && <Post low={low} />}
       </Suspense>
     </Canvas>
   )

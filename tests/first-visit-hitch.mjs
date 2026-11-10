@@ -171,3 +171,10 @@ assert.ok(delayedClick.includes('UNACCEPTED_STUTTER'), 'late-click measurement m
 const readyTest = read('scripts/colossus-idle-probe.mjs')
 assert.ok(readyTest.includes("COLOSSUS_READY_GATE === '1'") && readyTest.includes("window.__orbitaColossusWarmup?.status === 'ready'"), 'full-prewarm diagnosis gates click on actual ready status')
 assert.ok(readyTest.includes('uploadedProxies >= readiness.totalProxies') && readyTest.includes('BLOCKED_FULL_READINESS_NOT_REACHED'), 'full prewarm does not claim success or trigger before all GPU proxies are uploaded')
+
+const experienceProbe = read('source/src/scene/Experience.tsx')
+const integratedRoot = JSON.parse(read('index.html').split('<script id="orbita-embedded-map" type="application/json">')[1].split('</script>')[0])
+assert.ok(experienceProbe.includes("get('colossusPostProbe') === 'off'") &&
+  experienceProbe.includes('{!postProbeOff && <Post low={low} />}'), 'postprocessing A/B only changes opt-in diagnostic, original production Post remains')
+assert.ok(integratedRoot['orbita/scene/Experience'], 'full quality Experience module remains embedded in standalone runtime')
+assert.ok(read('scripts/sync-colossus-standalone.mjs').includes("'scene/Experience'"), 'diagnostic Experience source synchronized into ACTUAL deployed standalone HTML')

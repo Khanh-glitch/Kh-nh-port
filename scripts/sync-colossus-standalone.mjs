@@ -25,6 +25,7 @@ const targets = [
   'scene/ShowcaseWarmup',
   'scene/Robot',
   'scene/materialize',
+  'scene/Experience',
 ]
 const checkInternal = (name) => {
   const normalized = name.replace(/\\/g, '/').replace(/\.(tsx?|jsx?)$/, '')
@@ -58,12 +59,12 @@ for (const file of targets) {
   original['orbita/' + file] = 'data:text/javascript;base64,' + Buffer.from(js, 'utf8').toString('base64')
 }
 if (Object.keys(original).length !== keysBefore.length || keysBefore.some(k => !(k in original))) {
-  throw new Error('Embedded module map was altered beyond requested four modules')
+  throw new Error('Embedded module map was altered beyond the requested embedded modules')
 }
 const updated = html.slice(0, jsonStart) + JSON.stringify(original) + html.slice(end)
 if (updated === html) {
   console.log('[ORBITA] Standalone ESM map already synchronized')
 } else {
   writeFileSync(htmlPath, updated)
-  console.log('[ORBITA] Synchronized five Colossus source modules into integrated index.html')
+  console.log('[ORBITA] Synchronized Colossus and diagnostic Experience source modules into integrated index.html')
 }

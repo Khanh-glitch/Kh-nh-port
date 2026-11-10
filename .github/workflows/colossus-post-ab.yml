@@ -1,0 +1,53 @@
+name: Colossus Metal compositor A-B isolation
+on:
+  push:
+    branches: [fix/colossus-frame-budget-prewarm]
+    paths:
+      - 'source/src/scene/Experience.tsx'
+      - 'scripts/colossus-browser-smoke.mjs'
+      - '.github/workflows/colossus-post-ab.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  compare:
+    runs-on: macos-15
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        trial: [1, 2, 3]
+        postVariant: [normal, off]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: source/package-lock.json
+      - run: npm ci --prefix source
+      - run: npm install --prefix source --no-save --package-lock=false playwright@1.56.1
+      - run: cd source && npx playwright install chromium
+      - name: Build identical candidate HTML per variant
+        run: |
+          node scripts/sync-colossus-standalone.mjs
+          node scripts/build-pages.mjs
+      - name: Compare first-click frame gaps with exact original 3D scene
+        env:
+          COLOSSUS_SMOKE_URL: http://127.0.0.1:4173/#at=0,-27,0,20&autostart&skip
+          COLOSSUS_GPU_MODE: metal
+          COLOSSUS_AB_VARIANT: enabled
+          COLOSSUS_POST_VARIANT: ${{ matrix.postVariant }}
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 --directory dist-pages >/tmp/colossus-post-ab.log 2>&1 &
+          for n in {1..30}; do
+            if curl -fsS -o /dev/null http://127.0.0.1:4173/; then break; fi
+            sleep 1
+          done
+          node scripts/colossus-browser-smoke.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: colossus-post-${{ matrix.postVariant }}-${{ matrix.trial }}
+          path: browser-evidence/
+          if-no-files-found: warn
