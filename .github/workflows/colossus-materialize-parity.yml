@@ -12,7 +12,7 @@ permissions:
   contents: read
 jobs:
   pixel-parity:
-    runs-on: ubuntu-latest
+    runs-on: macos-15
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4

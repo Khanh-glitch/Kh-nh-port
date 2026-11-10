@@ -5,7 +5,7 @@ const {chromium}=require('../source/node_modules/playwright')
 mkdirSync('browser-evidence',{recursive:true})
 const browser=await chromium.launch({
  headless:true,
- args:['--no-sandbox','--enable-webgl','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']
+ args:['--enable-webgl','--enable-gpu','--ignore-gpu-blocklist','--use-angle=metal','--disable-software-rasterizer']
 })
 const base='http://127.0.0.1:5173/tests/materialize-parity-fixture.html'
 const legacy=await browser.newPage({viewport:{width:480,height:360},deviceScaleFactor:1})
@@ -19,6 +19,8 @@ try{
  await early.goto(base+'?colossusEarlyDiscardProbe=on',{waitUntil:'domcontentloaded',timeout:120000})
  await Promise.all([legacy,early].map(p=>p.waitForFunction(()=>window.__materializeParityReady===true,null,{timeout:90000})))
  const keys=await Promise.all([legacy,early].map(p=>p.evaluate(()=>window.__materializeShaderKeys)))
+ const backends=await Promise.all([legacy,early].map(p=>p.evaluate(()=>window.__materializeBackend)))
+ if(backends.some(b=>!/Metal/.test(String(b))||/SwiftShader/.test(String(b))))throw Error('Backend is not Metal: '+JSON.stringify(backends))
  if(keys[0].some(k=>k!=='orbita-materialize-shared-v1')||keys[1].some(k=>k!=='orbita-materialize-early-reject-v2'))throw Error('GLSL variants not isolated: '+JSON.stringify(keys))
  for(const pct of stages){
   const [old,nw]=await Promise.all([legacy,early].map(p=>p.evaluate(pct=>window.__captureMaterializeParity(pct),pct)))
@@ -44,10 +46,10 @@ try{
  await legacy.screenshot({path:'browser-evidence/materialize-legacy-50.png'})
  await early.screenshot({path:'browser-evidence/materialize-early-50.png'})
  const accepted=problems.length===0&&stagesReport.every(s=>s.mismatchedPixels===0)
- const report={sha:process.env.GITHUB_SHA,backend:'SwiftShader test fixture (not final real-scene parity)',
+ const report={sha:process.env.GITHUB_SHA,backends,
   keys,stages:stagesReport,errors:problems,
   verdict:accepted?'PIXEL_EXACT_SHADER_FIXTURE_PASS':'SHADER_FIXTURE_PIXEL_MISMATCH',
-  caveat:'This isolated shader fixture includes mapped/unmapped PBR+Basic, alpha test, lighting and shadow. It is not a complete rendered-portfiolio screenshot or physical Metal-GPU proof.'}
+  caveat:'This isolated shader fixture includes mapped/unmapped PBR+Basic, alpha test, lighting and shadows on Apple Paravirtual Metal. Not a full portfolio scene or bare-metal proof.'}
  console.log('MATERIALIZE_SHADER_PARITY '+JSON.stringify(report))
  writeFileSync('browser-evidence/materialize-shader-parity.json',JSON.stringify(report,null,2))
  if(!accepted)process.exitCode=12
