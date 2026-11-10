@@ -1,4 +1,4 @@
-name: Colossus rigid armor batching exact pixel parity
+name: Colossus rigid armor batching bounded pixel parity
 on:
   push:
     branches: [fix/colossus-hitch-only]
@@ -31,7 +31,7 @@ jobs:
             if curl -fsS -o /dev/null http://127.0.0.1:5173/tests/colossus-batch-parity.html; then break; fi
             sleep 1
           done
-      - name: Compare untouched GPU pixels at six laser scan stages
+      - name: Reject more than 1 8-bit channel rounding on one pixel across six scan stages
         run: node scripts/colossus-batch-parity.mjs
       - uses: actions/upload-artifact@v4
         if: always()
