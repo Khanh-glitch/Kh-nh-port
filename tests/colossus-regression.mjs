@@ -1,7 +1,7 @@
 /** Lightweight source-contract regression checks. No browser/runtime claims. */
 import { readFileSync } from 'node:fs'
 import assert from 'node:assert/strict'
-const source = (name) => readFileSync(new URL(`../src/scene/${name}`, import.meta.url), 'utf8')
+const source = (name) => readFileSync(new URL(`../source/src/scene/${name}`, import.meta.url), 'utf8')
 const rag = source('RagnarokShowcase.tsx')
 const apex = source('ApexShowcase.tsx')
 const weather = source('RagnarokWeather.tsx')

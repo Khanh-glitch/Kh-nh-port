@@ -57,7 +57,7 @@ function mergeTaggedArmorSiblings(root: THREE.Object3D) {
     const buckets = new Map<string, THREE.Mesh[]>()
     for (const m of eligible) {
       const key = [
-        m.material.uuid, m.castShadow ? 1 : 0, m.receiveShadow ? 1 : 0,
+        (m.material as THREE.Material).uuid, m.castShadow ? 1 : 0, m.receiveShadow ? 1 : 0,
         m.renderOrder, m.frustumCulled ? 1 : 0, m.layers.mask,
       ].join('|')
       const arr = buckets.get(key) ?? []
