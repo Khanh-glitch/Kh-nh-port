@@ -58,7 +58,9 @@ assert.ok(warmup.includes('menniverse-laser-probe') && warmup.includes('Copy las
 assert.ok(!source['source/src/scene/ShowcaseWarmup.tsx'].includes("location.hash.includes('colossus-profile')"), 'startup prewarm identical regardless of hash')
 
 const showWarm = source['source/src/scene/ShowcaseWarmup.tsx']
-assert.ok(showWarm.includes("drawVariant('dormant', [])"), 'stable rig still draws the actual resources offscreen')
+assert.ok(showWarm.includes('info.uploadedProxies++'), 'actual geometry upload must be split into individual frame-sized work items')
+assert.ok(showWarm.includes('cancelled-on-summon') && showWarm.includes('arenaState.mode'), 'prewarm cancels rather than blocking the first laser')
+assert.ok(showWarm.includes('const withTarget = (fn:'), 'every offscreen draw restores public renderer state')
 assert.ok(!showWarm.includes("drawVariant('laser-apex', apexLights)"), 'no redundant offscreen light permutation after stabilizing lights')
 assert.ok(!showWarm.includes("drawVariant('laser-ragnarok', [...apexLights, ...ragLights])"), 'no duplicate render for an identical shader permutation')
 const apex = read('source/src/scene/ApexShowcase.tsx')
