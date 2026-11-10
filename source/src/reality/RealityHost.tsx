@@ -446,7 +446,7 @@ export function RealityHost() {
     // --- 1. Intro-only GPU preflight. No synchronous shader compilation during gameplay.
     if (S.warmPass < 2 && st.phase === 'idle' &&
         (useStore.getState().phase === 'intro' ||
-         (useStore.getState().phase === 'playing' && dtRaw <= 0.05 &&
+         (useStore.getState().phase === 'playing' && rawDt <= 0.05 &&
           document.visibilityState === 'visible'))) {
       if (S.warmTex.length) {
         const tex = S.warmTex.shift()!
