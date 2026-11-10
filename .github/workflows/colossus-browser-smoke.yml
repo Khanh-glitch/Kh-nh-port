@@ -9,7 +9,11 @@ permissions:
 jobs:
   smoke:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 12
+    strategy:
+      fail-fast: false
+      matrix:
+        trial: [1, 2, 3]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -26,6 +30,6 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: colossus-browser-evidence
+          name: colossus-browser-evidence-${{ matrix.trial }}
           path: browser-evidence/
           if-no-files-found: warn
