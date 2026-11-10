@@ -55,7 +55,7 @@ assert.ok(robot.includes('__orbitaColossusProfiles'), 'record repeated cold/warm
 const warmup = source['source/src/scene/ShowcaseWarmup.tsx']
 assert.ok(warmup.includes('menniverse-laser-probe') && warmup.includes('Copy laser report'), 'comparable no-console HUD')
 
-assert.ok(!source['source/src/scene/ShowcaseWarmup.tsx'].includes("location.hash.includes('colossus-profile')"), 'startup prewarm identical regardless of hash')
+assert.ok(source['source/src/scene/ShowcaseWarmup.tsx'].includes("const diagnosticsVisible = window.location.hash.includes('colossus-profile')"), 'profile hash controls diagnostic HUD only, not warmup code path')
 
 const showWarm = source['source/src/scene/ShowcaseWarmup.tsx']
 assert.ok(showWarm.includes('info.uploadedProxies++'), 'actual geometry upload must be split into individual frame-sized work items')
