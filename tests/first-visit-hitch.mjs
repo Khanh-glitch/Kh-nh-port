@@ -113,3 +113,10 @@ assert.ok(cooperativeBudget.includes('document.visibilityState'), 'no GPU backgr
 assert.ok(cooperativeBudget.includes('laserReady = true'), 'laser readiness is recorded after real proxy uploads')
 assert.ok(cooperativeBudget.includes("uploadTexture(texture, 'showcase')") && cooperativeBudget.includes("uploadProxy(proxy, 'showcase')"), 'all nonlaser texture and mesh uploads budget guarded')
 assert.ok(cooperativeBudget.includes("uploadTexture(texture, 'laser')") && cooperativeBudget.includes("uploadProxy(proxy, 'laser')"), 'all laser assets remain prioritized')
+
+const clickClock = read('source/src/scene/Robot.tsx')
+assert.ok(clickClock.includes('lastPostClickFrameAt'), 'cold trigger profile has its own post-click callback clock')
+assert.ok(clickClock.includes('frameAt - coldProbe.started'), 'first sample starts at input, not previous rAF')
+assert.ok(clickClock.includes('frameAt - coldProbe.lastPostClickFrameAt'), 'later samples measure only post-click gaps')
+assert.ok(clickClock.includes('firstFrameFromClickMs'), 'first input-to-rAF latency is reported')
+assert.ok(clickClock.includes('firstBeamFrameAtMs'), 'time to first actual submitted laser geometry is observable')
