@@ -1,8 +1,8 @@
-name: Colossus chunked shader preview
+name: Colossus robot-only idle isolation
 on:
   push:
     branches:
-      - experiment/colossus-chunked-firstdraw
+      - experiment/colossus-robot-only-control
   workflow_dispatch:
 permissions:
   contents: write
@@ -46,7 +46,7 @@ jobs:
             git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
             git add index.html
             git commit -m "build(colossus): synchronize fixed laser code into preview HTML"
-            git push origin HEAD:experiment/colossus-chunked-firstdraw
+            git push origin HEAD:experiment/colossus-robot-only-control
           else
             echo "Integrated preview HTML is already up to date."
           fi
