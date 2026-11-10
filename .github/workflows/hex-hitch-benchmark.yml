@@ -1,0 +1,47 @@
+name: HEX Reality Rewrite first trigger A/B + visual evidence
+on:
+  push:
+    branches: [fix/hex-hitch-no-visual-loss]
+    paths: ['.github/workflows/hex-hitch-benchmark.yml','source/src/reality/RealityHost.tsx','source/src/reality/Front.tsx','scripts/hex-hitch-a-b.mjs','scripts/sync-hex-standalone.mjs']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  metal:
+    runs-on: macos-15
+    timeout-minutes: 17
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          ref: 4454511b31913531856549659bf55628ffc25578
+          path: baseline
+      - uses: actions/checkout@v4
+        with:
+          path: candidate
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build immutable baseline and candidate with HEX source synced into real published HTML
+        run: |
+          npm ci --prefix candidate/source
+          npm install --prefix candidate/source --no-save --package-lock=false playwright@1.56.1
+          (cd candidate/source && npx playwright install chromium)
+          (cd candidate && node scripts/sync-hex-standalone.mjs)
+          (cd baseline && node scripts/build-pages.mjs)
+          (cd candidate && node scripts/build-pages.mjs)
+      - name: Run baseline and candidate sequentially on the same Metal GPU
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 --directory baseline/dist-pages >/tmp/hex-baseline.log 2>&1 &
+          python3 -m http.server 4174 --bind 127.0.0.1 --directory candidate/dist-pages >/tmp/hex-candidate.log 2>&1 &
+          for n in {1..80}; do
+            if curl -fsS -o /dev/null http://127.0.0.1:4173/ && curl -fsS -o /dev/null http://127.0.0.1:4174/; then break; fi
+            sleep 1
+          done
+          node scripts/hex-hitch-a-b.mjs
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hex-first-trigger-metal-visual-A-B
+          path: hex-evidence/
+          if-no-files-found: warn
