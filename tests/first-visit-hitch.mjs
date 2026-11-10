@@ -32,7 +32,7 @@ for (const [file, key] of pairs) {
   if (file.includes('ShowcaseWarmup')) {
     assert.ok(!js.includes('gl.readRenderTargetPixels(target'), 'no blocking GPU read')
     assert.ok(js.includes('readRenderTargetPixelsAsync'), 'async GPU readback is present')
-    assert.ok(js.includes('if (!restored)'), 'safe framebuffer restoration')
+    assert.ok(js.includes('if (!restored)') || js.includes('gl.setRenderTarget(prevTarget)'), 'public framebuffer restored for legacy or per-pass GPU preflight')
   }
   if (file.includes('Sheets')) assert.ok(js.includes("k > 0.01 || useStore.getState().phase === 'intro'"), 'Piano GoldZone primed')
   if (file.includes('Robot')) assert.ok(js.includes('colossus-warm-beam-left') && js.includes('colossus-warm-impact'), 'Robot beams and flare identified')
