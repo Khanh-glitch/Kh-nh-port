@@ -2,7 +2,7 @@ import { createRequire } from 'node:module'
 import { mkdirSync, writeFileSync } from 'node:fs'
 const require = createRequire(import.meta.url)
 const { chromium } = require('../source/node_modules/playwright')
-const url = 'https://0d632f8c.menniverse.pages.dev/#at=0,-27,0,20&autostart&skip'
+const url = 'https://0d632f8c.menniverse.pages.dev/#at=0,-27,0,20&skip'
 mkdirSync('browser-evidence', { recursive: true })
 const browser = await chromium.launch({
   channel: 'chrome',
@@ -24,6 +24,11 @@ try {
     null,
     {timeout:180000, polling:1500}
   )
+  // The previous experiment autostarted the game before warmup completed,
+  // making READY impossible because the cooperative prewarm correctly aborted.
+  // Hold the intro screen for full GPU readiness, THEN enter and click.
+  await page.getByRole('button',{name:'BƯỚC VÀO'}).click({timeout:30000})
+  await page.waitForTimeout(1200)
   const before=await page.evaluate(() => {
     const canvas=document.querySelector('canvas')
     const gl=canvas?.getContext('webgl2')
