@@ -258,6 +258,11 @@ export function Robot() {
 
   const disp = useMemo(() => canvasTex(640, 200, () => {}), [])
   const consoleScreen = useMemo(() => canvasTex(512, 192, () => {}), [])
+  // This texture depends ONLY on the arena mode. Redrawing it every 0.18s
+  // reuploads an unchanged 512x192 texture to the GPU and contends with the
+  // shadow/compositor work during a cold summon. Preserve every pixel while
+  // uploading only when the console's actual content changes.
+  const lastConsoleMode = useRef<ArenaMode | null>(null)
 
   const drawChestLED = (t: number, waving: boolean) => {
     const { ctx, tex } = disp
@@ -326,6 +331,7 @@ export function Robot() {
   }
 
   const drawConsole = () => {
+    if (lastConsoleMode.current === st.mode) return
     const { ctx, tex } = consoleScreen
     const W = 512
     const H = 192
@@ -355,6 +361,7 @@ export function Robot() {
     ctx.fillStyle = 'rgba(255,255,255,0.65)'
     ctx.font = `500 18px ${FONT}`
     ctx.fillText('TRÁI: APEX CHAOS   |   GIỮA: TRIỆU HỒI/THU HỒI   |   PHẢI: RAGNAROK', 26, 152)
+    lastConsoleMode.current = st.mode
     tex.needsUpdate = true
   }
 
