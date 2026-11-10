@@ -120,7 +120,8 @@ export function ShowcaseWarmup({ arenaState }: { arenaState: { mode: string } })
         stageNow.add(clonePrivateLight(object as THREE.Light))
       })
       const textures = new Set<THREE.Texture>()
-      roots.forEach(root => root!.traverse(object => {
+      const priorityTextures = new Set<THREE.Texture>()
+      roots.forEach((root, rootIndex) => root!.traverse(object => {
         const m = object as THREE.Mesh
         const sprite = object as THREE.Sprite
         if (!m.isMesh && !sprite.isSprite) return
@@ -145,7 +146,10 @@ export function ShowcaseWarmup({ arenaState }: { arenaState: { mode: string } })
           if (!mat) continue
           for (const name of ['map','alphaMap','emissiveMap','normalMap','roughnessMap','metalnessMap'] as const) {
             const t = (mat as THREE.MeshStandardMaterial)[name]
-            if (t?.isTexture) textures.add(t)
+            if (t?.isTexture) {
+              textures.add(t)
+              if (rootIndex < beams.length) priorityTextures.add(t)
+            }
           }
         }
       }))
@@ -197,19 +201,24 @@ export function ShowcaseWarmup({ arenaState }: { arenaState: { mode: string } })
           return
         }
         if (interrupted()) { info.status='cancelled-on-summon'; return }
-        info.status = 'uploading-textures'
-        for (const texture of textures) {
+        // Prepare the actual beam and flare resources FIRST. Previously all
+        // 14 exhibit textures could block the four laser proxies even though
+        // the visitor sees only those proxies at the start of fabrication.
+        const uploadTexture = async (texture: THREE.Texture): Promise<boolean> => {
           await nextPaint()
-          if (interrupted()) { info.status='cancelled-on-summon'; return }
-          try { gl.initTexture(texture) } catch { /* The real renderer can upload it. */ }
+          if (interrupted()) return false
+          try { gl.initTexture(texture) } catch { /* Normal renderer can retry. */ }
+          return true
         }
-        if (interrupted()) { info.status='cancelled-on-summon'; return }
+        info.status = 'laser-textures'
+        for (const texture of priorityTextures) {
+          if (!await uploadTexture(texture)) { info.status='cancelled-on-summon'; return }
+        }
         target = new THREE.WebGLRenderTarget(96, 96, { depthBuffer:true, stencilBuffer:false })
         proxies.forEach(proxy => { proxy.visible = false })
-        info.status = 'uploading'
-        for (const proxy of proxies) {
+        const uploadProxy = async (proxy: THREE.Object3D): Promise<boolean> => {
           await nextPaint()
-          if (interrupted()) { info.status='cancelled-on-summon'; return }
+          if (interrupted()) return false
           proxy.visible = true
           try {
             withTarget(() => {
@@ -220,6 +229,20 @@ export function ShowcaseWarmup({ arenaState }: { arenaState: { mode: string } })
             proxy.visible = false
           }
           info.uploadedProxies++
+          return true
+        }
+        info.status = 'laser-geometry'
+        for (const proxy of proxies.slice(0, beams.length)) {
+          if (!await uploadProxy(proxy)) { info.status='cancelled-on-summon'; return }
+        }
+        info.status = 'showcase-textures'
+        for (const texture of textures) {
+          if (priorityTextures.has(texture)) continue
+          if (!await uploadTexture(texture)) { info.status='cancelled-on-summon'; return }
+        }
+        info.status = 'showcase-geometry'
+        for (const proxy of proxies.slice(beams.length)) {
+          if (!await uploadProxy(proxy)) { info.status='cancelled-on-summon'; return }
         }
         info.drawnVariants.push({ name:'incremental', programs:gl.info.programs?.length ?? 0 })
         if (interrupted()) { info.status='cancelled-on-summon'; return }
