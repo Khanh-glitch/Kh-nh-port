@@ -5,9 +5,12 @@ const { chromium } = require('../source/node_modules/playwright')
 const raw = process.env.COLOSSUS_SMOKE_URL
 if (!raw) throw new Error('COLOSSUS_SMOKE_URL missing')
 const variant = process.env.COLOSSUS_AB_VARIANT ?? 'enabled'
+const shadowWarm = process.env.COLOSSUS_SHADOW_WARM ?? 'small'
+if (!['small','full'].includes(shadowWarm)) throw new Error('Invalid shadow warm mode')
 if (!['enabled', 'disabled'].includes(variant)) throw new Error('Invalid variant')
 const url = new URL(raw)
 if (variant === 'disabled') url.searchParams.set('colossusPrewarm', 'off')
+if (shadowWarm === 'full') url.searchParams.set('colossusShadowWarm', 'full')
 mkdirSync('browser-evidence', { recursive: true })
 const gpuMode = process.env.COLOSSUS_GPU_MODE ?? 'swiftshader'
 const browser = await chromium.launch({
@@ -57,10 +60,10 @@ try {
       firstGaps:p.gaps.slice(0,30), longestGaps:gaps.slice(-12)
     }
   })
-  const report = {commit:process.env.GITHUB_SHA,variant,gpuMode,url:url.toString(),data,errors,
+  const report = {commit:process.env.GITHUB_SHA,variant,shadowWarm,gpuMode,url:url.toString(),data,errors,
     note:'GPU backend is explicitly fingerprinted. No user interaction in this trial. Visual screenshot captured AFTER timing sample.'}
   writeFileSync('browser-evidence/idle-summary.json',JSON.stringify(report,null,2))
-  console.log('IDLE_PROBE '+JSON.stringify({variant,gpuMode,commit:report.commit, ...data, warmup:{status:data.warmup?.status,laserReady:data.warmup?.laserReady,earlyShaderCompileStatus:data.warmup?.earlyShaderCompileStatus}}))
+  console.log('IDLE_PROBE '+JSON.stringify({variant,shadowWarm,gpuMode,commit:report.commit, ...data, warmup:{status:data.warmup?.status,laserReady:data.warmup?.laserReady,earlyShaderCompileStatus:data.warmup?.earlyShaderCompileStatus}}))
   await page.screenshot({path:'browser-evidence/colossus-idle.png',timeout:90000})
   if(errors.length || !data.validWebgl || data.contextLost) process.exitCode=2
 } catch(err) {

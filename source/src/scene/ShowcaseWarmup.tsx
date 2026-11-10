@@ -32,6 +32,7 @@ export function ShowcaseWarmup({ arenaState }: { arenaState: { mode: string } })
     const info = {
       status: 'scheduled',
       shadowProbe: new URLSearchParams(location.search).get('colossusShadowProbe') === 'off' ? 'off-diagnostic-only' : 'unchanged',
+      shadowWarmMode: new URLSearchParams(location.search).get('colossusShadowWarm') === 'full' ? 'full-test-only' : 'small',
       meshes: 0,
       sprites: 0,
       beams: 0,
@@ -295,10 +296,13 @@ export function ShowcaseWarmup({ arenaState }: { arenaState: { mode: string } })
       const baseVisibleLights = new Set<THREE.Object3D>()
       // Only PRIVATE light clones use a 64px shadow cache, never production
       // shadow quality. Keep castShadow and shader light/shadow defines intact.
+      const fullShadowWarm = new URLSearchParams(location.search).get('colossusShadowWarm') === 'full'
       const clonePrivateLight = (source: THREE.Light): THREE.Light => {
         const copy = source.clone(false)
         const shadow = (copy as THREE.Light & { shadow?: THREE.LightShadow }).shadow
-        if (copy.castShadow && shadow) shadow.mapSize.set(64, 64)
+        // A/B ONLY: try warmup's real 2048px directional-shadow variant.
+        // This clone never alters the production shadow texture or quality.
+        if (copy.castShadow && shadow && !fullShadowWarm) shadow.mapSize.set(64, 64)
         return copy
       }
       const extraLights = (root: THREE.Object3D | undefined | null): THREE.Light[] => {

@@ -5,11 +5,14 @@ const { chromium } = require('../source/node_modules/playwright')
 const inputURL = process.env.COLOSSUS_SMOKE_URL
 const abVariant = process.env.COLOSSUS_AB_VARIANT || 'enabled'
 const shadowVariant = process.env.COLOSSUS_SHADOW_VARIANT || 'normal'
+const shadowWarm = process.env.COLOSSUS_SHADOW_WARM || 'small'
+if (!['small','full'].includes(shadowWarm)) throw new Error('Invalid shadow warm A/B')
 if (!['normal','off'].includes(shadowVariant)) throw new Error('Unknown shadow A/B variant')
 if (!['enabled','disabled'].includes(abVariant)) throw new Error('Unknown A/B variant: '+abVariant)
 const parsedURL = inputURL ? new URL(inputURL) : null
 if (abVariant === 'disabled' && parsedURL) parsedURL.searchParams.set('colossusPrewarm', 'off')
 if (shadowVariant === 'off' && parsedURL) parsedURL.searchParams.set('colossusShadowProbe', 'off')
+if (shadowWarm === 'full' && parsedURL) parsedURL.searchParams.set('colossusShadowWarm', 'full')
 const url = parsedURL?.toString() ?? ''
 if (!url || !/^https?:\/\//.test(url)) {
   throw new Error('COLOSSUS_SMOKE_URL is required: never test a stale deployed preview as if it were branch HEAD')
@@ -84,7 +87,7 @@ try {
     (after.profile.firstFrameFromClickMs ?? Infinity) > 120 ||
     after.profile.firstBeamFrameAtMs == null
   const report={
-    url,abVariant,shadowVariant,commit:process.env.GITHUB_SHA ?? 'local',
+    url,abVariant,shadowVariant,shadowWarm,commit:process.env.GITHUB_SHA ?? 'local',
     gpuMode, metalBackendVerified, virtualGpu, realGpuVerified,
     performanceVerdict: softwareStutter
       ? (metalBackendVerified ? (virtualGpu ? 'UNACCEPTED_METAL_VIRTUALIZED' : 'UNACCEPTED_METAL_HARDWARE') : 'UNACCEPTED_SOFTWARE_GPU')
@@ -103,7 +106,7 @@ try {
     gpuRenderer:before.gpuRenderer,
     canvas:before.canvas,webgl2:before.webgl2,contextLost:before.contextLost,
     verifiedCandidate:before.verifiedCandidate,
-    abVariant,shadowVariant,
+    abVariant,shadowVariant,shadowWarm,
     laserSubmitted:after.warmup?.laserSubmitted,
     laserGpuSynced:after.warmup?.laserGpuSynced,
     laserBatchCpuMs:after.warmup?.laserBatchCpuMs,
