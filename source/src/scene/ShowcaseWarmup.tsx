@@ -215,6 +215,12 @@ export function ShowcaseWarmup({ arenaState }: { arenaState: { mode: string } })
           if (!await uploadTexture(texture)) { info.status='cancelled-on-summon'; return }
         }
         target = new THREE.WebGLRenderTarget(96, 96, { depthBuffer:true, stencilBuffer:false })
+        // Default render-target colorSpace is NoColorSpace, while the visible
+        // canvas is sRGB. Output-color-space is part of Three's GPU program
+        // cache key: a mismatched private target can prepare the WRONG shader
+        // variant even when mesh, material and lights are identical.
+        // Match the production framebuffer ONLY inside this private target.
+        target.texture.colorSpace = gl.outputColorSpace
         proxies.forEach(proxy => { proxy.visible = false })
         const uploadProxy = async (proxy: THREE.Object3D): Promise<boolean> => {
           await nextPaint()
