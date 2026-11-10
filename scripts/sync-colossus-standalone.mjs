@@ -26,7 +26,7 @@ const targets = [
   'scene/Robot',
 ]
 const checkInternal = (name) => {
-  const normalized = name.replace(/\\/g, '/').replace(/\\.(tsx?|jsx?)$/, '')
+  const normalized = name.replace(/\\/g, '/').replace(/\.(tsx?|jsx?)$/, '')
   const key = 'orbita/' + normalized
   if (!(key in original)) throw new Error('Unexpected new import: ' + key)
   return key
@@ -46,14 +46,14 @@ for (const file of targets) {
   })
   const errors = (output.diagnostics || []).filter(x => x.category === ts.DiagnosticCategory.Error)
   if (errors.length) throw new Error(name + ': ' + ts.formatDiagnosticsWithColorAndContext(errors, { getCanonicalFileName: x => x, getCurrentDirectory: () => root, getNewLine: () => '\n' }))
-  const js = output.outputText.replace(/(\\bfrom\\s*['"])(\\.{1,2}\\/[^'"]+)(['"])/g, (_match, pre, spec, post) => {
+  const js = output.outputText.replace(/(\bfrom\s*['"])(\.{1,2}\/[^'"]+)(['"])/g, (_match, pre, spec, post) => {
     const abs = resolve(srcRoot, dirname(name), spec)
     const rel = relative(srcRoot, abs)
     if (rel.startsWith('..')) throw new Error('Forbidden out-of-tree import: ' + spec)
     return pre + checkInternal(rel) + post
   })
   // Fail closed if local imports escaped rewriting.
-  if (/\\bfrom\\s*['"]\\.{1,2}\\//.test(js)) throw new Error('Unresolved import in ' + name)
+  if (/\bfrom\s*['"]\.{1,2}\//.test(js)) throw new Error('Unresolved import in ' + name)
   original['orbita/' + file] = 'data:text/javascript;base64,' + Buffer.from(js, 'utf8').toString('base64')
 }
 if (Object.keys(original).length !== keysBefore.length || keysBefore.some(k => !(k in original))) {
