@@ -111,7 +111,9 @@ export interface ScanCullEntry {
 export function collectScanCullMeshes(root: THREE.Object3D, skip: ReadonlySet<THREE.Object3D> = new Set()): ScanCullEntry[] {
   const entries: ScanCullEntry[] = []
   root.traverse(obj => {
-    if (skip.has(obj) || !(obj as THREE.Mesh).isMesh || !obj.visible) return
+    // Instanced meshes need per-instance bounds, so leave them to their
+    // existing animation/visibility owner rather than using one geometry box.
+    if (skip.has(obj) || !(obj as THREE.Mesh).isMesh || (obj as THREE.InstancedMesh).isInstancedMesh || !obj.visible) return
     const mesh = obj as THREE.Mesh
     const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material]
     if (!mats.length || mats.some(m => !m?.userData?.orbitaMaterialize)) return
