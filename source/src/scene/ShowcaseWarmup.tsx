@@ -43,7 +43,10 @@ export function ShowcaseWarmup({ arenaState }: { arenaState: { mode: string } })
       extraRagLights: 0,
       textureMaps: 0,
       totalProxies: 0,
-      fullLitPrewarm: new URLSearchParams(location.search).get('colossusFullLitPrewarm') === 'on',
+      fullLitPrewarm: new URLSearchParams(location.search).get('colossusFullLitPrewarm') === 'on' ||
+        new URLSearchParams(location.search).get('colossusDeepPrewarm') === 'on',
+      deepWorldPrewarm: new URLSearchParams(location.search).get('colossusDeepPrewarm') === 'on',
+      longestPrivateBatchCpuMs: 0,
       fullyLitMeshesPrimed: 0,
       fullyLitBatches: 0,
       uploadedProxies: 0,
@@ -301,7 +304,12 @@ export function ShowcaseWarmup({ arenaState }: { arenaState: { mode: string } })
       const clonePrivateLight = (source: THREE.Light): THREE.Light => {
         const copy = source.clone(false)
         const shadow = (copy as THREE.Light & { shadow?: THREE.LightShadow }).shadow
-        if (copy.castShadow && shadow) shadow.mapSize.set(64, 64)
+        if (copy.castShadow && shadow) {
+          // A/B only: match the real 2048x2048 sun shadow attachment during
+          // arrival preflight. Private shadow textures do NOT change game quality.
+          const size = info.deepWorldPrewarm && source instanceof THREE.DirectionalLight ? 2048 : 64
+          shadow.mapSize.set(size, size)
+        }
         return copy
       }
       const extraLights = (root: THREE.Object3D | undefined | null): THREE.Light[] => {
@@ -324,9 +332,19 @@ export function ShowcaseWarmup({ arenaState }: { arenaState: { mode: string } })
         const sprite = object as THREE.Sprite
         if (!m.isMesh && !sprite.isSprite) return
         const proxy = object.clone(false) as THREE.Object3D
-        proxy.position.set(0, 0, 0)
-        proxy.rotation.set(0, 0, 0)
-        proxy.scale.setScalar(1)
+        if (info.deepWorldPrewarm) {
+          // Private clones share source geometry, original materials and actual
+          // world transforms; unlike a zeroed 96px proxy, this renders the same
+          // real positions/shadow casters the visitor will encounter.
+          object.updateWorldMatrix(true, false)
+          proxy.matrixAutoUpdate = false
+          proxy.matrix.copy(object.matrixWorld)
+          proxy.matrixWorld.copy(object.matrixWorld)
+        } else {
+          proxy.position.set(0, 0, 0)
+          proxy.rotation.set(0, 0, 0)
+          proxy.scale.setScalar(1)
+        }
         proxy.frustumCulled = false
         proxy.visible = true
         if ((m as THREE.InstancedMesh).isInstancedMesh) {
@@ -354,8 +372,14 @@ export function ShowcaseWarmup({ arenaState }: { arenaState: { mode: string } })
       info.textureMaps = textures.size
       info.totalProxies = proxies.length
       const camera = new THREE.PerspectiveCamera(60, 1, 0.01, 200)
-      camera.position.set(0, 0, 12)
-      camera.lookAt(0, 0, 0)
+      if (info.deepWorldPrewarm) {
+        camera.position.set(0, 17, -18)
+        camera.lookAt(0, 4, -41)
+      } else {
+        camera.position.set(0, 0, 12)
+        camera.lookAt(0, 0, 0)
+      }
+      const targetSize = info.deepWorldPrewarm ? 512 : 96
 
       // Capture/restores the *current* framebuffer on each independent pass.
       // Never keep a private target bound across requestAnimationFrame/await.
@@ -370,7 +394,7 @@ export function ShowcaseWarmup({ arenaState }: { arenaState: { mode: string } })
           gl.xr.enabled = false
           gl.autoClear = true
           gl.setRenderTarget(target)
-          gl.setViewport(0, 0, 96, 96)
+          gl.setViewport(0, 0, targetSize, targetSize)
           gl.setScissorTest(false)
           fn()
         } finally {
@@ -409,7 +433,7 @@ export function ShowcaseWarmup({ arenaState }: { arenaState: { mode: string } })
           if (interrupted()) { info.status='cancelled-on-summon'; return }
           try { gl.initTexture(texture) } catch { /* Visible renderer can retry. */ }
         }
-        target = new THREE.WebGLRenderTarget(96, 96, { depthBuffer:true, stencilBuffer:false })
+        target = new THREE.WebGLRenderTarget(targetSize, targetSize, { depthBuffer:true, stencilBuffer:false })
         target.texture.colorSpace = gl.outputColorSpace
         proxies.forEach(proxy => { proxy.visible = false })
         const laserProxies = proxies.slice(0, beams.length)
@@ -545,11 +569,16 @@ export function ShowcaseWarmup({ arenaState }: { arenaState: { mode: string } })
           const batch = showcaseProxies.slice(i, i + SHOWCASE_BATCH_SIZE)
           batch.forEach(proxy => { proxy.visible = true })
           const savedUniforms = temporarilyMaterialize(batch)
+          const batchCpuStart = performance.now()
           try {
             withTarget(() => {
               gl.clear(true, true, false)
               gl.render(stageNow, camera)
             })
+            info.longestPrivateBatchCpuMs = Math.max(
+              info.longestPrivateBatchCpuMs,
+              Math.round(performance.now() - batchCpuStart),
+            )
             if (savedUniforms.length) info.fullyLitBatches++
           } finally {
             for (const entry of savedUniforms) entry.uniform.value = entry.old

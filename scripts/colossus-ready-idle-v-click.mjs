@@ -15,12 +15,13 @@ if(!['legacy','early','fast'].includes(earlyVariant))throw Error('Unknown early-
 const exhibitVariant=process.env.COLOSSUS_EXHIBIT_VARIANT || 'normal'
 if(!['normal','noExhibits','noLaser'].includes(exhibitVariant)) throw Error('Unknown exhibit/laser diagnostic')
 const fullLitVariant=process.env.COLOSSUS_FULL_LIT_VARIANT || 'legacy'
-if(!['legacy','lit'].includes(fullLitVariant))throw Error('Unknown complete-fragment variant')
+if(!['legacy','lit','deep'].includes(fullLitVariant))throw Error('Unknown complete-fragment variant')
 const shadowVariant=process.env.COLOSSUS_SHADOW_VARIANT || 'normal'
 if(!['normal','off'].includes(shadowVariant))throw Error('Unknown shadow variant')
 const targetUrl=new URL(process.env.COLOSSUS_SMOKE_URL || 'http://127.0.0.1:4173/#at=0,-27,0,20&autostart&skip')
 if(shadowVariant==='off')targetUrl.searchParams.set('colossusShadowProbe','off')
 if(fullLitVariant==='lit')targetUrl.searchParams.set('colossusFullLitPrewarm','on')
+if(fullLitVariant==='deep')targetUrl.searchParams.set('colossusDeepPrewarm','on')
 if(exhibitVariant==='noExhibits')targetUrl.searchParams.set('colossusExhibitProbe','off')
 if(exhibitVariant==='noLaser')targetUrl.searchParams.set('colossusLaserProbe','off')
 if(earlyVariant==='early')targetUrl.searchParams.set('colossusEarlyDiscardProbe','on')
@@ -44,7 +45,9 @@ try {
       status:w?.status,laserReady:w?.laserReady,gpuSynced:w?.gpuSynced,
       totalProxies:w?.totalProxies,uploadedProxies:w?.uploadedProxies,
       fullLitPrewarm:w?.fullLitPrewarm,fullyLitBatches:w?.fullyLitBatches,
-      fullyLitMeshesPrimed:w?.fullyLitMeshesPrimed
+      fullyLitMeshesPrimed:w?.fullyLitMeshesPrimed,
+      deepWorldPrewarm:w?.deepWorldPrewarm,
+      longestPrivateBatchCpuMs:w?.longestPrivateBatchCpuMs
     }}
   })
   if(!/Metal/.test(String(before.renderer)) || /SwiftShader/.test(String(before.renderer)))
