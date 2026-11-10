@@ -50,7 +50,8 @@ for(const test of contexts){
    const ext=gl?.getExtension('WEBGL_debug_renderer_info')
    const backend=gl?.getParameter(ext?.UNMASKED_RENDERER_WEBGL??gl.RENDERER)
    return {phase,track,front:Math.round(f),backend,contextLost:gl?.isContextLost(),
-     prewarm:window.__orbitaHexPrewarm ? {...window.__orbitaHexPrewarm}:null}
+     prewarm:window.__orbitaHexPrewarm ? {...window.__orbitaHexPrewarm}:null,
+     cull:window.__orbitaHexCullStats ? {...window.__orbitaHexCullStats}:null}
   })
   async function measure(name,fn,duration){
    await page.evaluate(()=>{window.__hexFrames.length=0;window.__hexLongTasks.length=0})
