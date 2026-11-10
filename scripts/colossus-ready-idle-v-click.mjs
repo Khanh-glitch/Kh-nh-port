@@ -10,7 +10,11 @@ const browser = await chromium.launch({
 const page = await browser.newPage({viewport:{width:1280,height:720},deviceScaleFactor:1})
 const errors=[]
 page.on('pageerror',e=>errors.push(e.message))
-const url=process.env.COLOSSUS_SMOKE_URL || 'http://127.0.0.1:4173/#at=0,-27,0,20&autostart&skip'
+const shadowVariant=process.env.COLOSSUS_SHADOW_VARIANT || 'normal'
+if(!['normal','off'].includes(shadowVariant))throw Error('Unknown shadow variant')
+const targetUrl=new URL(process.env.COLOSSUS_SMOKE_URL || 'http://127.0.0.1:4173/#at=0,-27,0,20&autostart&skip')
+if(shadowVariant==='off')targetUrl.searchParams.set('colossusShadowProbe','off')
+const url=targetUrl.toString()
 try {
   await page.goto(url,{waitUntil:'domcontentloaded',timeout:120000})
   await page.waitForFunction(()=>!!window.__orbitaColossusWarmup,null,{timeout:120000})
@@ -88,10 +92,15 @@ try {
       firstFrameMs:profile?.firstFrameFromClickMs??null,
       profileMaxFrameMs:profile?.maxFrameMs??null,
       newShaderPrograms:profile?.programDelta??null,
-      reactCommits:profile?.reactCommits??[]
+      reactCommits:profile?.reactCommits??[],
+      // Locate the actual time of the slow frame relative to the scan and
+      // the laser. This is derived from the existing opt-in R3F profile.
+      slowFrames:(profile?.trace??[]).filter(x=>x.dtMs>=120).map(x=>({
+        atMs:x.atMs,dtMs:x.dtMs,mode:x.mode,programs:x.programs
+      })).slice(0,32)
     }
   })
-  const report={sha:process.env.GITHUB_SHA??'local',before,clicked,result,errors,
+  const report={sha:process.env.GITHUB_SHA??'local',shadowVariant,before,clicked,result,errors,
     verdict:result.afterClick.maxMs<=120&&result.firstBeamMs!=null&&result.firstBeamMs<500
       ? 'SMOOTH_VIRTUAL_MEASURED_NOT_REAL_GPU_CERTIFIED' : 'HITCH_NOT_ACCEPTED',
     limits:'Same-session idle vs click rAF callback comparison on Apple Paravirtual Metal. rAF is not presented frame timing and no physical device is certified; no visual settings changed.'}
