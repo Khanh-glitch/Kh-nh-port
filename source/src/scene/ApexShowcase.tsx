@@ -551,7 +551,7 @@ function ApexShowcaseImpl({ position, worldPosition, rotationY, summoned, scanPr
       <Label title="APEX CHAOS" sub="NEWBOT · Arena Combat Demo" color="#ff941f" position={[0, 6.1, 0]} scale={0.92} fadeNear={3} fadeFar={65} />
 
       {/* Materialized Game Showcase Content */}
-      <group ref={exhibitRef}>
+      <group ref={exhibitRef} name="apex-exhibit-content">
         {/* Floor Target Lock Reticle */}
         <mesh position={[0, 0.44, 0.35]} rotation={[-Math.PI / 2, 0, 0]}>
           <ringGeometry args={[1.65, 1.72, 6]} />

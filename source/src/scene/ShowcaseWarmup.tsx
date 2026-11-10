@@ -47,6 +47,9 @@ export function ShowcaseWarmup({ arenaState }: { arenaState: { mode: string } })
         new URLSearchParams(location.search).get('colossusDeepPrewarm') === 'on',
       deepWorldPrewarm: new URLSearchParams(location.search).get('colossusDeepPrewarm') === 'on',
       longestPrivateBatchCpuMs: 0,
+      nativeScenePrewarm: new URLSearchParams(location.search).get('colossusNativePreflight') === 'on',
+      nativeScenePasses: 0,
+      nativeScenePeakCpuMs: 0,
       fullyLitMeshesPrimed: 0,
       fullyLitBatches: 0,
       uploadedProxies: 0,
@@ -588,6 +591,76 @@ export function ShowcaseWarmup({ arenaState }: { arenaState: { mode: string } })
           info.showcaseDrawBatches++
         }
         info.drawnVariants.push({ name:'incremental', programs:gl.info.programs?.length ?? 0 })
+        // Opt-in only. The detached low-res proxy has not exercised the ORIGINAL
+        // 2048px sun shadow attachment with the REAL exhibit mesh transforms.
+        // A full native scene offscreen draw tests this missing first-use path.
+        // Never render mutations to the public framebuffer. Restore all actor
+        // visibility, material uniforms, camera and sun transforms in finally.
+        if (info.nativeScenePrewarm && !interrupted()) {
+          const contents = [
+            scene.getObjectByName('apex-exhibit-content'),
+            scene.getObjectByName('ragnarok-exhibit-content'),
+          ]
+          let sun: THREE.DirectionalLight | undefined
+          scene.traverse(o => {
+            const light = o as THREE.DirectionalLight
+            if (!sun && light.isDirectionalLight && light.castShadow) sun = light
+          })
+          if (!sun || contents.some(c => !c)) {
+            info.status = 'native-scene-preflight-missing-primitives'
+            return
+          }
+          const sunPos = sun.position.clone()
+          const targetPos = sun.target.position.clone()
+          const offset = sunPos.clone().sub(targetPos)
+          const savedCameraPos = camera.position.clone()
+          const savedCameraRotation = camera.quaternion.clone()
+          try {
+            sun.target.position.set(0, 0, -41)
+            sun.position.copy(sun.target.position).add(offset)
+            sun.target.updateMatrixWorld(true)
+            sun.updateMatrixWorld(true)
+            camera.position.set(0, 16, -17)
+            camera.lookAt(0, 4, -41)
+            for (const content of contents) {
+              if (!await nextPaint('showcase')) { info.status='cancelled-on-summon'; return }
+              if (interrupted() || !content) { info.status='cancelled-on-summon'; return }
+              const priorVisible = content.visible
+              const savedComplete = new Map<{value:number},number>()
+              const startNative = performance.now()
+              try {
+                content.visible = true
+                content.traverse(o => {
+                  const mesh = o as THREE.Mesh
+                  if (!mesh.isMesh) return
+                  const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material]
+                  for (const material of materials) {
+                    const u = (material?.userData?.orbitaMaterializeUniforms as
+                      { uComplete?: { value: number } } | undefined)?.uComplete
+                    if (u && !savedComplete.has(u)) {
+                      savedComplete.set(u, u.value)
+                      u.value = 1
+                    }
+                  }
+                })
+                withTarget(() => { gl.clear(true,true,false); gl.render(scene,camera) })
+                info.nativeScenePeakCpuMs = Math.max(info.nativeScenePeakCpuMs,
+                  Math.round(performance.now() - startNative))
+                info.nativeScenePasses++
+              } finally {
+                savedComplete.forEach((value,uniform) => { uniform.value=value })
+                content.visible = priorVisible
+              }
+            }
+          } finally {
+            camera.position.copy(savedCameraPos)
+            camera.quaternion.copy(savedCameraRotation)
+            sun.position.copy(sunPos)
+            sun.target.position.copy(targetPos)
+            sun.target.updateMatrixWorld(true)
+            sun.updateMatrixWorld(true)
+          }
+        }
         if (interrupted()) { info.status='cancelled-on-summon'; return }
         if (typeof gl.readRenderTargetPixelsAsync === 'function') {
           let fence: Promise<unknown> = Promise.resolve()

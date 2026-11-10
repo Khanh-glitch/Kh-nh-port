@@ -707,7 +707,7 @@ function RagnarokShowcaseImpl({ position, worldPosition, rotationY, summoned, sc
       </group>
 
       {/* Materialized Floating Pixel-Art Island Diorama */}
-      <group ref={exhibitRef} visible={false}>
+      <group ref={exhibitRef} name="ragnarok-exhibit-content" visible={false}>
         <group ref={islandGroup} position={[0, 1.65, 0]}>
           {/* Translucent Glowing Voxel Ocean Block + Rim */}
           <mesh position={[0, -0.01, 0]} rotation={[-Math.PI / 2, 0, 0]} material={waterMat}>
