@@ -78,25 +78,6 @@ export function Experience() {
   // composer. Normal portfolio path always retains Bloom/AA/tonemapping.
   const postProbeOff = typeof window !== 'undefined' &&
     new URLSearchParams(window.location.search).get('colossusPostProbe') === 'off'
-  // Test-only opaque framebuffer: the full-scene sky already supplies an
-  // opaque background. A/B checks whether eliminating alpha compositing
-  // removes ANGLE Metal IOSurface swap stalls WITHOUT losing a single pixel.
-  // The ordinary portfolio keeps the previous context attributes.
-  const opaqueCanvasProbe = typeof window !== 'undefined' &&
-    new URLSearchParams(window.location.search).get('colossusOpaqueCanvas') === '1'
-
-  const glConfig = useMemo(() => {
-    const base = {
-      antialias: false, powerPreference: 'high-performance' as const,
-      toneMapping: THREE.NoToneMapping, stencil: false
-    }
-    if (!opaqueCanvasProbe) return base
-    // R3F may construct its default alpha:true context before merging the
-    // object-form gl options. In the diagnostic branch only, create the exact
-    // WebGLRenderer up front so alpha:false is requested at context creation.
-    return (canvas: HTMLCanvasElement | OffscreenCanvas) =>
-      new THREE.WebGLRenderer({ ...base, alpha: false, canvas: canvas as HTMLCanvasElement })
-  }, [opaqueCanvasProbe])
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -125,7 +106,7 @@ export function Experience() {
       dpr={low ? 1 : [1, 1.6]}
       shadows="percentage"
       camera={{ fov: 72, near: 0.1, far: 9000, position: [0, 17, 88] }}
-      gl={glConfig}
+      gl={{ antialias: false, powerPreference: 'high-performance', toneMapping: THREE.NoToneMapping, stencil: false }}
     >
       <HighGateMeter />
       <Suspense fallback={null}>

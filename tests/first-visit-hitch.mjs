@@ -178,8 +178,3 @@ assert.ok(experienceProbe.includes("get('colossusPostProbe') === 'off'") &&
   experienceProbe.includes('{!postProbeOff && <Post low={low} />}'), 'postprocessing A/B only changes opt-in diagnostic, original production Post remains')
 assert.ok(integratedRoot['orbita/scene/Experience'], 'full quality Experience module remains embedded in standalone runtime')
 assert.ok(read('scripts/sync-colossus-standalone.mjs').includes("'scene/Experience'"), 'diagnostic Experience source synchronized into ACTUAL deployed standalone HTML')
-
-
-assert.ok(experience.includes("get('colossusOpaqueCanvas') === '1'"), 'opaque canvas A/B only via diagnostic parameter')
-assert.ok(experience.includes('if (!opaqueCanvasProbe) return base') && experience.includes('alpha: false, canvas: canvas as HTMLCanvasElement'), 'opaque A/B factory constructs WebGL context while normal visitor retains original options')
-assert.ok(!experience.includes('shadow-mapSize={[1024, 1024]}'), 'opacity test must not downgrade production shadows')
