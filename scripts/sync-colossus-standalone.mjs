@@ -25,6 +25,7 @@ const targets = [
   'scene/ShowcaseWarmup',
   'scene/Robot',
   'scene/materialize',
+  'scene/Exhibits',
 ]
 const checkInternal = (name) => {
   const normalized = name.replace(/\\/g, '/').replace(/\.(tsx?|jsx?)$/, '')
