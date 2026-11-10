@@ -2,6 +2,7 @@ name: Colossus visual parity audit main vs 4454511
 on:
   push:
     branches: [audit/colossus-visual-parity-4454511]
+    paths: ['.github/workflows/colossus-visual-audit.yml']
   workflow_dispatch:
 permissions:
   contents: read
