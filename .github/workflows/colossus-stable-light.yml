@@ -3,6 +3,8 @@ on:
   push:
     branches:
       - fix/colossus-frame-budget-prewarm
+    paths-ignore:
+      - 'docs/**'
   workflow_dispatch:
 permissions:
   contents: write

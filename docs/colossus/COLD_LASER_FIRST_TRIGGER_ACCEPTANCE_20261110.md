@@ -27,7 +27,7 @@ First laser activation at Colossus must not visibly hitch and must not downgrade
 
 ## CORRECTED profiler round (source compiled and deployed, no stale HTML)
 
-The original profile mistakenly used R3F's raw first-frame `dtRaw`, which may include time **before** the click. It also permitted false-green Chrome tests with no completed profile. Both defects have now been fixed and the browser test is pinned to the immutable Cloudflare deployment `https://107d7b2c.menniverse.pages.dev`; it rejects old source by validating `frameMeasureOrigin`, and rejects a missing profile.
+The original profile mistakenly used R3F's raw first-frame `dtRaw`, which may include time **before** the click. It also permitted false-green Chrome tests with no completed profile. Both defects have now been fixed and the **historical** browser test was pinned to immutable Cloudflare deployment `https://107d7b2c.menniverse.pages.dev`. Current tests no longer test that URL: they compile the current branch and serve its integrated HTML on loopback, verify candidate-specific runtime fields, validate the click clock and reject missing profile/beam evidence.
 
 [Strict post-click-clock browser CI](https://github.com/Khanh-glitch/Kh-nh-port/actions/runs/42755589843) — **all 3 jobs PASS as valid measurements, NOT as smoothness acceptance**:
 
@@ -52,3 +52,24 @@ Slow first draw remains on the software GPU, and idle frames can stall without a
 5. If no genuine GPU runner is available, label hardware verdict BLOCKED rather than making the user execute DevTools, ZIPs or a QA checklist or claiming PASS.
 
 **Decision:** source/test checks PASS; browser smoke functional PASS when profile exists; real-GPU and visual acceptance BLOCKED; no merge/production.
+
+## 2026-11-10 continued rounds — current code: `409ba403` (HTML synchronized separately)
+
+**VERDICT STILL NOT ACCEPTED — ZERO-STUTTER NOT PROVEN. No merge into `main`.**
+
+The following is newly measured evidence, superseding any apparent "PASS" performance impression from earlier green smoke workflows:
+
+- **Code:** first-priority laser proxies share one private draw; asynchronous laser readback distinguishes submitted GPU commands from completed work. Showcase uploads are batched. Materialization shader representatives now distinguish mapped/unmapped and Basic/Physical variants (geometry UV presence alone was an invalid discriminator), and use `compileAsync` rather than an uninterruptible offscreen materialization draw. These optimizations preserve production geometry, materials, shaders, shadows, Bloom and render scale.
+- **Busy renderer protection:** two healthy visible callback intervals (each <=50ms) required before laser preflight. If the visible renderer cannot satisfy this within 2,500ms, skip extra warmup rather than further saturating its GPU. Source traversal and all 131 temporary proxy creations now happen AFTER that budget guard (`409ba403`). This reduces unnecessary background work but does not prove the activation itself is smooth.
+- **True branch deployment check:** CI always builds `index.html` from the checked-out branch then serves it locally. The earlier smoke that pointed at a fixed Cloudflare URL was stale and is not accepted as evidence for later commits.
+- **First-trigger causal A/B** [six trials before early CPU gate](https://github.com/Khanh-glitch/Kh-nh-port/actions/runs/42767990421): enabled worst gaps 2,677 / 5,141 / 6,298ms; disabled 5,164 / 5,236 / 5,324ms. Neither mode demonstrates smoothness; variability prevents claiming a reliable improvement.
+- **No-click idle causal A/B** [six trials](https://github.com/Khanh-glitch/Kh-nh-port/actions/runs/42768465570): disabled idle worst callback gaps 3,450 / 3,617 / 3,483ms, despite ZERO laser interaction. Enabled gaps 8,666 / 7,733 / 3,550ms. This establishes severe base-scene/software-GL scheduling stalls as an independent factor; aggressive prewarm can make them worse. Do not attribute the complete freeze solely to click handler or shaders.
+- **Current source/build/embedded HTML checks** [PASS](https://github.com/Khanh-glitch/Kh-nh-port/actions/runs/42769506877).
+- **Current strict first-trigger browser gate** [6/6 correctly FAIL smoothness acceptance](https://github.com/Khanh-glitch/Kh-nh-port/actions/runs/42769506462). All tested the exact candidate using Chrome/ANGLE SwiftShader. Prewarm enabled max gaps 4,260 / 4,383 / 3,211ms, first beam *submitted* 11,512 / 11,708 / 9,331ms after click. Disabled max gaps 5,052 / 7,284 / 5,340ms, first beam submitted 13,858 / 13,686 / 14,123ms. This is not a user-hardware timing claim. The screenshot taken AFTER click confirms the laser ultimately appears, but the visible screenshot is not pixel-parity certification.
+- CI now rejects missing first beam in an extended window and fails when max measured interval, first callback or absent beam exceeds the software-test gate. **A source/build green run is NOT visual or smoothness acceptance.**
+
+### Blocking reality and decision
+
+Every A/B, idle, and trigger run above uses a software renderer. No available trace proves the user's physical GPU is smooth (or quantifies the remaining reported ~2-second hitch on it). Uncontrolled changes to Bloom, shadow map resolution, polygon counts, postprocessing or lighting are FORBIDDEN merely to make a software renderer look fast.
+
+**Continue only on experimental branch** until a real hardware-accelerated comparison (`main` vs candidate, three true cold visits each, fixed render quality, real timing + screenshot parity at 0/10/25/50/75/100% animation) shows no perceptible hitch. The code and diagnostics can advance; final visual and hardware acceptance remain BLOCKED. The recorded software CI FAIL is intentional evidence, not a deployment failure.
