@@ -14,6 +14,7 @@ jobs:
       fail-fast: false
       matrix:
         trial: [1, 2, 3]
+        prewarm: [enabled, disabled]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -31,6 +32,7 @@ jobs:
       - name: Smoke actual candidate on an isolated loopback webserver
         env:
           COLOSSUS_SMOKE_URL: http://127.0.0.1:4173/#at=0,-27,0,20&autostart&skip
+          COLOSSUS_AB_VARIANT: ${{ matrix.prewarm }}
         run: |
           python3 -m http.server 4173 --bind 127.0.0.1 --directory dist-pages >/tmp/colossus-site.log 2>&1 &
           for n in {1..30}; do
@@ -42,6 +44,6 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: colossus-browser-evidence-${{ matrix.trial }}
+          name: colossus-browser-evidence-${{ matrix.prewarm }}-${{ matrix.trial }}
           path: browser-evidence/
           if-no-files-found: warn

@@ -2,7 +2,12 @@ import { createRequire } from 'node:module'
 import { mkdirSync, writeFileSync } from 'node:fs'
 const require = createRequire(import.meta.url)
 const { chromium } = require('../source/node_modules/playwright')
-const url = process.env.COLOSSUS_SMOKE_URL
+const inputURL = process.env.COLOSSUS_SMOKE_URL
+const abVariant = process.env.COLOSSUS_AB_VARIANT || 'enabled'
+if (!['enabled','disabled'].includes(abVariant)) throw new Error('Unknown A/B variant: '+abVariant)
+const parsedURL = inputURL ? new URL(inputURL) : null
+if (abVariant === 'disabled' && parsedURL) parsedURL.searchParams.set('colossusPrewarm', 'off')
+const url = parsedURL?.toString() ?? ''
 if (!url || !/^https?:\/\//.test(url)) {
   throw new Error('COLOSSUS_SMOKE_URL is required: never test a stale deployed preview as if it were branch HEAD')
 }
@@ -57,7 +62,7 @@ try {
     historyLength:window.__orbitaColossusProfiles?.length || 0,
   }))
   const report={
-    url,commit:process.env.GITHUB_SHA ?? 'local',elapsedMs:Date.now()-t0,attempted,before,after,
+    url,abVariant,commit:process.env.GITHUB_SHA ?? 'local',elapsedMs:Date.now()-t0,attempted,before,after,
     errors,netFailed,
     notes:'NO screenshots before the click: avoid GPU readback contaminating first-laser measurement. Headless SwiftShader, not a real hardware certification'
   }
@@ -65,6 +70,7 @@ try {
   console.log(JSON.stringify({
     canvas:before.canvas,webgl2:before.webgl2,contextLost:before.contextLost,
     verifiedCandidate:before.verifiedCandidate,
+    abVariant,
     laserSubmitted:after.warmup?.laserSubmitted,
     laserGpuSynced:after.warmup?.laserGpuSynced,
     laserBatchCpuMs:after.warmup?.laserBatchCpuMs,

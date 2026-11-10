@@ -113,6 +113,12 @@ export function ShowcaseWarmup({ arenaState }: { arenaState: { mode: string } })
       }
     }
     const warm = async () => {
+      // Experimental A/B isolation only. Production/default code path remains
+      // exactly the same: no visual settings, materials or geometry altered.
+      if (new URLSearchParams(location.search).get('colossusPrewarm') === 'off') {
+        info.status = 'diagnostic-prewarm-disabled'
+        return
+      }
       if (interrupted()) { info.status = 'cancelled-on-summon'; return }
       const showcaseRoots = ['apex-showcase-root', 'ragnarok-showcase-root']
         .map(name => scene.getObjectByName(name))

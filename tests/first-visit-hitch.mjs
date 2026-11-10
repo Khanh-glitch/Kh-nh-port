@@ -137,3 +137,5 @@ assert.ok(showWarm.includes('info.materializeCompileMode = \'compileAsync\''))
 assert.ok(showWarm.indexOf("info.status = 'materialize-shaders'") < showWarm.indexOf("info.status = 'showcase-textures'"))
 
 assert.ok(!showWarm.includes("info.materializeShaderMs = Math.round(performance.now() - startedMaterialize)\n          info.uploadedProxies +="), "shader precompile must not falsely claim geometry upload")
+
+assert.ok(showWarm.includes("new URLSearchParams(location.search).get('colossusPrewarm') === 'off'"), 'diagnostic A/B no-prewarm variant exists without modifying production default')
