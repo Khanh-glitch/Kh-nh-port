@@ -1,0 +1,31 @@
+name: Colossus READY cold-first-laser GPU diagnosis
+on:
+  push:
+    branches:
+      - qa/colossus-ready-first-laser
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  ready-click:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: source/package-lock.json
+      - run: npm ci --prefix source
+      - name: Install browser controller without changing lockfile
+        run: npm install --prefix source --no-save --package-lock=false playwright@1.56.1
+      - name: Measure first laser when all 131 resource uploads are marked complete
+        run: node scripts/colossus-browser-ready-click.mjs
+      - name: Save results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: colossus-first-laser-ready-evidence
+          path: browser-evidence/
+          if-no-files-found: warn
