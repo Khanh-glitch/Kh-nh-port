@@ -1,8 +1,8 @@
-name: Colossus integrated preview verification
+name: Colossus progressive materialization preview
 on:
   push:
     branches:
-      - fix/colossus-stable-light-rig
+      - experiment/colossus-progressive-scan
   workflow_dispatch:
 permissions:
   contents: write
@@ -44,7 +44,7 @@ jobs:
             git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
             git add index.html
             git commit -m "build(colossus): synchronize fixed laser code into preview HTML"
-            git push origin HEAD:fix/colossus-stable-light-rig
+            git push origin HEAD:experiment/colossus-progressive-scan
           else
             echo "Integrated preview HTML is already up to date."
           fi
