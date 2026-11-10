@@ -11,10 +11,11 @@ const page=await browser.newPage({viewport:{width:1280,height:720},deviceScaleFa
 const failures=[]
 page.on('pageerror',e=>failures.push(e.message))
 const landingVariant=process.env.ARRIVAL_LANDING_VARIANT||'primed'
-if(!['primed','legacy','path'].includes(landingVariant))throw Error('Unknown landing variant')
+if(!['primed','legacy','path','settled'].includes(landingVariant))throw Error('Unknown landing variant')
 const targetUrl=new URL(process.env.ARRIVAL_URL||'http://127.0.0.1:4173/?arrival=on#at=0,-27,0,20&skip')
 if(landingVariant==='legacy')targetUrl.searchParams.set('arrivalLandingPreflight','off')
-if(landingVariant!=='path')targetUrl.searchParams.set('arrivalFlightPathPreflight','off')
+if(landingVariant==='path')targetUrl.searchParams.set('arrivalFlightPathPreflight','on')
+if(landingVariant==='settled')targetUrl.searchParams.set('arrivalGpuSettle','on')
 const url=targetUrl.toString()
 const report={sha:process.env.GITHUB_SHA||'local',url,landingVariant,errors:failures,initial:null,ready:null,afterLanding:null}
 try{
@@ -34,7 +35,8 @@ try{
     w.uploadedProxies===w.totalProxies&&w.nativeScenePrewarm===true&&
     w.nativeSceneRepeats===2&&w.nativeScenePasses===4&&
     w.landingScenePasses===(window.location.search.includes('arrivalLandingPreflight=off')?0:2)&&
-    w.landingFlightPathPasses===(window.location.search.includes('arrivalFlightPathPreflight=off')?0:3)
+    w.landingFlightPathPasses===(window.location.search.includes('arrivalFlightPathPreflight=on')?3:0)&&
+    w.gpuSettlingWindows===(window.location.search.includes('arrivalGpuSettle=on')?3:0)
  },null,{timeout:180000,polling:250})
  await page.waitForFunction(()=>{
   const b=document.querySelector('[data-testid="arrival-land"]')
@@ -50,7 +52,8 @@ try{
     status:w.status,gpuSynced:w.gpuSynced,proxies:w.uploadedProxies,
     totalProxies:w.totalProxies,nativePasses:w.nativeScenePasses,
     landingScenePasses:w.landingScenePasses,landingScenePeakCpuMs:w.landingScenePeakCpuMs,
-    landingFlightPathPasses:w.landingFlightPathPasses,landingFlightPathPeakCpuMs:w.landingFlightPathPeakCpuMs}
+    landingFlightPathPasses:w.landingFlightPathPasses,landingFlightPathPeakCpuMs:w.landingFlightPathPeakCpuMs,
+    gpuSettlingWindows:w.gpuSettlingWindows,gpuSettlingMs:w.gpuSettlingMs}
  })
  if(!/Metal/.test(String(report.ready.gpu))||/SwiftShader/.test(String(report.ready.gpu)))
   throw Error('GPU not Metal: '+report.ready.gpu)

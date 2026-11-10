@@ -76,3 +76,8 @@ assert.match(arrivalGpu, /target!\.setSize\(640, 360\)/, 'landing prewarms origi
 // Flight path warmup uses the actual Three.js scene before settling the view.
 assert.match(arrivalWarmup, /landingFlightPathPasses === 3/, 'GPU flight path must be primed')
 assert.match(arrivalWarmup, /const fractions = \[0\.27, 0\.55, 0\.82\]/, 'sample actual descent viewpoints')
+
+// Metal A/B flight-path extra GPU priming failed; do not enable by default.
+assert.match(arrivalWarmup, /get\('arrivalFlightPathPreflight'\) === 'on'/, 'path prewarm opt-in only')
+assert.match(arrivalWarmup, /gpuSettlingWindows\+\+/, 'settle with actual healthy rAF windows')
+assert.match(arrivalWarmup, /nextPaint\('showcase',12000\)/, 'settling must not hang forever')

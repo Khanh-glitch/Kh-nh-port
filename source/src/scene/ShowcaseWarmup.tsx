@@ -62,8 +62,14 @@ export function ShowcaseWarmup({ arenaState }: { arenaState: { mode: string } })
         new URLSearchParams(location.search).get('arrivalLandingPreflight') !== 'off',
       landingScenePasses: 0,
       landingScenePeakCpuMs: 0,
+      // Flight-path preflight regressed the frame peak in Metal A/B.
+      // Retained as a non-default diagnostic until measured differently.
       arrivalFlightPathPreflight: arrivalEnabled &&
-        new URLSearchParams(location.search).get('arrivalFlightPathPreflight') !== 'off',
+        new URLSearchParams(location.search).get('arrivalFlightPathPreflight') === 'on',
+      arrivalGpuSettle: arrivalEnabled &&
+        new URLSearchParams(location.search).get('arrivalGpuSettle') === 'on',
+      gpuSettlingWindows: 0,
+      gpuSettlingMs: 0,
       landingFlightPathPasses: 0,
       landingFlightPathPeakCpuMs: 0,
       fullyLitMeshesPrimed: 0,
@@ -114,7 +120,7 @@ export function ShowcaseWarmup({ arenaState }: { arenaState: { mode: string } })
         progress = Math.max(progress, 0.94 + 0.03 * Math.min(1, info.landingScenePasses / 2))
       if (info.arrivalFlightPathPreflight && info.landingScenePasses === 2)
         progress = Math.max(progress, 0.97 + 0.015 * Math.min(1, info.landingFlightPathPasses / 3))
-      if (info.status === 'gpu-pending') progress = 0.99
+      if (info.status === 'gpu-pending' || info.status === 'gpu-settling') progress = 0.99
       const verified = info.status === 'ready' && info.gpuSynced &&
         info.uploadedProxies >= info.totalProxies && info.totalProxies >= 120 &&
         (!info.nativeScenePrewarm || info.nativeScenePasses === expectedNative) &&
@@ -122,8 +128,10 @@ export function ShowcaseWarmup({ arenaState }: { arenaState: { mode: string } })
         (!info.arrivalFlightPathPreflight || info.landingFlightPathPasses === 3)
       const stage = verified ? 'TÀI NGUYÊN GPU ĐÃ SẴN SÀNG · HẠ CÁNH ĐƯỢC PHÉP'
         : info.status === 'failed' || info.status === 'missing-roots' ||
-          info.status === 'prewarm-skipped-busy-renderer' || info.status === 'native-scene-preflight-missing-primitives'
+          info.status === 'prewarm-skipped-busy-renderer' || info.status === 'native-scene-preflight-missing-primitives' ||
+          info.status === 'gpu-stalled-after-prewarm'
           ? 'GIỮ QUỸ ĐẠO · GPU CHƯA SẴN SÀNG'
+        : info.status === 'gpu-settling' ? 'GPU ĐANG ỔN ĐỊNH · GIỮ QUỸ ĐẠO'
         : info.arrivalFlightPathPreflight && info.landingScenePasses === 2
           ? 'ĐANG CHUẨN BỊ ĐƯỜNG BAY HẠ CÁNH'
         : info.arrivalLandingPreflight && info.nativeScenePasses >= expectedNative
@@ -183,8 +191,13 @@ export function ShowcaseWarmup({ arenaState }: { arenaState: { mode: string } })
     // Do not submit an additional offscreen GPU workload if the renderer's
     // own visible frames are already late. The production 3D visuals are
     // untouched. Both laser and optional work must yield to user input.
-    const nextPaint = async (priority: 'laser' | 'showcase'): Promise<boolean> => {
+    const nextPaint = async (priority: 'laser' | 'showcase', maxWaitMs = Infinity): Promise<boolean> => {
+      const budgetBegin = performance.now()
       for (;;) {
+        if (performance.now() - budgetBegin > maxWaitMs) {
+          info.status = 'gpu-stalled-after-prewarm'
+          return false
+        }
         const timestamp = await new Promise<number>(resolve => requestAnimationFrame(resolve))
         const frameMs = previousPaintAt > 0 ? timestamp - previousPaintAt : 0
         previousPaintAt = timestamp
@@ -806,6 +819,20 @@ export function ShowcaseWarmup({ arenaState }: { arenaState: { mode: string } })
           info.status = 'gpu-pending'
           await fence
           info.gpuSynced = true
+          if (info.arrivalGpuSettle) {
+            // A fence proves GPU completion for submitted work, not that the
+            // PUBLIC compositor has returned to smooth presentation. Require
+            // three separate windows of 3 healthy rAF paints, with no new
+            // offscreen draws, before opening the landing hatch.
+            info.status = 'gpu-settling'
+            broadcastArrival()
+            const settleStart = performance.now()
+            for (let i=0; i<3; i++) {
+              if (!await nextPaint('showcase',12000)) return
+              info.gpuSettlingWindows++
+            }
+            info.gpuSettlingMs = Math.round(performance.now()-settleStart)
+          }
           info.status = 'ready'
           broadcastArrival()
         } else {
