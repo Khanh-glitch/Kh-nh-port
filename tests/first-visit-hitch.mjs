@@ -97,3 +97,5 @@ assert.ok(showWarm.includes('window.setTimeout(() => { void warm() }, 0)'), 'asy
 assert.ok(showWarm.includes("for (const proxy of proxies.slice(0, beams.length))"), 'actual laser VBO uploads precede showcases')
 assert.ok(showWarm.includes("for (const texture of priorityTextures)"), 'laser impact textures upload before other showcase textures')
 assert.ok(showWarm.indexOf("info.status = 'laser-geometry'") < showWarm.indexOf("info.status = 'showcase-textures'"), 'beam first ordering enforced')
+
+assert.ok(showWarm.includes('target.texture.colorSpace = gl.outputColorSpace'), 'private warmup must compile the same color-space shader variant as visible canvas')
