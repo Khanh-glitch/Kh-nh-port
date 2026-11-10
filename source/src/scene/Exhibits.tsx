@@ -8,18 +8,8 @@ import { Products } from './Products'
 import { Beacon } from './Beacon'
 import { VngGallery } from './VngGallery'
 
+// PERFORMANCE ISOLATION ONLY: compare idle frames without other exhibits.
+// Never merge this branch: production must retain every exhibit.
 export function Exhibits() {
-  return (
-    <group>
-      <Orb />
-      <Piano />
-      <Rubik />
-      <Robot />
-      <VngGallery />
-      <Cinema />
-      <Stage />
-      <Products />
-      <Beacon />
-    </group>
-  )
+  return <group><Robot /></group>
 }
