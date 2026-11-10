@@ -74,6 +74,12 @@ export function RealityHost() {
   // never replace textures, reduce shadow resolution or mutate the visible scene.
   // A private 96px target uploads GPU resources a few meshes at a time, instead
   // of exposing the entire multi-building UEH world on the first ignition frame.
+  // Conservative UEH scan culling: do not submit a mesh while the EXISTING
+  // patchNew shader would discard all its pixels. Unlike LOD, this cannot
+  // remove a visible surface; meshes return before the scan reaches them.
+  const hexCull = useRef([] as Array<{
+    mesh: THREE.Mesh; threshold: number; hidden: boolean
+  }>).current
   const hexGpu = useRef({
     stage: null as THREE.Scene | null,
     target: null as THREE.WebGLRenderTarget | null,
@@ -94,6 +100,9 @@ export function RealityHost() {
     stage.environment = scene.environment
     stage.fog = scene.fog
     const proxies: THREE.Object3D[] = []
+    hexCull.length = 0
+    const cullCenter = new THREE.Vector3()
+    const cullScale = new THREE.Vector3()
     // Cloning without children reuses exactly the original GPU geometry,
     // material and instance buffers. This is not a simplified scene.
     ueh.current?.traverse((source) => {
@@ -102,6 +111,33 @@ export function RealityHost() {
       const points = source as THREE.Points
       const line = source as THREE.Line
       if (!draw.isMesh && !sprite.isSprite && !points.isPoints && !line.isLine) return
+      // Only static opaque materialized PBR/basic meshes can be omitted.
+      // Transparent weather, instanced geometry, VFX, animated sprites and
+      // unpatched shaders always render through the original path.
+      if (draw.isMesh && !(draw as THREE.InstancedMesh).isInstancedMesh &&
+          draw.visible && !Array.isArray(draw.material) &&
+          !draw.material.transparent && !draw.material.alphaTest &&
+          !draw.material.isShaderMaterial &&
+          draw.material.customProgramCacheKey().includes('rw-new-')) {
+        const geo = draw.geometry
+        if (!geo.boundingSphere) geo.computeBoundingSphere()
+        if (geo.boundingSphere) {
+          draw.updateWorldMatrix(true, false)
+          cullCenter.copy(geo.boundingSphere.center).applyMatrix4(draw.matrixWorld)
+          cullScale.setFromMatrixScale(draw.matrixWorld)
+          const radius = geo.boundingSphere.radius *
+            Math.max(cullScale.x, cullScale.y, cullScale.z)
+          const nearEdge = Math.max(0,
+            Math.hypot(cullCenter.x - CENTER.x, cullCenter.z - CENTER.z) - radius)
+          const minY = Math.max(0, cullCenter.y - radius)
+          // 16m is larger than HEX snapping/jitter and UEH wind deformation.
+          // Far-field materialization starts at >=150m; cap our threshold at
+          // 130 so even far-world fragments are submitted before they appear.
+          const threshold = Math.min(130, Math.max(0,
+            nearEdge - 16 + minY * 0.55))
+          if (threshold > 0) hexCull.push({mesh:draw,threshold,hidden:false})
+        }
+      }
       const proxy = source.clone(false)
       proxy.visible = true
       proxy.frustumCulled = false
@@ -156,6 +192,8 @@ export function RealityHost() {
       hexGpu.lights.forEach(l =>
         (l as THREE.Light & {shadow?:THREE.LightShadow}).shadow?.dispose())
       stage.clear()
+      for (const entry of hexCull) if (entry.hidden) entry.mesh.visible = true
+      hexCull.length = 0
       hexGpu.proxies.length = 0
       hexGpu.stage = null
       hexGpu.target = null
@@ -666,6 +704,27 @@ export function RealityHost() {
         camera.fov = f
         camera.updateProjectionMatrix()
       }
+    }
+
+    // Drop draw calls for zero-visible-pixel UEH geometry during the
+    // advancing and retracting scan. Nothing is hidden once HEX is complete.
+    // Only restore visibility for meshes hidden by this specific culler.
+    let culled = 0
+    for (const entry of hexCull) {
+      const shouldDraw = st.phase === 'idle' || st.phase === 'active' ||
+        rt.front >= entry.threshold
+      if (!shouldDraw && !entry.hidden) {
+        entry.mesh.visible = false
+        entry.hidden = true
+      } else if (shouldDraw && entry.hidden) {
+        entry.mesh.visible = true
+        entry.hidden = false
+      }
+      if (entry.hidden) culled++
+    }
+    if (typeof window !== 'undefined') {
+      ;(window as unknown as {__orbitaHexCullStats?:{eligible:number;culled:number;front:number}})
+        .__orbitaHexCullStats = { eligible:hexCull.length, culled, front:rt.front }
     }
 
     // The original newly generated world is completely shader-discarded
