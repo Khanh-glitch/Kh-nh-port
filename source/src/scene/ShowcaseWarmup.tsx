@@ -33,6 +33,9 @@ export function ShowcaseWarmup({ arenaState }: { arenaState: { mode: string } })
       textureMaps: 0,
       totalProxies: 0,
       uploadedProxies: 0,
+      laserReady: false,
+      deferredShowcaseFrames: 0,
+      maxSampledFrameMs: 0,
       gpuSynced: false,
       durationMs: 0,
       programsBefore: 0,
@@ -73,9 +76,33 @@ export function ShowcaseWarmup({ arenaState }: { arenaState: { mode: string } })
     // Renderer-side geometry uploads are spread over animation frames (one
     // actual mesh per private draw), keeping source mesh/material/texture data.
     const interrupted = () => disposed || arenaState.mode !== 'dormant'
-    const nextPaint = () => new Promise<void>(resolve => {
-      requestAnimationFrame(() => window.setTimeout(resolve, 0))
-    })
+    // Laser uses the earliest available paint. Showcase assets are opportunistic:
+    // do NOT submit an extra GPU draw while the active scene is already late,
+    // or while Chrome reports a pending input event. Visual content is unchanged.
+    let previousPaintAt = 0
+    let smoothPaints = 0
+    const nextPaint = async (priority: 'laser' | 'showcase'): Promise<boolean> => {
+      for (;;) {
+        const timestamp = await new Promise<number>(resolve => requestAnimationFrame(resolve))
+        const frameMs = previousPaintAt > 0 ? timestamp - previousPaintAt : 0
+        previousPaintAt = timestamp
+        await new Promise<void>(resolve => window.setTimeout(resolve, 0))
+        if (interrupted()) return false
+        if (priority === 'laser') return true
+        info.maxSampledFrameMs = Math.max(info.maxSampledFrameMs, Math.round(frameMs))
+        const scheduling = (navigator as Navigator & {
+          scheduling?: { isInputPending?: () => boolean }
+        }).scheduling
+        const pendingInput = scheduling?.isInputPending?.() ?? false
+        // 50ms accommodates normal 30fps rendering, but prevents the
+        // multi-second software-GPU frames from competing with background work.
+        if (document.visibilityState === 'visible' && !pendingInput
+            && frameMs > 0 && frameMs <= 50) smoothPaints++
+        else smoothPaints = 0
+        if (smoothPaints >= 3) { smoothPaints = 0; return true }
+        info.deferredShowcaseFrames++
+      }
+    }
     const warm = async () => {
       if (interrupted()) { info.status = 'cancelled-on-summon'; return }
       const showcaseRoots = ['apex-showcase-root', 'ragnarok-showcase-root']
@@ -203,15 +230,15 @@ export function ShowcaseWarmup({ arenaState }: { arenaState: { mode: string } })
         // Prepare the actual beam and flare resources FIRST. Previously all
         // 14 exhibit textures could block the four laser proxies even though
         // the visitor sees only those proxies at the start of fabrication.
-        const uploadTexture = async (texture: THREE.Texture): Promise<boolean> => {
-          await nextPaint()
+        const uploadTexture = async (texture: THREE.Texture, priority: 'laser' | 'showcase'): Promise<boolean> => {
+          if (!await nextPaint(priority)) return false
           if (interrupted()) return false
           try { gl.initTexture(texture) } catch { /* Normal renderer can retry. */ }
           return true
         }
         info.status = 'laser-textures'
         for (const texture of priorityTextures) {
-          if (!await uploadTexture(texture)) { info.status='cancelled-on-summon'; return }
+          if (!await uploadTexture(texture, 'laser')) { info.status='cancelled-on-summon'; return }
         }
         target = new THREE.WebGLRenderTarget(96, 96, { depthBuffer:true, stencilBuffer:false })
         // Default render-target colorSpace is NoColorSpace, while the visible
@@ -221,8 +248,8 @@ export function ShowcaseWarmup({ arenaState }: { arenaState: { mode: string } })
         // Match the production framebuffer ONLY inside this private target.
         target.texture.colorSpace = gl.outputColorSpace
         proxies.forEach(proxy => { proxy.visible = false })
-        const uploadProxy = async (proxy: THREE.Object3D): Promise<boolean> => {
-          await nextPaint()
+        const uploadProxy = async (proxy: THREE.Object3D, priority: 'laser' | 'showcase'): Promise<boolean> => {
+          if (!await nextPaint(priority)) return false
           if (interrupted()) return false
           proxy.visible = true
           try {
@@ -238,16 +265,17 @@ export function ShowcaseWarmup({ arenaState }: { arenaState: { mode: string } })
         }
         info.status = 'laser-geometry'
         for (const proxy of proxies.slice(0, beams.length)) {
-          if (!await uploadProxy(proxy)) { info.status='cancelled-on-summon'; return }
+          if (!await uploadProxy(proxy, 'laser')) { info.status='cancelled-on-summon'; return }
         }
+        info.laserReady = true
         info.status = 'showcase-textures'
         for (const texture of textures) {
           if (priorityTextures.has(texture)) continue
-          if (!await uploadTexture(texture)) { info.status='cancelled-on-summon'; return }
+          if (!await uploadTexture(texture, 'showcase')) { info.status='cancelled-on-summon'; return }
         }
         info.status = 'showcase-geometry'
         for (const proxy of proxies.slice(beams.length)) {
-          if (!await uploadProxy(proxy)) { info.status='cancelled-on-summon'; return }
+          if (!await uploadProxy(proxy, 'showcase')) { info.status='cancelled-on-summon'; return }
         }
         info.drawnVariants.push({ name:'incremental', programs:gl.info.programs?.length ?? 0 })
         if (interrupted()) { info.status='cancelled-on-summon'; return }
