@@ -8,6 +8,7 @@ on:
       - 'source/src/scene/ApexShowcase.tsx'
       - 'source/src/scene/RagnarokShowcase.tsx'
       - 'source/src/scene/Robot.tsx'
+      - 'source/src/scene/materialize.ts'
   workflow_dispatch:
 permissions:
   contents: read
@@ -18,9 +19,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        trial: [1, 2]
+        trial: [1, 2, 3]
         shadow: [normal]
-        exhibit: [normal, noExhibits, noLaser]
+        exhibit: [normal]
+        early: [legacy, early]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -40,6 +42,7 @@ jobs:
           COLOSSUS_SMOKE_URL: http://127.0.0.1:4173/#at=0,-27,0,20&autostart&skip
           COLOSSUS_SHADOW_VARIANT: ${{ matrix.shadow }}
           COLOSSUS_EXHIBIT_VARIANT: ${{ matrix.exhibit }}
+          COLOSSUS_EARLY_VARIANT: ${{ matrix.early }}
         run: |
           python3 -m http.server 4173 --bind 127.0.0.1 --directory dist-pages >/tmp/colossus-ready-idle.log 2>&1 &
           for n in {1..30}; do
@@ -50,6 +53,6 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: colossus-ready-idle-v-click-${{ matrix.exhibit }}-${{ matrix.shadow }}-trial-${{ matrix.trial }}
+          name: colossus-ready-idle-v-click-${{ matrix.early }}-${{ matrix.exhibit }}-trial-${{ matrix.trial }}
           path: browser-evidence/
           if-no-files-found: warn

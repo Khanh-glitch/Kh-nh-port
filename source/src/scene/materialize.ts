@@ -32,7 +32,14 @@ export function patchMaterialize<T extends THREE.Material>(mat: T, uniforms: Mat
   // A per-material tag here incorrectly multiplies shader programs and
   // first-summon compilation. Uniforms remain PER MATERIAL, never shared by
   // this program-cache deduplication.
-  mat.customProgramCacheKey = () => 'orbita-materialize-shared-v1'
+  // Opt-in experiment; default retains original shaders until frame and visual
+  // parity gates pass. Move ONLY the rejection of zero-visible-pixel fragments
+  // ahead of costly PBR lighting; keep the final color equation unchanged.
+  const earlyDiscardProbe = typeof window !== 'undefined' &&
+    new URLSearchParams(window.location.search).get('colossusEarlyDiscardProbe') === 'on'
+  mat.customProgramCacheKey = () => earlyDiscardProbe
+    ? 'orbita-materialize-early-reject-v2'
+    : 'orbita-materialize-shared-v1'
   mat.onBeforeCompile = (shader) => {
     shader.uniforms.uScanY = uniforms.uScanY
     shader.uniforms.uWireHeight = uniforms.uWireHeight
@@ -90,6 +97,27 @@ export function patchMaterialize<T extends THREE.Material>(mat: T, uniforms: Mat
           }
         }`,
       )
+    if (earlyDiscardProbe) {
+      // Alpha/texture sampling has already occurred, but lighting has not.
+      // The original end-of-fragment discard and final color math remain
+      // intact. Masked fragments must satisfy IDENTICAL discard conditions.
+      shader.fragmentShader = shader.fragmentShader.replace(
+        '#include <alphatest_fragment>',
+        `#include <alphatest_fragment>
+        if (uComplete < 0.999) {
+          float earlyRipple = sin(vMatWorldPos.x * 14.0 + uTime * 4.5) * cos(vMatWorldPos.z * 14.0 - uTime * 3.8) * 0.035;
+          float earlyDy = (vMatWorldPos.y - uScanY) + earlyRipple;
+          if (earlyDy > uWireHeight) discard;
+          if (earlyDy > 0.1) {
+            float earlyGY = step(0.84, abs(sin(vMatWorldPos.y * 22.0)));
+            float earlyGX = step(0.86, abs(sin(vMatWorldPos.x * 18.0)));
+            float earlyGZ = step(0.86, abs(sin(vMatWorldPos.z * 18.0)));
+            float earlyGrid = clamp(earlyGY + earlyGX * 0.8 + earlyGZ * 0.8, 0.0, 1.0);
+            if (earlyGrid < 0.25) discard;
+          }
+        }`,
+      )
+    }
   }
   return mat
 }
