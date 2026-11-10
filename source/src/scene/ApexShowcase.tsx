@@ -117,6 +117,10 @@ const MODE_LABELS = ['IDLE · SCRAP SENTRY', 'A1 · TARGET LOCK & CLAMP', 'A2 ·
 function ApexShowcaseImpl({ position, worldPosition, rotationY, summoned, scanProgressRef, scanWorldYRef, activeRef, onRequestSummon, onFocus }: ShowcaseProps) {
   const busRef = useRef<Bus | null>(null)
   const exhibitRef = useRef<THREE.Group>(null)
+  const showcaseRootRef = useRef<THREE.Group>(null)
+  const eyeLight = useRef<THREE.PointLight>(null)
+  const eyeLightAnchor = useRef<THREE.Group>(null)
+  const eyeLightWorld = useMemo(() => new THREE.Vector3(), [])
   const plinthRef = useRef<THREE.Group>(null)
   const newbotRoot = useRef<THREE.Group>(null)
   const upperBody = useRef<THREE.Group>(null)
@@ -450,10 +454,20 @@ function ApexShowcaseImpl({ position, worldPosition, rotationY, summoned, scanPr
       state.lastHudKey = hk
       drawHud(state.mode, isAct)
     }
+    // Maintain the ORIGINAL world-space light position while keeping the light
+    // in the always-visible root. This freezes the scene-wide point-light count:
+    // first summon no longer recompiles unrelated materials for a new light define.
+    if (eyeLight.current && eyeLightAnchor.current && showcaseRootRef.current) {
+      eyeLightAnchor.current.getWorldPosition(eyeLightWorld)
+      showcaseRootRef.current.worldToLocal(eyeLightWorld)
+      eyeLight.current.position.copy(eyeLightWorld)
+      eyeLight.current.intensity = prog > 0.005 ? 5.5 : 0
+    }
   })
 
   return (
-    <group name="apex-showcase-root" position={position} rotation={[0, rotationY, 0]}>
+    <group ref={showcaseRootRef} name="apex-showcase-root" position={position} rotation={[0, rotationY, 0]}>
+      <pointLight ref={eyeLight} color="#ff941f" intensity={0} distance={4.5} decay={2} />
       {/* Emitter fabrication matched to the scan (no premature full pedestal). */}
       <group ref={plinthRef} visible={false}>
       <PadRing radius={3.4} color="#ff941f" y={0.06} tube={0.045} intensity={summoned ? 2.4 : 1.1} />
@@ -532,7 +546,7 @@ function ApexShowcaseImpl({ position, worldPosition, rotationY, summoned, scanPr
             <sprite position={[0, 0.05, 0.66]} scale={[0.75, 0.75, 1]}>
               <spriteMaterial map={glow} color="#ff941f" transparent opacity={0.42} blending={THREE.AdditiveBlending} depthWrite={false} />
             </sprite>
-            <pointLight position={[0, 0.05, 0.95]} color="#ff941f" intensity={5.5} distance={4.5} decay={2} />
+            <group ref={eyeLightAnchor} position={[0, 0.05, 0.95]} />
 
             {/* Dorsal Vertical Crest Fin */}
             <mesh position={[0, 0.68, 0.02]} rotation={[-0.22, 0, 0]} geometry={rbox(0.18, 0.58, 0.78, 0.04)} material={materials.armor} castShadow />
