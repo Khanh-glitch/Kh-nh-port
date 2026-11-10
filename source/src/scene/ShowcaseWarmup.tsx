@@ -62,6 +62,10 @@ export function ShowcaseWarmup({ arenaState }: { arenaState: { mode: string } })
         new URLSearchParams(location.search).get('arrivalLandingPreflight') !== 'off',
       landingScenePasses: 0,
       landingScenePeakCpuMs: 0,
+      arrivalFlightPathPreflight: arrivalEnabled &&
+        new URLSearchParams(location.search).get('arrivalFlightPathPreflight') !== 'off',
+      landingFlightPathPasses: 0,
+      landingFlightPathPeakCpuMs: 0,
       fullyLitMeshesPrimed: 0,
       fullyLitBatches: 0,
       uploadedProxies: 0,
@@ -107,16 +111,21 @@ export function ShowcaseWarmup({ arenaState }: { arenaState: { mode: string } })
       if (info.nativeScenePrewarm)
         progress = Math.max(progress, 0.75 + 0.19 * Math.min(1, info.nativeScenePasses / expectedNative))
       if (info.arrivalLandingPreflight && info.nativeScenePasses === expectedNative)
-        progress = Math.max(progress, 0.94 + 0.035 * Math.min(1, info.landingScenePasses / 2))
+        progress = Math.max(progress, 0.94 + 0.03 * Math.min(1, info.landingScenePasses / 2))
+      if (info.arrivalFlightPathPreflight && info.landingScenePasses === 2)
+        progress = Math.max(progress, 0.97 + 0.015 * Math.min(1, info.landingFlightPathPasses / 3))
       if (info.status === 'gpu-pending') progress = 0.99
       const verified = info.status === 'ready' && info.gpuSynced &&
         info.uploadedProxies >= info.totalProxies && info.totalProxies >= 120 &&
         (!info.nativeScenePrewarm || info.nativeScenePasses === expectedNative) &&
-        (!info.arrivalLandingPreflight || info.landingScenePasses === 2)
+        (!info.arrivalLandingPreflight || info.landingScenePasses === 2) &&
+        (!info.arrivalFlightPathPreflight || info.landingFlightPathPasses === 3)
       const stage = verified ? 'TÀI NGUYÊN GPU ĐÃ SẴN SÀNG · HẠ CÁNH ĐƯỢC PHÉP'
         : info.status === 'failed' || info.status === 'missing-roots' ||
           info.status === 'prewarm-skipped-busy-renderer' || info.status === 'native-scene-preflight-missing-primitives'
           ? 'GIỮ QUỸ ĐẠO · GPU CHƯA SẴN SÀNG'
+        : info.arrivalFlightPathPreflight && info.landingScenePasses === 2
+          ? 'ĐANG CHUẨN BỊ ĐƯỜNG BAY HẠ CÁNH'
         : info.arrivalLandingPreflight && info.nativeScenePasses >= expectedNative
           ? 'ĐANG CHUẨN BỊ BÃI ĐÁP 3D'
         : info.nativeScenePrewarm && info.nativeScenePasses > 0 ? 'ĐANG CHUẨN BỊ SHADOW THỰC'
@@ -745,6 +754,45 @@ export function ShowcaseWarmup({ arenaState }: { arenaState: { mode: string } })
               camera.aspect = priorAspect
               camera.fov = priorFov
               camera.far = priorFar
+              camera.updateProjectionMatrix()
+            }
+          }
+        }
+        // During the 3.2s descent, the real camera visits intermediate
+        // world angles that a spawn-only GPU preflight has never submitted.
+        // Prime three actual route views in isolated frame-budgeted batches.
+        // Never yield with public scene camera mutated; original shadows stay.
+        if (info.arrivalFlightPathPreflight && info.arrivalLandingPreflight) {
+          const fractions = [0.27, 0.55, 0.82]
+          for (const fraction of fractions) {
+            if (!await nextPaint('showcase')) { info.status='cancelled-on-summon'; return }
+            if (interrupted()) { info.status='cancelled-on-summon'; return }
+            const savedPos = camera.position.clone()
+            const savedQuat = camera.quaternion.clone()
+            const savedAspect = camera.aspect
+            const savedFov = camera.fov
+            const savedFar = camera.far
+            const startPath = performance.now()
+            try {
+              const eased = fraction < 0.5
+                ? 4*fraction*fraction*fraction
+                : 1-Math.pow(-2*fraction+2,3)/2
+              camera.position.copy(savedPos).lerp(new THREE.Vector3(0,1.7,46),eased)
+              camera.quaternion.copy(savedQuat).slerp(new THREE.Quaternion(),eased)
+              camera.aspect = 16/9
+              camera.fov = 72
+              camera.far = 9000
+              camera.updateProjectionMatrix()
+              withTarget(() => { gl.clear(true,true,false); gl.render(scene,camera) })
+              info.landingFlightPathPasses++
+              info.landingFlightPathPeakCpuMs = Math.max(info.landingFlightPathPeakCpuMs,
+                Math.round(performance.now()-startPath))
+            } finally {
+              camera.position.copy(savedPos)
+              camera.quaternion.copy(savedQuat)
+              camera.aspect = savedAspect
+              camera.fov = savedFov
+              camera.far = savedFar
               camera.updateProjectionMatrix()
             }
           }

@@ -63,7 +63,7 @@ const arrivalPlayer = read('source/src/scene/Player.tsx')
 const arrivalOverlay = read('source/src/ui/Overlay.tsx')
 const arrivalWarmup = read('source/src/scene/ShowcaseWarmup.tsx')
 assert.match(arrivalStore, /arrivalReady: false/, 'arrival starts GPU-unready')
-assert.match(arrivalPlayer, /arrivalEnabled && \(!s\.ready \|\| !s\.arrivalReady\)/, 'landing blocks early click')
+assert.match(arrivalPlayer, /arrivalEnabled && \(!s\.ready \|\| !s\.arrivalReady \|\| !s\.arrivalApproachSettled\)/, 'landing blocks premature click')
 assert.match(arrivalPlayer, /arrivalProgress/, 'approach camera uses real GPU progress')
 assert.match(arrivalOverlay, /disabled=\{!canLand\}/, 'arrival button cannot land before GPU readiness')
 assert.match(arrivalWarmup, /info\.nativeScenePasses === expectedNative/, 'native scene pass counted before ready')
@@ -72,3 +72,7 @@ assert.match(arrivalWarmup, /info\.gpuSynced/, 'GPU fence required before granti
 const arrivalGpu = read('source/src/scene/ShowcaseWarmup.tsx')
 assert.match(arrivalGpu, /landingScenePasses === 2/, 'landing requires genuine native scene passes')
 assert.match(arrivalGpu, /target!\.setSize\(640, 360\)/, 'landing prewarms original 16:9 view')
+
+// Flight path warmup uses the actual Three.js scene before settling the view.
+assert.match(arrivalWarmup, /landingFlightPathPasses === 3/, 'GPU flight path must be primed')
+assert.match(arrivalWarmup, /const fractions = \[0\.27, 0\.55, 0\.82\]/, 'sample actual descent viewpoints')
