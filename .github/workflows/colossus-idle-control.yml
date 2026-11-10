@@ -1,0 +1,20 @@
+name: Colossus idle WebGL frame baseline
+on:
+  push:
+    branches:
+      - qa/colossus-idle-control
+  workflow_dispatch:
+jobs:
+  idle:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: source/package-lock.json
+      - run: npm ci --prefix source
+      - run: npm install --prefix source --no-save --package-lock=false playwright@1.56.1
+      - run: node scripts/colossus-idle-control.mjs
