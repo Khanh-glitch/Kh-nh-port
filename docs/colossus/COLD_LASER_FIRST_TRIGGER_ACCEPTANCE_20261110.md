@@ -133,3 +133,27 @@ Cold first activation of Colossus laser, APEX CHAOS and Ragnarok must not freeze
 - Keep this on `fix/colossus-frame-budget-prewarm`. No merge to `main`, no shadow-map downsize, no PBR/mesh/Bloom/postprocessing removal. Existing 2048 shadow setting and actual game geometries are retained.
 - The user's new spaceship arrival concept SHOULD allocate the genuine GPU warming **before landing**. Existing intro `loading` still tracks **piano audio downloads**; its 100% is not a graphics-readiness claim. Arrival must have distinct audio/asset/shader/VBO/real-shadow/render and first-present readiness; don't equate `131/131` with a no-hitch native scene, and don't autoplay landing solely on an arbitrary cinematic timer.
 - Native preflight stays explicit URL **diagnostic only** until repeated fixed-code CPU/GPU frame gating, safe preflight session pacing, before/after screenshot inspection and both activation/landing acceptance. Do not claim 60FPS or zero-stutter yet. Remaining blocker = 120ms cold-summon max-frame contract and actual hardware validation.
+
+
+## ORBITA Arrival GPU-gate implementation and negative A/B evidence (2026-11-10 follow-up)
+
+### Production safety / exact mechanism
+
+- Arrival is deliberately **opt-in** via `?arrival=on` on branch `fix/colossus-frame-budget-prewarm`; `main` was **not** merged.
+- Intro now creates an actual camera-mounted Three.js cockpit with an overlay flight HUD. The flight-distance target reflects **Colossus GPU prewarm** progress (real geometry uploads, original 2048px shadows, native-scene submissions, and readback fence), *not* piano loading. Latest `Player.tsx` damps the flight camera's distance with a frame-time exponential rather than teleporting between asynchronous progress milestones; landing requires both audio readiness, GPU readiness and completed physical approach.
+- Original `startGame` behavior remains unchanged for URLs without `?arrival=on`. All offscreen native passes restore real sun/camera/material uniforms synchronously before yielding to the public event loop. No meshes/Bloom/shadow-map reduction, no `main` release.
+
+### Arrival on Metal Paravirtual, actually measured
+
+- [First arrival smoke 42834048078](https://github.com/Khanh-glitch/Kh-nh-port/actions/runs/42834048078): landing gate worked (initially disabled, then 131/131 uploads + 4 native passes + async fence, no page errors), but max post-land rAF gap **533ms**, 4 frames over 120ms. FAIL.
+- [First landing-position preflight A/B 42837482831](https://github.com/Khanh-glitch/Kh-nh-port/actions/runs/42837482831): 640x360 private landing view **717ms** vs no separate landing-view preflight **750ms**. Both fail; difference too small for a stable win.
+- [Flight path A/B 42837658735](https://github.com/Khanh-glitch/Kh-nh-port/actions/runs/42837658735): additional offscreen flight-path real-scene priming at 27/55/82% yielded **1433ms** max gap vs baseline (without landing-view priming) **1050ms** in one trial; no stable performance gain. Flight path preflight was accordingly changed to **diagnostic-only** `arrivalFlightPathPreflight=on`, OFF by default.
+- `f392ac07`: startGame now records timestamped R3F callback traces for the real 3.2s descent, separate from compositor rAF; the CI artifact reports first several worst callback gaps and current transition/camera pose. No quality changes.
+- `f38a5b61`: tests an alternative hypothesis: a GPU completion fence signals submitted work completed but **not** reliable compositor frame pacing. `arrivalGpuSettle=on` therefore gates landing on three independent windows of three healthy presentation rAF frames (max 12s per window) after GPU sync. `?arrival=on` without this option retains the control path. [A/B 42839209801](https://github.com/Khanh-glitch/Kh-nh-port/actions/runs/42839209801): 2 x `primed` (no settle) versus 2 x `settled` jobs, pending at this ledger update. **Do not announce smoothness or enable settling in production until the measured comparison passes.**
+
+### Acceptance still OPEN
+
+1. Landing: worst post-land rAF gap <= 120ms, with correct full visual geometry, no missing textures/shadows/console and no context loss; validate across two or more runs and inspect approach + landed screenshots.
+2. Colossus: its own fully-ready cold summon still fails <=120ms despite native live-scene prewarm. Preserve independent A/B, do not conflate landing and robot warmup acceptance.
+3. Behavior: no early landing click, no GPU false-ready when native shadow or real descent preflight is missing, no indefinite blocking without truthful stage, no regression to legacy entry URL, correct audio behavior, physical GPU or real-device verification after paravirtual Metal.
+4. The cockpit currently is a **functional 3D prototype**, not a final art-quality ship: it lacks complete exterior model, landing thrusters, and polished cockpit material/lighting. Those require a separate visual acceptance after the hitch contract is met.
