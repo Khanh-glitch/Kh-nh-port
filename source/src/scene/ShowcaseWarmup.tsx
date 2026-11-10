@@ -57,6 +57,9 @@ export function ShowcaseWarmup({ arenaState }: { arenaState: { mode: string } })
           : 96,
       nativePreflightHeight: 0,
       nativePreflightGpuFence: false,
+      nativeHologramPasses: 0,
+      nativePassMode: new URLSearchParams(location.search).get('colossusNativePassMode') === 'mixed'
+        ? 'mixed' : 'full',
       fullyLitMeshesPrimed: 0,
       fullyLitBatches: 0,
       uploadedProxies: 0,
@@ -649,7 +652,17 @@ export function ShowcaseWarmup({ arenaState }: { arenaState: { mode: string } })
             const offset = sunPos.clone().sub(targetPos)
             const savedCameraPos = camera.position.clone()
             const savedCameraRotation = camera.quaternion.clone()
-            const savedComplete = new Map<{value:number},number>()
+            // An all-PBR (uComplete=1) private draw cannot exercise the
+            // materialization branch (scan ripple/grid/discard) that becomes
+            // visible for the very first time after clicking Colossus.
+            // Compare a second pass through that ORIGINAL exact shader path.
+            const savedUniforms = new Map<{value:number},number>()
+            const setPreflightUniform = (uniform: {value:number}|undefined, value:number) => {
+              if (!uniform) return
+              if (!savedUniforms.has(uniform)) savedUniforms.set(uniform,uniform.value)
+              uniform.value = value
+            }
+            const warmHologram = info.nativePassMode === 'mixed' && repeat > 0
             const startNative = performance.now()
             try {
               sun.target.position.set(0, 0, -41)
@@ -664,11 +677,14 @@ export function ShowcaseWarmup({ arenaState }: { arenaState: { mode: string } })
                 if (!mesh.isMesh) return
                 const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material]
                 for (const material of materials) {
-                  const u = (material?.userData?.orbitaMaterializeUniforms as
-                    { uComplete?: { value: number } } | undefined)?.uComplete
-                  if (u && !savedComplete.has(u)) {
-                    savedComplete.set(u, u.value)
-                    u.value = 1
+                  const u = material?.userData?.orbitaMaterializeUniforms as
+                    | { uComplete?: {value:number}; uScanY?: {value:number}; uTime?: {value:number} }
+                    | undefined
+                  if (!u) continue
+                  setPreflightUniform(u.uComplete, warmHologram ? 0 : 1)
+                  if (warmHologram) {
+                    setPreflightUniform(u.uScanY, 2.1)
+                    setPreflightUniform(u.uTime, 1.7)
                   }
                 }
               })
@@ -676,8 +692,9 @@ export function ShowcaseWarmup({ arenaState }: { arenaState: { mode: string } })
               info.nativeScenePeakCpuMs = Math.max(info.nativeScenePeakCpuMs,
                 Math.round(performance.now() - startNative))
               info.nativeScenePasses++
+              if (warmHologram) info.nativeHologramPasses++
             } finally {
-              savedComplete.forEach((value,uniform) => { uniform.value=value })
+              savedUniforms.forEach((value,uniform) => { uniform.value=value })
               content.visible = priorVisible
               camera.position.copy(savedCameraPos)
               camera.quaternion.copy(savedCameraRotation)

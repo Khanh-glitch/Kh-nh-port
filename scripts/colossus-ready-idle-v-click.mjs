@@ -16,6 +16,8 @@ const exhibitVariant=process.env.COLOSSUS_EXHIBIT_VARIANT || 'normal'
 if(!['normal','noExhibits','noLaser'].includes(exhibitVariant)) throw Error('Unknown exhibit/laser diagnostic')
 const fullLitVariant=process.env.COLOSSUS_FULL_LIT_VARIANT || 'legacy'
 if(!['legacy','lit','deep'].includes(fullLitVariant))throw Error('Unknown complete-fragment variant')
+const nativePassMode=process.env.COLOSSUS_NATIVE_PASS_MODE || 'full'
+if(!['full','mixed'].includes(nativePassMode))throw Error('Unknown native scan prep')
 const nativePixels=Number(process.env.COLOSSUS_NATIVE_PIXELS || '96')
 if(![96,512,960].includes(nativePixels))throw Error('Unknown native target pixels')
 const nativeVariant=process.env.COLOSSUS_NATIVE_VARIANT || 'legacy'
@@ -33,6 +35,7 @@ if(geometryVariant==='legacy')targetUrl.searchParams.set('colossusGeometryProbe'
 if(nativeVariant==='native')targetUrl.searchParams.set('colossusNativePreflight','on')
 if(nativeVariant==='native2')targetUrl.searchParams.set('colossusNativePreflight','double')
 if(nativePixels!==96)targetUrl.searchParams.set('colossusNativeTarget',String(nativePixels))
+if(nativePassMode==='mixed')targetUrl.searchParams.set('colossusNativePassMode','mixed')
 if(fullLitVariant==='lit')targetUrl.searchParams.set('colossusFullLitPrewarm','on')
 if(fullLitVariant==='deep')targetUrl.searchParams.set('colossusDeepPrewarm','on')
 if(exhibitVariant==='noExhibits')targetUrl.searchParams.set('colossusExhibitProbe','off')
@@ -65,6 +68,8 @@ try {
       nativeSceneRepeats:w?.nativeSceneRepeats,
       nativePreflightWidth:w?.nativePreflightWidth,
       nativePreflightHeight:w?.nativePreflightHeight,
+      nativeHologramPasses:w?.nativeHologramPasses,
+      nativePassMode:w?.nativePassMode,
       nativeScenePeakCpuMs:w?.nativeScenePeakCpuMs,
       longestPrivateBatchCpuMs:w?.longestPrivateBatchCpuMs
     }}
@@ -135,7 +140,7 @@ try {
       })).slice(0,32)
     }
   })
-  const report={sha:process.env.GITHUB_SHA??'local',shadowVariant,apexShadowVariant,nativeVariant,nativePixels,geometryVariant,exhibitVariant,earlyVariant,fullLitVariant,before,clicked,result,errors,
+  const report={sha:process.env.GITHUB_SHA??'local',shadowVariant,apexShadowVariant,nativeVariant,nativePixels,nativePassMode,geometryVariant,exhibitVariant,earlyVariant,fullLitVariant,before,clicked,result,errors,
     verdict:result.afterClick.maxMs<=120&&(exhibitVariant==='noLaser'||(result.firstBeamMs!=null&&result.firstBeamMs<500))
       ? 'SMOOTH_VIRTUAL_MEASURED_NOT_REAL_GPU_CERTIFIED' : 'HITCH_NOT_ACCEPTED',
     limits:'Same-session idle vs click rAF callback comparison on Apple Paravirtual Metal. rAF is not presented frame timing and no physical device is certified; no visual settings changed.'}

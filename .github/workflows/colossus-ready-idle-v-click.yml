@@ -28,7 +28,8 @@ jobs:
         apexShadow: [normal]
         geometry: [stable]
         native: [native2]
-        pixels: [96, 960]
+        pixels: [960]
+        scan: [full, mixed]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -54,6 +55,7 @@ jobs:
           COLOSSUS_GEOMETRY_VARIANT: ${{ matrix.geometry }}
           COLOSSUS_NATIVE_VARIANT: ${{ matrix.native }}
           COLOSSUS_NATIVE_PIXELS: ${{ matrix.pixels }}
+          COLOSSUS_NATIVE_PASS_MODE: ${{ matrix.scan }}
         run: |
           python3 -m http.server 4173 --bind 127.0.0.1 --directory dist-pages >/tmp/colossus-ready-idle.log 2>&1 &
           for n in {1..30}; do
@@ -64,6 +66,6 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: colossus-ready-idle-v-click-${{ matrix.native }}-${{ matrix.pixels }}px-trial-${{ matrix.trial }}
+          name: colossus-ready-idle-v-click-${{ matrix.native }}-${{ matrix.pixels }}px-${{ matrix.scan }}-trial-${{ matrix.trial }}
           path: browser-evidence/
           if-no-files-found: warn
