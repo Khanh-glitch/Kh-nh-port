@@ -40,7 +40,12 @@ try {
     canvas.dispatchEvent(new PointerEvent('pointerup',point))
     return true
   })
-  await page.waitForTimeout(9000)
+  // Software WebGL can pause for many seconds; PASS only when a real
+  // completed first-summon profile exists, never merely after dispatching click.
+  await page.waitForFunction(() => !!window.__orbitaColossusProfile, null, {
+    timeout: 100000, polling: 1000
+  })
+  await page.waitForTimeout(300)
   const after=await page.evaluate(() => ({
     warmup:window.__orbitaColossusWarmup,
     profile:window.__orbitaColossusProfile || null,
@@ -69,6 +74,7 @@ try {
   },null,2))
   if(!before.canvas || !before.webgl2) process.exitCode=2
   if(errors.length) process.exitCode=3
+  if(!after.profile) process.exitCode=4
   if(after.profile && !(after.profile.trace || []).some(x => x.mode === 'summon_apex' || x.mode === 'summon_rag')) process.exitCode=5
 } catch(e) {
   console.error('Browser smoke could not complete', e)
