@@ -99,3 +99,9 @@ assert.ok(showWarm.includes("for (const texture of priorityTextures)"), 'laser i
 assert.ok(showWarm.indexOf("info.status = 'laser-geometry'") < showWarm.indexOf("info.status = 'showcase-textures'"), 'beam first ordering enforced')
 
 assert.ok(showWarm.includes('target.texture.colorSpace = gl.outputColorSpace'), 'private warmup must compile the same color-space shader variant as visible canvas')
+
+assert.ok(!showWarm.includes('await gl.compileAsync(stageNow, camera)'), 'whole-scene compile is forbidden on latency-sensitive route')
+assert.ok(showWarm.includes("name:'laser-priority-incremental'"), 'priority laser compile occurs per drawable')
+const apex = read('source/src/scene/ApexShowcase.tsx')
+const rag = read('source/src/scene/RagnarokShowcase.tsx')
+assert.ok(apex.includes('updateScanCullMeshes(') && rag.includes('updateScanCullMeshes('), 'both projection scenes progressively render only shader-visible geometry')
