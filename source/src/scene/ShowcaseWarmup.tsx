@@ -47,7 +47,8 @@ export function ShowcaseWarmup({ arenaState }: { arenaState: { mode: string } })
         new URLSearchParams(location.search).get('colossusDeepPrewarm') === 'on',
       deepWorldPrewarm: new URLSearchParams(location.search).get('colossusDeepPrewarm') === 'on',
       longestPrivateBatchCpuMs: 0,
-      nativeScenePrewarm: new URLSearchParams(location.search).get('colossusNativePreflight') === 'on',
+      nativeScenePrewarm: ['on','double'].includes(new URLSearchParams(location.search).get('colossusNativePreflight') ?? ''),
+      nativeSceneRepeats: new URLSearchParams(location.search).get('colossusNativePreflight') === 'double' ? 2 : 1,
       nativeScenePasses: 0,
       nativeScenePeakCpuMs: 0,
       fullyLitMeshesPrimed: 0,
@@ -611,6 +612,7 @@ export function ShowcaseWarmup({ arenaState }: { arenaState: { mode: string } })
             return
           }
           for (const content of contents) {
+            for (let repeat = 0; repeat < info.nativeSceneRepeats; repeat++) {
             // Do not leave the live sun/camera mutated across nextPaint().
             // The prior candidate did this and could alter the REAL visible
             // intro frames while awaiting the GPU frame budget. Each stage
@@ -660,6 +662,7 @@ export function ShowcaseWarmup({ arenaState }: { arenaState: { mode: string } })
               sun.target.position.copy(targetPos)
               sun.target.updateMatrixWorld(true)
               sun.updateMatrixWorld(true)
+            }
             }
           }
         }

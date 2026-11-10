@@ -17,7 +17,7 @@ if(!['normal','noExhibits','noLaser'].includes(exhibitVariant)) throw Error('Unk
 const fullLitVariant=process.env.COLOSSUS_FULL_LIT_VARIANT || 'legacy'
 if(!['legacy','lit','deep'].includes(fullLitVariant))throw Error('Unknown complete-fragment variant')
 const nativeVariant=process.env.COLOSSUS_NATIVE_VARIANT || 'legacy'
-if(!['legacy','native'].includes(nativeVariant))throw Error('Unknown native scene preflight variant')
+if(!['legacy','native','native2'].includes(nativeVariant))throw Error('Unknown native scene preflight variant')
 const geometryVariant=process.env.COLOSSUS_GEOMETRY_VARIANT || 'stable'
 if(!['legacy','stable'].includes(geometryVariant))throw Error('Unknown geometry lifecycle variant')
 const apexShadowVariant=process.env.COLOSSUS_APEX_SHADOW_VARIANT || 'normal'
@@ -29,6 +29,7 @@ if(shadowVariant==='off')targetUrl.searchParams.set('colossusShadowProbe','off')
 if(apexShadowVariant==='off')targetUrl.searchParams.set('colossusApexShadowProbe','off')
 if(geometryVariant==='legacy')targetUrl.searchParams.set('colossusGeometryProbe','legacy')
 if(nativeVariant==='native')targetUrl.searchParams.set('colossusNativePreflight','on')
+if(nativeVariant==='native2')targetUrl.searchParams.set('colossusNativePreflight','double')
 if(fullLitVariant==='lit')targetUrl.searchParams.set('colossusFullLitPrewarm','on')
 if(fullLitVariant==='deep')targetUrl.searchParams.set('colossusDeepPrewarm','on')
 if(exhibitVariant==='noExhibits')targetUrl.searchParams.set('colossusExhibitProbe','off')
@@ -58,6 +59,7 @@ try {
       deepWorldPrewarm:w?.deepWorldPrewarm,
       nativeScenePrewarm:w?.nativeScenePrewarm,
       nativeScenePasses:w?.nativeScenePasses,
+      nativeSceneRepeats:w?.nativeSceneRepeats,
       nativeScenePeakCpuMs:w?.nativeScenePeakCpuMs,
       longestPrivateBatchCpuMs:w?.longestPrivateBatchCpuMs
     }}

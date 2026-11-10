@@ -47,3 +47,12 @@ const stableApex = read('source/src/scene/ApexShowcase.tsx')
 assert.match(stableRobot, /const stableGeometry = useMemo\(/, 'Colossus Part geometry cached per dimension')
 assert.match(stableRobot, /geometry=\{roundedBox\(/, 'Colossus inline rounded geometry cached')
 assert.match(stableApex, /geometry=\{roundedBox\(/, 'APEX inline rounded geometry cached')
+
+// Native offscreen preflight may modify the live sun ONLY synchronously:
+// no public rAF can run while the real camera or sun points at Colossus.
+const nativeWarmSource = read('source/src/scene/ShowcaseWarmup.tsx')
+assert.match(nativeWarmSource, /for \(let repeat = 0; repeat < info\.nativeSceneRepeats; repeat\+\+\)/, 'native warmup repeats are frame-budgeted')
+const offscreenBegin = nativeWarmSource.indexOf('sun.target.position.set(0, 0, -41)')
+const offscreenEnd = nativeWarmSource.indexOf('sun.target.position.copy(targetPos)', offscreenBegin)
+assert.ok(offscreenBegin >= 0 && offscreenEnd > offscreenBegin, 'native source camera and sun restored')
+assert.ok(!nativeWarmSource.slice(offscreenBegin, offscreenEnd).includes('await '), 'no await while public camera or sun is temporarily moved')
