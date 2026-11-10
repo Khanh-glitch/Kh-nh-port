@@ -103,3 +103,13 @@ assert.ok(showWarm.includes('target.texture.colorSpace = gl.outputColorSpace'), 
 assert.ok(!showWarm.includes('await gl.compileAsync(stageNow, camera)'), 'whole-scene compile is forbidden on latency-sensitive route')
 assert.ok(showWarm.includes("name:'laser-priority-incremental'"), 'priority laser compile occurs per drawable')
 assert.ok(apex.includes('updateScanCullMeshes(') && rag.includes('updateScanCullMeshes('), 'both projection scenes progressively render only shader-visible geometry')
+
+const cooperativeBudget = read('source/src/scene/ShowcaseWarmup.tsx')
+assert.ok(cooperativeBudget.includes('deferredShowcaseFrames'), 'GPU work throttling must expose evidence')
+assert.ok(cooperativeBudget.includes("priority === 'laser'"), 'all laser resources must bypass showcase frame budget')
+assert.ok(cooperativeBudget.includes("smoothPaints >= 3"), 'showcase work requires three healthy frames')
+assert.ok(cooperativeBudget.includes("isInputPending"), 'yield to queued user input')
+assert.ok(cooperativeBudget.includes('document.visibilityState'), 'no GPU background prewarm in hidden tab')
+assert.ok(cooperativeBudget.includes('laserReady = true'), 'laser readiness is recorded after real proxy uploads')
+assert.ok(cooperativeBudget.includes("uploadTexture(texture, 'showcase')") && cooperativeBudget.includes("uploadProxy(proxy, 'showcase')"), 'all nonlaser texture and mesh uploads budget guarded')
+assert.ok(cooperativeBudget.includes("uploadTexture(texture, 'laser')") && cooperativeBudget.includes("uploadProxy(proxy, 'laser')"), 'all laser assets remain prioritized')
