@@ -160,8 +160,3 @@ assert.ok(showWarm.indexOf('await precompileCriticalShaders()') < showWarm.index
 
 const gpuSmoke = read('scripts/colossus-browser-smoke.mjs')
 assert.ok(gpuSmoke.includes('metalBackendVerified') && gpuSmoke.includes('virtualGpu'), 'Metal paravirtual device must not be represented as bare physical GPU')
-
-assert.ok(showWarm.includes('apexProxies.push(proxy)') && showWarm.includes('ragProxies.push(proxy)'), 'showcase buffers scheduled by actual animation order')
-assert.ok(showWarm.includes('for (const texture of apexTextures)') && showWarm.includes('for (const texture of ragTextures)'), 'APEX textures prepared before Ragnarok textures')
-assert.ok(showWarm.indexOf("await uploadMeshQueue(apexProxies, 'apex')") < showWarm.indexOf("info.status = 'ragnarok-textures'"), 'all APEX VBO submissions precede noncritical Ragnarok assets')
-assert.ok(showWarm.includes("info.earlyShaderCompileStatus !== 'compiled'"), 'do not recompile programs already primed asynchronously')

@@ -50,10 +50,6 @@ export function ShowcaseWarmup({ arenaState }: { arenaState: { mode: string } })
       adaptiveFrameBudgetMs: 50,
       measuredMedianFrameMs: 0,
       showcaseDrawBatches: 0,
-      apexProxyCount: 0,
-      apexUploadedProxies: 0,
-      ragUploadedProxies: 0,
-      apexTextureCount: 0,
       deferredShowcaseFrames: 0,
       maxSampledFrameMs: 0,
       gpuSynced: false,
@@ -309,10 +305,6 @@ export function ShowcaseWarmup({ arenaState }: { arenaState: { mode: string } })
       })
       const textures = new Set<THREE.Texture>()
       const priorityTextures = new Set<THREE.Texture>()
-      const apexTextures = new Set<THREE.Texture>()
-      const ragTextures = new Set<THREE.Texture>()
-      const apexProxies: THREE.Object3D[] = []
-      const ragProxies: THREE.Object3D[] = []
       roots.forEach((root, rootIndex) => root!.traverse(object => {
         const m = object as THREE.Mesh
         const sprite = object as THREE.Sprite
@@ -331,8 +323,6 @@ export function ShowcaseWarmup({ arenaState }: { arenaState: { mode: string } })
         }
         stageNow.add(proxy)
         proxies.push(proxy)
-        if (rootIndex === beams.length) apexProxies.push(proxy)
-        if (rootIndex === beams.length + 1) ragProxies.push(proxy)
         if (sprite.isSprite) info.sprites++
         else info.meshes++
         const mats = Array.isArray(m.material) ? m.material : [m.material]
@@ -343,16 +333,12 @@ export function ShowcaseWarmup({ arenaState }: { arenaState: { mode: string } })
             if (t?.isTexture) {
               textures.add(t)
               if (rootIndex < beams.length) priorityTextures.add(t)
-              else if (rootIndex === beams.length) apexTextures.add(t)
-              else ragTextures.add(t)
             }
           }
         }
       }))
       info.textureMaps = textures.size
       info.totalProxies = proxies.length
-      info.apexProxyCount = apexProxies.length
-      info.apexTextureCount = apexTextures.size
       const camera = new THREE.PerspectiveCamera(60, 1, 0.01, 200)
       camera.position.set(0, 0, 12)
       camera.lookAt(0, 0, 0)
@@ -464,7 +450,7 @@ export function ShowcaseWarmup({ arenaState }: { arenaState: { mode: string } })
           const variant = shaderFamily + ':' + (mapped ? 'mapped' : 'unmapped')
           if (!materializeVariants.has(variant)) materializeVariants.set(variant, proxy)
         }
-        if (materializeVariants.size > 0 && info.earlyShaderCompileStatus !== 'compiled') {
+        if (materializeVariants.size > 0) {
           info.status = 'materialize-shaders'
           info.materializeVariantKeys = [...materializeVariants.keys()]
           if (!await nextPaint('laser')) {
@@ -504,51 +490,30 @@ export function ShowcaseWarmup({ arenaState }: { arenaState: { mode: string } })
           try { gl.initTexture(texture) } catch { /* Visible renderer can retry. */ }
           return true
         }
-        // Colossus starts with APEX. Before any Ragnarok work, prepare the
-        // APEX textures and every APEX geometry buffer. This is a scheduling
-        // change only: real materials, geometry, shadows, and pixels are
-        // untouched. If a visitor selects Ragnarok alone, its assets still
-        // render normally and can be prepared later in the same idle queue.
         info.status = 'showcase-textures'
-        for (const texture of apexTextures) {
+        for (const texture of textures) {
           if (priorityTextures.has(texture)) continue
           if (!await uploadTexture(texture)) { info.status='cancelled-on-summon'; return }
         }
+        info.status = 'showcase-geometry'
         const showcaseProxies = proxies.slice(beams.length)
         const SHOWCASE_BATCH_SIZE = 4
-        const uploadMeshQueue = async (queue: THREE.Object3D[], kind: 'apex' | 'rag'): Promise<boolean> => {
-          for (let i = 0; i < queue.length; i += SHOWCASE_BATCH_SIZE) {
-            if (!await nextPaint('showcase')) return false
-            if (interrupted()) return false
-            const batch = queue.slice(i, i + SHOWCASE_BATCH_SIZE)
-            batch.forEach(proxy => { proxy.visible = true })
-            try {
-              withTarget(() => {
-                gl.clear(true, true, false)
-                gl.render(stageNow, camera)
-              })
-            } finally {
-              batch.forEach(proxy => { proxy.visible = false })
-            }
-            info.uploadedProxies += batch.length
-            info.showcaseDrawBatches++
-            if (kind === 'apex') info.apexUploadedProxies += batch.length
-            else info.ragUploadedProxies += batch.length
+        for (let i = 0; i < showcaseProxies.length; i += SHOWCASE_BATCH_SIZE) {
+          if (!await nextPaint('showcase')) { info.status='cancelled-on-summon'; return }
+          if (interrupted()) { info.status='cancelled-on-summon'; return }
+          const batch = showcaseProxies.slice(i, i + SHOWCASE_BATCH_SIZE)
+          batch.forEach(proxy => { proxy.visible = true })
+          try {
+            withTarget(() => {
+              gl.clear(true, true, false)
+              gl.render(stageNow, camera)
+            })
+          } finally {
+            batch.forEach(proxy => { proxy.visible = false })
           }
-          return true
+          info.uploadedProxies += batch.length
+          info.showcaseDrawBatches++
         }
-        info.status = 'showcase-geometry'
-        if (!await uploadMeshQueue(apexProxies, 'apex')) { info.status='cancelled-on-summon'; return }
-
-        // Ragnarok is never rendered during the first APEX fabrication.
-        // Only consume idle GPU time on Ragnarok AFTER APEX is prepared.
-        info.status = 'ragnarok-textures'
-        for (const texture of ragTextures) {
-          if (priorityTextures.has(texture) || apexTextures.has(texture)) continue
-          if (!await uploadTexture(texture)) { info.status='cancelled-on-summon'; return }
-        }
-        info.status = 'ragnarok-geometry'
-        if (!await uploadMeshQueue(ragProxies, 'rag')) { info.status='cancelled-on-summon'; return }
         info.drawnVariants.push({ name:'incremental', programs:gl.info.programs?.length ?? 0 })
         if (interrupted()) { info.status='cancelled-on-summon'; return }
         if (typeof gl.readRenderTargetPixelsAsync === 'function') {
