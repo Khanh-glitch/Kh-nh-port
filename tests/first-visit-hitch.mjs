@@ -93,3 +93,7 @@ assert.ok(!mat.includes('orbita-materialize-${tag}'), 'unique decorative tags mu
 
 assert.ok(showWarm.includes("const roots: THREE.Object3D[] = [...beams, ...(showcaseRoots as THREE.Object3D[])]"), 'laser emitters must be GPU-primed before the larger models')
 assert.ok(showWarm.includes('window.setTimeout(() => { void warm() }, 0)'), 'async first-use work must not wait for a potentially stalled first render frame')
+
+assert.ok(showWarm.includes("for (const proxy of proxies.slice(0, beams.length))"), 'actual laser VBO uploads precede showcases')
+assert.ok(showWarm.includes("for (const texture of priorityTextures)"), 'laser impact textures upload before other showcase textures')
+assert.ok(showWarm.indexOf("info.status = 'laser-geometry'") < showWarm.indexOf("info.status = 'showcase-textures'"), 'beam first ordering enforced')
