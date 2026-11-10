@@ -2,7 +2,10 @@ import { createRequire } from 'node:module'
 import { mkdirSync, writeFileSync } from 'node:fs'
 const require = createRequire(import.meta.url)
 const { chromium } = require('../source/node_modules/playwright')
-const url = 'https://107d7b2c.menniverse.pages.dev/#at=0,-27,0,20&autostart&skip'
+const url = process.env.COLOSSUS_SMOKE_URL
+if (!url || !/^https?:\/\//.test(url)) {
+  throw new Error('COLOSSUS_SMOKE_URL is required: never test a stale deployed preview as if it were branch HEAD')
+}
 mkdirSync('browser-evidence', { recursive: true })
 const browser = await chromium.launch({
   channel: 'chrome',
@@ -25,6 +28,8 @@ try {
     return {
       canvas:!!canvas,webgl2:!!gl,contextLost:gl?.isContextLost(),
       warmup:window.__orbitaColossusWarmup,
+      verifiedCandidate: typeof window.__orbitaColossusWarmup?.laserSubmitted === 'boolean' &&
+        typeof window.__orbitaColossusWarmup?.showcaseDrawBatches === 'number',
       canvasSize:canvas ? [canvas.width,canvas.height] : null,
       pageTitle:document.title,
       overlay:document.getElementById('menniverse-laser-probe')?.textContent?.slice(0,200)
@@ -52,13 +57,18 @@ try {
     historyLength:window.__orbitaColossusProfiles?.length || 0,
   }))
   const report={
-    url,elapsedMs:Date.now()-t0,attempted,before,after,
+    url,commit:process.env.GITHUB_SHA ?? 'local',elapsedMs:Date.now()-t0,attempted,before,after,
     errors,netFailed,
     notes:'NO screenshots before the click: avoid GPU readback contaminating first-laser measurement. Headless SwiftShader, not a real hardware certification'
   }
   writeFileSync('browser-evidence/summary.json',JSON.stringify(report,null,2))
   console.log(JSON.stringify({
     canvas:before.canvas,webgl2:before.webgl2,contextLost:before.contextLost,
+    verifiedCandidate:before.verifiedCandidate,
+    laserSubmitted:after.warmup?.laserSubmitted,
+    laserGpuSynced:after.warmup?.laserGpuSynced,
+    laserBatchCpuMs:after.warmup?.laserBatchCpuMs,
+    showcaseDrawBatches:after.warmup?.showcaseDrawBatches,
     warmStatus:before.warmup?.status,initialPrograms:before.warmup?.programsAfter,
     attempted,profileRecorded:!!after.profile,
     reportedMaxFrameMs:after.profile?.maxFrameMs,
@@ -76,6 +86,7 @@ try {
     warmupDetails:after.warmup
   },null,2))
   if(!before.canvas || !before.webgl2) process.exitCode=2
+  if(!before.verifiedCandidate) process.exitCode=9
   if(errors.length) process.exitCode=3
   if(!after.profile) process.exitCode=4
   if(after.profile?.frameMeasureOrigin !== 'performance.now at click; never prior R3F dtRaw') process.exitCode=8
