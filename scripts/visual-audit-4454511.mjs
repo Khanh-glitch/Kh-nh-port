@@ -4,9 +4,9 @@ const require=createRequire(import.meta.url)
 const {chromium}=require('../candidate/source/node_modules/playwright')
 mkdirSync('visual-evidence',{recursive:true})
 const reports=[]
-const browser=await chromium.launch({channel:'chrome',headless:true,args:[
- '--no-sandbox','--enable-webgl','--use-gl=angle',
- '--use-angle=swiftshader','--enable-unsafe-swiftshader'
+const browser=await chromium.launch({headless:true,args:[
+ '--enable-webgl','--enable-gpu','--ignore-gpu-blocklist',
+ '--use-angle=metal','--disable-software-rasterizer'
 ]})
 const variants=[
  {name:'main-8dd5ded',url:'http://127.0.0.1:4173/#at=0,-27,0,20&autostart&skip'},
