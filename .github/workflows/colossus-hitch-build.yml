@@ -22,7 +22,7 @@ jobs:
         run: |
           cd source && npx tsc --noEmit
           cd ..
-          node tests/colossus-regression.mjs
+          node tests/colossus-hitch-contracts.mjs
       - name: Build source and exact standalone embed
         run: |
           npm run build --prefix source
