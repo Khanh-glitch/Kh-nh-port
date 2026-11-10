@@ -347,7 +347,7 @@ function ApexShowcaseImpl({ position, worldPosition, rotationY, summoned, scanPr
   const scanBeamGeo = useMemo(() => beamGeometry(4.4, 2.35, 2.35, 32), [])
   const lockGeo = useMemo(() => beamGeometry(2.3, 0.04, 0.015, 8), [])
   const lockMat = useMemo(() => beamMaterial('#ffb030', 2.0), [])
-  const glow = glowTexture()
+  const glow = useMemo(() => glowTexture(), []) // preserve GPU texture across summon completion renders
 
   useFrame((s, dtRaw) => {
     const dt = Math.min(dtRaw, 0.05)
