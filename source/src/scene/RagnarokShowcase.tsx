@@ -59,6 +59,10 @@ function makePixelPopupTex(text: string, color: string) {
 function RagnarokShowcaseImpl({ position, worldPosition, rotationY, summoned, scanProgressRef, scanWorldYRef, activeRef, onRequestSummon, onFocus }: ShowcaseProps) {
   const busRef = useRef<Bus | null>(null)
   const exhibitRef = useRef<THREE.Group>(null)
+  const showcaseRootRef = useRef<THREE.Group>(null)
+  const fireLightAnchor = useRef<THREE.Group>(null)
+  const islandLightAnchor = useRef<THREE.Group>(null)
+  const lightWorld = useMemo(() => new THREE.Vector3(), [])
   const plinthRef = useRef<THREE.Group>(null)
   const titleRef = useRef<THREE.Group>(null)
   const treeRefs = useRef<Array<THREE.Group | null>>([])
@@ -535,12 +539,12 @@ function RagnarokShowcaseImpl({ position, worldPosition, rotationY, summoned, sc
       fireMesh.current.rotation.y = camYaw
     }
     if (fireLight.current) {
-      fireLight.current.intensity = (isAct ? 14 : 0) + Math.sin(t * 17) * 3.5 + Math.cos(t * 23) * 2
+      fireLight.current.intensity = prog > 0.19 ? (isAct ? 14 : 0) + Math.sin(t * 17) * 3.5 + Math.cos(t * 23) * 2 : 0
     }
     if (islandLight.current) {
       const c = sim.weather === 0 ? '#d8ffe8' : sim.weather === 1 ? '#ffb258' : '#9c8aff'
       islandLight.current.color.set(c)
-      islandLight.current.intensity = sim.weather === 2 && Math.sin(t * 11) > 0.93 ? 45 : 16
+      islandLight.current.intensity = prog > 0.19 ? (sim.weather === 2 && Math.sin(t * 11) > 0.93 ? 45 : 16) : 0
     }
 
     // Chest state
@@ -619,6 +623,21 @@ function RagnarokShowcaseImpl({ position, worldPosition, rotationY, summoned, sc
       sim.lastHudKey = hk
       drawHud(isAct)
     }
+    // Freeze shader light-count without changing the original visible lighting.
+    // Anchors retain the animated island position; only zero-intensity lights
+    // stay in the renderable hierarchy while the miniature is hidden.
+    if (showcaseRootRef.current) {
+      if (fireLight.current && fireLightAnchor.current) {
+        fireLightAnchor.current.getWorldPosition(lightWorld)
+        showcaseRootRef.current.worldToLocal(lightWorld)
+        fireLight.current.position.copy(lightWorld)
+      }
+      if (islandLight.current && islandLightAnchor.current) {
+        islandLightAnchor.current.getWorldPosition(lightWorld)
+        showcaseRootRef.current.worldToLocal(lightWorld)
+        islandLight.current.position.copy(lightWorld)
+      }
+    }
   })
 
   const treeCoords: [number, number, boolean][] = [
@@ -629,7 +648,9 @@ function RagnarokShowcaseImpl({ position, worldPosition, rotationY, summoned, sc
   ]
 
   return (
-    <group name="ragnarok-showcase-root" position={position} rotation={[0, rotationY, 0]}>
+    <group ref={showcaseRootRef} name="ragnarok-showcase-root" position={position} rotation={[0, rotationY, 0]}>
+      <pointLight ref={fireLight} color="#ff8828" intensity={0} distance={4.5} decay={2} />
+      <pointLight ref={islandLight} color="#d8ffe8" intensity={0} distance={7} decay={2} />
       {/* Emitter is fabricated with the laser, never visible in the dormant scene. */}
       <group ref={plinthRef} visible={false}>
       <PadRing radius={3.4} color="#5dffb0" y={0.06} tube={0.045} intensity={summoned ? 2.4 : 1.1} />
@@ -710,8 +731,8 @@ function RagnarokShowcaseImpl({ position, worldPosition, rotationY, summoned, sc
 
           {/* Campfire + Warm Flickering Light */}
           <mesh ref={fireMesh} position={[-0.08, 0.34, 0.06]} geometry={fireGeo} material={materials.spriteMat} />
-          <pointLight ref={fireLight} position={[-0.08, 0.7, 0.06]} color="#ff8828" intensity={14} distance={4.5} decay={2} />
-          <pointLight ref={islandLight} position={[0, 2.2, 0.4]} color="#d8ffe8" intensity={16} distance={7} decay={2} />
+          <group ref={fireLightAnchor} position={[-0.08, 0.7, 0.06]} />
+          <group ref={islandLightAnchor} position={[0, 2.2, 0.4]} />
 
           {/* Treasure Chest */}
           <mesh ref={chestMesh} position={[0.68, 0.34, 0.78]} geometry={chestGeo} material={materials.spriteMat} />
