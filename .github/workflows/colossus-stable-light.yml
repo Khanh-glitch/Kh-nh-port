@@ -1,27 +1,50 @@
-name: Colossus stable-light source verification
+name: Colossus integrated preview verification
 on:
   push:
     branches:
       - fix/colossus-stable-light-rig
   workflow_dispatch:
+permissions:
+  contents: write
 jobs:
-  verify:
+  verify-integrated:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
           cache: npm
           cache-dependency-path: source/package-lock.json
-      - name: Source regression and light-rig contracts
+      - name: Verify original integrated HTML baseline
         run: node tests/first-visit-hitch.mjs
-      - name: Install source dependencies
+      - name: Install editable source dependencies
         run: npm ci --prefix source
-      - name: Build real source, not stale embedded root index
+      - name: Build original Vite source for transpile errors
         run: npm run build --prefix source
-      - uses: actions/upload-artifact@v4
+      - name: Synchronize fixed Colossus modules into ACTUAL deployed HTML
+        run: node scripts/sync-colossus-standalone.mjs
+      - name: Verify synchronized standalone JS and frozen render settings
+        run: node tests/first-visit-hitch.mjs
+      - name: Package the integrated root site for Cloudflare Pages
+        run: node scripts/build-pages.mjs
+      - name: Upload the integrated site for independent verification
+        uses: actions/upload-artifact@v4
         with:
-          name: colossus-stable-light-standalone
-          path: source/dist/index.html
+          name: colossus-fixed-integrated-pages
+          path: dist-pages/
           if-no-files-found: error
+      - name: Commit synchronized HTML into preview branch (never main)
+        shell: bash
+        run: |
+          if ! git diff --quiet -- index.html; then
+            git config user.name 'github-actions[bot]'
+            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+            git add index.html
+            git commit -m "build(colossus): synchronize fixed laser code into preview HTML"
+            git push origin HEAD:fix/colossus-stable-light-rig
+          else
+            echo "Integrated preview HTML is already up to date."
+          fi
