@@ -110,3 +110,8 @@ assert.ok(front.includes('if (r < 0.5 || uRW.z < 0.5)'), 'staff shader discards 
 assert.equal((front.match(/mesh.visible = RW.uRW.value.z >= 0.5/g) || []).length, 2, 'both offscreen meshes must skip draw only at identical original shader threshold')
 assert.ok(front.includes('ref={meshRef} visible={false} geometry={geo} material={mat} frustumCulled={false} renderOrder={20}'), 'lattice is hidden during dormant')
 assert.ok(front.includes('ref={meshRef} visible={false} geometry={geo} material={mat} frustumCulled={false} renderOrder={21}'), 'staff wall is hidden during dormant')
+
+const realityMask = read('source/src/reality/mask.ts')
+assert.equal((realityMask.match(/if \(uRW.z > 0.5\) rwx = rwX\(vRWp, rwE\)/g) || []).length, 2, 'both original-world shader families must avoid heavy hex noise while inactive')
+assert.equal((realityMask.match(/if \(uRW.z > 0.5 && rwx > 0.0\) discard;/g) || []).length, 2, 'the original destruction/clipping threshold and appearance must remain unchanged')
+assert.ok(!realityMask.includes('float rwx = rwX(vRWp, rwE); if (uRW.z > 0.5'), 'no expensive unguarded original-world front evaluation in active pipeline')
