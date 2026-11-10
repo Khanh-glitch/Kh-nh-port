@@ -362,6 +362,9 @@ export function Robot() {
     // IMPORTANT: no hash-dependent work. Both URLs follow the same code path.
     {
       const warm = (window as unknown as { __orbitaColossusWarmup?: { status?: string } }).__orbitaColossusWarmup
+      // Never let a repeat summon or an automated browser check read the
+      // previous click's completed profile as though it were this activation.
+      ;(window as unknown as { __orbitaColossusProfile?: unknown }).__orbitaColossusProfile = null
       coldProbe.running = true
       coldProbe.started = performance.now()
       coldProbe.frames = 0
