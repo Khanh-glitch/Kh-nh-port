@@ -93,3 +93,8 @@ assert.ok(!mat.includes('orbita-materialize-${tag}'), 'unique decorative tags mu
 
 assert.ok(showWarm.includes("const roots: THREE.Object3D[] = [...beams, ...(showcaseRoots as THREE.Object3D[])]"), 'laser emitters must be GPU-primed before the larger models')
 assert.ok(showWarm.includes('window.setTimeout(() => { void warm() }, 0)'), 'async first-use work must not wait for a potentially stalled first render frame')
+
+const cooperative = read('source/src/scene/ShowcaseWarmup.tsx')
+assert.ok(cooperative.includes("name:'one-mesh-per-paint'"), 'compile work must be split over browser frames')
+assert.ok(!cooperative.includes('await gl.compileAsync(stageNow, camera)'), 'never reintroduce one-shot whole-scene GPU compile')
+assert.ok(cooperative.includes('await nextPaint()'), 'yield to browser between offscreen GPU uploads')
