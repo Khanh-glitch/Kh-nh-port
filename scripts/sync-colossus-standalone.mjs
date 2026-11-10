@@ -26,6 +26,9 @@ const targets = [
   'scene/Robot',
   'scene/materialize',
   'scene/Experience',
+  'scene/Player',
+  'ui/Overlay',
+  'store',
 ]
 const checkInternal = (name) => {
   const normalized = name.replace(/\\/g, '/').replace(/\.(tsx?|jsx?)$/, '')
@@ -34,7 +37,7 @@ const checkInternal = (name) => {
   return key
 }
 for (const file of targets) {
-  const name = file + (file === 'scene/materialize' ? '.ts' : '.tsx')
+  const name = file + (file === 'scene/materialize' || file === 'store' ? '.ts' : '.tsx')
   const input = readFileSync(resolve(srcRoot, name), 'utf8')
   const output = ts.transpileModule(input, {
     fileName: name,

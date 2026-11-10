@@ -11,6 +11,11 @@ interface State {
   phase: 'intro' | 'playing'
   loading: number
   ready: boolean
+  // Audio ready and GPU scene-ready are independent. The spaceship arrival
+  // never treats decoded piano samples as proof that rendering is ready.
+  arrivalProgress: number
+  arrivalStage: string
+  arrivalReady: boolean
   locked: boolean
   freeMouse: boolean
   paused: boolean
@@ -22,6 +27,7 @@ interface State {
   quality: 'high' | 'low'
   setLoading: (v: number) => void
   setReady: () => void
+  setArrivalReadiness: (progress: number, stage: string, ready: boolean) => void
   setPhase: (p: 'intro' | 'playing') => void
   setLocked: (v: boolean) => void
   setFree: (v: boolean) => void
@@ -37,6 +43,9 @@ export const useStore = create<State>((set) => ({
   phase: 'intro',
   loading: 0,
   ready: false,
+  arrivalProgress: 0,
+  arrivalStage: 'ĐANG KHỞI TẠO',
+  arrivalReady: false,
   locked: false,
   freeMouse: false,
   paused: false,
@@ -48,6 +57,11 @@ export const useStore = create<State>((set) => ({
   quality: 'low',
   setLoading: (loading) => set({ loading }),
   setReady: () => set({ ready: true, loading: 1 }),
+  setArrivalReadiness: (progress, stage, ready) => set((state) => {
+    const p = Math.max(0, Math.min(ready ? 1 : 0.99, progress))
+    if (state.arrivalProgress === p && state.arrivalStage === stage && state.arrivalReady === ready) return state
+    return { arrivalProgress: p, arrivalStage: stage, arrivalReady: ready }
+  }),
   setPhase: (phase) => set({ phase }),
   setLocked: (locked) => set({ locked }),
   setFree: (freeMouse) => set({ freeMouse }),

@@ -56,3 +56,15 @@ const offscreenBegin = nativeWarmSource.indexOf('sun.target.position.set(0, 0, -
 const offscreenEnd = nativeWarmSource.indexOf('sun.target.position.copy(targetPos)', offscreenBegin)
 assert.ok(offscreenBegin >= 0 && offscreenEnd > offscreenBegin, 'native source camera and sun restored')
 assert.ok(!nativeWarmSource.slice(offscreenBegin, offscreenEnd).includes('await '), 'no await while public camera or sun is temporarily moved')
+
+// ARRIVAL integration contracts. Audio readiness must not fake GPU readiness.
+const arrivalStore = read('source/src/store.ts')
+const arrivalPlayer = read('source/src/scene/Player.tsx')
+const arrivalOverlay = read('source/src/ui/Overlay.tsx')
+const arrivalWarmup = read('source/src/scene/ShowcaseWarmup.tsx')
+assert.match(arrivalStore, /arrivalReady: false/, 'arrival starts GPU-unready')
+assert.match(arrivalPlayer, /arrivalEnabled && !s\.arrivalReady/, 'landing blocks early click')
+assert.match(arrivalPlayer, /arrivalProgress/, 'approach camera uses real GPU progress')
+assert.match(arrivalOverlay, /disabled=\{!canLand\}/, 'arrival button cannot land before GPU readiness')
+assert.match(arrivalWarmup, /info\.nativeScenePasses === expectedNative/, 'native scene pass counted before ready')
+assert.match(arrivalWarmup, /info\.gpuSynced/, 'GPU fence required before granting landing')

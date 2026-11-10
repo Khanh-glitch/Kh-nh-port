@@ -34,6 +34,10 @@ function checkLockLater() {
 
 export function startGame() {
   const s = useStore.getState()
+  // The arrival gate is real: a disabled landing button must not be bypassed
+  // by a synthetic click, shortcut, or an outdated audio-only ready flag.
+  const arrivalEnabled = new URLSearchParams(window.location.search).get('arrival') === 'on'
+  if (!s.ready || (arrivalEnabled && !s.arrivalReady)) return
   void audio.start()
   s.setPhase('playing')
   s.setPaused(false)
@@ -260,7 +264,12 @@ export function Player() {
 
     if (s.phase === 'intro') {
       const a = 0.6 + t * 0.045
-      camera.position.set(Math.sin(a) * 88, 17 + Math.sin(t * 0.17) * 4, Math.cos(a) * 88)
+      const arrivalEnabled = new URLSearchParams(window.location.search).get('arrival') === 'on'
+      // Distance depends on ACTUAL upload/readback readiness, not elapsed time
+      // or the piano progress. Hold orbit while the GPU is not ready.
+      const approach = arrivalEnabled ? s.arrivalProgress : 1
+      const distance = 88 + (1 - approach) * 342
+      camera.position.set(Math.sin(a) * distance, 17 + Math.sin(t * 0.17) * 4 + (1 - approach) * 25, Math.cos(a) * distance)
       lookTarget.set(0, 6, 0)
       camera.lookAt(lookTarget)
       audio.update(camera)

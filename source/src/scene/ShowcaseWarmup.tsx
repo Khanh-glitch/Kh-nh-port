@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { useThree } from '@react-three/fiber'
 import * as THREE from 'three'
+import { useStore } from '../store'
 
 /**
  * The cold-activation hitch survived V2 because compileAsync only prepared
@@ -13,6 +14,8 @@ import * as THREE from 'three'
  */
 export function ShowcaseWarmup({ arenaState }: { arenaState: { mode: string } }) {
   const { gl, scene } = useThree()
+  const arrivalEnabled = typeof window !== 'undefined' &&
+    new URLSearchParams(window.location.search).get('arrival') === 'on'
 
   // Test-only shadow A/B. The normal portfolio does not alter shadows,
   // their 2048px map, geometry, shader, light count, or rendered pixels.
@@ -47,8 +50,10 @@ export function ShowcaseWarmup({ arenaState }: { arenaState: { mode: string } })
         new URLSearchParams(location.search).get('colossusDeepPrewarm') === 'on',
       deepWorldPrewarm: new URLSearchParams(location.search).get('colossusDeepPrewarm') === 'on',
       longestPrivateBatchCpuMs: 0,
-      nativeScenePrewarm: ['on','double'].includes(new URLSearchParams(location.search).get('colossusNativePreflight') ?? ''),
-      nativeSceneRepeats: new URLSearchParams(location.search).get('colossusNativePreflight') === 'double' ? 2 : 1,
+      nativeScenePrewarm: arrivalEnabled ||
+        ['on','double'].includes(new URLSearchParams(location.search).get('colossusNativePreflight') ?? ''),
+      nativeSceneRepeats: (arrivalEnabled ||
+        new URLSearchParams(location.search).get('colossusNativePreflight') === 'double') ? 2 : 1,
       nativeScenePasses: 0,
       nativeScenePeakCpuMs: 0,
       fullyLitMeshesPrimed: 0,
@@ -79,6 +84,36 @@ export function ShowcaseWarmup({ arenaState }: { arenaState: { mode: string } })
       programsAfter: 0,
       error: '',
     }
+    // GPU progress is read from actual shader/texture/geometry/real-shadow
+    // submission and the asynchronous GPU completion fence, not elapsed time.
+    // The UI must never display 100% until the real scene is synchronized.
+    if (arrivalEnabled) useStore.getState().setArrivalReadiness(0, 'KHỞI TẠO GPU', false)
+    const broadcastArrival = () => {
+      if (!arrivalEnabled || disposed) return
+      const count = Math.max(1, info.totalProxies)
+      let progress = 0.07
+      if (info.totalProxies) progress = 0.16 + 0.58 * info.uploadedProxies / count
+      if (info.laserReady) progress = Math.max(progress, 0.23)
+      if (info.materializeProgramsCompiled) progress = Math.max(progress, 0.30)
+      if (info.uploadedProxies === info.totalProxies && info.totalProxies > 0)
+        progress = Math.max(progress, 0.75)
+      const expectedNative = 2 * info.nativeSceneRepeats
+      if (info.nativeScenePrewarm)
+        progress = Math.max(progress, 0.75 + 0.19 * Math.min(1, info.nativeScenePasses / expectedNative))
+      if (info.status === 'gpu-pending') progress = 0.97
+      const verified = info.status === 'ready' && info.gpuSynced &&
+        info.uploadedProxies >= info.totalProxies && info.totalProxies >= 120 &&
+        (!info.nativeScenePrewarm || info.nativeScenePasses === expectedNative)
+      const stage = verified ? 'GPU VERIFIED · HẠ CÁNH ĐƯỢC PHÉP'
+        : info.status === 'failed' || info.status === 'missing-roots' ||
+          info.status === 'prewarm-skipped-busy-renderer' || info.status === 'native-scene-preflight-missing-primitives'
+          ? 'GIỮ QUỸ ĐẠO · GPU CHƯA SẴN SÀNG'
+        : info.nativeScenePrewarm && info.nativeScenePasses > 0 ? 'ĐANG CHUẨN BỊ SHADOW THỰC'
+        : info.uploadedProxies > 0 ? 'ĐANG NẠP HÌNH HỌC 3D'
+        : 'ĐANG BIÊN DỊCH VẬT LIỆU GPU'
+      useStore.getState().setArrivalReadiness(verified ? 1 : progress, stage, verified)
+    }
+    const arrivalTelemetry = arrivalEnabled ? window.setInterval(broadcastArrival, 160) : 0
     // Browser diagnostic: __orbitaColossusWarmup shows whether a cold click
     // raced initialization. With #colossus-profile, this is logged as well.
     Object.assign(window as unknown as { __orbitaColossusWarmup: typeof info }, { __orbitaColossusWarmup: info }) 
@@ -676,6 +711,7 @@ export function ShowcaseWarmup({ arenaState }: { arenaState: { mode: string } })
           await fence
           info.gpuSynced = true
           info.status = 'ready'
+          broadcastArrival()
         } else {
           gl.getContext().flush()
           info.status = 'submitted-no-async-readback'
@@ -705,6 +741,7 @@ export function ShowcaseWarmup({ arenaState }: { arenaState: { mode: string } })
     cancelTimeout = window.setTimeout(() => { void warm() }, 0)
     return () => {
       window.clearInterval(hudTimer)
+      if (arrivalTelemetry) window.clearInterval(arrivalTelemetry)
       badge.remove()
       disposed = true
       clearTimeout(cancelTimeout)

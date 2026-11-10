@@ -64,6 +64,58 @@ function Post({ low }: { low: boolean }) {
   )
 }
 
+// Lightweight genuine Three.js cockpit rig anchored to the visitor camera.
+// It is visible only in the opt-in approach, and never after landing.
+// All components use basic materials; the full ORBITA scene keeps its
+// existing 2048px shadows, 4x MSAA composer and postprocessing unchanged.
+function ArrivalCockpit() {
+  const frame = useRef<THREE.Group>(null)
+  const offset = useMemo(() => new THREE.Vector3(0, -0.34, -2.9), [])
+  useFrame(({ camera }) => {
+    if (!frame.current) return
+    frame.current.visible = useStore.getState().phase === 'intro'
+    frame.current.position.copy(offset).applyQuaternion(camera.quaternion).add(camera.position)
+    frame.current.quaternion.copy(camera.quaternion)
+  })
+  return (
+    <group ref={frame} name="orbita-arrival-cockpit">
+      {/* 3D panoramic windshield frame, dashboard and illuminated consoles. */}
+      <mesh position={[0, -1.12, 0.2]} renderOrder={25}>
+        <boxGeometry args={[5.3, 0.65, 0.65]} />
+        <meshBasicMaterial color="#08101f" depthTest={false} depthWrite={false} />
+      </mesh>
+      <mesh position={[0, -0.85, 0.05]} rotation={[-0.18, 0, 0]} renderOrder={26}>
+        <boxGeometry args={[4.6, 0.08, 0.45]} />
+        <meshBasicMaterial color="#234a68" depthTest={false} depthWrite={false} />
+      </mesh>
+      {[-1, 1].map((side) => (
+        <group key={side}>
+          <mesh position={[side * 1.87, 0.04, 0]} rotation={[0, 0, side * -0.2]} renderOrder={25}>
+            <boxGeometry args={[0.09, 2.7, 0.12]} />
+            <meshBasicMaterial color="#172d48" depthTest={false} depthWrite={false} />
+          </mesh>
+          <mesh position={[side * 1.84, -0.58, 0.22]} renderOrder={27}>
+            <boxGeometry args={[1.02, 0.44, 0.08]} />
+            <meshBasicMaterial color="#0b253c" depthTest={false} depthWrite={false} />
+          </mesh>
+          <mesh position={[side * 1.84, -0.42, 0.31]} renderOrder={28}>
+            <boxGeometry args={[0.86, 0.045, 0.01]} />
+            <meshBasicMaterial color="#39b9d9" depthTest={false} depthWrite={false} />
+          </mesh>
+        </group>
+      ))}
+      <mesh position={[0, 1.17, 0]} renderOrder={25}>
+        <boxGeometry args={[4.1, 0.12, 0.12]} />
+        <meshBasicMaterial color="#1a3852" depthTest={false} depthWrite={false} />
+      </mesh>
+      <mesh position={[0, -1.02, 0.56]} renderOrder={28}>
+        <boxGeometry args={[1.0, 0.18, 0.1]} />
+        <meshBasicMaterial color="#20c0e5" depthTest={false} depthWrite={false} />
+      </mesh>
+    </group>
+  )
+}
+
 function HighGateMeter() {
   useFrame((state, delta) => {
     highGuard.record(delta, useStore.getState().quality, state.gl)
@@ -116,6 +168,7 @@ export function Experience() {
         <Platform />
         <Exhibits />
         <Player />
+        {typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('arrival') === 'on' && <ArrivalCockpit />}
         <RealityHost />
         {!postProbeOff && <Post low={low} />}
       </Suspense>

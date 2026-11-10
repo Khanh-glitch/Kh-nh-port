@@ -17,6 +17,13 @@ function Kbd({ children }: { children: React.ReactNode }) {
 function Intro() {
   const loading = useStore((s) => s.loading)
   const ready = useStore((s) => s.ready)
+  const arrivalReady = useStore((s) => s.arrivalReady)
+  const arrivalProgress = useStore((s) => s.arrivalProgress)
+  const arrivalStage = useStore((s) => s.arrivalStage)
+  const arrival = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('arrival') === 'on'
+  const canLand = ready && (!arrival || arrivalReady)
+  // Fictional cockpit range tracks measured GPU readiness monotonically.
+  const simulatedRange = Math.round(250 + (1 - arrivalProgress) * 11950)
   const touch = useStore((s) => s.touch)
   return (
     <div className="absolute inset-0 z-30 flex flex-col items-center justify-between overflow-hidden px-6 py-8 text-white">
@@ -28,7 +35,7 @@ function Intro() {
       </div>
 
       <div className="relative z-10 flex max-w-3xl flex-col items-center text-center">
-        <div className="mb-5 text-[11px] tracking-[0.5em] text-cyan-200/80 animate-[fadeUp_1s_ease-out_both]">PORTFOLIO TƯƠNG TÁC · GÓC NHÌN THỨ NHẤT</div>
+        <div className="mb-5 text-[11px] tracking-[0.5em] text-cyan-200/80 animate-[fadeUp_1s_ease-out_both]">{arrival ? 'ORBITA ARRIVAL · PHI THUYỀN TỰ ĐỘNG · COCKPIT VIEW' : 'PORTFOLIO TƯƠNG TÁC · GÓC NHÌN THỨ NHẤT'}</div>
         <h1 className="font-display bg-gradient-to-b from-white via-white to-sky-300/70 bg-clip-text text-6xl font-bold leading-[0.95] tracking-tight text-transparent drop-shadow-[0_0_40px_rgba(120,160,255,0.45)] sm:text-8xl animate-[fadeUp_1.1s_0.1s_ease-out_both]">
           Một chiếc đĩa
           <br />
@@ -38,19 +45,25 @@ function Intro() {
           Bước đi trên đĩa bay của <b className="text-white">{STUDIO.name}</b> — nghe cây grand piano tự chơi, xem khối Rubik tự giải, chạm vào quả cầu đen, đứng dưới chân người máy khổng lồ và bấm cue trên sân khấu thật.
         </p>
 
+        {arrival && (
+          <div className="mt-5 flex w-full max-w-md justify-between rounded-xl border border-cyan-300/40 bg-slate-950/75 px-4 py-3 font-mono text-[11px] tracking-wider text-cyan-100 backdrop-blur-xl">
+            <div><div className="text-white/50">FLIGHT CONTROL</div><div className="mt-1 font-bold text-white">LÊ QUỐC KHÁNH</div></div>
+            <div className="text-right"><div className="text-white/50">ORBITA / SIMULATED RANGE</div><div className="mt-1 font-bold">{simulatedRange.toLocaleString('vi-VN')} U</div></div>
+          </div>
+        )}
         <div className="mt-9 flex flex-col items-center gap-3 animate-[fadeUp_1.1s_0.4s_ease-out_both]">
           <button
-            disabled={!ready}
+            disabled={!canLand}
             onClick={startGame}
             className="group relative overflow-hidden rounded-full border border-white/30 bg-white/10 px-10 py-4 text-sm font-semibold tracking-[0.3em] text-white backdrop-blur-md transition hover:scale-[1.04] hover:border-white/70 hover:bg-white/20 disabled:cursor-wait disabled:opacity-60"
           >
             <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/30 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
-            <span className="relative">{ready ? 'BƯỚC VÀO' : `ĐANG NẠP ÂM THANH ${Math.round(loading * 100)}%`}</span>
+            <span className="relative">{canLand ? (arrival ? 'HẠ CÁNH · BƯỚC VÀO ORBITA' : 'BƯỚC VÀO') : !ready ? `ĐANG NẠP ÂM THANH ${Math.round(loading * 100)}%` : arrival ? `GIỮ QUỸ ĐẠO · GPU ${Math.round(arrivalProgress * 100)}%` : 'ĐANG CHUẨN BỊ'}</span>
           </button>
           <div className="h-[2px] w-56 overflow-hidden rounded-full bg-white/15">
-            <div className="h-full bg-gradient-to-r from-cyan-300 to-fuchsia-400 transition-all duration-300" style={{ width: `${Math.round(loading * 100)}%` }} />
+            <div className="h-full bg-gradient-to-r from-cyan-300 to-fuchsia-400 transition-all duration-300" style={{ width: `${Math.round((arrival && ready ? arrivalProgress : loading) * 100)}%` }} />
           </div>
-          <div className="text-[11px] tracking-[0.25em] text-white/45">🎧 ĐEO TAI NGHE ĐỂ NGHE ÂM THANH 3D</div>
+          <div className="text-[11px] tracking-[0.2em] text-white/60">{arrival ? (ready ? (arrivalReady ? 'GPU VERIFIED · APPROACH COMPLETE' : arrivalStage) : 'AUDIO ASSETS · RECEIVING') : '🎧 ĐEO TAI NGHE ĐỂ NGHE ÂM THANH 3D'}</div>
         </div>
       </div>
 
