@@ -1,0 +1,49 @@
+name: Colossus WebGL call-stall attribution on Metal
+on:
+  push:
+    branches: [fix/colossus-frame-budget-prewarm]
+    paths:
+      - 'scripts/colossus-gl-call-timing.mjs'
+      - '.github/workflows/colossus-gl-call-timing.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  gl-timing:
+    runs-on: macos-15
+    timeout-minutes: 16
+    strategy:
+      fail-fast: false
+      matrix:
+        trial: [1, 2]
+        prewarm: [ready, off]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: source/package-lock.json
+      - run: npm ci --prefix source
+      - run: npm install --prefix source --no-save --package-lock=false playwright@1.56.1
+      - run: cd source && npx playwright install chromium
+      - name: Build checked-out candidate
+        run: |
+          node scripts/sync-colossus-standalone.mjs
+          node scripts/build-pages.mjs
+      - name: Isolate WebGL synchronous calls during click
+        env:
+          COLOSSUS_PREWARM_VARIANT: ${{ matrix.prewarm }}
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 --directory dist-pages >/tmp/colossus-gl.log 2>&1 &
+          for n in {1..30}; do
+            if curl -fsS -o /dev/null http://127.0.0.1:4173/; then break; fi
+            sleep 1
+          done
+          node scripts/colossus-gl-call-timing.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: colossus-gl-timing-${{ matrix.prewarm }}-${{ matrix.trial }}
+          path: browser-evidence/
+          if-no-files-found: warn
