@@ -22,13 +22,15 @@ try {
   await page.evaluate(() => {
     const probe = { startedAt:performance.now(), gaps:[], callbackCount:0, maxGapMs:0, lastAt:0 }
     window.__colossusIdleProbe = probe
-    let lastAt = performance.now()
+    let lastAt = 0
     const sample = (timestamp) => {
-      const d = timestamp - lastAt
+      if (lastAt > 0) {
+        const d = timestamp - lastAt
+        probe.maxGapMs = Math.max(probe.maxGapMs,d)
+        if (probe.gaps.length < 600) probe.gaps.push(Math.round(d))
+      }
       lastAt = timestamp
       probe.callbackCount++
-      probe.maxGapMs = Math.max(probe.maxGapMs,d)
-      if (probe.gaps.length < 600) probe.gaps.push(Math.round(d))
       probe.lastAt = timestamp
       requestAnimationFrame(sample)
     }

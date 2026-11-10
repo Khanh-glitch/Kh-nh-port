@@ -42,6 +42,7 @@ export function ShowcaseWarmup({ arenaState }: { arenaState: { mode: string } })
       materializeCompileMode: 'not-started',
       materializeVariantKeys: [] as string[],
       laserBatchCpuMs: 0,
+      deferredLaserFrames: 0,
       showcaseDrawBatches: 0,
       deferredShowcaseFrames: 0,
       maxSampledFrameMs: 0,
@@ -90,6 +91,12 @@ export function ShowcaseWarmup({ arenaState }: { arenaState: { mode: string } })
     // or while Chrome reports a pending input event. Visual content is unchanged.
     let previousPaintAt = 0
     let smoothPaints = 0
+    let healthyLaserPaints = 0
+    const budgetClockStart = performance.now()
+    const MAX_LASER_PREFLIGHT_WAIT_MS = 2500
+    // Do not submit an additional offscreen GPU workload if the renderer's
+    // own visible frames are already late. The production 3D visuals are
+    // untouched. Both laser and optional work must yield to user input.
     const nextPaint = async (priority: 'laser' | 'showcase'): Promise<boolean> => {
       for (;;) {
         const timestamp = await new Promise<number>(resolve => requestAnimationFrame(resolve))
@@ -97,16 +104,24 @@ export function ShowcaseWarmup({ arenaState }: { arenaState: { mode: string } })
         previousPaintAt = timestamp
         await new Promise<void>(resolve => window.setTimeout(resolve, 0))
         if (interrupted()) return false
-        if (priority === 'laser') return true
-        info.maxSampledFrameMs = Math.max(info.maxSampledFrameMs, Math.round(frameMs))
         const scheduling = (navigator as Navigator & {
           scheduling?: { isInputPending?: () => boolean }
         }).scheduling
         const pendingInput = scheduling?.isInputPending?.() ?? false
-        // 50ms accommodates normal 30fps rendering, but prevents the
-        // multi-second software-GPU frames from competing with background work.
-        if (document.visibilityState === 'visible' && !pendingInput
-            && frameMs > 0 && frameMs <= 50) smoothPaints++
+        const healthyPaint = document.visibilityState === 'visible' && !pendingInput &&
+          frameMs > 0 && frameMs <= 50
+        if (priority === 'laser') {
+          healthyLaserPaints = healthyPaint ? healthyLaserPaints + 1 : 0
+          if (healthyLaserPaints >= 2) { healthyLaserPaints = 0; return true }
+          info.deferredLaserFrames++
+          if (performance.now() - budgetClockStart >= MAX_LASER_PREFLIGHT_WAIT_MS) {
+            info.status = 'prewarm-skipped-busy-renderer'
+            return false
+          }
+          continue
+        }
+        info.maxSampledFrameMs = Math.max(info.maxSampledFrameMs, Math.round(frameMs))
+        if (healthyPaint) smoothPaints++
         else smoothPaints = 0
         if (smoothPaints >= 3) { smoothPaints = 0; return true }
         info.deferredShowcaseFrames++
@@ -248,7 +263,10 @@ export function ShowcaseWarmup({ arenaState }: { arenaState: { mode: string } })
         // Prime all four latency-critical laser drawables in one offscreen pass.
         // Previously each beam waited for a separate requestAnimationFrame.
         info.status = 'laser-textures'
-        if (!await nextPaint('laser')) { info.status='cancelled-on-summon'; return }
+        if (!await nextPaint('laser')) {
+          if (info.status !== 'prewarm-skipped-busy-renderer') info.status='cancelled-on-summon'
+          return
+        }
         for (const texture of priorityTextures) {
           if (interrupted()) { info.status='cancelled-on-summon'; return }
           try { gl.initTexture(texture) } catch { /* Visible renderer can retry. */ }
@@ -311,7 +329,10 @@ export function ShowcaseWarmup({ arenaState }: { arenaState: { mode: string } })
         if (materializeVariants.size > 0) {
           info.status = 'materialize-shaders'
           info.materializeVariantKeys = [...materializeVariants.keys()]
-          if (!await nextPaint('laser')) { info.status='cancelled-on-summon'; return }
+          if (!await nextPaint('laser')) {
+          if (info.status !== 'prewarm-skipped-busy-renderer') info.status='cancelled-on-summon'
+          return
+        }
           if (interrupted()) { info.status='cancelled-on-summon'; return }
           const startedMaterialize = performance.now()
           const representatives = [...materializeVariants.values()]

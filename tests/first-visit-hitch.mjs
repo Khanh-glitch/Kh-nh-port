@@ -139,3 +139,7 @@ assert.ok(showWarm.indexOf("info.status = 'materialize-shaders'") < showWarm.ind
 assert.ok(!showWarm.includes("info.materializeShaderMs = Math.round(performance.now() - startedMaterialize)\n          info.uploadedProxies +="), "shader precompile must not falsely claim geometry upload")
 
 assert.ok(showWarm.includes("new URLSearchParams(location.search).get('colossusPrewarm') === 'off'"), 'diagnostic A/B no-prewarm variant exists without modifying production default')
+
+assert.ok(showWarm.includes('MAX_LASER_PREFLIGHT_WAIT_MS = 2500'), 'laser preflight must not compete with overloaded visible renderer')
+assert.ok(showWarm.includes("info.status = 'prewarm-skipped-busy-renderer'"), 'budget backoff exposed in diagnostics')
+assert.ok(showWarm.includes('healthyLaserPaints >= 2'), 'laser GPU work requires healthy idle frames')
