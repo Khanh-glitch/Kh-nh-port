@@ -35,7 +35,7 @@ assert.match(warmup, /await gl\.compileAsync/, 'Shader prewarming away from summ
 assert.match(warmup, /gl\.render\(stageNow, camera\)/, 'Actual GPU draw primes geometry & programs, not only compileAsync')
 assert.doesNotMatch(warmup, /if \(\'requestIdleCallback\' in window/, 'Warmup cannot be postponed indefinitely to browser idle')
 assert.match(robot, /coldProbe\.warmStatusAtClick/, 'Cold vs warm first-activation diagnostics available')
-assert.match(robot, /<ShowcaseWarmup \/>/, 'Prewarm is mounted')
+assert.match(robot, /<ShowcaseWarmup arenaState=\{st\} \/>/, 'Cooperative prewarm is mounted with laser state')
 assert.match(robot, /apexColliderRemove/, 'Invisible plinth no longer collides')
 assert.match(robot, /ragColliderRemove/, 'Invisible Ragnarok plinth no longer collides')
 console.log('PASS: 22 static Colossus contracts (NOT a substitute for browser visual QA)')
