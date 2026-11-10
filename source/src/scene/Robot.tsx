@@ -28,8 +28,17 @@ const eyeColor = new THREE.Color('#ffa24a').multiplyScalar(3.2)
 const glowMat = new THREE.MeshBasicMaterial({ color: new THREE.Color('#ff8a2a').multiplyScalar(2.8), toneMapped: false })
 
 type V3 = [number, number, number]
+// Diagnostic opt-out compares the old on-every-React-render buffer lifecycle.
+// Production ALWAYS keeps static rounded geometry identity stable.
+const LEGACY_ROUNDED_GEOMETRY = typeof window !== 'undefined' &&
+  new URLSearchParams(window.location.search).get('colossusGeometryProbe') === 'legacy'
 function Part({ s, p, r = 0.22, m = mats.white, rot, cast = true }: { s: V3; p: V3; r?: number; m?: THREE.Material; rot?: V3; cast?: boolean }) {
-  return <mesh geometry={rbox(s[0], s[1], s[2], r)} material={m} position={p} rotation={rot} castShadow={cast} receiveShadow />
+  const stableGeometry = useMemo(() => rbox(s[0], s[1], s[2], r), [s[0], s[1], s[2], r])
+  // A state transition used to allocate a BRAND NEW VBO for every Part even
+  // though dimensions never changed. Reuse the identical geometry across
+  // dormant > summon > active > retract transitions.
+  const geometry = LEGACY_ROUNDED_GEOMETRY ? rbox(s[0], s[1], s[2], r) : stableGeometry
+  return <mesh geometry={geometry} material={m} position={p} rotation={rot} castShadow={cast} receiveShadow />
 }
 
 function Arm({
@@ -77,6 +86,16 @@ function Arm({
 export function Robot() {
   const renderStartedAt = performance.now()
   const { gl } = useThree()
+  const roundedBox = useMemo(() => {
+    const cache = new Map<string, THREE.BufferGeometry>()
+    return (w: number, h: number, d: number, radius: number) => {
+      if (LEGACY_ROUNDED_GEOMETRY) return rbox(w, h, d, radius)
+      const key = `${w}:${h}:${d}:${radius}`
+      let geometry = cache.get(key)
+      if (!geometry) { geometry = rbox(w, h, d, radius); cache.set(key, geometry) }
+      return geometry
+    }
+  }, [])
   const head = useRef<THREE.Group>(null)
   const torso = useRef<THREE.Group>(null)
   const armR = useRef<THREE.Group>(null)
@@ -905,7 +924,7 @@ export function Robot() {
             <Part s={[3.2, 2.4, 3.0]} p={[0, 1.2, 0]} r={0.7} />
             <Part s={[2.7, 1.0, 0.35]} p={[0, 1.3, 1.45]} m={mats.lacquer} r={0.2} />
             {[-0.68, 0.68].map((x) => (
-              <mesh key={x} position={[x, 1.3, 1.64]} geometry={rbox(0.82, 0.3, 0.06, 0.1)}>
+              <mesh key={x} position={[x, 1.3, 1.64]} geometry={roundedBox(0.82, 0.3, 0.06, 0.1)}>
                 <meshBasicMaterial ref={x < 0 ? eyes : undefined} color={eyeColor} toneMapped={false} />
               </mesh>
             ))}
@@ -971,7 +990,7 @@ export function Robot() {
 
       {/* Center Control Console Pylon */}
       <group position={CONSOLE_POS}>
-        <mesh position={[0, 0.52, 0]} geometry={rbox(3.1, 1.04, 1.15, 0.1)} material={mats.darkMetal} castShadow receiveShadow />
+        <mesh position={[0, 0.52, 0]} geometry={roundedBox(3.1, 1.04, 1.15, 0.1)} material={mats.darkMetal} castShadow receiveShadow />
         {arenaModeUi === 'dormant' && (
           <mesh position={[0, 1.7, 0]} rotation={[0.4, 0.7, 0]}>
             <octahedronGeometry args={[0.16, 0]} />
@@ -979,7 +998,7 @@ export function Robot() {
           </mesh>
         )}
         <group position={[0, 1.08, 0]} rotation={[0.32, 0, 0]}>
-          <mesh geometry={rbox(2.95, 0.12, 1.05, 0.05)} material={mats.lacquer} />
+          <mesh geometry={roundedBox(2.95, 0.12, 1.05, 0.05)} material={mats.lacquer} />
           <mesh position={[0, 0.075, -0.22]} rotation={[-Math.PI / 2, 0, 0]}>
             <planeGeometry args={[2.6, 0.5]} />
             <meshBasicMaterial map={consoleScreen.tex} toneMapped={false} />
@@ -991,7 +1010,7 @@ export function Robot() {
             { x: 0.92, id: 'console-rag', label: 'Bệ 02 · RAGNAROK', hint: ragSummoned ? 'Mở hồ sơ Ragnarok' : 'Triệu hồi Ragnarok', panel: 'ragnarok' as const, fn: () => { btnPress[2] = 1; if (!ragActive.current) startSummonAll('rag'); else openPanel('ragnarok') } },
           ].map((b, i) => (
             <group key={b.id} position={[b.x, 0.08, 0.25]}>
-              <mesh ref={(r) => { btnRefs.current[i] = r }} position={[0, 0.06, 0]} geometry={rbox(0.68, 0.1, 0.36, 0.04)} material={btnMats[i]} />
+              <mesh ref={(r) => { btnRefs.current[i] = r }} position={[0, 0.06, 0]} geometry={roundedBox(0.68, 0.1, 0.36, 0.04)} material={btnMats[i]} />
               <Hit id={b.id} label={b.label} hint={b.hint} panel={b.panel} maxDist={9} size={[0.76, 0.45, 0.45]} position={[0, 0.08, 0]} onClick={b.fn} />
             </group>
           ))}

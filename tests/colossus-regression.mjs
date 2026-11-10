@@ -39,3 +39,11 @@ assert.match(robot, /<ShowcaseWarmup arenaState=\{st\} \/>/, 'Cooperative prewar
 assert.match(robot, /apexColliderRemove/, 'Invisible plinth no longer collides')
 assert.match(robot, /ragColliderRemove/, 'Invisible Ragnarok plinth no longer collides')
 console.log('PASS: 22 static Colossus contracts (NOT a substitute for browser visual QA)')
+
+// Static rounded parts must survive Robot/Apex React state transitions without
+// invalidating the GPU buffers already uploaded during prewarm.
+const stableRobot = read('source/src/scene/Robot.tsx')
+const stableApex = read('source/src/scene/ApexShowcase.tsx')
+assert.match(stableRobot, /const stableGeometry = useMemo\(/, 'Colossus Part geometry cached per dimension')
+assert.match(stableRobot, /geometry=\{roundedBox\(/, 'Colossus inline rounded geometry cached')
+assert.match(stableApex, /geometry=\{roundedBox\(/, 'APEX inline rounded geometry cached')

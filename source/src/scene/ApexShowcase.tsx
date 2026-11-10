@@ -24,6 +24,8 @@ export interface ShowcaseProps {
 }
 
 type AbilityMode = 0 | 1 | 2 // 0: Idle/Patrol, 1: A1 Target Lock & Dash Clamp, 2: A2 Armor Core Surge
+const LEGACY_ROUNDED_GEOMETRY = typeof window !== 'undefined' &&
+  new URLSearchParams(window.location.search).get('colossusGeometryProbe') === 'legacy'
 
 function makeNewbotArmorTex() {
   const S = 512
@@ -157,6 +159,19 @@ function ApexShowcaseImpl({ position, worldPosition, rotationY, summoned, scanPr
   }).current
 
   const matUniforms = useMemo(() => createMaterializeUniforms('#ff9b30'), [])
+  // The 17 procedural armor details are immutable shapes. JSX used to create
+  // fresh geometry every time summon/completion props changed, invalidating
+  // buffers which the GPU warmup had already prepared.
+  const roundedBox = useMemo(() => {
+    const cache = new Map<string, THREE.BufferGeometry>()
+    return (w: number, h: number, d: number, radius: number) => {
+      if (LEGACY_ROUNDED_GEOMETRY) return rbox(w, h, d, radius)
+      const key = `${w}:${h}:${d}:${radius}`
+      let geometry = cache.get(key)
+      if (!geometry) { geometry = rbox(w, h, d, radius); cache.set(key, geometry) }
+      return geometry
+    }
+  }, [])
   useEffect(() => {
     const shadowCasters: THREE.Mesh[] = []
     if (newbotRoot.current) {
@@ -553,13 +568,13 @@ function ApexShowcaseImpl({ position, worldPosition, rotationY, summoned, scanPr
                 <cylinderGeometry args={[0.24, 0.24, 0.22, 18]} />
               </mesh>
               {/* Armored Thigh/Shin */}
-              <mesh position={[s * 0.18, -0.35, 0.04]} rotation={[0, 0, s * -0.12]} geometry={rbox(0.38, 0.68, 0.44, 0.06)} material={materials.armor} castShadow />
+              <mesh position={[s * 0.18, -0.35, 0.04]} rotation={[0, 0, s * -0.12]} geometry={roundedBox(0.38, 0.68, 0.44, 0.06)} material={materials.armor} castShadow />
               {/* Bronze Knee/Ankle Ring */}
               <mesh position={[s * 0.25, -0.58, 0.08]} rotation={[0, 0, Math.PI / 2]} material={materials.bronze}>
                 <cylinderGeometry args={[0.17, 0.17, 0.24, 16]} />
               </mesh>
               {/* Tapered Chisel Foot */}
-              <mesh position={[s * 0.28, -0.76, 0.16]} rotation={[0.15, 0, 0]} geometry={rbox(0.32, 0.24, 0.56, 0.05)} material={materials.dark} castShadow />
+              <mesh position={[s * 0.28, -0.76, 0.16]} rotation={[0.15, 0, 0]} geometry={roundedBox(0.32, 0.24, 0.56, 0.05)} material={materials.dark} castShadow />
             </group>
           ))}
 
@@ -574,10 +589,10 @@ function ApexShowcaseImpl({ position, worldPosition, rotationY, summoned, scanPr
           {/* Upper Body Pod + Head + Caliper Arms */}
           <group ref={upperBody} position={[0, 0.88, 0]}>
             {/* Dark Inner Chassis Core */}
-            <mesh geometry={rbox(1.12, 1.02, 0.96, 0.24)} material={materials.dark} castShadow />
+            <mesh geometry={roundedBox(1.12, 1.02, 0.96, 0.24)} material={materials.dark} castShadow />
 
             {/* Obsidian Recessed Visor Cavity */}
-            <mesh position={[0, 0.04, 0.36]} geometry={rbox(0.78, 0.5, 0.34, 0.06)} material={materials.cavity} />
+            <mesh position={[0, 0.04, 0.36]} geometry={roundedBox(0.78, 0.5, 0.34, 0.06)} material={materials.cavity} />
 
             {/* Signature Faceted Amber Core / Eye Crystal (matches home-robot-core.png!) */}
             <mesh ref={coreEye} position={[0, 0.05, 0.53]} rotation={[0.18, 0.25, -0.35]} scale={[0.72, 1.08, 0.65]} material={materials.coreCrystal}>
@@ -589,8 +604,8 @@ function ApexShowcaseImpl({ position, worldPosition, rotationY, summoned, scanPr
             <group ref={eyeLightAnchor} position={[0, 0.05, 0.95]} />
 
             {/* Dorsal Vertical Crest Fin */}
-            <mesh position={[0, 0.68, 0.02]} rotation={[-0.22, 0, 0]} geometry={rbox(0.18, 0.58, 0.78, 0.04)} material={materials.armor} castShadow />
-            <mesh position={[0, 0.72, 0.32]} rotation={[-0.22, 0, 0]} geometry={rbox(0.12, 0.48, 0.14, 0.02)} material={materials.orange} />
+            <mesh position={[0, 0.68, 0.02]} rotation={[-0.22, 0, 0]} geometry={roundedBox(0.18, 0.58, 0.78, 0.04)} material={materials.armor} castShadow />
+            <mesh position={[0, 0.72, 0.32]} rotation={[-0.22, 0, 0]} geometry={roundedBox(0.12, 0.48, 0.14, 0.02)} material={materials.orange} />
 
             {/* Overhanging Angled Brow Cowl Plates */}
             {[-1, 1].map((s) => (
@@ -598,24 +613,24 @@ function ApexShowcaseImpl({ position, worldPosition, rotationY, summoned, scanPr
                 key={s}
                 position={[s * 0.34, 0.34, 0.24]}
                 rotation={[0.28, s * -0.26, s * -0.22]}
-                geometry={rbox(0.56, 0.26, 0.76, 0.05)}
+                geometry={roundedBox(0.56, 0.26, 0.76, 0.05)}
                 material={materials.armor}
                 castShadow
               />
             ))}
 
             {/* Floating Cheek & Chin Plates (spring-animated, flare open in A2!) */}
-            <mesh ref={cheekL} position={[-0.48, -0.08, 0.28]} rotation={[0.12, 0.32, 0.18]} geometry={rbox(0.32, 0.44, 0.52, 0.05)} material={materials.armor} castShadow />
-            <mesh ref={cheekR} position={[0.48, -0.08, 0.28]} rotation={[0.12, -0.32, -0.18]} geometry={rbox(0.32, 0.44, 0.52, 0.05)} material={materials.armor} castShadow />
-            <mesh ref={chinRef} position={[0, -0.34, 0.38]} rotation={[0.25, 0, 0]} geometry={rbox(0.56, 0.24, 0.42, 0.05)} material={materials.armor} castShadow />
+            <mesh ref={cheekL} position={[-0.48, -0.08, 0.28]} rotation={[0.12, 0.32, 0.18]} geometry={roundedBox(0.32, 0.44, 0.52, 0.05)} material={materials.armor} castShadow />
+            <mesh ref={cheekR} position={[0.48, -0.08, 0.28]} rotation={[0.12, -0.32, -0.18]} geometry={roundedBox(0.32, 0.44, 0.52, 0.05)} material={materials.armor} castShadow />
+            <mesh ref={chinRef} position={[0, -0.34, 0.38]} rotation={[0.25, 0, 0]} geometry={roundedBox(0.56, 0.24, 0.42, 0.05)} material={materials.armor} castShadow />
 
             {/* 3 Chest Status Ticks */}
             {[-0.14, 0, 0.14].map((x, idx) => (
-              <mesh key={idx} position={[x, -0.22, 0.53]} geometry={rbox(0.08, 0.04, 0.04, 0.01)} material={materials.orange} />
+              <mesh key={idx} position={[x, -0.22, 0.53]} geometry={roundedBox(0.08, 0.04, 0.04, 0.01)} material={materials.orange} />
             ))}
 
             {/* Back Pack / Exhaust */}
-            <mesh position={[0, 0.05, -0.52]} geometry={rbox(0.84, 0.68, 0.36, 0.08)} material={materials.dark} castShadow />
+            <mesh position={[0, 0.05, -0.52]} geometry={roundedBox(0.84, 0.68, 0.36, 0.08)} material={materials.dark} castShadow />
 
             {/* Telescopic Hydraulic Struts (torso -> shoulder hubs) */}
             {[-1, 1].map((s) => (
@@ -654,15 +669,15 @@ function ApexShowcaseImpl({ position, worldPosition, rotationY, summoned, scanPr
                 {/* Massive Arched C-Shaped Caliper Shield Segments curving high above head */}
                 <group rotation={[0, 0, side * 0.1]}>
                   {/* Lower arm strut */}
-                  <mesh position={[side * 0.22, 0.38, 0.04]} rotation={[0, 0, side * -0.18]} geometry={rbox(0.36, 0.68, 0.46, 0.06)} material={materials.dark} castShadow />
+                  <mesh position={[side * 0.22, 0.38, 0.04]} rotation={[0, 0, side * -0.18]} geometry={roundedBox(0.36, 0.68, 0.46, 0.06)} material={materials.dark} castShadow />
                   {/* Mid curved ivory armor shield */}
-                  <mesh position={[side * 0.24, 0.85, 0.08]} rotation={[-0.12, 0, side * 0.22]} geometry={rbox(0.42, 0.72, 0.5, 0.07)} material={materials.armor} castShadow />
+                  <mesh position={[side * 0.24, 0.85, 0.08]} rotation={[-0.12, 0, side * 0.22]} geometry={roundedBox(0.42, 0.72, 0.5, 0.07)} material={materials.armor} castShadow />
                   {/* Upper inward-arching caliper claw blade */}
-                  <mesh position={[side * 0.02, 1.38, 0.16]} rotation={[-0.25, 0, side * 0.68]} geometry={rbox(0.34, 0.68, 0.42, 0.06)} material={materials.armor} castShadow />
+                  <mesh position={[side * 0.02, 1.38, 0.16]} rotation={[-0.25, 0, side * 0.68]} geometry={roundedBox(0.34, 0.68, 0.42, 0.06)} material={materials.armor} castShadow />
                   {/* Dark inner pincer tip */}
-                  <mesh position={[side * -0.26, 1.56, 0.24]} rotation={[-0.3, 0, side * 1.05]} geometry={rbox(0.18, 0.4, 0.26, 0.03)} material={materials.dark} castShadow />
+                  <mesh position={[side * -0.26, 1.56, 0.24]} rotation={[-0.3, 0, side * 1.05]} geometry={roundedBox(0.18, 0.4, 0.26, 0.03)} material={materials.dark} castShadow />
                   {/* Orange hazard trim accent */}
-                  <mesh position={[side * 0.36, 0.88, 0.12]} rotation={[-0.12, 0, side * 0.22]} geometry={rbox(0.06, 0.56, 0.12, 0.02)} material={materials.orange} />
+                  <mesh position={[side * 0.36, 0.88, 0.12]} rotation={[-0.12, 0, side * 0.22]} geometry={roundedBox(0.06, 0.56, 0.12, 0.02)} material={materials.orange} />
                 </group>
               </group>
             ))}
