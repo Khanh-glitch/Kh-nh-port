@@ -3,7 +3,7 @@ import { mkdirSync, writeFileSync } from 'node:fs'
 const require = createRequire(import.meta.url)
 const { chromium } = require('../source/node_modules/playwright')
 const variant=process.env.COL_VARIANT || 'gated'
-const site=variant==='baseline'?'https://1cc1b13a.menniverse.pages.dev':'https://f5dacc10.menniverse.pages.dev'
+const site=variant==='baseline'?'https://f5dacc10.menniverse.pages.dev':'https://961acfd8.menniverse.pages.dev'
 const url = site+'/#at=0,-27,0,20&autostart&skip'
 mkdirSync('browser-evidence', { recursive: true })
 const browser = await chromium.launch({
