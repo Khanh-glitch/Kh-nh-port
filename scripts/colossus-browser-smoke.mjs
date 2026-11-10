@@ -1,0 +1,72 @@
+import { createRequire } from 'node:module'
+import { mkdirSync, writeFileSync } from 'node:fs'
+const require = createRequire(import.meta.url)
+const { chromium } = require('../source/node_modules/playwright')
+const url = 'https://e59cfc3b.menniverse.pages.dev/#at=0,-27,0,20&autostart&skip'
+mkdirSync('browser-evidence', { recursive: true })
+const browser = await chromium.launch({
+  channel: 'chrome',
+  headless: true,
+  args: ['--no-sandbox','--enable-webgl','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']
+})
+const page = await browser.newPage({viewport:{width:1280,height:720},deviceScaleFactor:1})
+const errors=[]
+const netFailed=[]
+page.on('pageerror', e => errors.push(e.message))
+page.on('requestfailed', r => netFailed.push(r.url().slice(0,150) + ': ' + r.failure()?.errorText))
+const t0=Date.now()
+try {
+  await page.goto(url,{waitUntil:'domcontentloaded',timeout:60000})
+  await page.waitForFunction(() => !!window.__orbitaColossusWarmup, {timeout:60000})
+  await page.waitForTimeout(6000)
+  const before=await page.evaluate(() => {
+    const canvas=document.querySelector('canvas')
+    const gl=canvas?.getContext('webgl2')
+    return {
+      canvas:!!canvas,webgl2:!!gl,contextLost:gl?.isContextLost(),
+      warmup:window.__orbitaColossusWarmup,
+      canvasSize:canvas ? [canvas.width,canvas.height] : null,
+      pageTitle:document.title,
+      overlay:document.getElementById('menniverse-laser-probe')?.textContent?.slice(0,200)
+    }
+  })
+  await page.screenshot({path:'browser-evidence/01-before.png'})
+  const attempted=await page.evaluate(() => {
+    const canvas=document.querySelector('canvas')
+    if(!canvas) return false
+    const r=canvas.getBoundingClientRect()
+    const point={bubbles:true,cancelable:true,clientX:r.left+r.width/2,clientY:r.top+r.height/2,pointerId:1,pointerType:'mouse',isPrimary:true}
+    canvas.dispatchEvent(new PointerEvent('pointermove',point))
+    canvas.dispatchEvent(new PointerEvent('pointerdown',point))
+    canvas.dispatchEvent(new PointerEvent('pointerup',point))
+    return true
+  })
+  await page.waitForTimeout(9000)
+  const after=await page.evaluate(() => ({
+    warmup:window.__orbitaColossusWarmup,
+    profile:window.__orbitaColossusProfile || null,
+    historyLength:window.__orbitaColossusProfiles?.length || 0,
+  }))
+  await page.screenshot({path:'browser-evidence/02-after.png'})
+  const report={
+    url,elapsedMs:Date.now()-t0,attempted,before,after,
+    errors,netFailed,
+    notes:'Headless SwiftShader smoke, NOT user-GPU performance or visual parity certification'
+  }
+  writeFileSync('browser-evidence/summary.json',JSON.stringify(report,null,2))
+  console.log(JSON.stringify({
+    canvas:before.canvas,webgl2:before.webgl2,contextLost:before.contextLost,
+    warmStatus:before.warmup?.status,initialPrograms:before.warmup?.programsAfter,
+    attempted,profileRecorded:!!after.profile,
+    reportedMaxFrameMs:after.profile?.maxFrameMs,
+    newShaderPrograms:after.profile?.programDelta,
+    errors,netFailed:netFailed.slice(0,8)
+  },null,2))
+  if(!before.canvas || !before.webgl2) process.exitCode=2
+  if(errors.length) process.exitCode=3
+} catch(e) {
+  console.error('Browser smoke could not complete', e)
+  process.exitCode=4
+} finally {
+  await browser.close()
+}
