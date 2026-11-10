@@ -1,0 +1,27 @@
+name: Colossus stable-light source verification
+on:
+  push:
+    branches:
+      - fix/colossus-stable-light-rig
+  workflow_dispatch:
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: source/package-lock.json
+      - name: Source regression and light-rig contracts
+        run: node tests/first-visit-hitch.mjs
+      - name: Install source dependencies
+        run: npm ci --prefix source
+      - name: Build real source, not stale embedded root index
+        run: npm run build --prefix source
+      - uses: actions/upload-artifact@v4
+        with:
+          name: colossus-stable-light-standalone
+          path: source/dist/index.html
+          if-no-files-found: error
