@@ -62,6 +62,7 @@ export function RealityHost() {
     warmStarted: false,
     warmTex: [] as THREE.Texture[],
     warmMesh: [] as THREE.Object3D[],
+    warmCritical: [] as THREE.Object3D[],
     warmCompilePending: false,
     warmErrors: 0,
     warmShaderDone: 0,
@@ -195,7 +196,15 @@ export function RealityHost() {
     const dbg = gl.getContext().getExtension('WEBGL_debug_renderer_info')
     hexGpu.info.renderer = String(gl.getContext().getParameter(
       dbg?.UNMASKED_RENDERER_WEBGL ?? gl.getContext().RENDERER))
-    if (/SwiftShader|llvmpipe|Software/i.test(hexGpu.info.renderer)) {
+    // The first 6-proxy private draw took 214-450 ms on Metal and then
+    // backed off; it moved a hitch into idle without preparing the world.
+    // Keep it as a diagnostic A/B only until actual visitor benefit is proven.
+    const enabled = new URLSearchParams(window.location.search)
+      .get('hexPrivateGpuPrewarm') === 'on'
+    if (!enabled) {
+      hexGpu.blocked = true
+      hexGpu.info.status = 'disabled-unproven-private-gpu'
+    } else if (/SwiftShader|llvmpipe|Software/i.test(hexGpu.info.renderer)) {
       hexGpu.blocked = true
       hexGpu.info.status = 'skipped-software-renderer'
     } else hexGpu.info.status = 'awaiting-idle'
@@ -459,7 +468,43 @@ export function RealityHost() {
     // Prepare Piano sheets and GoldZone before the hidden UEH campus.
     if (hostRoot.current) for (const child of hostRoot.current.children) if (child !== ueh.current) scan(child)
     scan(ueh.current)
-    S.warmShaderTotal = S.warmMesh.length
+    // Shader programs must be compiled BEFORE 41 texture uploads. The old
+    // texture-first queue reached a visitor click with 0/83 shaders ready.
+    // Use exact source meshes/materials but prime the nearby unique program
+    // variants first, rather than compiling the same GLSL 83 times.
+    scene.updateMatrixWorld(true)
+    const position = new THREE.Vector3()
+    const distance = (obj: THREE.Object3D) => {
+      obj.getWorldPosition(position)
+      return Math.hypot(position.x-CENTER.x,position.z-CENTER.z)
+    }
+    S.warmMesh.sort((a,b)=>distance(a)-distance(b))
+    const variantKey = (obj: THREE.Object3D) => {
+      const m = (obj as THREE.Mesh).material
+      const mats = Array.isArray(m) ? m : m ? [m] : []
+      return [
+        (obj as THREE.InstancedMesh).isInstancedMesh ? 'instanced' : 'plain',
+        ...mats.map(mat => {
+          const p = mat as THREE.MeshStandardMaterial
+          return [mat.type,mat.customProgramCacheKey(),
+            p.map?'map':'nomap',p.normalMap?'normal':'',
+            p.bumpMap?'bump':'',p.roughnessMap?'rough':'',
+            p.alphaMap?'alpha':'',p.emissiveMap?'emissive':'',
+            mat.transparent?'blend':'opaque',mat.side
+          ].join(':')
+        }),
+      ].join('|')
+    }
+    const seenVariants = new Set<string>()
+    S.warmCritical = S.warmMesh.filter(obj=>{
+      const key=variantKey(obj)
+      if(seenVariants.has(key))return false
+      seenVariants.add(key)
+      return true
+    })
+    const critical=new Set(S.warmCritical)
+    S.warmMesh=S.warmMesh.filter(obj=>!critical.has(obj))
+    S.warmShaderTotal = S.warmMesh.length + S.warmCritical.length
     S.warmTextureTotal = S.warmTex.length
     recordHexTiming('warm-queue-build', started)
   }
@@ -512,8 +557,23 @@ export function RealityHost() {
     S.warmHealthyPaints = shaderHealthy ? S.warmHealthyPaints + 1 : 0
     const warmOpportunity = S.warmHealthyPaints >= 2
     if (warmOpportunity) S.warmHealthyPaints = 0
-    if (S.warmPass < 2 && st.phase === 'idle' && warmOpportunity) {
-      if (S.warmTex.length) {
+    if (S.warmPass < 2 && (st.phase === 'idle' || st.phase === 'ignite') && warmOpportunity) {
+      if (S.warmCritical.length && !S.warmCompilePending) {
+        const obj=S.warmCritical.shift()!
+        S.warmCompilePending=true
+        if(typeof gl.compileAsync==='function') {
+          void gl.compileAsync(obj,camera,scene).catch(err=>{
+            S.warmErrors++;console.warn('[HEX preflight] critical shader',err)
+          }).finally(()=>{S.warmCompilePending=false;S.warmShaderDone++})
+        } else {
+          try{gl.compile(obj,camera,scene)}
+          catch(err){S.warmErrors++;console.warn('[HEX preflight] critical shader fallback',err)}
+          S.warmCompilePending=false
+          S.warmShaderDone++
+        }
+      } else if(S.warmCompilePending) {
+        // Let async compilation complete before starting the next resource.
+      } else if (S.warmTex.length) {
         const tex = S.warmTex.shift()!
         try {
           gl.initTexture(tex)
@@ -546,7 +606,8 @@ export function RealityHost() {
       totalTextures: S.warmTextureTotal,
       compiledShaders: S.warmShaderDone,
       uploadedTextures: S.warmTextureDone,
-      remainingShaders: S.warmMesh.length,
+      remainingShaders: S.warmMesh.length+S.warmCritical.length,
+      criticalRemaining: S.warmCritical.length,
       remainingTextures: S.warmTex.length,
       errors: S.warmErrors,
     }
@@ -555,11 +616,13 @@ export function RealityHost() {
     // before the visitor could reach the piano. That forced first-HEX
     // material compilation on the interaction frame. There is no more
     // full-world visibility preflight to clean up at intro exit.
-    if (S.warmPass < 2 && st.phase !== 'idle') {
-      // Stop GPU prep immediately on an actual user activation; all future
+    if (S.warmPass < 2 &&
+        (st.phase === 'sweep' || st.phase === 'active' || st.phase === 'retract')) {
+      // Stop GPU prep when the first visible HEX sweep begins; all future
       // rendering follows the authentic HEX sweep/materialization state.
       S.warmTex.length = 0
       S.warmMesh.length = 0
+      S.warmCritical.length = 0
       S.warmPass = 2
     }
     // --- 2. Hiện diện của người chơi quanh đàn ---
