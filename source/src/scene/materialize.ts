@@ -37,9 +37,10 @@ export function patchMaterialize<T extends THREE.Material>(mat: T, uniforms: Mat
   // ahead of costly PBR lighting; keep the final color equation unchanged.
   const earlyDiscardProbe = typeof window !== 'undefined' &&
     new URLSearchParams(window.location.search).get('colossusEarlyDiscardProbe') === 'on'
-  mat.customProgramCacheKey = () => earlyDiscardProbe
-    ? 'orbita-materialize-early-reject-v2'
-    : 'orbita-materialize-shared-v1'
+  // Keep the original cache identity for every production material.
+  mat.customProgramCacheKey = () => 'orbita-materialize-shared-v1'
+  // The opt-in experiment is a distinct shared GLSL program family.
+  if (earlyDiscardProbe) mat.customProgramCacheKey = () => 'orbita-materialize-early-reject-v2'
   mat.onBeforeCompile = (shader) => {
     shader.uniforms.uScanY = uniforms.uScanY
     shader.uniforms.uWireHeight = uniforms.uWireHeight
