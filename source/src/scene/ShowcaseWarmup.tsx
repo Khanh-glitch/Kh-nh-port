@@ -93,11 +93,22 @@ export function ShowcaseWarmup() {
       // First APEX reveal enables a previously hidden PointLight.
       // Compile the real light-count variants before the first laser.
       const baseVisibleLights = new Set<THREE.Object3D>()
+      // The 96x96 PRIVATE warm pass used to clone production 2048px
+      // shadow maps. That needlessly runs full-resolution shadow passes while
+      // the first laser may be starting. Keep castShadow and the exact shader
+      // defines, but use 64px maps ONLY on private light clones.
+      // The production scene/lights/shadows remain completely unchanged.
+      const clonePrivateLight = (source: THREE.Light): THREE.Light => {
+        const copy = source.clone(false)
+        const shadow = (copy as THREE.Light & { shadow?: THREE.LightShadow }).shadow
+        if (copy.castShadow && shadow) shadow.mapSize.set(64, 64)
+        return copy
+      }
       const extraLights = (root: THREE.Object3D | undefined | null): THREE.Light[] => {
         const list: THREE.Light[] = []
         root?.traverse(obj => {
           if (!(obj as THREE.Light).isLight || baseVisibleLights.has(obj)) return
-          list.push((obj as THREE.Light).clone(false))
+          list.push(clonePrivateLight(obj as THREE.Light))
         })
         return list
       }
@@ -106,7 +117,7 @@ export function ShowcaseWarmup() {
       scene.traverseVisible(object => {
         if (!(object as THREE.Light).isLight) return
         baseVisibleLights.add(object)
-        const light = (object as THREE.Light).clone(false)
+        const light = clonePrivateLight(object as THREE.Light)
         stageNow.add(light)
       })
 
