@@ -2,7 +2,7 @@ import { createRequire } from 'node:module'
 const require=createRequire(import.meta.url)
 const { chromium }=require('../source/node_modules/playwright')
 const variant=process.env.COL_VARIANT || 'gated'
-const site=variant==='baseline'?'https://1cc1b13a.menniverse.pages.dev':'https://f5dacc10.menniverse.pages.dev'
+const site=variant==='baseline'?'https://f5dacc10.menniverse.pages.dev':'https://961acfd8.menniverse.pages.dev'
 const url=site+'/#at=0,-27,0,20&autostart&skip'
 const browser=await chromium.launch({channel:'chrome',headless:true,args:['--no-sandbox','--enable-webgl','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']})
 const page=await browser.newPage({viewport:{width:1280,height:720},deviceScaleFactor:1})
