@@ -12,6 +12,7 @@ const variants=[
  {name:'legacy',url:base,key:'orbita-materialize-shared-v1'},
  {name:'early',url:base+'?colossusEarlyDiscardProbe=on',key:'orbita-materialize-early-reject-v2'},
  {name:'fast',url:base+'?colossusEarlyDiscardProbe=fast',key:'orbita-materialize-fast-bound-v3'},
+ {name:'holo',url:base+'?colossusEarlyDiscardProbe=holo',key:'orbita-materialize-holo-direct-v4'},
 ]
 const problems=[]
 const stages=[0,0.1,0.25,0.5,0.75,1]
