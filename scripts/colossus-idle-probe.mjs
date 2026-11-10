@@ -9,9 +9,13 @@ if (!['enabled', 'disabled'].includes(variant)) throw new Error('Invalid variant
 const url = new URL(raw)
 if (variant === 'disabled') url.searchParams.set('colossusPrewarm', 'off')
 mkdirSync('browser-evidence', { recursive: true })
+const gpuMode = process.env.COLOSSUS_GPU_MODE ?? 'swiftshader'
 const browser = await chromium.launch({
-  channel: 'chrome', headless: true,
-  args: ['--no-sandbox','--enable-webgl','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']
+  ...(gpuMode === 'swiftshader' ? { channel:'chrome' } : {}),
+  headless:true,
+  args: gpuMode === 'metal'
+    ? ['--enable-webgl','--enable-gpu','--ignore-gpu-blocklist','--use-angle=metal','--disable-software-rasterizer']
+    : ['--no-sandbox','--enable-webgl','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']
 })
 const page = await browser.newPage({ viewport:{width:1280,height:720},deviceScaleFactor:1 })
 const errors=[]
@@ -44,6 +48,7 @@ try {
     const gaps = [...p.gaps].sort((a,b)=>a-b)
     return {
       validCanvas:!!canvas, validWebgl:!!gl, contextLost:gl?.isContextLost(),
+      renderer:gl?.getParameter(gl.getExtension('WEBGL_debug_renderer_info')?.UNMASKED_RENDERER_WEBGL ?? gl.RENDERER),
       warmup:window.__orbitaColossusWarmup,
       count:p.callbackCount, maxGapMs:Math.round(p.maxGapMs),
       p95GapMs:gaps.length?gaps[Math.floor((gaps.length-1)*0.95)]:null,
@@ -52,10 +57,10 @@ try {
       firstGaps:p.gaps.slice(0,30), longestGaps:gaps.slice(-12)
     }
   })
-  const report = {commit:process.env.GITHUB_SHA,variant,url:url.toString(),data,errors,
-    note:'ANGLE/SwiftShader SOFTWARE renderer. No user interaction in this trial. Visual screenshot captured AFTER timing sample.'}
+  const report = {commit:process.env.GITHUB_SHA,variant,gpuMode,url:url.toString(),data,errors,
+    note:'GPU backend is explicitly fingerprinted. No user interaction in this trial. Visual screenshot captured AFTER timing sample.'}
   writeFileSync('browser-evidence/idle-summary.json',JSON.stringify(report,null,2))
-  console.log('IDLE_PROBE '+JSON.stringify({variant,commits:report.commit, ...data, warmup:{status:data.warmup?.status,laserReady:data.warmup?.laserReady,materializeCompileMode:data.warmup?.materializeCompileMode,materializeShaderMs:data.warmup?.materializeShaderMs}}))
+  console.log('IDLE_PROBE '+JSON.stringify({variant,gpuMode,commit:report.commit, ...data, warmup:{status:data.warmup?.status,laserReady:data.warmup?.laserReady,earlyShaderCompileStatus:data.warmup?.earlyShaderCompileStatus}}))
   await page.screenshot({path:'browser-evidence/colossus-idle.png',timeout:90000})
   if(errors.length || !data.validWebgl || data.contextLost) process.exitCode=2
 } catch(err) {

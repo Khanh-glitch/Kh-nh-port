@@ -1,0 +1,50 @@
+name: Colossus Metal no-click frame baseline
+on:
+  push:
+    branches: [fix/colossus-frame-budget-prewarm]
+    paths:
+      - 'scripts/colossus-idle-probe.mjs'
+      - '.github/workflows/colossus-metal-idle.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  baseline:
+    runs-on: macos-15
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        trial: [1, 2, 3]
+        prewarm: [enabled, disabled]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: source/package-lock.json
+      - run: npm ci --prefix source
+      - run: npm install --prefix source --no-save --package-lock=false playwright@1.56.1
+      - run: cd source && npx playwright install chromium
+      - run: |
+          node scripts/sync-colossus-standalone.mjs
+          node scripts/build-pages.mjs
+      - name: Measure idle Metal frame intervals without input
+        env:
+          COLOSSUS_SMOKE_URL: http://127.0.0.1:4173/#at=0,-27,0,20&autostart&skip
+          COLOSSUS_GPU_MODE: metal
+          COLOSSUS_AB_VARIANT: ${{ matrix.prewarm }}
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 --directory dist-pages >/tmp/colossus-metal-idle.log 2>&1 &
+          for n in {1..30}; do
+            if curl -fsS -o /dev/null http://127.0.0.1:4173/; then break; fi
+            sleep 1
+          done
+          node scripts/colossus-idle-probe.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: colossus-metal-idle-${{ matrix.prewarm }}-${{ matrix.trial }}
+          path: browser-evidence/
+          if-no-files-found: warn
