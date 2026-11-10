@@ -1,5 +1,5 @@
-import { Suspense, useEffect, useMemo, useRef } from 'react'
-import { Canvas, useFrame } from '@react-three/fiber'
+import { Suspense, useEffect, useLayoutEffect, useMemo, useRef } from 'react'
+import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { Bloom, ChromaticAberration, EffectComposer, Noise, ToneMapping, Vignette } from '@react-three/postprocessing'
 import { BlendFunction, ToneMappingMode } from 'postprocessing'
 import * as THREE from 'three'
@@ -10,6 +10,7 @@ import { Platform } from './Platform'
 import { Player } from './Player'
 import { Exhibits } from './Exhibits'
 import { player } from '../world'
+import { SPAWN, EYE } from '../layout'
 import { highGuard } from '../highGuard'
 import { RealityHost } from '../reality/RealityHost'
 
@@ -64,6 +65,153 @@ function Post({ low }: { low: boolean }) {
   )
 }
 
+
+/**
+ * FIRST-LANDING GPU PREP — no spaceship UI and no altered visible scene.
+ *
+ * The public intro camera orbits at radius 88. On "BƯỚC VÀO", the camera
+ * crosses previously unseen close-up geometry and world shadows. Render
+ * those ACTUAL source meshes from the descent and spawn camera positions
+ * into a private target while the intro remains open. Keep shader programs,
+ * VAOs and textures resident; force a GPU fence, then let Colossus prewarm.
+ *
+ * Every render owns its private camera; no live sun/actor transform changes.
+ * Reusing this subsystem from the user's existing spaceship prototype will
+ * require NO recreation of ORBITA's models or quality settings.
+ */
+function LandingGpuPreflight() {
+  const {gl,scene}=useThree()
+  useLayoutEffect(()=>{
+    const enabled=new URLSearchParams(location.search).get('landingGpuPreflight')!=='off'
+    const info={
+      enabled,status:enabled?'scheduled':'disabled',passes:0,
+      compiled:false,gpuSynced:false,maxCpuDrawMs:0,
+      longestInputWaitMs:0,error:'',renderer:'',
+    }
+    ;(window as unknown as {__orbitaLandingPrewarm:typeof info}).__orbitaLandingPrewarm=info
+    if(!enabled)return
+    let disposed=false
+    let timer=0
+    const target=new THREE.WebGLRenderTarget(320,180,{depthBuffer:true,stencilBuffer:false})
+    target.texture.colorSpace=gl.outputColorSpace
+    const withTarget=(fn:()=>void)=>{
+      const oldTarget=gl.getRenderTarget()
+      const viewport=gl.getViewport(new THREE.Vector4()).clone()
+      const scissor=gl.getScissor(new THREE.Vector4()).clone()
+      const test=gl.getScissorTest()
+      const xr=gl.xr.enabled
+      const clear=gl.autoClear
+      try{
+        gl.xr.enabled=false
+        gl.autoClear=true
+        gl.setRenderTarget(target)
+        gl.setViewport(0,0,320,180)
+        gl.setScissorTest(false)
+        fn()
+      } finally {
+        gl.setRenderTarget(oldTarget)
+        gl.setViewport(viewport)
+        gl.setScissor(scissor)
+        gl.setScissorTest(test)
+        gl.xr.enabled=xr
+        gl.autoClear=clear
+      }
+    }
+    const cancelled=()=>disposed||useStore.getState().phase!=='intro'
+    const healthyPaint=async()=>{
+      let previous=0,consecutive=0
+      const started=performance.now()
+      while(!cancelled()){
+        const t=await new Promise<number>(resolve=>requestAnimationFrame(resolve))
+        const dt=previous?t-previous:0
+        previous=t
+        await new Promise<void>(resolve=>window.setTimeout(resolve,0))
+        if(cancelled())return false
+        const pending=(navigator as Navigator & {
+          scheduling?:{isInputPending?:()=>boolean}
+        }).scheduling?.isInputPending?.()??false
+        const healthy=document.visibilityState==='visible'&&!pending&&dt>0&&dt<100
+        consecutive=healthy?consecutive+1:0
+        if(consecutive>=2){
+          info.longestInputWaitMs=Math.max(info.longestInputWaitMs,
+            Math.round(performance.now()-started))
+          return true
+        }
+        if(performance.now()-started>3500)return false
+      }
+      return false
+    }
+    const makeCamera=(descent:boolean)=>{
+      const cam=new THREE.PerspectiveCamera(72,320/180,.1,9000)
+      if(descent){
+        cam.position.set(SPAWN.x,24,SPAWN.z+34)
+        cam.lookAt(0,4,0)
+      }else{
+        cam.position.copy(player.pos)
+        cam.position.y=EYE
+        cam.rotation.set(player.pitch,player.yaw,0,'YXZ')
+      }
+      cam.updateMatrixWorld(true)
+      return cam
+    }
+    const work=async()=>{
+      try{
+        info.status='waiting-for-healthy-frame'
+        if(!await healthyPaint()){info.status='skipped-busy-or-entered';return}
+        const ctx=gl.getContext()
+        const dbg=ctx.getExtension('WEBGL_debug_renderer_info')
+        info.renderer=String(ctx.getParameter(dbg?.UNMASKED_RENDERER_WEBGL??ctx.RENDERER))
+        // An already overloaded software renderer should not have more
+        // first-visit work piled onto it. It remains fully functional.
+        if(/SwiftShader|Software|llvmpipe/i.test(info.renderer)){
+          info.status='skipped-software-renderer'
+          return
+        }
+        const cameras=[makeCamera(true),makeCamera(false)]
+        info.status='compiling-close-view'
+        await gl.compileAsync(scene,cameras[1])
+        info.compiled=true
+        for(const camera of cameras){
+          info.status=info.passes===0?'preparing-descent':'preparing-spawn'
+          if(!await healthyPaint()){info.status='skipped-busy-or-entered';return}
+          const start=performance.now()
+          withTarget(()=>{gl.clear(true,true,false);gl.render(scene,camera)})
+          info.passes++
+          info.maxCpuDrawMs=Math.max(info.maxCpuDrawMs,Math.round(performance.now()-start))
+        }
+        if(cancelled()){info.status='skipped-entered';return}
+        // Async readback of the final privately rendered frame proves that
+        // previous geometry/shadow commands were GPU-scheduled and completed.
+        if(typeof gl.readRenderTargetPixelsAsync==='function'){
+          info.status='gpu-pending'
+          let fence:Promise<unknown>=Promise.resolve()
+          withTarget(()=>{fence=gl.readRenderTargetPixelsAsync(target,0,0,1,1,new Uint8Array(4))})
+          await fence
+          info.gpuSynced=true
+          info.status='ready'
+        }else{
+          gl.getContext().flush()
+          info.status='submitted-no-fence'
+        }
+      }catch(e){
+        info.error=String(e)
+        info.status='failed'
+        console.warn('[ORBITA] first-landing GPU preflight failed; original scene intact',e)
+      }finally{
+        target.dispose()
+      }
+    }
+    timer=window.setTimeout(()=>{void work()},0)
+    return()=>{
+      disposed=true
+      clearTimeout(timer)
+      if(info.status!=='ready'&&info.status!=='failed')info.status='cancelled'
+      target.dispose()
+    }
+  },[gl,scene])
+  return null
+}
+
 function HighGateMeter() {
   useFrame((state, delta) => {
     highGuard.record(delta, useStore.getState().quality, state.gl)
@@ -112,6 +260,7 @@ export function Experience() {
       <Suspense fallback={null}>
         <Sky />
         <Lights />
+        <LandingGpuPreflight />
         <Phenomena />
         <Platform />
         <Exhibits />

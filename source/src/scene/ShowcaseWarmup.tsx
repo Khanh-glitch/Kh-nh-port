@@ -128,6 +128,22 @@ export function ShowcaseWarmup({ arenaState }: { arenaState: { mode: string } })
     // Renderer-side geometry uploads are spread over animation frames (one
     // actual mesh per private draw), keeping source mesh/material/texture data.
     const interrupted = () => disposed || arenaState.mode !== 'dormant'
+    // First-visit/landing is the earliest user-visible choke point. Do not
+    // submit the 131-object Colossus GPU upload queue in parallel with its
+    // bounded two-camera offscreen preflight. Colossus remains responsive:
+    // this waits at most 3.5s and cancels immediately on a summon click.
+    const waitForLandingPreflight = async () => {
+      const start = performance.now()
+      while(!interrupted() && performance.now()-start<3500){
+        const landing=(window as unknown as {
+          __orbitaLandingPrewarm?:{status:string}
+        }).__orbitaLandingPrewarm
+        if(!landing || ['ready','disabled','failed','cancelled',
+          'skipped-busy-or-entered','skipped-software-renderer',
+          'skipped-entered','submitted-no-fence'].includes(landing.status))return
+        await new Promise<void>(resolve=>window.setTimeout(resolve,40))
+      }
+    }
     // Laser uses the earliest available paint. Showcase assets are opportunistic:
     // do NOT submit an extra GPU draw while the active scene is already late,
     // or while Chrome reports a pending input event. Visual content is unchanged.
@@ -753,7 +769,12 @@ export function ShowcaseWarmup({ arenaState }: { arenaState: { mode: string } })
     // Waiting for the first 3D rAF can take seconds on slow GPUs and let the
     // visitor click BEFORE any laser beam has been primed. Actual GPU uploads
     // still yield to each subsequent browser paint and stop on summon.
-    cancelTimeout = window.setTimeout(() => { void warm() }, 0)
+    cancelTimeout = window.setTimeout(() => {
+      void (async()=>{
+        await waitForLandingPreflight()
+        if (!interrupted()) await warm()
+      })()
+    }, 0)
     return () => {
       window.clearInterval(hudTimer)
       badge.remove()

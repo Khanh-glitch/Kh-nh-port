@@ -30,3 +30,12 @@ assert.match(exp,/shadow-mapSize=\{\[2048, 2048\]\}/, 'production 2048px shadows
 assert.match(exp,/Bloom intensity=\{low \? 0\.9 : 1\.25\}/, 'full Bloom quality retained')
 assert.ok(!src('scene/Player.tsx').includes('arrivalEnabled'),'ship/arrival work is not part of this hitch-only branch')
 console.log('PASS: 21 focused hitch-only source invariants. Browser visual and frame pacing require separate acceptance.')
+
+// FIRST-LANDING: actual two-camera pre-render, no ship visuals or quality cuts.
+const landingSource=src('scene/Experience.tsx')
+assert.match(landingSource,/function LandingGpuPreflight/, 'two-camera real-scene landing preflight mounted')
+assert.match(landingSource,/makeCamera\(true\),makeCamera\(false\)/, 'both descent and spawn are warmed')
+assert.match(landingSource,/gl\.compileAsync\(scene,cameras\[1\]\)/, 'spawn shaders compiled before landing')
+assert.match(landingSource,/gl\.render\(scene,camera\)/, 'actual scene submitted to private framebuffer')
+assert.match(landingSource,/readRenderTargetPixelsAsync\(target/, 'GPU completion fence included')
+assert.match(warm,/waitForLandingPreflight/, 'Colossus GPU upload waits for landing preflight instead of racing it')
