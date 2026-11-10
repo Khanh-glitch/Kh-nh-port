@@ -30,7 +30,10 @@ try {
       overlay:document.getElementById('menniverse-laser-probe')?.textContent?.slice(0,200)
     }
   })
-  await page.screenshot({path:'browser-evidence/01-before.png'})
+  // Browser screenshots can block on software-rendered WebGL. Never let visual
+  // capture prevent the real input/trace evidence from being recorded.
+  try { await page.screenshot({path:'browser-evidence/01-before.png',timeout:6000,animations:'disabled'}) }
+  catch (e) { console.warn('Optional before-screenshot failed:', String(e).slice(0,200)) }
   const attempted=await page.evaluate(() => {
     const canvas=document.querySelector('canvas')
     if(!canvas) return false
@@ -47,7 +50,8 @@ try {
     profile:window.__orbitaColossusProfile || null,
     historyLength:window.__orbitaColossusProfiles?.length || 0,
   }))
-  await page.screenshot({path:'browser-evidence/02-after.png'})
+  try { await page.screenshot({path:'browser-evidence/02-after.png',timeout:6000,animations:'disabled'}) }
+  catch (e) { console.warn('Optional after-screenshot failed:', String(e).slice(0,200)) }
   const report={
     url,elapsedMs:Date.now()-t0,attempted,before,after,
     errors,netFailed,
