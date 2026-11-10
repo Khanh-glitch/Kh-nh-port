@@ -90,3 +90,6 @@ assert.ok(lateTasks.includes('coldProbe.browserTasks = []'), 'task arrays isolat
 const mat = read('source/src/scene/materialize.ts')
 assert.ok(mat.includes("mat.customProgramCacheKey = () => 'orbita-materialize-shared-v1'"), 'same-GLSL materialization materials reuse shader programs')
 assert.ok(!mat.includes('orbita-materialize-${tag}'), 'unique decorative tags must not split identical shader programs')
+
+assert.ok(showWarm.includes("const roots: THREE.Object3D[] = [...beams, ...(showcaseRoots as THREE.Object3D[])]"), 'laser emitters must be GPU-primed before the larger models')
+assert.ok(showWarm.includes('window.setTimeout(() => { void warm() }, 0)'), 'async first-use work must not wait for a potentially stalled first render frame')
