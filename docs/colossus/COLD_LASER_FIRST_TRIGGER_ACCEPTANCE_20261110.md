@@ -82,3 +82,19 @@ Cold first activation of Colossus laser, APEX CHAOS and Ragnarok must not freeze
 - This **does** distinguish an activation-correlated large frame gap from the ready/idle baseline in these two trials. It **does not** yet separate shadow submission from other 3D GPU/compositor work; neither callback timestamps nor prewarm counts prove a pixel reached the physical display. Both trials appropriately FAILED strict frame acceptance.
 - Code improvement in `f1437501`: `Robot.tsx` now uploads its 512×192 console CanvasTexture only when the display mode actually changes. This removes redundant GPU uploads while retaining identical console pixels. Build/source verification PASSED (run 42781481163), but no causal improvement to worst frame pacing was demonstrated; **not accepted as a hitch fix**.
 - Follow-up fully-ready identical-session diagnostic: compare **original full shadows** to **test-only shadows disabled**, with timestamped >120ms callback gaps and shader program count, to attribute the activation-induced delta without altering normal portfolio visuals. All production settings remain unchanged; no merge into `main`.
+
+
+## 2026-11-10 full-ready shadow-on/off and slow-frame timing (resolved)
+
+[Four-trial controlled Metal diagnostic, run 42782336885](https://github.com/Khanh-glitch/Kh-nh-port/actions/runs/42782336885), source `4047cd2b`; same-session 5-second idle versus 5-second click, both scenarios at 131/131 uploaded and `status=ready`, 0 new post-click shader programs, Apple **Paravirtual** Metal only.
+
+| Diagnostic | Trial | Idle max rAF gap | Post-click max rAF gap | First laser R3F submission | R3F slow-frame timing | React commit |
+| --- | --- | ---: | ---: | ---: | --- | ---: |
+| Original 2048px shadows ON | 1 | 67 ms | **1,283 ms** | 1,443 ms | at 1,443 ms, gap 1,281 ms | 3 ms |
+| Original 2048px shadows ON | 2 | 217 ms | **1,067 ms** | 250 ms | at 1,327 ms, gap 1,077 ms | 3 ms |
+| ALL shadows OFF **diagnostic only** | 1 | 67 ms | **800 ms** | 933 ms | at 932 ms, gap 801 ms | 6 ms |
+| ALL shadows OFF **diagnostic only** | 2 | 67 ms | **833 ms** | 1,000 ms | at 954 ms, gap 848 ms | 2 ms |
+
+**Revised finding:** shadow pass is a significant contributor, but not the only bottleneck; even removing all shadows leaves 800–833 ms frame gaps on this virtual GPU. The stall can occur **before** the first laser R3F callback (trial 1) or **after** it (trial 2). Thus the previous two-trial suggestion that the big stall always occurs after the first visible beam was TOO STRONG and is now superseded. No React loop, new shader compilation, or unfinished preload accounts for the observed large gap. CPU/GPU compositor scheduling and first-visibility render workload remain the locus for investigation, but a physical GPU may behave differently. No visual downgrade or production shadow toggle is authorized; still **NOT ACCEPTED**, no merge.
+
+**Concrete next engineering target:** isolate first-visibility render pass (laser primitives, transparent/materializing exhibits, cast-shadow draw load) while retaining exact geometry/materials/lighting; favor draw-call batching and conservative zero-pixel culling supported by captures, not shaderless proxies, loss of shadows, reducing DPR or effect removal. Any implementation must be independently visually compared at multiple scan percentages before being accepted.
