@@ -26,6 +26,7 @@ const targets = [
   'scene/Robot',
   'scene/materialize',
   'reality/Front',
+  'reality/mask',
 ]
 const checkInternal = (name) => {
   const normalized = name.replace(/\\/g, '/').replace(/\.(tsx?|jsx?)$/, '')
@@ -34,7 +35,7 @@ const checkInternal = (name) => {
   return key
 }
 for (const file of targets) {
-  const name = file + (file === 'scene/materialize' ? '.ts' : '.tsx')
+  const name = file + ((file === 'scene/materialize' || file === 'reality/mask') ? '.ts' : '.tsx')
   const input = readFileSync(resolve(srcRoot, name), 'utf8')
   const output = ts.transpileModule(input, {
     fileName: name,
@@ -66,5 +67,5 @@ if (updated === html) {
   console.log('[ORBITA] Standalone ESM map already synchronized')
 } else {
   writeFileSync(htmlPath, updated)
-  console.log('[ORBITA] Synchronized six Colossus source modules into integrated index.html')
+  console.log('[ORBITA] Synchronized seven Colossus source modules into integrated index.html')
 }
