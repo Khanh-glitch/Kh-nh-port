@@ -1,8 +1,8 @@
-name: Colossus laser-priority integrated verification
+name: Colossus reality idle draw gating
 on:
   push:
     branches:
-      - fix/colossus-laser-priority-progressive
+      - fix/colossus-reality-idle-draw-gate
   workflow_dispatch:
 permissions:
   contents: write
@@ -51,7 +51,7 @@ jobs:
             git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
             git add index.html
             git commit -m "build(colossus): synchronize fixed laser code into preview HTML"
-            git push origin HEAD:fix/colossus-laser-priority-progressive
+            git push origin HEAD:fix/colossus-reality-idle-draw-gate
           else
             echo "Integrated preview HTML is already up to date."
           fi
