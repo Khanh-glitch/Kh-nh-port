@@ -33,7 +33,7 @@ const checkInternal = (name) => {
   return key
 }
 for (const file of targets) {
-  const name = file + '.tsx'
+  const name = file + (file === 'scene/materialize' ? '.ts' : '.tsx')
   const input = readFileSync(resolve(srcRoot, name), 'utf8')
   const output = ts.transpileModule(input, {
     fileName: name,
