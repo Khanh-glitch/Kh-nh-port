@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en"><head><meta charset="UTF-8"/><title>NEWBOT exact rigid geometry batching pixel proof</title>
+<style>body{margin:0;background:#070b18;color:white;font:12px system-ui}canvas{display:block}</style></head>
+<body><script type="module">
+import * as THREE from 'three'
+import {rbox} from '../src/gfx.ts'
+import {createMaterializeUniforms,patchMaterialize} from '../src/scene/materialize.ts'
+import {mergeTaggedArmorSiblings} from '../src/scene/ApexShowcase.tsx'
+
+const W=640,H=400
+const renderer = new THREE.WebGLRenderer({antialias:false,preserveDrawingBuffer:true,powerPreference:'high-performance'})
+renderer.setPixelRatio(1)
+renderer.setSize(W,H,false)
+renderer.shadowMap.enabled=true
+renderer.shadowMap.type=THREE.PCFSoftShadowMap
+renderer.outputColorSpace=THREE.SRGBColorSpace
+renderer.toneMapping=THREE.NoToneMapping
+document.body.append(renderer.domElement)
+const scene = new THREE.Scene()
+scene.background = new THREE.Color('#071023')
+const camera = new THREE.PerspectiveCamera(42,W/H,.1,50)
+camera.position.set(3.5,3.2,7.2)
+camera.lookAt(0,1.3,0)
+scene.add(new THREE.AmbientLight('#a2beff',0.35))
+const sun = new THREE.DirectionalLight('#fff6e3',2.2)
+sun.position.set(3.5,7,5)
+sun.target.position.set(0,1.3,0)
+sun.castShadow=true
+sun.shadow.mapSize.set(1024,1024)
+sun.shadow.camera.near=.1
+sun.shadow.camera.far=28
+sun.shadow.camera.left=-6
+sun.shadow.camera.right=6
+sun.shadow.camera.top=6
+sun.shadow.camera.bottom=-6
+scene.add(sun,sun.target)
+const floor = new THREE.Mesh(new THREE.PlaneGeometry(16,16),new THREE.MeshStandardMaterial({color:'#233349',roughness:.7}))
+floor.rotation.x=-Math.PI/2
+floor.receiveShadow=true
+scene.add(floor)
+const uniforms=createMaterializeUniforms('#ff9b30')
+uniforms.uTime.value=1.7
+const armor=patchMaterialize(new THREE.MeshStandardMaterial({color:'#ddd2bd',metalness:.28,roughness:.42}),uniforms,'armor')
+const dark=patchMaterialize(new THREE.MeshStandardMaterial({color:'#29344f',metalness:.55,roughness:.38}),uniforms,'dark')
+const orange=patchMaterialize(new THREE.MeshStandardMaterial({color:'#f59a37',metalness:.4,roughness:.34}),uniforms,'orange')
+const parent=new THREE.Group()
+parent.position.set(.2,.62,-.5)
+parent.rotation.set(.05,.35,-.08)
+parent.scale.setScalar(1.15)
+scene.add(parent)
+function plate(size,pos,rot,mat,cast=true){
+ const mesh=new THREE.Mesh(rbox(size[0],size[1],size[2],Math.min(...size)*.15),mat)
+ mesh.position.set(...pos)
+ mesh.rotation.set(...rot)
+ mesh.castShadow=cast
+ mesh.receiveShadow=false
+ mesh.userData.colossusMergeStatic=true
+ parent.add(mesh)
+}
+plate([1.12,1.02,.96],[0,.35,0],[0,0,0],dark)
+plate([.84,.68,.36],[0,.40,-.52],[0,.12,0],dark)
+plate([.18,.58,.78],[0,1.12,.02],[-.22,0,0],armor)
+plate([.56,.26,.76],[-.34,.76,.24],[.28,.26,.22],armor)
+plate([.56,.26,.76],[.34,.76,.24],[.28,-.26,-.22],armor)
+plate([.12,.48,.14],[0,1.16,.32],[-.22,0,0],orange,false)
+for(const x of [-.14,0,.14])plate([.08,.04,.04],[x,.25,.53],[0,0,0],orange,false)
+const target=new THREE.WebGLRenderTarget(W,H,{depthBuffer:true,stencilBuffer:false})
+target.texture.colorSpace=renderer.outputColorSpace
+function capture(progress){
+ uniforms.uComplete.value=progress>=.999?1:0
+ uniforms.uScanY.value=.35 + progress*4.5
+ renderer.setRenderTarget(target)
+ renderer.render(scene,camera)
+ const buffer=new Uint8Array(W*H*4)
+ renderer.readRenderTargetPixels(target,0,0,W,H,buffer)
+ renderer.setRenderTarget(null)
+ renderer.render(scene,camera)
+ return buffer
+}
+window.__captureBatchFrame=(progress)=>capture(progress)
+window.__runBatchParity=()=>{
+ const stages=[0,.1,.25,.5,.75,1]
+ const before=stages.map(capture)
+ const undo=mergeTaggedArmorSiblings(parent)
+ const counters=window.__orbitaApexBatch
+ const after=stages.map(capture)
+ const results=stages.map((stage,index)=>{
+  const a=before[index],b=after[index]
+  let mismatchedPixels=0,maxChannelDiff=0,differingChannels=0
+  for(let i=0;i<a.length;i+=4){
+   let changed=false
+   for(let channel=0;channel<4;channel++){
+    const d=Math.abs(a[i+channel]-b[i+channel])
+    if(d>0){differingChannels++;changed=true;maxChannelDiff=Math.max(maxChannelDiff,d)}
+   }
+   if(changed)mismatchedPixels++
+  }
+  return {stage,totalPixels:W*H,mismatchedPixels,maxChannelDiff,differingChannels}
+ })
+ window.__batchUndo=undo
+ window.__batchReport={results,counters,backend:renderer.getContext().getParameter(
+  renderer.getContext().getExtension('WEBGL_debug_renderer_info')?.UNMASKED_RENDERER_WEBGL??renderer.getContext().RENDERER)}
+ return window.__batchReport
+}
+window.__ready=true
+</script></body></html>

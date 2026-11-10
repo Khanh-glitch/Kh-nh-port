@@ -1,0 +1,41 @@
+name: Colossus rigid armor batching exact pixel parity
+on:
+  push:
+    branches: [fix/colossus-hitch-only]
+    paths:
+      - 'source/src/scene/ApexShowcase.tsx'
+      - 'source/tests/colossus-batch-parity.html'
+      - 'scripts/colossus-batch-parity.mjs'
+      - '.github/workflows/colossus-batch-parity.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  compare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: source/package-lock.json
+      - run: npm ci --prefix source
+      - run: npm install --prefix source --no-save --package-lock=false playwright@1.56.1
+      - run: cd source && npx playwright install chromium
+      - name: Serve real NEWBOT materialize and geometry modules
+        run: |
+          (cd source && npx vite --host 127.0.0.1 --port 5173 >/tmp/colossus-batch-parity.log 2>&1) &
+          for n in {1..30}; do
+            if curl -fsS -o /dev/null http://127.0.0.1:5173/tests/colossus-batch-parity.html; then break; fi
+            sleep 1
+          done
+      - name: Compare untouched GPU pixels at six laser scan stages
+        run: node scripts/colossus-batch-parity.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: colossus-batch-legacy-v-merged-six-stages
+          path: browser-evidence/
+          if-no-files-found: warn

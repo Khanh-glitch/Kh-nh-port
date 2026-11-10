@@ -38,7 +38,7 @@ const LEGACY_ROUNDED_GEOMETRY = typeof window !== 'undefined' &&
  * For comparison the old tree is available behind colossusBatchProbe=legacy.
  * No geometry/resolution/material/light/shadow quality is reduced.
  */
-function mergeTaggedArmorSiblings(root: THREE.Object3D) {
+export function mergeTaggedArmorSiblings(root: THREE.Object3D) {
   const undo: Array<() => void> = []
   const parents: THREE.Object3D[] = []
   root.traverse(o => { parents.push(o) })
