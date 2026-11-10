@@ -15,6 +15,16 @@ try {
     {waitUntil:'domcontentloaded',timeout:120000})
   await page.waitForFunction(()=>!!window.__orbitaColossusWarmup,null,{timeout:120000})
   await page.waitForTimeout(6500)
+  // Crucial causal control: diagnose ONLY the hitch which remains after
+  // every cached shader, texture and vertex proxy is GPU-synchronized.
+  // The earlier trace started while warmup was still 'scheduled' and could
+  // not distinguish render/compositor from unfinished program linking.
+  const fullyReady = await page.waitForFunction(() => {
+    const w = window.__orbitaColossusWarmup
+    return w?.status === 'ready' && w.gpuSynced === true &&
+      w.totalProxies > 0 && w.uploadedProxies >= w.totalProxies
+  },null,{timeout:45000,polling:200}).then(()=>true,()=>false)
+  if (!fullyReady) throw new Error('FULL_READY_PRECONDITION_FAILED: refuse confounded trace')
   const baseline=await page.evaluate(()=>{
     const gl=document.querySelector('canvas')?.getContext('webgl2')
     const dbg=gl?.getExtension('WEBGL_debug_renderer_info')
@@ -68,6 +78,8 @@ try {
   const graphics=events.filter(x=>/gpu|viz|compositor|shadow|render|raster|swap/i.test(String(x.cat)+' '+String(x.name)))
   const report={commit:process.env.GITHUB_SHA,attempted,backend:baseline.renderer,
     warmupAtClick:baseline.warmup?.status,laserReadyAtClick:baseline.warmup?.laserReady,
+    fullyReadyBeforeClick:fullyReady,uploadedProxies:baseline.warmup?.uploadedProxies,
+    totalProxies:baseline.warmup?.totalProxies,gpuSynced:baseline.warmup?.gpuSynced,
     recordedForMs:Date.now()-started,profile:{
       firstFrameMs:profile?.firstFrameFromClickMs,firstBeamMs:profile?.firstBeamFrameAtMs,
       maxGapMs:profile?.maxFrameMs,newShaderPrograms:profile?.programDelta
