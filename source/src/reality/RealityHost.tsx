@@ -69,6 +69,178 @@ export function RealityHost() {
   const tmp = useMemo(() => new THREE.Vector3(), [])
   const tc = useMemo(() => new THREE.Color(), [])
   const tc2 = useMemo(() => new THREE.Color(), [])
+
+  // HEX/UEH cooperative GPU preflight. Share source geometry and source materials;
+  // never replace textures, reduce shadow resolution or mutate the visible scene.
+  // A private 96px target uploads GPU resources a few meshes at a time, instead
+  // of exposing the entire multi-building UEH world on the first ignition frame.
+  const hexGpu = useRef({
+    stage: null as THREE.Scene | null,
+    target: null as THREE.WebGLRenderTarget | null,
+    camera: null as THREE.PerspectiveCamera | null,
+    proxies: [] as THREE.Object3D[],
+    lights: [] as THREE.Light[],
+    index: 0, lastPaintAt: 0, healthyPaints: 0, frame: 0,
+    blocked: false,
+    info: {
+      status: 'scheduled', total: 0, uploaded: 0,
+      maxPrivateCpuMs: 0, deferredFrames: 0,
+      renderer: '', error: '', gpuTarget: 'private-96px',
+    },
+  }).current
+
+  useEffect(() => {
+    const stage = new THREE.Scene()
+    stage.environment = scene.environment
+    stage.fog = scene.fog
+    const proxies: THREE.Object3D[] = []
+    // Cloning without children reuses exactly the original GPU geometry,
+    // material and instance buffers. This is not a simplified scene.
+    ueh.current?.traverse((source) => {
+      const draw = source as THREE.Mesh
+      const sprite = source as THREE.Sprite
+      const points = source as THREE.Points
+      const line = source as THREE.Line
+      if (!draw.isMesh && !sprite.isSprite && !points.isPoints && !line.isLine) return
+      const proxy = source.clone(false)
+      proxy.visible = true
+      proxy.frustumCulled = false
+      proxy.position.set(0, 0, 0)
+      proxy.rotation.set(0, 0, 0)
+      proxy.scale.setScalar(1)
+      if ((source as THREE.InstancedMesh).isInstancedMesh) {
+        const src = source as THREE.InstancedMesh
+        const dst = proxy as THREE.InstancedMesh
+        dst.instanceMatrix = src.instanceMatrix
+        dst.instanceColor = src.instanceColor
+      }
+      proxies.push(proxy)
+    })
+    // Keep shader light-count/shadow defines representative of the real stage.
+    scene.traverseVisible(o => {
+      if (!(o as THREE.Light).isLight) return
+      const light = (o as THREE.Light).clone(false)
+      if ((light as THREE.DirectionalLight).target) {
+        const target = (o as THREE.DirectionalLight).target.clone(false)
+        ;(light as THREE.DirectionalLight).target = target
+        stage.add(target)
+      }
+      if (light.castShadow && (light as THREE.Light & {shadow?:THREE.LightShadow}).shadow) {
+        (light as THREE.Light & {shadow:THREE.LightShadow}).shadow.mapSize.set(64, 64)
+      }
+      stage.add(light)
+      hexGpu.lights.push(light)
+    })
+    const target = new THREE.WebGLRenderTarget(96, 96, {
+      depthBuffer: true, stencilBuffer: false,
+    })
+    target.texture.colorSpace = gl.outputColorSpace
+    const cameraHex = new THREE.PerspectiveCamera(70, 1, 0.01, 9000)
+    cameraHex.position.set(0, 4, 16)
+    cameraHex.lookAt(0, 0, 0)
+    hexGpu.stage = stage
+    hexGpu.target = target
+    hexGpu.camera = cameraHex
+    hexGpu.proxies = proxies
+    hexGpu.info.total = proxies.length
+    const dbg = gl.getContext().getExtension('WEBGL_debug_renderer_info')
+    hexGpu.info.renderer = String(gl.getContext().getParameter(
+      dbg?.UNMASKED_RENDERER_WEBGL ?? gl.getContext().RENDERER))
+    if (/SwiftShader|llvmpipe|Software/i.test(hexGpu.info.renderer)) {
+      hexGpu.blocked = true
+      hexGpu.info.status = 'skipped-software-renderer'
+    } else hexGpu.info.status = 'awaiting-idle'
+    ;(window as unknown as {__orbitaHexPrewarm:typeof hexGpu.info}).__orbitaHexPrewarm = hexGpu.info
+    return () => {
+      target.dispose()
+      hexGpu.lights.forEach(l =>
+        (l as THREE.Light & {shadow?:THREE.LightShadow}).shadow?.dispose())
+      stage.clear()
+      hexGpu.proxies.length = 0
+      hexGpu.stage = null
+      hexGpu.target = null
+    }
+  }, [scene, gl])
+
+  useFrame((_, dtRaw) => {
+    const h = hexGpu
+    if (h.blocked || !h.stage || !h.target || !h.camera ||
+        h.index >= h.proxies.length) return
+    const realityPhase = useReality.getState().phase
+    // No competition with a clicked HEX, landing GPU preflight, or Colossus.
+    if (realityPhase !== 'idle' || useStore.getState().phase !== 'playing' ||
+        document.visibilityState !== 'visible') return
+    const landing = (window as unknown as {
+      __orbitaLandingPrewarm?: {status:string}
+    }).__orbitaLandingPrewarm
+    const colossus = (window as unknown as {
+      __orbitaColossusWarmup?: {status:string}
+    }).__orbitaColossusWarmup
+    const terminal = ['ready','failed','disabled','cancelled',
+      'skipped-entered','skipped-busy-or-entered','skipped-software-renderer',
+      'submitted-no-fence','prewarm-skipped-busy-renderer',
+      'diagnostic-prewarm-disabled','cancelled-on-summon',
+      'submitted-no-async-readback']
+    if ((landing && !terminal.includes(landing.status)) ||
+        (colossus && !terminal.includes(colossus.status))) {
+      h.info.status = 'waiting-for-other-preflights'
+      return
+    }
+    const pendingInput = (navigator as Navigator & {
+      scheduling?:{isInputPending?:()=>boolean}
+    }).scheduling?.isInputPending?.() ?? false
+    // At most one small offscreen draw per three healthy frames.
+    // A busy renderer or pending user input is always favored over prewarm.
+    const healthy = dtRaw > 0 && dtRaw <= 0.05 && !pendingInput
+    h.healthyPaints = healthy ? h.healthyPaints + 1 : 0
+    if (h.healthyPaints < 3) { h.info.deferredFrames++; return }
+    h.healthyPaints = 0
+    const stage = h.stage, target = h.target
+    const batch = h.proxies.slice(h.index, h.index + 3)
+    const oldTarget = gl.getRenderTarget()
+    const viewport = gl.getViewport(new THREE.Vector4()).clone()
+    const scissor = gl.getScissor(new THREE.Vector4()).clone()
+    const scissorTest = gl.getScissorTest()
+    const xr = gl.xr.enabled, clear = gl.autoClear
+    const rw = RW.uRW.value.clone(), center = RW.uRWc.value.clone()
+    const started = performance.now()
+    try {
+      for (const obj of batch) stage.add(obj)
+      RW.uRW.value.set(FRONT_MAX, RW.uRW.value.y, 1, RW.uRW.value.w)
+      RW.uRWc.value.set(0, 0, 0)
+      gl.xr.enabled = false
+      gl.autoClear = true
+      gl.setRenderTarget(target)
+      gl.setViewport(0, 0, 96, 96)
+      gl.setScissorTest(false)
+      gl.clear(true, true, false)
+      gl.render(stage, h.camera)
+      h.index += batch.length
+      h.info.uploaded = h.index
+      h.info.status = h.index >= h.proxies.length ? 'ready' : 'warming-geometry'
+      h.info.maxPrivateCpuMs = Math.max(h.info.maxPrivateCpuMs,
+        Math.round(performance.now() - started))
+      // Do not make the visible portfolio pay for a saturated renderer.
+      if (performance.now() - started > 75) {
+        h.blocked = true
+        h.info.status = 'paused-expensive-private-draw'
+      }
+    } catch (e) {
+      h.info.error = String(e)
+      h.info.status = 'failed'
+      h.blocked = true
+    } finally {
+      RW.uRW.value.copy(rw)
+      RW.uRWc.value.copy(center)
+      for (const obj of batch) stage.remove(obj)
+      gl.setRenderTarget(oldTarget)
+      gl.setViewport(viewport)
+      gl.setScissor(scissor)
+      gl.setScissorTest(scissorTest)
+      gl.xr.enabled = xr
+      gl.autoClear = clear
+    }
+  })
   const recordHexTiming = (step: string, started: number) => {
     if (typeof window === 'undefined' || new URLSearchParams(location.search).get('hexProfile') !== '1') return
     const host = window as unknown as {__orbitaHexTimings?: Array<{step:string;ms:number;at:number}>}
@@ -272,7 +444,10 @@ export function RealityHost() {
     rt.t = state.clock.elapsedTime
 
     // --- 1. Intro-only GPU preflight. No synchronous shader compilation during gameplay.
-    if (S.warmPass < 2 && useStore.getState().phase === 'intro') {
+    if (S.warmPass < 2 && st.phase === 'idle' &&
+        (useStore.getState().phase === 'intro' ||
+         (useStore.getState().phase === 'playing' && dtRaw <= 0.05 &&
+          document.visibilityState === 'visible'))) {
       if (S.warmTex.length) {
         const tex = S.warmTex.shift()!
         try { gl.initTexture(tex) } catch (err) { S.warmErrors++; console.warn('[Piano preflight] texture', err) }
@@ -289,14 +464,11 @@ export function RealityHost() {
           catch (err) { S.warmErrors++; console.warn('[Piano preflight] shader fallback', err) }
           S.warmCompilePending = false
         }
-      } else if (!S.warmCompilePending && st.phase === 'idle' && ueh.current) {
-        if (S.warmPass === 0) {
-          ueh.current.visible = true
-          S.warmPass = 1
-        } else {
-          ueh.current.visible = false
-          S.warmPass = 2
-        }
+      } else if (!S.warmCompilePending) {
+        // The old one-frame ENTIRE-UEH visibility preflight caused a large
+        // first GPU submission. Private source-mesh batches above replace it.
+        // Keep the real world hidden until the real HEX state machine reveals it.
+        S.warmPass = 2
       }
     }
         // Never leave the silent UEH preflight pass visible if the visitor starts
@@ -496,15 +668,16 @@ export function RealityHost() {
       }
     }
 
-    // Chỉ bật hiển thị UEH khi trường biến đổi đang mở (trừ 1 frame warmPass === 1 lúc Intro)
+    // The original newly generated world is completely shader-discarded
+    // before HEX sweep begins. Do not submit its entire GPU geometry during
+    // the 2.6s ignition. Actual scan/active/retract render remains unchanged.
     if (ueh.current) {
-      if (st.phase !== 'idle') {
-        ueh.current.visible = true
+      const reveal = st.phase === 'sweep' || st.phase === 'active' || st.phase === 'retract'
+      ueh.current.visible = reveal
+      if (reveal) {
         S.warmPass = 2
         S.warmTex.length = 0
         S.warmMesh.length = 0
-      } else if (S.warmPass === 2) {
-        ueh.current.visible = false
       }
     }
   })
