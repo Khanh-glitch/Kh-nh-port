@@ -148,3 +148,5 @@ const smokeSource = read('scripts/colossus-browser-smoke.mjs')
 assert.ok(smokeSource.includes('window.__orbitaColossusProfile?.firstBeamFrameAtMs != null'), 'browser CI must witness actual first laser submission')
 assert.ok(smokeSource.includes('UNACCEPTED_SOFTWARE_GPU') && smokeSource.includes('process.exitCode=12'), 'slow software GPU cannot become false-green acceptance')
 assert.ok(showWarm.includes('materializeProgramsCompiled = true') && !showWarm.includes('materializeShaderGpuSynced = true'), 'compileAsync must never claim GPU geometry-ready')
+
+assert.ok(showWarm.indexOf("info.status = 'budget-preflight'") < showWarm.indexOf("const showcaseRoots ="), 'GPU frame-budget gate precedes expensive scene proxy construction')

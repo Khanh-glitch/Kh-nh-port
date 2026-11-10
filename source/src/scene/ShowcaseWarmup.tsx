@@ -136,6 +136,14 @@ export function ShowcaseWarmup({ arenaState }: { arenaState: { mode: string } })
         return
       }
       if (interrupted()) { info.status = 'cancelled-on-summon'; return }
+      // BEFORE cloning/traversing the 131 proxies and production lights,
+      // require healthy render frames. A saturated renderer must not spend
+      // additional CPU/GPU time even constructing temporary warmup objects.
+      info.status = 'budget-preflight'
+      if (!await nextPaint('laser')) {
+        if (info.status !== 'prewarm-skipped-busy-renderer') info.status='cancelled-on-summon'
+        return
+      }
       const showcaseRoots = ['apex-showcase-root', 'ragnarok-showcase-root']
         .map(name => scene.getObjectByName(name))
       const beamNames = ['colossus-warm-beam-left', 'colossus-warm-beam-right', 'colossus-warm-beam-eye', 'colossus-warm-impact']
@@ -264,10 +272,7 @@ export function ShowcaseWarmup({ arenaState }: { arenaState: { mode: string } })
         // Prime all four latency-critical laser drawables in one offscreen pass.
         // Previously each beam waited for a separate requestAnimationFrame.
         info.status = 'laser-textures'
-        if (!await nextPaint('laser')) {
-          if (info.status !== 'prewarm-skipped-busy-renderer') info.status='cancelled-on-summon'
-          return
-        }
+        // First healthy-frame gate already ran before any source traversal.
         for (const texture of priorityTextures) {
           if (interrupted()) { info.status='cancelled-on-summon'; return }
           try { gl.initTexture(texture) } catch { /* Visible renderer can retry. */ }
