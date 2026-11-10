@@ -60,10 +60,18 @@ try {
     attempted,profileRecorded:!!after.profile,
     reportedMaxFrameMs:after.profile?.maxFrameMs,
     newShaderPrograms:after.profile?.programDelta,
-    errors,netFailed:netFailed.slice(0,8)
+    errors,netFailed:netFailed.slice(0,8),
+    warmAfter:after.warmup?.status, actualModes: [...new Set(after.profile?.trace?.map(x => x.mode) || [])],
+    reactCommits:after.profile?.reactCommits,
+    newPrograms:after.profile?.newPrograms?.slice(0,30),
+    browserTasks:after.profile?.browserTasks?.slice(0,30),
+    longFrames:after.profile?.longFrames?.slice(0,20),
+    firstFrames:after.profile?.trace?.slice(0,12),
+    warmupDetails:after.warmup
   },null,2))
   if(!before.canvas || !before.webgl2) process.exitCode=2
   if(errors.length) process.exitCode=3
+  if(after.profile && !(after.profile.trace || []).some(x => x.mode === 'summon_apex' || x.mode === 'summon_rag')) process.exitCode=5
 } catch(e) {
   console.error('Browser smoke could not complete', e)
   process.exitCode=4
