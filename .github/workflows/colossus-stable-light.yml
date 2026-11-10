@@ -6,6 +6,11 @@ on:
   workflow_dispatch:
 permissions:
   contents: write
+# Do not let older source CI push its embedded HTML after a newer change.
+# This is essential because the root HTML is the real Cloudflare artifact.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   verify-integrated:
     runs-on: ubuntu-latest
