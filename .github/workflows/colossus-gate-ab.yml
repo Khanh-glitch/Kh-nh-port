@@ -1,8 +1,8 @@
-name: Colossus lossless Reality draw-gate A/B
+name: Colossus active-only reality GLSL A/B
 on:
   push:
     branches:
-      - fix/colossus-reality-idle-draw-gate
+      - fix/colossus-reality-idle-uniform-gate
   workflow_dispatch:
 permissions:
   contents: read
