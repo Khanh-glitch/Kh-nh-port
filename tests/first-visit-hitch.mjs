@@ -160,3 +160,6 @@ assert.ok(showWarm.indexOf('await precompileCriticalShaders()') < showWarm.index
 
 const gpuSmoke = read('scripts/colossus-browser-smoke.mjs')
 assert.ok(gpuSmoke.includes('metalBackendVerified') && gpuSmoke.includes('virtualGpu'), 'Metal paravirtual device must not be represented as bare physical GPU')
+
+assert.ok(showWarm.includes("get('colossusShadowProbe') === 'off'"), 'shadow A/B is opt-in only')
+assert.ok(showWarm.includes('gl.shadowMap.enabled = originalShadows'), 'shadow A/B restores the global renderer setting')

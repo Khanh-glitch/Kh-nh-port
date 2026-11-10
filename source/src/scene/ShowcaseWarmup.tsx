@@ -14,6 +14,16 @@ import * as THREE from 'three'
 export function ShowcaseWarmup({ arenaState }: { arenaState: { mode: string } }) {
   const { gl, scene } = useThree()
 
+  // Test-only shadow A/B. The normal portfolio does not alter shadows,
+  // their 2048px map, geometry, shader, light count, or rendered pixels.
+  useEffect(() => {
+    const shadowProbeOff = new URLSearchParams(location.search).get('colossusShadowProbe') === 'off'
+    if (!shadowProbeOff) return
+    const originalShadows = gl.shadowMap.enabled
+    gl.shadowMap.enabled = false
+    return () => { gl.shadowMap.enabled = originalShadows }
+  }, [gl])
+
   useEffect(() => {
     let disposed = false
     let cancelTimeout = 0
@@ -21,6 +31,7 @@ export function ShowcaseWarmup({ arenaState }: { arenaState: { mode: string } })
     let target: THREE.WebGLRenderTarget | null = null
     const info = {
       status: 'scheduled',
+      shadowProbe: new URLSearchParams(location.search).get('colossusShadowProbe') === 'off' ? 'off-diagnostic-only' : 'unchanged',
       meshes: 0,
       sprites: 0,
       beams: 0,
