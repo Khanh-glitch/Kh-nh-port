@@ -18,7 +18,7 @@ for(const test of contexts){
  page.on('pageerror',e=>report.errors.push(e.message))
  page.on('requestfailed',r=>report.failures.push({url:r.url().slice(0,140),error:r.failure()?.errorText}))
  try{
-  await page.goto('http://127.0.0.1:'+test.port+'/#at=-26,20,0,0&autostart&skip',
+  await page.goto('http://127.0.0.1:'+test.port+'/' + (test.port===4174?'?hexProfile=1':'') + '#at=-26,20,0,0&autostart&skip',
     {waitUntil:'domcontentloaded',timeout:120000})
   await page.waitForSelector('canvas',{timeout:120000})
   await page.waitForFunction(async()=>{
@@ -97,6 +97,7 @@ for(const test of contexts){
   await page.screenshot({path:'hex-evidence/'+test.name+'-hex-second.png',timeout:90000})
   report.screenshots.push('hex-second')
   report.final=await get()
+  report.hexTimings=await page.evaluate(()=>window.__orbitaHexTimings??[])
   await page.evaluate(()=>window.__hexObserver?.disconnect())
  }catch(e){report.error=String(e)}
  await context.close()
