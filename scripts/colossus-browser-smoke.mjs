@@ -2,7 +2,7 @@ import { createRequire } from 'node:module'
 import { mkdirSync, writeFileSync } from 'node:fs'
 const require = createRequire(import.meta.url)
 const { chromium } = require('../source/node_modules/playwright')
-const url = 'https://750fc9ae.menniverse.pages.dev/#at=0,-27,0,20&autostart&skip'
+const url = 'https://fc0f9278.menniverse.pages.dev/#at=0,-27,0,20&autostart&skip'
 mkdirSync('browser-evidence', { recursive: true })
 const browser = await chromium.launch({
   channel: 'chrome',
