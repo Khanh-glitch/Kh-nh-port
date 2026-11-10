@@ -1,8 +1,8 @@
-name: Colossus cooperative GPU prewarm preview
+name: Colossus laser-priority integrated verification
 on:
   push:
     branches:
-      - fix/colossus-cooperative-prewarm
+      - fix/colossus-laser-priority-progressive
   workflow_dispatch:
 permissions:
   contents: write
@@ -27,6 +27,8 @@ jobs:
         run: node tests/first-visit-hitch.mjs
       - name: Install editable source dependencies
         run: npm ci --prefix source
+      - name: Verify physically lossless scan culling with Three.js
+        run: node --experimental-strip-types source/tests/scan-cull.mjs
       - name: Build original Vite source for transpile errors
         run: npm run build --prefix source
       - name: Synchronize fixed Colossus modules into ACTUAL deployed HTML
@@ -49,7 +51,7 @@ jobs:
             git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
             git add index.html
             git commit -m "build(colossus): synchronize fixed laser code into preview HTML"
-            git push origin HEAD:fix/colossus-cooperative-prewarm
+            git push origin HEAD:fix/colossus-laser-priority-progressive
           else
             echo "Integrated preview HTML is already up to date."
           fi
