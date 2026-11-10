@@ -117,7 +117,7 @@ export function RealityHost() {
       if (draw.isMesh && !(draw as THREE.InstancedMesh).isInstancedMesh &&
           draw.visible && !Array.isArray(draw.material) &&
           !draw.material.transparent && !draw.material.alphaTest &&
-          !draw.material.isShaderMaterial &&
+          !(draw.material as THREE.ShaderMaterial).isShaderMaterial &&
           draw.material.customProgramCacheKey().includes('rw-new-')) {
         const geo = draw.geometry
         if (!geo.boundingSphere) geo.computeBoundingSphere()
