@@ -187,7 +187,7 @@ export function Robot() {
       try {
         const observer = new PerformanceObserver(list => {
           for (const entry of list.getEntries()) {
-            if (!coldProbe.running || entry.startTime < coldProbe.started - 40 || coldProbe.browserTasks.length >= 30) continue
+            if (coldProbe.started <= 0 || entry.startTime < coldProbe.started - 40 || entry.startTime > coldProbe.started + 3500 || performance.now() - coldProbe.started > 20000 || coldProbe.browserTasks.length >= 30) continue
             const e = entry as PerformanceEntry & {
               blockingDuration?: number
               scripts?: Array<{ duration?: number; invoker?: string; sourceURL?: string }>
@@ -375,7 +375,7 @@ export function Robot() {
       coldProbe.visibilityTransitions = 0
       coldProbe.programsAtClick = programSnapshot()
       coldProbe.reactCommits.length = 0
-      coldProbe.browserTasks.length = 0
+      coldProbe.browserTasks = []
       coldProbe.warmStatusAtClick = warm?.status ?? 'not-started'
       console.info('[Colossus] Laser clicked; GPU warmup status:', coldProbe.warmStatusAtClick)
     }
@@ -538,7 +538,7 @@ export function Robot() {
           programDelta: final - initial,
           newPrograms,
           reactCommits: [...coldProbe.reactCommits],
-          browserTasks: [...coldProbe.browserTasks],
+          browserTasks: coldProbe.browserTasks,
           longFrames: trace.filter(x => x.dtMs >= 34),
           trace,
         }

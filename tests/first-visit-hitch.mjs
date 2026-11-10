@@ -69,3 +69,7 @@ assert.ok(detailedProbe.includes('newPrograms'), 'shader identities captured')
 assert.ok(detailedProbe.includes('reactCommits'), 'React reconciliation captured')
 assert.ok(detailedProbe.includes("'long-animation-frame'"), 'LoAF profiling attempted')
 assert.ok(detailedProbe.includes('browserTasks'), 'long task attribution captured')
+
+const lateTasks = source['source/src/scene/Robot.tsx']
+assert.ok(lateTasks.includes('browserTasks: coldProbe.browserTasks'), 'late observer entries remain visible in copied report')
+assert.ok(lateTasks.includes('coldProbe.browserTasks = []'), 'task arrays isolated for repeat summon runs')
