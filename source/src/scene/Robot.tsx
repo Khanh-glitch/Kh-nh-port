@@ -903,7 +903,7 @@ export function Robot() {
       </sprite>
 
       {/* Shader/texture preflight runs at idle, never in the summon click. */}
-      <ShowcaseWarmup />
+      <ShowcaseWarmup arenaState={st} />
 
       {/* Flanking Game Showcases */}
       <ApexShowcase
