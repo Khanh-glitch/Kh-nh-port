@@ -55,7 +55,9 @@ for(const test of contexts){
   async function measure(name,fn,duration){
    await page.evaluate(()=>{window.__hexFrames.length=0;window.__hexLongTasks.length=0})
    const start=await page.evaluate(()=>performance.now())
+   const actionStarted=Date.now()
    await fn()
+   const actionWallMs=Date.now()-actionStarted
    await page.waitForTimeout(duration)
    const sample=await page.evaluate(start=>{
     const e=performance.now(),frames=window.__hexFrames.filter(x=>x.t>=start&&x.t<=e)
@@ -68,7 +70,7 @@ for(const test of contexts){
       topGaps:dt.slice(-12).reverse(),stage:window.__orbitaReality?.useReality.getState().phase,
       front:Math.round(window.__orbitaReality?.rt.front??0)}
    },start)
-   report.samples.push({name,...sample})
+   report.samples.push({name,actionWallMs,...sample})
    return sample
   }
   report.intro=await get()
@@ -78,6 +80,7 @@ for(const test of contexts){
   await measure('first_hex_ignite_sweep',async()=>{
     await page.evaluate(()=>window.__orbitaReality.requestReality('mua-ha'))
   },9200)
+  await page.waitForFunction(()=>['sweep','active'].includes(window.__orbitaReality?.useReality.getState().phase),null,{timeout:120000})
   await page.screenshot({path:'hex-evidence/'+test.name+'-hex-rain.png',timeout:90000})
   report.screenshots.push('hex-rain')
   report.steps.push(await get())
@@ -89,6 +92,7 @@ for(const test of contexts){
   await measure('retract',async()=>{
    await page.evaluate(()=>window.__orbitaReality.dismissReality())
   },6700)
+  await page.waitForFunction(()=>window.__orbitaReality?.useReality.getState().phase==='idle',null,{timeout:120000})
   await page.screenshot({path:'hex-evidence/'+test.name+'-retract.png',timeout:90000})
   report.screenshots.push('retract')
   report.steps.push(await get())
