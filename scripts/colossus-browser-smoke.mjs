@@ -5,6 +5,8 @@ const { chromium } = require('../source/node_modules/playwright')
 const inputURL = process.env.COLOSSUS_SMOKE_URL
 const abVariant = process.env.COLOSSUS_AB_VARIANT || 'enabled'
 const postVariant = process.env.COLOSSUS_POST_VARIANT || 'normal'
+const canvasAlpha = process.env.COLOSSUS_CANVAS_ALPHA || 'normal'
+if (!['normal','opaque'].includes(canvasAlpha)) throw new Error('Unknown opaque canvas diagnostic')
 if (!['normal','off'].includes(postVariant)) throw new Error('Unknown postproduction diagnostic variant')
 const shadowVariant = process.env.COLOSSUS_SHADOW_VARIANT || 'normal'
 if (!['normal','off'].includes(shadowVariant)) throw new Error('Unknown shadow A/B variant')
@@ -13,6 +15,7 @@ const parsedURL = inputURL ? new URL(inputURL) : null
 if (abVariant === 'disabled' && parsedURL) parsedURL.searchParams.set('colossusPrewarm', 'off')
 if (shadowVariant === 'off' && parsedURL) parsedURL.searchParams.set('colossusShadowProbe', 'off')
 if (postVariant === 'off' && parsedURL) parsedURL.searchParams.set('colossusPostProbe', 'off')
+if (canvasAlpha === 'opaque' && parsedURL) parsedURL.searchParams.set('colossusOpaqueCanvas', '1')
 const url = parsedURL?.toString() ?? ''
 if (!url || !/^https?:\/\//.test(url)) {
   throw new Error('COLOSSUS_SMOKE_URL is required: never test a stale deployed preview as if it were branch HEAD')
@@ -42,6 +45,7 @@ try {
     const gl=canvas?.getContext('webgl2')
     return {
       canvas:!!canvas,webgl2:!!gl,contextLost:gl?.isContextLost(),
+      contextAlpha:gl?.getContextAttributes()?.alpha,
       gpuRenderer:gl ? gl.getParameter(gl.getExtension('WEBGL_debug_renderer_info')?.UNMASKED_RENDERER_WEBGL ?? gl.RENDERER) : null,
       warmup:window.__orbitaColossusWarmup,
       verifiedCandidate: typeof window.__orbitaColossusWarmup?.laserSubmitted === 'boolean' &&
@@ -87,7 +91,7 @@ try {
     (after.profile.firstFrameFromClickMs ?? Infinity) > 120 ||
     after.profile.firstBeamFrameAtMs == null
   const report={
-    url,abVariant,shadowVariant,postVariant,commit:process.env.GITHUB_SHA ?? 'local',
+    url,abVariant,shadowVariant,postVariant,canvasAlpha,commit:process.env.GITHUB_SHA ?? 'local',
     gpuMode, metalBackendVerified, virtualGpu, realGpuVerified,
     performanceVerdict: softwareStutter
       ? (metalBackendVerified ? (virtualGpu ? 'UNACCEPTED_METAL_VIRTUALIZED' : 'UNACCEPTED_METAL_HARDWARE') : 'UNACCEPTED_SOFTWARE_GPU')
@@ -106,7 +110,7 @@ try {
     gpuRenderer:before.gpuRenderer,
     canvas:before.canvas,webgl2:before.webgl2,contextLost:before.contextLost,
     verifiedCandidate:before.verifiedCandidate,
-    abVariant,shadowVariant,postVariant,
+    abVariant,shadowVariant,postVariant,canvasAlpha,contextAlpha:before.contextAlpha,
     laserSubmitted:after.warmup?.laserSubmitted,
     laserGpuSynced:after.warmup?.laserGpuSynced,
     laserBatchCpuMs:after.warmup?.laserBatchCpuMs,
@@ -134,6 +138,8 @@ try {
     warmupDetails:after.warmup
   },null,2))
   if(!before.canvas || !before.webgl2) process.exitCode=2
+  if(canvasAlpha === 'opaque' && before.contextAlpha !== false) process.exitCode=15
+  if(canvasAlpha === 'normal' && before.contextAlpha !== true) process.exitCode=15
   if(!before.verifiedCandidate) process.exitCode=9
   if(errors.length) process.exitCode=3
   if(!after.profile) process.exitCode=4
