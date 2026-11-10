@@ -102,6 +102,4 @@ assert.ok(showWarm.includes('target.texture.colorSpace = gl.outputColorSpace'), 
 
 assert.ok(!showWarm.includes('await gl.compileAsync(stageNow, camera)'), 'whole-scene compile is forbidden on latency-sensitive route')
 assert.ok(showWarm.includes("name:'laser-priority-incremental'"), 'priority laser compile occurs per drawable')
-const apex = read('source/src/scene/ApexShowcase.tsx')
-const rag = read('source/src/scene/RagnarokShowcase.tsx')
 assert.ok(apex.includes('updateScanCullMeshes(') && rag.includes('updateScanCullMeshes('), 'both projection scenes progressively render only shader-visible geometry')
