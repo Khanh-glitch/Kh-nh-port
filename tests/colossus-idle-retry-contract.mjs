@@ -7,6 +7,7 @@ const source=readFileSync('source/src/scene/ShowcaseWarmup.tsx','utf8')
 const integration=readFileSync('tests/integration-original-modules.json','utf8')
 const html=readFileSync('index.html','utf8')
 const key='orbita/scene/ShowcaseWarmup'
+const apexKey='orbita/scene/ApexShowcase'
 const tag='<script id="orbita-embedded-map" type="application/json">'
 const start=html.indexOf(tag)
 const end=html.indexOf('</script>',start+tag.length)
@@ -34,6 +35,17 @@ test('published standalone contains corrected scheduler, not only source',()=>{
   assert.match(compiled,/waiting-for-idle-renderer/)
   assert.doesNotMatch(compiled,/prewarm-skipped-busy-renderer/)
   assert.equal(createHash('sha256').update(module).digest('hex'),baseline[key])
+})
+
+test('extra original-geometry batching remains opt-in, and published version matches source',()=>{
+  const source=readFileSync('source/src/scene/ApexShowcase.tsx','utf8')
+  const embedded=Buffer.from(map[apexKey].split(',')[1],'base64').toString('utf8')
+  for(const text of [source,embedded]){
+    assert.match(text,/colossusBatchProbe/)
+    assert.match(text,/extended/)
+    assert.match(text,/colossusMergedAway/)
+  }
+  assert.equal(createHash('sha256').update(map[apexKey]).digest('hex'),baseline[apexKey])
 })
 
 test('all frozen visual modules match accepted baseline',()=>{
