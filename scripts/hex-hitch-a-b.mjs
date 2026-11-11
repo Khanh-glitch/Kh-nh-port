@@ -26,6 +26,21 @@ for(const test of contexts){
     return useStore.getState().phase==='playing'&&useStore.getState().ready
   },null,{timeout:120000})
   await page.waitForTimeout(4000)
+  if(test.port===4174 && process.env.HEX_WARM_HORIZON==='1'){
+    // Diagnostic A/B: hold the real renderer idle until every source shader
+    // and original-resolution texture has completed its preflight.
+    // This is NOT a production delay or quality change.
+    await page.waitForFunction(()=>{
+      const p=window.__orbitaHexShaderPrep
+      return p?.status==='complete-or-interrupted' &&
+        p.compiledShaders===p.totalShaders &&
+        p.uploadedTextures===p.totalTextures &&
+        p.errors===0
+    },null,{timeout:150000,polling:1000})
+    report.fullyWarmedAt=await page.evaluate(()=>({
+      time:Math.round(performance.now()),prep:{...window.__orbitaHexShaderPrep}
+    }))
+  }
   await page.evaluate(()=>{
     const {performance}=window
     window.__hexFrames=[]
