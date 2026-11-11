@@ -172,6 +172,176 @@ export function RealityHost() {
     }
   }, [scene])
 
+  // OPTIONAL GPU attribute-residency experiment. Unlike the rejected radial
+  // sorter, this never changes ANY source instance matrix, color, count,
+  // source geometry/material or visible rendering order.
+  // One private triangle / one instance per healthy idle frame uploads the
+  // ORIGINAL THREE.BufferAttributes on the same WebGL context. This tests
+  // buffer residency as the remaining first-UEH-render bottleneck.
+  const hexAttrEnabled = typeof window !== 'undefined' &&
+    new URLSearchParams(window.location.search).get('hexAttrWarm') === '1'
+  const hexAttr = useRef({
+    stage: null as THREE.Scene | null,
+    camera: null as THREE.OrthographicCamera | null,
+    target: null as THREE.WebGLRenderTarget | null,
+    previews: [] as THREE.InstancedMesh[],
+    wrappers: [] as THREE.BufferGeometry[],
+    previewMats: [] as THREE.Material[],
+    index: 0, healthyFrames: 0,
+    report: {
+      status: 'disabled', total: 0, done: 0,
+      maxPrivateCpuMs: 0, totalPrivateCpuMs: 0,
+      samples: [] as Array<{object:number;ms:number}>,
+      error: '',
+    },
+  }).current
+
+  useEffect(() => {
+    if (!hexAttrEnabled) return
+    const stage = new THREE.Scene()
+    const cameraAttr = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.01, 50)
+    cameraAttr.position.set(0, 0, 3)
+    cameraAttr.lookAt(0, 0, 0)
+    const target = new THREE.WebGLRenderTarget(1, 1, {
+      depthBuffer: false, stencilBuffer: false,
+    })
+    const previews: THREE.InstancedMesh[] = []
+    const wrappers: THREE.BufferGeometry[] = []
+    const previewMats: THREE.Material[] = []
+    ueh.current?.traverse(o => {
+      const source = o as THREE.InstancedMesh
+      if (!source.isInstancedMesh || !source.geometry) return
+      // A shallow geometry wrapper shares the exact source BufferAttribute
+      // identities, and therefore the same WebGLAttributes cache entries.
+      // Independent drawRange limits private work to ONE triangle; the
+      // original source geometry and its drawRange are never mutated.
+      const wrapper = new THREE.BufferGeometry()
+      for (const [name, attr] of Object.entries(source.geometry.attributes))
+        wrapper.setAttribute(name, attr)
+      const sourceIndex = source.geometry.getIndex()
+      if (sourceIndex) wrapper.setIndex(sourceIndex)
+      wrapper.setDrawRange(0, 3)
+      wrappers.push(wrapper)
+      const basic = new THREE.MeshBasicMaterial({
+        color: 0xffffff, side: THREE.DoubleSide,
+        vertexColors: !!source.geometry.getAttribute('color'),
+      })
+      previewMats.push(basic)
+      const preview = source.clone(false) as THREE.InstancedMesh
+      preview.geometry = wrapper
+      preview.material = basic
+      // Shared exact buffer identity: uploads amortize the real draw.
+      preview.instanceMatrix = source.instanceMatrix
+      preview.instanceColor = source.instanceColor
+      preview.count = 1
+      preview.castShadow = false
+      preview.receiveShadow = false
+      preview.frustumCulled = false
+      preview.position.set(0, 0, 0)
+      preview.rotation.set(0, 0, 0)
+      preview.scale.set(1, 1, 1)
+      previews.push(preview)
+    })
+    hexAttr.stage = stage
+    hexAttr.camera = cameraAttr
+    hexAttr.target = target
+    hexAttr.previews = previews
+    hexAttr.wrappers = wrappers
+    hexAttr.previewMats = previewMats
+    hexAttr.index = 0
+    hexAttr.healthyFrames = 0
+    hexAttr.report.status = previews.length ? 'waiting-for-idle' : 'empty'
+    hexAttr.report.total = previews.length
+    hexAttr.report.done = 0
+    hexAttr.report.error = ''
+    ;(window as unknown as {__orbitaHexAttributeWarm?:typeof hexAttr.report})
+      .__orbitaHexAttributeWarm = hexAttr.report
+    return () => {
+      target.dispose()
+      stage.clear()
+      // Only teardown: disposing shallow wrappers earlier would delete their
+      // shared GPU attribute buffers and nullify the entire experiment.
+      for (const m of previewMats) m.dispose()
+      for (const g of wrappers) g.dispose()
+      hexAttr.stage = null
+      hexAttr.target = null
+      hexAttr.previews.length = 0
+    }
+  }, [scene, gl])
+
+  useFrame((_, rawDt) => {
+    const h = hexAttr
+    if (!hexAttrEnabled || !h.stage || !h.camera || !h.target ||
+        h.report.status === 'ready' || h.report.status === 'failed' ||
+        h.report.status === 'paused-expensive') return
+    const phase = useReality.getState().phase
+    const playing = useStore.getState().phase === 'playing'
+    const nearby = Math.hypot(player.pos.x-CENTER.x,
+      player.pos.z-CENTER.z) < 32
+    if (phase !== 'idle' || !playing || !nearby ||
+        document.visibilityState !== 'visible') return
+    const landing = (window as unknown as {
+      __orbitaLandingPrewarm?: {status:string}
+    }).__orbitaLandingPrewarm
+    if (landing && !['ready','disabled','failed','cancelled',
+      'skipped-entered','skipped-busy-or-entered',
+      'skipped-software-renderer','submitted-no-fence'].includes(landing.status))
+      return
+    const inputPending = (navigator as Navigator & {
+      scheduling?:{isInputPending?:()=>boolean}
+    }).scheduling?.isInputPending?.() ?? false
+    if (inputPending || rawDt <= 0 || rawDt > 0.05) {
+      h.healthyFrames = 0
+      return
+    }
+    h.healthyFrames++
+    if (h.healthyFrames < 3) return
+    h.healthyFrames = 0
+    const preview = h.previews[h.index]
+    if (!preview) {
+      h.report.status = 'ready'
+      return
+    }
+    const originalTarget = gl.getRenderTarget()
+    const originalViewport = gl.getViewport(new THREE.Vector4()).clone()
+    const originalScissor = gl.getScissor(new THREE.Vector4()).clone()
+    const originalScissorTest = gl.getScissorTest()
+    const originalXR = gl.xr.enabled
+    const originalClear = gl.autoClear
+    const started = performance.now()
+    try {
+      h.stage.add(preview)
+      gl.xr.enabled = false
+      gl.autoClear = true
+      gl.setRenderTarget(h.target)
+      gl.setViewport(0, 0, 1, 1)
+      gl.setScissorTest(false)
+      gl.clear(true, false, false)
+      gl.render(h.stage, h.camera)
+      h.index++
+      h.report.done = h.index
+      const cpu = performance.now()-started
+      h.report.maxPrivateCpuMs = Math.max(h.report.maxPrivateCpuMs,
+        Math.round(cpu))
+      h.report.totalPrivateCpuMs += Math.round(cpu)
+      h.report.samples.push({object:h.index,ms:Math.round(cpu)})
+      if (cpu > 75) h.report.status = 'paused-expensive'
+      else h.report.status = h.index >= h.previews.length ?
+        'ready' : 'warming'
+    } catch (e) {
+      h.report.status = 'failed'
+      h.report.error = String(e)
+    } finally {
+      h.stage.remove(preview)
+      gl.setRenderTarget(originalTarget)
+      gl.setViewport(originalViewport)
+      gl.setScissor(originalScissor)
+      gl.setScissorTest(originalScissorTest)
+      gl.xr.enabled = originalXR
+      gl.autoClear = originalClear
+    }
+  })
+
   const recordHexTiming = (step: string, started: number) => {
     if (typeof window === 'undefined' || new URLSearchParams(location.search).get('hexProfile') !== '1') return
     const host = window as unknown as {__orbitaHexTimings?: Array<{step:string;ms:number;at:number}>}
