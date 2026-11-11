@@ -47,7 +47,7 @@ try {
  try {
    await page.waitForFunction(()=>{
      const btn=document.querySelector('iframe')?.contentDocument?.querySelector('.energy-gate button')
-     return btn instanceof HTMLButtonElement && !btn.disabled
+     return btn?.tagName==='BUTTON' && btn.disabled===false
    },null,{timeout:35000,polling:400})
    normalReady=true
  } catch {
@@ -62,7 +62,7 @@ try {
    report.parentHandshakeAfterRecovery=await page.evaluate(()=>window.__orbitaEntryGate??null)
    await page.waitForFunction(()=>{
      const btn=document.querySelector('iframe')?.contentDocument?.querySelector('.energy-gate button')
-     return btn instanceof HTMLButtonElement && !btn.disabled
+     return btn?.tagName==='BUTTON' && btn.disabled===false
    },null,{timeout:20000,polling:400})
  }
  report.normalGpuReady=normalReady
