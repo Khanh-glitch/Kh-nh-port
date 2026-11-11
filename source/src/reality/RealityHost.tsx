@@ -136,9 +136,46 @@ export function RealityHost() {
               vertexOffset += count
             }
             geometry.setIndex(new THREE.BufferAttribute(indices,1))
+            // HEX's ORIGINAL 'new' vertex GLSL computes vRWg from each
+            // mesh's LOCAL ORIGIN (modelMatrix * vec4(0,0,0,1)), not from
+            // its visible vertices. A merged mesh otherwise uses its
+            // parent's shared origin, breaking per-object growth timing.
+            // Preserve each exact old origin alongside its unmodified UVs
+            // and geometry, with no loss of individual reveal behavior.
+            const origins = new Float32Array(vertexCount * 3)
+            let baseVertex = 0
+            const origin = new THREE.Vector3()
+            for (let k=0;k<group.length;k++) {
+              origin.setFromMatrixPosition(group[k].matrix)
+              const count = copies[k].getAttribute('position').count
+              for(let v=0;v<count;v++) {
+                const n=(baseVertex+v)*3
+                origins[n]=origin.x
+                origins[n+1]=origin.y
+                origins[n+2]=origin.z
+              }
+              baseVertex+=count
+            }
+            geometry.setAttribute('aRWOrigin',new THREE.BufferAttribute(origins,3))
             geometry.computeBoundingSphere()
             geometry.computeBoundingBox()
-            const combined = new THREE.Mesh(geometry,group[0].material)
+            const originalMaterial = group[0].material
+            const combinedMaterial = originalMaterial.clone()
+            const originalKey = originalMaterial.customProgramCacheKey.bind(originalMaterial)
+            combinedMaterial.customProgramCacheKey = () =>
+              originalKey() + '|hex-static-source-origin-v1'
+            combinedMaterial.onBeforeCompile = (shader,renderer) => {
+              // Keep ORIGINAL PBR/Wet/Growth/Wind/Lighting and all uniforms.
+              // Alter only the per-mesh reveal ORIGIN for batched triangles.
+              originalMaterial.onBeforeCompile(shader,renderer)
+              const originalExpr = 'rwX((rwM * vec4(0.0,0.0,0.0,1.0)).xyz, rwEd0)'
+              if (!shader.vertexShader.includes(originalExpr))
+                throw new Error('UEH_PATCHED_GROWTH_SHADER_MISSING: refusing unsafe batching')
+              shader.vertexShader = 'attribute vec3 aRWOrigin;\n' +
+                shader.vertexShader.replaceAll(originalExpr,
+                  'rwX((rwM * vec4(aRWOrigin,1.0)).xyz, rwEd0)')
+            }
+            const combined = new THREE.Mesh(geometry,combinedMaterial)
             combined.name = 'ueh-exact-opaque-batch'
             combined.castShadow = group[0].castShadow
             combined.receiveShadow = group[0].receiveShadow
@@ -156,6 +193,7 @@ export function RealityHost() {
             undo.push(() => {
               parent.remove(combined)
               geometry.dispose()
+              combinedMaterial.dispose()
               for (const mesh of group) {
                 mesh.visible = true
                 delete mesh.userData.hexMergedAway
