@@ -2,7 +2,7 @@ name: HEX distance-safe Cinema light readback A/B with full visuals
 on:
   push:
     branches: [fix/hex-hitch-no-visual-loss]
-    paths: ['.github/workflows/hex-cinema-far-light-ab.yml', 'source/src/scene/Cinema.tsx', 'scripts/hex-cpu-first-trigger-trace.mjs']
+    paths: ['.github/workflows/hex-cinema-far-light-ab.yml', 'source/src/scene/Cinema.tsx', 'scripts/sync-hex-standalone.mjs', 'tests/hex-preservation.mjs', 'scripts/hex-cpu-first-trigger-trace.mjs']
   workflow_dispatch:
 permissions:
   contents: read
