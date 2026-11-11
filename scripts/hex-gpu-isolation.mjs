@@ -3,7 +3,7 @@ import {mkdirSync,writeFileSync} from 'node:fs'
 const require=createRequire(import.meta.url)
 const {chromium}=require('../source/node_modules/playwright')
 mkdirSync('hex-gpu-isolation',{recursive:true})
-const cases=['normal','no-ignition','no-ignition-light','no-hex','no-world','no-sheets']
+const cases=(process.env.HEX_GPU_MODES??'normal,no-ignition,no-ignition-light,no-hex,no-world,no-sheets').split(',').map(x=>x.trim()).filter(Boolean)
 const browser=await chromium.launch({headless:true,args:[
   '--enable-webgl','--enable-gpu','--ignore-gpu-blocklist',
   '--use-angle=metal','--disable-software-rasterizer'
@@ -34,6 +34,9 @@ for(const mode of cases){
       p.uploadedTextures===p.totalTextures && p.errors===0
   },null,{timeout:150000,polling:500})
   r.preflight=await page.evaluate(()=>({...window.__orbitaHexShaderPrep}))
+  r.diag=await page.evaluate(()=>window.__orbitaHexGpuDiagStats??null)
+  if(mode.startsWith('no-ueh-') && !(r.diag?.hiddenDrawables>0))
+    throw Error('Diagnostic category is empty: '+JSON.stringify(r.diag))
   await page.waitForTimeout(500)
   await page.evaluate(()=>{
     window.__hfd={last:0,frames:[],tasks:[]}
@@ -72,7 +75,8 @@ for(const mode of cases){
       phase:window.__orbitaReality.useReality.getState().phase,
       front:Math.round(window.__orbitaReality.rt.front),
       culling:window.__orbitaHexCullStats,
-      shaderPrep:window.__orbitaHexShaderPrep
+      shaderPrep:window.__orbitaHexShaderPrep,
+      isolatedGroup:window.__orbitaHexGpuDiagStats??null
     }
   })
   await page.screenshot({path:'hex-gpu-isolation/'+mode+'.png',timeout:120000})
