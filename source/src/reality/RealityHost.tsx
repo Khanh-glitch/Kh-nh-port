@@ -103,6 +103,7 @@ export function RealityHost() {
     warmPrimeSeeded:false,
     warmPrimeTotal:0,warmPrimeDone:0,
     warmPrimeMaxMs:0,warmPrimeErrors:0,warmPrimePaused:false,
+    warmPrimeLinkFailures:0,warmPrimeCheckedWithoutLogs:0,
     warmHealthyPaints: 0,
     warmPass: 0, // 0: đang upload tex/compile, 1: đang bật 1 frame silent shadow warm, 2: xong hoàn toàn
   }).current
@@ -528,6 +529,13 @@ export function RealityHost() {
     typeof window!=='undefined' &&
     new URLSearchParams(window.location.search).get('hexPrimeFirstUse')==='1'
 
+  // Optional second diagnostic: after KHR program completion, initialize
+  // first-use with the release-mode shader-log setting, while explicitly
+  // checking LINK_STATUS. Restore renderer.debug before returning. The
+  // original GLSL and visible rendering are NEVER changed.
+  const hexPrimeSkipLogs=hexPrimeFirstUse &&
+    new URLSearchParams(window.location.search).get('hexPrimeSkipLogs')==='1'
+
   const compileHexCooperatively=(obj:THREE.Object3D)=>{
     const scratch=hexCooperativeLinear?hexCooperativeTarget.current:null
     if(!scratch)return gl.compileAsync(obj,camera,scene)
@@ -841,8 +849,28 @@ export function RealityHost() {
         }else{
           const began=performance.now()
           try{
-            program.getUniforms()
-            program.getAttributes()
+            if(hexPrimeSkipLogs){
+              const gpu=gl.getContext()
+              // .isReady() was checked above; querying LINK_STATUS here
+              // protects against masking a real compilation failure.
+              const compiled=program as typeof program & {program:WebGLProgram}
+              if(!gpu.getProgramParameter(compiled.program,gpu.LINK_STATUS)){
+                S.warmPrimeLinkFailures++
+                throw Error('GPU program failed LINK_STATUS before first use')
+              }
+              const previous=gl.debug.checkShaderErrors
+              try{
+                gl.debug.checkShaderErrors=false
+                program.getUniforms()
+                program.getAttributes()
+              }finally{
+                gl.debug.checkShaderErrors=previous
+              }
+              S.warmPrimeCheckedWithoutLogs++
+            }else{
+              program.getUniforms()
+              program.getAttributes()
+            }
             S.warmPrimeDone++
           }catch(err){
             S.warmPrimeErrors++
@@ -887,6 +915,8 @@ export function RealityHost() {
       primeErrors:S.warmPrimeErrors,
       primeMaxMs:Math.round(S.warmPrimeMaxMs),
       primePaused:S.warmPrimePaused,
+      primeLinkFailures:S.warmPrimeLinkFailures,
+      primeCheckedWithoutLogs:S.warmPrimeCheckedWithoutLogs,
     }
     // Continue the cooperative material/texture queue AFTER entering the
     // world: the old intro-exit handler discarded every remaining UEH shader
