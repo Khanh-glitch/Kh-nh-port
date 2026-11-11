@@ -29,6 +29,7 @@ jobs:
       - name: Verify no other frozen module or navigation regressed
         run: |
           node tests/integration-regression.mjs
+          node --test tests/colossus-idle-retry-contract.mjs
           node scripts/build-pages.mjs
           test -s dist-pages/index.html
           cmp -s index.html dist-pages/index.html
