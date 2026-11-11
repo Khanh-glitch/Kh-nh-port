@@ -2,7 +2,7 @@ name: HEX original GPU attributes 1-triangle preupload A/B
 on:
   push:
     branches: [fix/hex-hitch-no-visual-loss]
-    paths: ['.github/workflows/hex-attribute-preupload-ab.yml']
+    paths: ['.github/workflows/hex-attribute-preupload-ab.yml','source/src/reality/RealityHost.tsx','scripts/hex-gpu-isolation.mjs']
   workflow_dispatch:
 permissions:
   contents: read
