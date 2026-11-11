@@ -25,7 +25,7 @@ jobs:
       - name: Reject cold-first-click terminal skip and check TypeScript
         run: |
           node --check scripts/sync-colossus-idle-standalone.mjs
-          npx --prefix source tsc --noEmit --project source/tsconfig.json
+          npx --prefix source tsc --noEmit --project source/tsconfig.colossus.json
       - name: Sync only corrected prewarm scheduler; keep visual modules immutable
         run: node scripts/sync-colossus-idle-standalone.mjs
       - name: Verify no other frozen module or navigation regressed
