@@ -13,10 +13,9 @@ for(const p of ['reality/RealityHost','reality/Front']){
  const js=Buffer.from(map[id].split(',')[1],'base64').toString('utf8')
  assert.ok(js.length>2000,id+' non-placeholder code')
  if(p.endsWith('RealityHost')){
-  assert.match(js,/paused-expensive-private-draw/,'Cooperative GPU safety budget embedded')
-  assert.match(js,/new THREE\.WebGLRenderTarget\(96,\s*96/,'Private target not output resolution')
-  assert.match(js,/RW\.uRW\.value\.copy\(rw\)/,'Global HEX uniforms restored')
-  assert.match(js,/gl\.setRenderTarget\(oldTarget\)/,'Visible framebuffer restored')
+  assert.match(js,/__rwPatchMode/,'Conservative scan-gated UEH source mesh path embedded')
+  assert.doesNotMatch(js,/new THREE\.WebGLRenderTarget\(96,\s*96/,
+    'Failed private GPU prewarm must not allocate 96px framebuffer in production')
  }
 }
 const source=read('source/src/reality/RealityHost.tsx')
@@ -25,7 +24,7 @@ assert.match(source,/<HexLattice\s*\/>/,'Source hexagonal prism mesh preserved')
 assert.match(source,/<StaffWall\s*\/>/,'Source five-line wall preserved')
 assert.match(source,/<Ignition\s*\/>/,'Ignition VFX preserved')
 assert.match(source,/<Sheets\s*\/>/,'Musical sheet triggers preserved')
-assert.match(source,/RW\.uRW\.value\.copy\(rw\)/,'Private preview restores original HEX state')
+assert.match(source,/__orbitaHexCullStats/,'Real HEX scan culling remains observable')
 const mask=read('source/src/reality/mask.ts')
 for(const scalar of ['uRWGrowLen','uRWGlow','uRWWind']){
  assert.ok(mask.includes(scalar),'HEX preserves material-specific '+scalar+' as a shared GLSL uniform')
