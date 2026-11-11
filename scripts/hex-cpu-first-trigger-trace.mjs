@@ -30,6 +30,8 @@ for(const [idx,mode] of modes.entries()){
    ? '?hexCinemaFarLightGate=1'
    : mode==='prime-cinema-far'
    ? '?hexCooperativeLinear=1&hexShadowProgramWarm=1&hexPrimeFirstUse=1&hexCinemaFarLightGate=1'
+   : /^gpu-no-instance-[0-7]$/.test(mode)
+   ? '?hexCooperativeLinear=1&hexShadowProgramWarm=1&hexPrimeFirstUse=1&hexCinemaFarLightGate=1&hexGpuDiag=no-ueh-instance-'+mode.slice(-1)
    : mode==='gpu-no-instances'
    ? '?hexCooperativeLinear=1&hexShadowProgramWarm=1&hexPrimeFirstUse=1&hexCinemaFarLightGate=1&hexGpuDiag=no-ueh-instanced'
    : mode==='gpu-no-foliage'
