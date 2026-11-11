@@ -136,6 +136,56 @@ export function RealityHost() {
         }
       }
     })
+    if (hexGpuDiag === 'batch-inventory') {
+      // No modifications. Determine whether the APEX sibling batching
+      // strategy has enough eligible same-material UEH plates to matter.
+      const parents:THREE.Object3D[]=[]
+      ueh.current?.traverse(parent=>parents.push(parent))
+      let drawable=0,eligible=0,mergeGroups=0,savedCalls=0
+      const samples:Array<{parent:string;material:string;count:number;saved:number}>= []
+      for(const parent of parents){
+        const candidates=parent.children.filter(o=>{
+          const m=o as THREE.Mesh
+          if(!m.isMesh||(m as THREE.InstancedMesh).isInstancedMesh||
+            m.children.length>0||!m.visible||Array.isArray(m.material)||
+            m.material.transparent||m.material.alphaTest>0||
+            Object.keys(m.geometry?.morphAttributes??{}).length>0||
+            m.material.userData.__rwPatchMode!=='new')return false
+          return true
+        }) as THREE.Mesh[]
+        eligible+=candidates.length
+        const buckets=new Map<string,THREE.Mesh[]>()
+        for(const m of candidates){
+          const geom=m.geometry
+          const attrs=Object.keys(geom.attributes).sort()
+          const signature=attrs.map(k=>{
+            const a=geom.getAttribute(k)
+            return [k,a.itemSize,a.normalized,a.array.constructor.name].join(':')
+          }).join(',')
+          const key=[m.material.uuid,m.castShadow,m.receiveShadow,
+            m.renderOrder,m.frustumCulled,m.layers.mask,signature].join('|')
+          const group=buckets.get(key)??[]
+          group.push(m)
+          buckets.set(key,group)
+        }
+        for(const group of buckets.values()){
+          if(group.length<2)continue
+          mergeGroups++
+          savedCalls+=group.length-1
+          if(samples.length<40)samples.push({
+            parent:parent.name||parent.type,material:group[0].material.name||
+              group[0].material.type,count:group.length,saved:group.length-1
+          })
+        }
+      }
+      ueh.current?.traverse(o=>{
+        const m=o as THREE.Mesh
+        if(m.isMesh)drawable++
+      })
+      ;(window as unknown as {__orbitaHexBatchInventory?:unknown}).__orbitaHexBatchInventory={
+        drawable,eligible,mergeGroups,savedCalls,samples
+      }
+    }
     if (hexGpuDiag === 'basic-instances') {
       ueh.current?.traverse(o=>{
         const mesh=o as THREE.InstancedMesh
