@@ -32,6 +32,10 @@ for(const [idx,mode] of modes.entries()){
    ? '?hexCooperativeLinear=1&hexShadowProgramWarm=1&hexPrimeFirstUse=1&hexCinemaFarLightGate=1'
    : /^gpu-no-instance-[0-7]$/.test(mode)
    ? '?hexCooperativeLinear=1&hexShadowProgramWarm=1&hexPrimeFirstUse=1&hexCinemaFarLightGate=1&hexGpuDiag=no-ueh-instance-'+mode.slice(-1)
+   : mode==='gpu-vertex-leaves'
+   ? '?hexCooperativeLinear=1&hexShadowProgramWarm=1&hexPrimeFirstUse=1&hexCinemaFarLightGate=1&hexVertexGate=leaves'
+   : mode==='gpu-vertex-all'
+   ? '?hexCooperativeLinear=1&hexShadowProgramWarm=1&hexPrimeFirstUse=1&hexCinemaFarLightGate=1&hexVertexGate=all'
    : mode==='gpu-attribute-warm'
    ? '?hexCooperativeLinear=1&hexShadowProgramWarm=1&hexPrimeFirstUse=1&hexCinemaFarLightGate=1&hexInstanceBufferWarm=1'
    : mode==='gpu-no-instances'
@@ -144,6 +148,7 @@ for(const [idx,mode] of modes.entries()){
     phase:window.__orbitaReality.useReality.getState().phase,
     front:window.__orbitaReality.rt.front,
     gpuDiag:window.__orbitaHexGpuDiagStats??null,
+    vertexGate:window.__orbitaHexVertexGate??null,
     shaderPrep:window.__orbitaHexShaderPrep,
     source:window.__orbitaHexTimings??null}
   })
