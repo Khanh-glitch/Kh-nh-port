@@ -41,6 +41,8 @@ const maskJs=Buffer.from(map['orbita/reality/mask'].split(',')[1],'base64').toSt
 assert.match(maskJs,/rw-uniform-v2/,'Production HTML uses new shared material programs')
 assert.match(maskJs,/uRWGrowLen/,'Production HTML preserves material-specific uniforms')
 const kit=read('source/src/reality/kit.tsx')
+assert.match(kit,/rwFarSky: true/,'Original UEH far-field shader mesh explicitly tagged')
+assert.match(source,/rt\.front >= 140/,'Far sky draw resumes before the original rwX visibility threshold at 150')
 assert.match(kit,/this\.tex = this\.demoTexture/,'Procedural memory texture is reused')
 assert.match(kit,/this\.demoTexture\.needsUpdate = true/,'Same canvas texture is updated for each track')
 assert.match(kit,/const generation = \+\+this\.useGeneration/,'Concurrent media requests cannot overwrite new track')
