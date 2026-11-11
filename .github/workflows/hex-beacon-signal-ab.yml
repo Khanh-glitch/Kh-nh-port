@@ -29,7 +29,7 @@ jobs:
           cmp index.html dist-pages/index.html
       - name: Trace original Beacon on software GPU with real panel handoff
         env:
-          BEACON_AB_MODES: baseline,stable-lights
+          BEACON_AB_MODES: baseline,stable-lights,stable-warm
         run: |
           python3 -m http.server 4173 --bind 127.0.0.1 --directory dist-pages >/tmp/beacon-signal.log 2>&1 &
           for n in {1..80}; do
@@ -67,7 +67,7 @@ jobs:
       - name: Opposite-order first and repeat Beacon signal on Metal
         env:
           BEACON_BACKEND: metal
-          BEACON_AB_MODES: ${{ matrix.order == 'baseline-first' && 'baseline,stable-lights' || 'stable-lights,baseline' }}
+          BEACON_AB_MODES: ${{ matrix.order == 'baseline-first' && 'baseline,stable-warm' || 'stable-warm,baseline' }}
         run: |
           python3 -m http.server 4173 --bind 127.0.0.1 --directory dist-pages >/tmp/beacon-metal.log 2>&1 &
           for n in {1..80}; do
