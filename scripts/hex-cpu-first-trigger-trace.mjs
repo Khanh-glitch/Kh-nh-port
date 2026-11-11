@@ -32,6 +32,8 @@ for(const [idx,mode] of modes.entries()){
    ? '?hexCooperativeLinear=1&hexShadowProgramWarm=1&hexPrimeFirstUse=1&hexCinemaFarLightGate=1'
    : /^gpu-no-instance-[0-7]$/.test(mode)
    ? '?hexCooperativeLinear=1&hexShadowProgramWarm=1&hexPrimeFirstUse=1&hexCinemaFarLightGate=1&hexGpuDiag=no-ueh-instance-'+mode.slice(-1)
+   : mode==='gpu-attribute-warm'
+   ? '?hexCooperativeLinear=1&hexShadowProgramWarm=1&hexPrimeFirstUse=1&hexCinemaFarLightGate=1&hexInstanceBufferWarm=1'
    : mode==='gpu-no-instances'
    ? '?hexCooperativeLinear=1&hexShadowProgramWarm=1&hexPrimeFirstUse=1&hexCinemaFarLightGate=1&hexGpuDiag=no-ueh-instanced'
    : mode==='gpu-no-foliage'
@@ -58,6 +60,17 @@ for(const [idx,mode] of modes.entries()){
      p.uploadedTextures===p.totalTextures
   },null,{timeout:180000,polling:500})
   r.prep=await page.evaluate(()=>({...window.__orbitaHexShaderPrep}))
+  if(mode==='gpu-attribute-warm'){
+   await page.waitForFunction(()=>{
+    const p=window.__orbitaHexInstanceBufferWarm
+    return ['ready','failed','rejected-idle-stall','empty'].includes(p?.status)
+   },null,{timeout:120000,polling:400})
+   r.instanceBufferWarm=await page.evaluate(()=>({...window.__orbitaHexInstanceBufferWarm}))
+   if(r.instanceBufferWarm.status!=='ready'||
+      r.instanceBufferWarm.done!==r.instanceBufferWarm.total||
+      r.instanceBufferWarm.maxSubmitMs>120||r.instanceBufferWarm.errors)
+    throw Error('GPU attribute warm must not create idle hitch: '+JSON.stringify(r.instanceBufferWarm))
+  }
   await page.evaluate(()=>{
    window.__hexCpuFrames=[]
    window.__hexCpuTasks=[]
@@ -137,7 +150,7 @@ for(const [idx,mode] of modes.entries()){
   writeFileSync('hex-cpu-trace/'+mode+'-'+idx+'.cpuprofile',JSON.stringify(profile))
   await page.screenshot({path:'hex-cpu-trace/'+mode+'-'+idx+'.png',timeout:120000})
   console.log('HEX_CPU_TRACE '+JSON.stringify({mode,prep:r.prep,cpu:r.cpu.top.slice(0,15),
-   render:r.render,error:r.error}).slice(0,12000))
+   render:r.render,instanceBufferWarm:r.instanceBufferWarm,error:r.error}).slice(0,12000))
  }catch(e){r.error=String(e);console.error('HEX_CPU_TRACE_ERROR '+mode+' '+r.error)}
  writeFileSync('hex-cpu-trace/results.json',JSON.stringify(results,null,2))
  await context.close()
