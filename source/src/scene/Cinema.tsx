@@ -5,6 +5,7 @@ import { EXHIBITS } from '../layout'
 import { audio, type Bus } from '../audio'
 import { toast } from '../store'
 import { FONT, beamGeometry, beamMaterial, canvasTex, rbox, roundRect } from '../gfx'
+import { useReality } from '../reality/state'
 import { Hit } from './Hit'
 import { Label } from './Label'
 import { PadRing, isFacing, mats, useWorldColliders, worldPos } from './common'
@@ -216,6 +217,10 @@ function posterTex(title: string, a: string, b: string, sub: string) {
 
 export function Cinema() {
   const busRef = useRef<Bus | null>(null)
+  // Diagnostic only: do not read Cinema screen pixels to update a distant
+  // room light during HEX. The full 1024x450 film keeps drawing, unchanged.
+  const hexCinemaFarLightGate = typeof window !== 'undefined' &&
+    new URLSearchParams(window.location.search).get('hexCinemaFarLightGate') === '1'
   // A/B ONLY: keep the real 1024×450 cinema pixels and exact CanvasTexture,
   // but opt into a CPU-backed 2D canvas to avoid a native readback fence when
   // the 4×2 room-light sampler calls getImageData(). No display changes allowed.
@@ -306,7 +311,15 @@ export function Cinema() {
       }
       screenTex.tex.needsUpdate = true
       // màu trung bình của phim -> ánh sáng phòng
-      if (t - st.lastAvg > 0.2) {
+      // A Cinema light has a 13m attenuation range. When the visitor is far
+      // away and the HEX transition is running, reading 4x2 pixels cannot
+      // affect the local piano/UEH scene but can trigger a multi-second
+      // Canvas2D GPU readback fence. Keep every cinema film frame intact.
+      const distantDuringHex = hexCinemaFarLightGate &&
+        useReality.getState().phase !== 'idle' &&
+        Math.hypot(state.camera.position.x - ex.x,
+          state.camera.position.z - ex.z) > 24
+      if (t - st.lastAvg > 0.2 && !distantDuringHex) {
         st.lastAvg = t
         tiny.drawImage(screenTex.canvas, 0, 34, SW, SH - 68, 0, 0, 4, 2)
         const d = tiny.getImageData(0, 0, 4, 2).data
