@@ -72,6 +72,11 @@ export function RealityHost() {
               Array.isArray(m.material) || !m.material ||
               m.material.transparent || m.material.alphaTest > 0 ||
               m.material.userData?.__rwPatchMode !== 'new' ||
+              (m.material as THREE.ShaderMaterial).isShaderMaterial ||
+              // Source wind is a LOCAL-space vector offset; preserve it by
+              // leaving those meshes original until a separately validated
+              // axis-preserving batch shader exists.
+              !m.material.customProgramCacheKey().includes('-still-') ||
               !m.geometry || Object.keys(m.geometry.morphAttributes).length ||
               m.userData.hexMergedAway || m.userData.rwKeep) return false
           return true
@@ -143,20 +148,32 @@ export function RealityHost() {
             // Preserve each exact old origin alongside its unmodified UVs
             // and geometry, with no loss of individual reveal behavior.
             const origins = new Float32Array(vertexCount * 3)
+            const growDeltas = new Float32Array(vertexCount * 3)
             let baseVertex = 0
             const origin = new THREE.Vector3()
             for (let k=0;k<group.length;k++) {
               origin.setFromMatrixPosition(group[k].matrix)
               const count = copies[k].getAttribute('position').count
+              const originalPositions = group[k].geometry.getAttribute('position')
+              // A source mesh grows by scaling its own local vertex Y
+              // BEFORE its local translation/rotation/scale are applied.
+              // The baked combined mesh must add back that exact displaced
+              // local-Y direction rather than scaling its parent-space Y.
+              const m=group[k].matrix.elements
               for(let v=0;v<count;v++) {
                 const n=(baseVertex+v)*3
                 origins[n]=origin.x
                 origins[n+1]=origin.y
                 origins[n+2]=origin.z
+                const y=originalPositions.getY(v)
+                growDeltas[n]=m[4]*y
+                growDeltas[n+1]=m[5]*y
+                growDeltas[n+2]=m[6]*y
               }
               baseVertex+=count
             }
             geometry.setAttribute('aRWOrigin',new THREE.BufferAttribute(origins,3))
+            geometry.setAttribute('aRWGrowDelta',new THREE.BufferAttribute(growDeltas,3))
             geometry.computeBoundingSphere()
             geometry.computeBoundingBox()
             const originalMaterial = group[0].material
@@ -171,9 +188,16 @@ export function RealityHost() {
               const originalExpr = 'rwX((rwM * vec4(0.0,0.0,0.0,1.0)).xyz, rwEd0)'
               if (!shader.vertexShader.includes(originalExpr))
                 throw new Error('UEH_PATCHED_GROWTH_SHADER_MISSING: refusing unsafe batching')
-              shader.vertexShader = 'attribute vec3 aRWOrigin;\n' +
-                shader.vertexShader.replaceAll(originalExpr,
-                  'rwX((rwM * vec4(aRWOrigin,1.0)).xyz, rwEd0)')
+              const growExpr='transformed.y *= rwGrow(vRWg, uRWGrowLen);'
+              const grown=shader.vertexShader.replaceAll(originalExpr,
+                'rwX((rwM * vec4(aRWOrigin,1.0)).xyz, rwEd0)')
+                .replaceAll(growExpr,
+                  'transformed += aRWGrowDelta * (rwGrow(vRWg, uRWGrowLen) - 1.0);')
+              if (originalMaterial.customProgramCacheKey().includes('-g-') &&
+                  !shader.vertexShader.includes(growExpr))
+                throw new Error('UEH_LOCAL_GROWTH_SHADER_MISSING: refuse unsafe batching')
+              shader.vertexShader =
+                'attribute vec3 aRWOrigin;\nattribute vec3 aRWGrowDelta;\n' + grown
             }
             const combined = new THREE.Mesh(geometry,combinedMaterial)
             combined.name = 'ueh-exact-opaque-batch'
