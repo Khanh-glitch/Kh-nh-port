@@ -25,16 +25,12 @@ for(const [name,port] of [['normal',4174],['linear-target-compile',4174]]){
  page.on('requestfailed',e=>r.network.push(e.url().slice(0,150)))
  report.push(r)
  try{
-  await page.goto('http://127.0.0.1:'+port+'/' + (name==='linear-target-compile'?'?hexLinearTargetCompile=1':'') + '#at=-26,20,0,0&autostart&skip',
+  await page.goto('http://127.0.0.1:'+port+'/?hexForceHigh=1' + (name==='linear-target-compile'?'&hexLinearTargetCompile=1':'') + '#at=-26,20,0,0&autostart&skip',
    {waitUntil:'domcontentloaded',timeout:120000})
   await page.waitForFunction(async()=>{
    const {useStore}=await import('orbita/store')
    return useStore.getState().phase==='playing'&&useStore.getState().ready
   },null,{timeout:120000})
-  await page.evaluate(async()=>{
-    const {useStore}=await import('orbita/store')
-    useStore.getState().setQuality('high')
-  })
   await page.waitForFunction(async()=>{
     const {useStore}=await import('orbita/store')
     return useStore.getState().quality==='high'
