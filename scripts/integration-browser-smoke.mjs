@@ -7,6 +7,13 @@ const angle=process.env.ORBITA_TEST_ANGLE || (process.platform==='darwin'?'metal
 const browser=await chromium.launch({headless:true,args:['--no-sandbox','--enable-webgl','--use-angle='+angle,'--ignore-gpu-blocklist']})
 const ctx=await browser.newContext({viewport:{width:1440,height:810},deviceScaleFactor:1})
 const page=await ctx.newPage(),report={errors:[],network:[],stages:[],ready:false}
+await page.addInitScript(()=>{
+  window.__orbitaTestMessages=[]
+  window.addEventListener('message', e=>{
+    if(e.data?.type?.startsWith?.('ORBITA_SPACE_'))
+      window.__orbitaTestMessages.push({type:e.data.type,t:Math.round(performance.now()),origin:e.origin})
+  })
+})
 page.on('pageerror',e=>report.errors.push(String(e)))
 page.on('requestfailed',r=>report.network.push({url:r.url().slice(0,160),error:r.failure()?.errorText}))
 try {
@@ -71,11 +78,18 @@ try {
  report.stages.push('energy-filled')
  await frame.locator('.energy-gate button').first().click({timeout:30000})
  report.stages.push('warp-clicked')
- await page.waitForFunction(async()=>{
+ await page.evaluate(async()=>{
    const m=await import('orbita/store')
-   return m.useStore.getState().phase==='playing'
+   window.__orbitaTestStore=m.useStore
+ })
+ // Synchronous predicate only: an async function can yield a truthy Promise
+ // before the store says playing, giving false-positive acceptance.
+ await page.waitForFunction(()=>{
+   return window.__orbitaTestStore?.getState().phase==='playing' &&
+     !document.querySelector('iframe[title*="Immersive Space Shift"]')
  },null,{timeout:45000,polling:400})
  report.stages.push('original-island-descent-engaged')
+ report.warpMessages=await page.evaluate(()=>window.__orbitaTestMessages||[])
  await page.waitForTimeout(1600)
  report.iframeAfterWarp=await page.locator('iframe[title*="Immersive Space Shift"]').count()
  report.playingState=await page.evaluate(async()=>{const m=await import('orbita/store');return m.useStore.getState().phase})
@@ -85,6 +99,7 @@ try {
  if(report.errors.length)throw Error('Browser JS exceptions: '+JSON.stringify(report.errors.slice(0,5)))
 } catch(error) {
  report.error=String(error)
+ report.warpMessages=await page.evaluate(()=>window.__orbitaTestMessages||[]).catch(()=>[])
  report.entryHandshakeAtFailure=await page.evaluate(()=>window.__orbitaEntryGate??null).catch(()=>null)
  report.iframeGateAtFailure=await page.evaluate(()=>{
    const iframe=document.querySelector('iframe')
