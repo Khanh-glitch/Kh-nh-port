@@ -63,5 +63,5 @@ const shipHtml=`<!DOCTYPE html><html lang="vi"><head><meta charset="UTF-8"><meta
 const dest=path.join(base,'assets','immersive','index.html');fs.mkdirSync(path.dirname(dest),{recursive:true});fs.writeFileSync(dest,shipHtml);
 console.log('SPACE_STANDALONE',shipNames.length,'modules',shipHtml.length,'bytes');
 // Stage asset exact byte provenance.
-const stagePhoto=path.join(payload,'assets/stage/mcyt-crew-stage.jpg');fs.mkdirSync(path.join(base,'assets/stage'),{recursive:true});fs.copyFileSync(stagePhoto,path.join(base,'assets/stage/mcyt-crew-stage.jpg'));
+const stagePhoto=path.join(payload,'assets/stage/mcyt-crew-stage.jpg');fs.mkdirSync(path.join(base,'assets/stage'),{recursive:true});if (path.resolve(stagePhoto)!==path.resolve(base,'assets/stage/mcyt-crew-stage.jpg')) fs.copyFileSync(stagePhoto,path.join(base,'assets/stage/mcyt-crew-stage.jpg'));
 const a=fs.readFileSync(stagePhoto);if(a.length<100000)throw Error('Stage image missing');
