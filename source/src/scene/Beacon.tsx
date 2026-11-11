@@ -50,7 +50,7 @@ export function Beacon() {
     let last=0, firstFrameMs:number|null=null
     let lastFrame=clickedAt
     let frames=0
-    const follow = (now:number) => {
+    const follow = () => {
       if (traceIndex.current!==id) return
       const clock=performance.now()
       if (firstFrameMs===null) firstFrameMs=clock-clickedAt
