@@ -19,16 +19,17 @@ if(start<0||end<0)throw Error('HEX sync: standalone import map not found')
 const a=start+tag.length
 const map=JSON.parse(html.slice(a,end))
 const keys=Object.keys(map)
-const targets=['reality/RealityHost','reality/Front']
+const targets=['reality/RealityHost','reality/Front','reality/mask']
 for(const f of targets){
- const source=readFileSync(resolve(src,f+'.tsx'),'utf8')
- const tx=ts.transpileModule(source,{fileName:f+'.tsx',reportDiagnostics:true,
+ const extension = f==='reality/mask' ? '.ts' : '.tsx'
+ const source=readFileSync(resolve(src,f+extension),'utf8')
+ const tx=ts.transpileModule(source,{fileName:f+extension,reportDiagnostics:true,
   compilerOptions:{jsx:ts.JsxEmit.ReactJSX,target:ts.ScriptTarget.ES2022,
    module:ts.ModuleKind.ESNext,removeComments:false}})
  const errors=(tx.diagnostics||[]).filter(d=>d.category===ts.DiagnosticCategory.Error)
  if(errors.length)throw Error('HEX sync TS diagnostics: '+f+' '+errors.map(e=>e.messageText).join(' | '))
  const js=tx.outputText.replace(/(\bfrom\s*['"])(\.{1,2}\/[^'"]+)(['"])/g,(_all,pre,spec,post)=>{
-  const dest=resolve(src,dirname(f+'.tsx'),spec)
+  const dest=resolve(src,dirname(f+extension),spec)
   const rel=relative(src,dest).replace(/\\/g,'/')
   if(rel.startsWith('..'))throw Error('HEX sync: import escapes source '+spec)
   const id='orbita/'+rel.replace(/\.(tsx?|jsx?)$/,'')
