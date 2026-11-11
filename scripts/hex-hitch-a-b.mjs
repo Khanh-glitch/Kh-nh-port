@@ -65,7 +65,13 @@ for(const test of contexts){
     const e=performance.now(),frames=window.__hexFrames.filter(x=>x.t>=start&&x.t<=e)
     const tasks=window.__hexLongTasks.filter(x=>x.t>=start&&x.t<=e)
     const dt=frames.map(x=>x.dt).filter(x=>x>0).sort((a,b)=>a-b)
-    return {durationMs:Math.round(e-start),frames:dt.length,maxMs:dt.at(-1)??null,
+    const lastRaf=frames.at(-1)?.t??start
+    // A long GPU freeze can leave the LAST rAF unscheduled, so its gap
+    // never appears in the frameDelta list. Always capture the silent tail.
+    const silentTailMs=Math.round(Math.max(0,e-lastRaf))
+    const maxObservedGapMs=Math.round(Math.max(dt.at(-1)??0,silentTailMs))
+    return {durationMs:Math.round(e-start),frames:dt.length,
+      silentTailMs,maxObservedGapMs,maxMs:dt.at(-1)??null,
       p95Ms:dt[Math.min(dt.length-1,Math.floor(dt.length*.95))]??null,
       gapsOver120Ms:dt.filter(v=>v>120).length,
       longTasks:tasks.length,maxLongTaskMs:Math.max(0,...tasks.map(x=>x.d)),
