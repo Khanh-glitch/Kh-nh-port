@@ -430,6 +430,11 @@ export function RealityHost() {
       total:proxies.length,done:0,maxSubmitMs:0,errors:0,paused:false,
       frameBudgetExceeded:false,healthy:0,
     })
+    ;(window as unknown as {__orbitaHexInstanceBufferWarm?:unknown})
+      .__orbitaHexInstanceBufferWarm={
+        status:instanceBufferWarm.status,total:proxies.length,done:0,
+        maxSubmitMs:0,errors:0,paused:false,frameBudgetExceeded:false,
+      }
     return ()=>{
       target.dispose()
       mat.dispose()
