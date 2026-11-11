@@ -1,0 +1,40 @@
+name: HEX whole-instance safe front gate visual parity
+on:
+  push:
+    branches: [fix/hex-hitch-no-visual-loss]
+    paths: ['.github/workflows/hex-whole-visual.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  visual:
+    runs-on: macos-15
+    timeout-minutes: 23
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: candidate
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build exact original scene and standalone
+        run: |
+          npm ci --prefix candidate/source
+          npm install --prefix candidate/source --no-save --package-lock=false playwright@1.56.1
+          (cd candidate/source && npx playwright install chromium)
+          (cd candidate && npm run build --prefix source && node scripts/sync-hex-standalone.mjs && node scripts/build-pages.mjs)
+          (cd candidate && node tests/hex-preservation.mjs)
+      - name: 9 visual stages with original instance buffer and no reorder
+        run: |
+          python3 -m http.server 4174 --bind 127.0.0.1 --directory candidate/dist-pages >/tmp/hex-whole-visual.log 2>&1 &
+          for n in {1..80}; do
+            if curl -fsS -o /dev/null http://127.0.0.1:4174/; then break; fi
+            sleep 1
+          done
+          node candidate/scripts/hex-whole-visual.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: hex-whole-group-instanced-original-visual
+          path: hex-whole-frames/
+          if-no-files-found: warn
