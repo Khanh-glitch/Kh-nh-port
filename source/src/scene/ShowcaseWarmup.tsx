@@ -156,7 +156,12 @@ export function ShowcaseWarmup({ arenaState }: { arenaState: { mode: string } })
     // Based on actual Metal idle traces: normal 67-83ms frames were being
     // rejected by the old fixed 50ms gate, so the 131 VBOs never warmed.
     // Learn a bounded local median instead; never accept >100ms "healthy".
-    const MAX_LASER_PREFLIGHT_WAIT_MS = 3500
+    // A busy renderer must not permanently forfeit laser preparation. The old
+    // 3.5s terminal skip left beams/geometry cold for the *entire visit* even
+    // if the visitor stayed in the world long after the GPU became idle.
+    // Wait cooperatively, without extra GPU submissions or visual changes.
+    const LASER_BUSY_RECHECK_INTERVAL_MS = 3500
+    const LASER_BUSY_BACKOFF_MS = 250
     // Do not submit an additional offscreen GPU workload if the renderer's
     // own visible frames are already late. The production 3D visuals are
     // untouched. Both laser and optional work must yield to user input.
@@ -186,9 +191,13 @@ export function ShowcaseWarmup({ arenaState }: { arenaState: { mode: string } })
           healthyLaserPaints = healthyPaint ? healthyLaserPaints + 1 : 0
           if (healthyLaserPaints >= 2) { healthyLaserPaints = 0; return true }
           info.deferredLaserFrames++
-          if (performance.now() - budgetClockStart >= MAX_LASER_PREFLIGHT_WAIT_MS) {
-            info.status = 'prewarm-skipped-busy-renderer'
-            return false
+          if (performance.now() - budgetClockStart >= LASER_BUSY_RECHECK_INTERVAL_MS) {
+            // Retry after overload rather than permanently skipping this
+            // visitor's first materialization. No draw or compile while busy.
+            info.status = 'waiting-for-idle-renderer'
+            budgetClockStart = performance.now()
+            await new Promise<void>(resolve => window.setTimeout(resolve, LASER_BUSY_BACKOFF_MS))
+            if (interrupted()) return false
           }
           continue
         }
@@ -312,9 +321,10 @@ export function ShowcaseWarmup({ arenaState }: { arenaState: { mode: string } })
       // additional CPU/GPU time even constructing temporary warmup objects.
       info.status = 'budget-preflight'
       if (!await nextPaint('laser')) {
-        if (info.status !== 'prewarm-skipped-busy-renderer') info.status='cancelled-on-summon'
+        info.status = 'cancelled-on-summon'
         return
       }
+      info.status = 'budget-preflight'
       const showcaseRoots = ['apex-showcase-root', 'ragnarok-showcase-root']
         .map(name => scene.getObjectByName(name))
       const beamNames = ['colossus-warm-beam-left', 'colossus-warm-beam-right', 'colossus-warm-beam-eye', 'colossus-warm-impact']
