@@ -270,7 +270,7 @@ export function RealityHost() {
             hexShadowSuppressed.push({object:d,castOrig:d.castShadow})
             d.castShadow=false
           }
-        } else if(kind === filter || (instanced && instanceGroup === filter)) {
+        } else if(kind === filter || (instanced && (instanceGroup === filter || filter === `instance-${idx}` || filter === `foliage-${idx}` && instanceGroup === 'foliage'))) {
           hexProbeSuppressed.push({object:o,originallyVisible:o.visible})
         }
       })
