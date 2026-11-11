@@ -52,6 +52,8 @@ jobs:
             echo "COLOSSUS_BATCH_AB mode=$mode order=${{ matrix.order }}"
             COLOSSUS_BATCH_MODE="$mode" node scripts/colossus-gpu-trace.mjs
           done
+      - name: Exact six-stage original-geometry color and shadow pixel parity
+        run: node scripts/colossus-original-geometry-pixel-parity.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
