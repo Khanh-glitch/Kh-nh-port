@@ -47,6 +47,9 @@ export function RealityHost() {
   const { scene, camera, gl } = useThree()
   const ueh = useRef<THREE.Group>(null)
   const hostRoot = useRef<THREE.Group>(null)
+  // Diagnostic only: the default page has no opt-in flags or visual changes.
+  const hexGpuDiag = typeof window !== 'undefined'
+    ? new URLSearchParams(window.location.search).get('hexGpuDiag') : null
   const S = useRef({
     managed: [] as Managed[],
     lights: [] as { o: THREE.Light; color: THREE.Color; gcolor?: THREE.Color; inten: number }[],
@@ -677,7 +680,7 @@ export function RealityHost() {
     // the 2.6s ignition. Actual scan/active/retract render remains unchanged.
     if (ueh.current) {
       const reveal = st.phase === 'sweep' || st.phase === 'active' || st.phase === 'retract'
-      ueh.current.visible = reveal
+      ueh.current.visible = reveal && hexGpuDiag !== 'no-world'
       if (reveal) {
         S.warmPass = 2
         S.warmTex.length = 0
@@ -694,7 +697,7 @@ export function RealityHost() {
       <HexLattice />
       <StaffWall />
       <Ignition />
-      <Sheets />
+      {hexGpuDiag !== 'no-sheets' && <Sheets />}
     </group>
   )
 }
