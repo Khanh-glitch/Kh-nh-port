@@ -66,8 +66,11 @@ float rwGrow(float x, float len){
 `
 
 const decl = 'varying vec3 vRWp;\nvarying float vRWg;\n'
-const fragCommon = decl + GLSL_COMMON
-const vertCommon = decl + GLSL_COMMON
+// Uniform scalars permit ONE identical shader program for every numeric
+// grow length / rim brightness / wind strength without changing their pixels.
+const scalarDecl = 'uniform float uRWGrowLen;\nuniform float uRWGlow;\nuniform float uRWWind;\n'
+const fragCommon = decl + scalarDecl + GLSL_COMMON
+const vertCommon = decl + scalarDecl + GLSL_COMMON
 
 const patched = new WeakMap<THREE.Material, string>()
 
@@ -107,6 +110,10 @@ export function patchMaterial(mat: THREE.Material, mode: 'old' | 'new', opts: Ne
   const isShader = !!m.isShaderMaterial
   const prev = m.onBeforeCompile
   const prevKey = m.customProgramCacheKey
+  // Snapshot the original key BEFORE replacing onBeforeCompile: the default
+  // Three.js implementation calls this.onBeforeCompile.toString() dynamically.
+  // Reading it afterwards can collapse different source shaders into one key.
+  const originalKey = prevKey ? prevKey.call(m) : ''
   const grow = mode === 'new' && opts.grow !== false
   const gl = opts.growLen ?? 14
   const glow = opts.glow ?? 0.65
@@ -114,12 +121,22 @@ export function patchMaterial(mat: THREE.Material, mode: 'old' | 'new', opts: Ne
   const useAo = mode === 'new' && opts.ao !== false
   const useWet = mode === 'new' && !!opts.wet
   const wind = opts.wind ?? 0
-  const tag = `rw-${mode}-${grow ? 'g' + gl : 'n'}-${useHaze ? 'h' : 'x'}-${useAo ? 'a' : 'x'}-${useWet ? 'wt' : 'x'}-w${wind}`
+  // Numerical values MUST NOT split programs. The original numeric values
+  // remain material-local uniforms, evaluated using exactly the same GLSL.
+  const tag = `rw-uniform-v2-${mode}-${grow ? 'g' : 'n'}-${useHaze ? 'h' : 'x'}-${useAo ? 'a' : 'x'}-${useWet ? 'wt' : 'x'}-${wind > 0 ? 'wind' : 'still'}`
+  const scalars = {
+    uRWGrowLen: { value: Number(gl.toFixed(1)) },
+    uRWGlow: { value: Number(glow.toFixed(2)) },
+    uRWWind: { value: Number(wind.toFixed(3)) },
+  }
   patched.set(m, tag)
 
   m.onBeforeCompile = (shader, renderer) => {
     prev?.call(m, shader, renderer)
     wire(shader as unknown as { uniforms: Record<string, { value: unknown }> })
+    // Every material receives its OWN parameter objects; a shared cached
+    // GPU program never imposes another building's height, wind, or glow.
+    Object.assign(shader.uniforms, scalars)
     let vs = shader.vertexShader
     let fs = shader.fragmentShader
     if (isShader) {
@@ -140,11 +157,11 @@ export function patchMaterial(mat: THREE.Material, mode: 'old' | 'new', opts: Ne
       fs = fragCommon + fs.replace(/void\s+main\s*\(\s*\)\s*\{/, (s) => s + test)
     } else {
       if (!vs.includes('#include <begin_vertex>')) return
-      const growCode = grow ? `transformed.y *= rwGrow(vRWg, ${gl.toFixed(1)});` : ''
+      const growCode = grow ? 'transformed.y *= rwGrow(vRWg, uRWGrowLen);' : ''
       const windCode =
         wind > 0
           ? `float wPh = vRWp.x * 0.25 + vRWp.z * 0.19 + vRWp.y * 0.35;
-             float wAmp = ${wind.toFixed(3)} * (0.75 + uRWenv.w * 1.65);
+             float wAmp = uRWWind * (0.75 + uRWenv.w * 1.65);
              float wK = smoothstep(0.0, 1.5, vRWp.y) * wAmp;
              float wGust = 0.65 + 0.35 * sin(uRW.y * 0.6 + vRWp.x * 0.08 + vRWp.z * 0.06);
              transformed.x += (sin(uRW.y * 1.9 + wPh) * 0.8 + sin(uRW.y * 4.3 + wPh * 2.1) * 0.35 + 0.45 * uRWenv.w) * wK * wGust;
@@ -197,13 +214,13 @@ export function patchMaterial(mat: THREE.Material, mode: 'old' | 'new', opts: Ne
       const tail =
         mode === 'old'
           ? `if (uRW.z > 0.5) { float k = smoothstep(-5.5, 0.0, rwx); float hl = smoothstep(0.42, 0.5, rwE); gl_FragColor.rgb += uRWt.xyz * (k*k*1.6 + hl*k*2.2); }`
-          : `{ ${wetDark} ${aoCode} ${hazeCode} float f = 1.0 - smoothstep(0.0, 5.5, rwx); float hl = smoothstep(0.43, 0.5, rwE); gl_FragColor.rgb += uRWt.xyz * ${glow.toFixed(2)} * (f*f*1.4 + hl*f*1.8); }`
+          : `{ ${wetDark} ${aoCode} ${hazeCode} float f = 1.0 - smoothstep(0.0, 5.5, rwx); float hl = smoothstep(0.43, 0.5, rwE); gl_FragColor.rgb += uRWt.xyz * uRWGlow * (f*f*1.4 + hl*f*1.8); }`
       if (fs.includes('#include <dithering_fragment>')) fs = fs.replace('#include <dithering_fragment>', `${tail}\n#include <dithering_fragment>`)
     }
     shader.vertexShader = vs
     shader.fragmentShader = fs
   }
-  m.customProgramCacheKey = () => (prevKey ? prevKey.call(m) : '') + tag
+  m.customProgramCacheKey = () => originalKey + '|' + tag
   m.needsUpdate = true
 }
 
