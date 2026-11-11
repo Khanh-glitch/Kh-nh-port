@@ -4,10 +4,13 @@
 //  • Lớp 2: Tán lá kép lông chim xanh mượt (crossed leaf cards, alphaTest),
 //  • Lớp 3: Chùm hoa phượng 3D thật (4 cánh đỏ cam uốn cong + 1 cánh cờ trắng vàng đốm đỏ + nhị hoa vươn dài + nụ phượng) mọc trên ngọn tán!
 import { useEffect, useMemo, useRef } from 'react'
+import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { useStore } from '../store'
 import { EXHIBITS } from '../layout'
-import { patchNew } from './mask'
+import { patchNew, FRONT_MAX } from './mask'
+import { CENTER } from './site'
+import { useReality, rt } from './state'
 import { createBarkPBR } from './pbr'
 
 function rnd(seed: number) {
@@ -25,6 +28,74 @@ export interface FlamboyantCanopy {
   yMax: number
   radius: number
   weight: number
+}
+
+// OPT-IN EXPERIMENT: order the EXACT original instance matrices and colors
+// by a conservative lower bound of the source materialization frontier.
+// The same original vertices, PBR, texture, wind, light, and colors render;
+// only instances whose entire bounding sphere cannot yet have visible pixels
+// are omitted from the draw call. No LOD reduction and no shader replacement.
+// As the front advances, all instances are restored. During retract the count
+// reverses in spatial order. Never enable by default without native A/B.
+const hexSpatialInstances = typeof window !== 'undefined' &&
+  new URLSearchParams(window.location.search).get('hexSpatialInstances') === '1'
+type SpatialIndex = { sortedThresholds: number[]; total: number }
+
+function prepareSpatialInstances(mesh: THREE.InstancedMesh | null): SpatialIndex | null {
+  if (!hexSpatialInstances || !mesh || !mesh.instanceColor) return null
+  const total = mesh.count
+  if (total <= 0) return null
+  if (!mesh.geometry.boundingSphere) mesh.geometry.computeBoundingSphere()
+  const radius = mesh.geometry.boundingSphere?.radius ?? 0
+  const baseCenter = mesh.geometry.boundingSphere?.center ?? new THREE.Vector3()
+  mesh.updateWorldMatrix(true, false)
+  const local = new THREE.Matrix4()
+  const point = new THREE.Vector3()
+  const scale = new THREE.Vector3()
+  const entries: { index:number; threshold:number }[] = []
+  for (let i = 0; i < total; i++) {
+    mesh.getMatrixAt(i, local)
+    point.copy(baseCenter).applyMatrix4(local).applyMatrix4(mesh.matrixWorld)
+    scale.setFromMatrixScale(local)
+    const instanceRadius = radius * Math.max(scale.x, scale.y, scale.z)
+    // Original GLSL may displace by wind and the cell-front jitter.
+    // A 24m margin is deliberately larger than these excursions, avoiding
+    // incorrect loss of blossoms/grass at the scan boundary.
+    const distance = Math.hypot(point.x - CENTER.x, point.z - CENTER.z)
+    entries.push({index:i,threshold:Math.max(0,distance-instanceRadius-24)})
+  }
+  entries.sort((a,b)=>a.threshold-b.threshold||a.index-b.index)
+  const transforms = mesh.instanceMatrix.array as Float32Array
+  const colors = mesh.instanceColor.array as Float32Array
+  const transformsBefore = transforms.slice()
+  const colorsBefore = colors.slice()
+  const sortedThresholds:number[] = []
+  for(let i=0;i<total;i++){
+    const original=entries[i]
+    transforms.set(transformsBefore.subarray(original.index*16,original.index*16+16),i*16)
+    colors.set(colorsBefore.subarray(original.index*3,original.index*3+3),i*3)
+    sortedThresholds.push(original.threshold)
+  }
+  mesh.instanceMatrix.needsUpdate=true
+  mesh.instanceColor.needsUpdate=true
+  return {sortedThresholds,total}
+}
+function spatialVisibleCount(index:SpatialIndex,front:number){
+  if(front>=FRONT_MAX)return index.total
+  let lo=0,hi=index.total
+  while(lo<hi){
+    const mid=(lo+hi)>>1
+    if(index.sortedThresholds[mid]<=front)lo=mid+1
+    else hi=mid
+  }
+  return lo
+}
+function applySpatialCount(mesh:THREE.InstancedMesh|null,index:SpatialIndex|null){
+  if(!hexSpatialInstances||!mesh||!index)return
+  const phase=useReality.getState().phase
+  const full=phase==='active'
+  const reveal=phase==='sweep'||phase==='retract'||full
+  mesh.count=reveal?(full?index.total:spatialVisibleCount(index,rt.front)):0
 }
 
 // Danh sách tọa độ tán cây phượng thật trên sân UEH để hoa phượng trong gió rời đúng từ tán cây
@@ -554,6 +625,12 @@ export function UEHFoliage() {
 
   const greenRef = useRef<THREE.InstancedMesh>(null)
   const blossomRef = useRef<THREE.InstancedMesh>(null)
+  const spatialGreen = useRef<SpatialIndex|null>(null)
+  const spatialBlossom = useRef<SpatialIndex|null>(null)
+  useFrame(()=>{
+    applySpatialCount(greenRef.current,spatialGreen.current)
+    applySpatialCount(blossomRef.current,spatialBlossom.current)
+  })
 
   useEffect(() => {
     if (greenRef.current) {
@@ -572,6 +649,8 @@ export function UEHFoliage() {
       blossomRef.current.instanceMatrix.needsUpdate = true
       if (blossomRef.current.instanceColor) blossomRef.current.instanceColor.needsUpdate = true
     }
+    spatialGreen.current=prepareSpatialInstances(greenRef.current)
+    spatialBlossom.current=prepareSpatialInstances(blossomRef.current)
   }, [greenLeaves, blossomClusters])
 
   return (
@@ -600,6 +679,8 @@ function onWalkway(x: number, z: number) {
 
 function CourtyardGrass({ low }: { low: boolean }) {
   const N = low ? 2200 : 4200
+  const spatialGrass=useRef<SpatialIndex|null>(null)
+  useFrame(()=>applySpatialCount(mesh.current,spatialGrass.current))
   const mesh = useRef<THREE.InstancedMesh>(null)
   const geo = useMemo(() => {
     const g = new THREE.PlaneGeometry(0.052, 0.26, 1, 2)
@@ -672,6 +753,7 @@ function CourtyardGrass({ low }: { low: boolean }) {
     }
     im.instanceMatrix.needsUpdate = true
     if (im.instanceColor) im.instanceColor.needsUpdate = true
+    spatialGrass.current=prepareSpatialInstances(im)
   }, [N])
   return <instancedMesh ref={mesh} args={[geo, mat, N]} frustumCulled={false} />
 }
