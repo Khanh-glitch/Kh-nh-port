@@ -37,6 +37,11 @@ function logoGeometry(path: string) {
 }
 
 export function SocialDrops({ signal }: { signal: {send:number} }) {
+  // Query-only A/B: stabilize the number of *real* point lights, not their
+  // brightness. Production/default retains the exact original light hierarchy.
+  const stableLights = typeof window !== 'undefined' &&
+    new URLSearchParams(window.location.search).get('beaconStableLights') === '1'
+  const lightRefs=useRef<Array<THREE.PointLight|null>>([])
   const nodes=useRef<Array<THREE.Group|null>>([])
   const rings=useRef<Array<THREE.Mesh|null>>([])
   const icons=useMemo(() => SOCIAL_PATHS.map((l)=>({
@@ -54,7 +59,13 @@ export function SocialDrops({ signal }: { signal: {send:number} }) {
       const halo=rings.current[i]
       if(!g)continue
       const t=age - i*.19 - .17
-      if(t<0){g.visible=false;if(halo)halo.visible=false;continue}
+      const light=lightRefs.current[i]
+      if(t<0){
+        g.visible=false
+        if(halo)halo.visible=false
+        if(light)light.intensity=0
+        continue
+      }
       g.visible=true
       const x=ease(t/1.75)
       const angle = -Math.PI/2 + i*Math.PI*2/icons.length
@@ -62,6 +73,7 @@ export function SocialDrops({ signal }: { signal: {send:number} }) {
       const bx=Math.cos(angle)*radius, bz=Math.sin(angle)*radius
       const hover = .16*Math.sin(state.clock.elapsedTime*1.4+i*.9)
       g.position.set(bx*(.15+.85*x), 34 - 28.5*x + hover*x, bz*(.15+.85*x))
+      if(light){light.position.copy(g.position);light.intensity=2.6}
       g.scale.setScalar(Math.max(0.005, Math.min(1, x*1.3)) * .82)
       g.rotation.set(.03*Math.sin(state.clock.elapsedTime+i), state.clock.elapsedTime*.24+i*.17, -0.12*Math.sin(t*2)*Math.exp(-t*.9))
       if(halo){halo.visible=t<2.8;halo.position.copy(g.position);halo.position.y-=.17;halo.scale.setScalar(1+.2*Math.sin(state.clock.elapsedTime*8+i))}
@@ -71,8 +83,10 @@ export function SocialDrops({ signal }: { signal: {send:number} }) {
     {icons.map((entry,i)=>entry.geometry&&<group key={entry.slug}>
       <group ref={(r)=>{nodes.current[i]=r}} visible={false}>
         <mesh geometry={entry.geometry} material={entry.material} />
-        <pointLight color={entry.color} intensity={2.6} distance={5} decay={2}/>
+        {!stableLights && <pointLight color={entry.color} intensity={2.6} distance={5} decay={2}/>}
       </group>
+      {stableLights && <pointLight ref={(r)=>{lightRefs.current[i]=r}}
+        color={entry.color} intensity={0} distance={5} decay={2}/>}
       <mesh ref={(r)=>{rings.current[i]=r}} visible={false} rotation={[-Math.PI/2,0,0]}>
         <ringGeometry args={[.68,.75,32]}/>
         <meshBasicMaterial color={entry.color} transparent opacity={.26} side={THREE.DoubleSide} blending={THREE.AdditiveBlending} depthWrite={false}/>
