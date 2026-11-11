@@ -15,7 +15,7 @@ const instrument=()=>{
   'bufferData','bufferSubData','bindBuffer','createBuffer',
   'texImage2D','texSubImage2D','texStorage2D','texStorage3D','compressedTexImage2D',
   'compressedTexSubImage2D','generateMipmap',
-  'shaderSource','compileShader','linkProgram','getShaderParameter',
+  'shaderSource','attachShader','compileShader','linkProgram','getShaderParameter',
   'getProgramParameter','getProgramInfoLog','getShaderInfoLog','useProgram',
   'drawElementsInstanced','drawArraysInstanced','drawElements','drawArrays',
   'vertexAttribPointer','vertexAttribIPointer','vertexAttribDivisor',
@@ -24,7 +24,16 @@ const instrument=()=>{
   'renderbufferStorageMultisample','clear','blitFramebuffer',
   'readPixels','finish','flush','getParameter','getError','getUniformLocation'
  ]
- const p={enabled:false,calls:{},slow:[],onAt:0}
+ const p={enabled:false,calls:{},slow:[],onAt:0,
+   linked:[],clickStartLinkIndex:0}
+ const sourceMeta=new WeakMap()
+ const linkedShaders=new WeakMap()
+ const programMeta=new WeakMap()
+ const hashCode=s=>{
+   let h=2166136261
+   for(let i=0;i<s.length;i++)h=Math.imul(h^s.charCodeAt(i),16777619)>>>0
+   return h.toString(16).padStart(8,'0')
+ }
  window.__hexGlProfiler=p
  for(const ctor of [window.WebGLRenderingContext,window.WebGL2RenderingContext]){
   if(!ctor)continue
@@ -36,6 +45,35 @@ const instrument=()=>{
    if(seen.has(key))continue
    seen.add(key)
    Object.defineProperty(ctor.prototype,method,{...desc,value:function(...args){
+    // Track the actual GLSL variants linked by the GPU driver on each phase,
+    // including when normal rAF/frame probes were not yet enabled.
+    if(method==='shaderSource'&&typeof args[1]==='string'){
+      const source=args[1]
+      sourceMeta.set(args[0],{hash:hashCode(source),length:source.length,
+        standard:/#define STANDARD\b/.test(source),
+        physical:/#define PHYSICAL\b/.test(source),
+        instanced:/#define USE_INSTANCING\b/.test(source),
+        shadow:/#define USE_SHADOWMAP\b/.test(source),
+        map:/#define USE_MAP\b/.test(source),
+        alphaTest:/#define USE_ALPHATEST\b/.test(source),
+        glslNew:source.includes('rwGrow(')||source.includes('uRWGrowLen'),
+        glslOld:source.includes('rwX(')
+      })
+    }
+    if(method==='attachShader'){
+      const a=linkedShaders.get(args[0])||[]
+      a.push(args[1]);linkedShaders.set(args[0],a)
+    }
+    if(method==='linkProgram'){
+      const shaders=(linkedShaders.get(args[0])||[])
+        .map(shader=>sourceMeta.get(shader)||{hash:'unknown',length:0})
+      const sig=shaders.map(x=>x.hash).join('+')
+      const rec={id:p.linked.length+1,sig,
+        phase:p.enabled?'trigger':'preflight',atMs:Math.round(performance.now()),
+        shaders}
+      p.linked.push(rec)
+      programMeta.set(args[0],rec)
+    }
     if(!p.enabled)return original.apply(this,args)
     const started=performance.now()
     try{return original.apply(this,args)}finally{
@@ -47,6 +85,8 @@ const instrument=()=>{
      if(elapsed>=50)rec.over50++
      if(elapsed>=16&&p.slow.length<180)
       p.slow.push({method,durationMs:Math.round(elapsed*10)/10,atMs:Math.round(started-p.onAt),
+       program:method==='getProgramInfoLog'||method==='getProgramParameter'
+         ? programMeta.get(args[0])?.sig:undefined,
        args:method==='bufferData'||method==='bufferSubData'
         ? args.map(a=>typeof a==='number'?a:a?.byteLength??typeof a).slice(0,4):undefined})
     }
@@ -106,7 +146,8 @@ for(const [idx,mode] of modes.entries()){
   await page.waitForTimeout(500)
   await page.evaluate(()=>{
    const p=window.__hexGlProfiler
-   p.calls={};p.slow=[];p.enabled=true;p.onAt=performance.now()
+   p.calls={};p.slow=[];p.clickStartLinkIndex=p.linked.length;
+   p.enabled=true;p.onAt=performance.now()
    window.__hexProfileFrames.length=0
    window.__hexProfileTasks.length=0
    window.__hexProfileStart=performance.now()
@@ -133,6 +174,13 @@ for(const [idx,mode] of modes.entries()){
     prep:window.__orbitaHexShaderPrep,
     isolated:dbg, contextLost:view?.isContextLost(),
     hookedMethods:p.hooks.length,
+    beforeClickProgramLinks:p.clickStartLinkIndex,
+    newProgramLinks:p.linked.length-p.clickStartLinkIndex,
+    newlyLinked:p.linked.slice(p.clickStartLinkIndex).map(rec=>({
+      ...rec,
+      alreadyLinkedBeforeClick:p.linked.slice(0,p.clickStartLinkIndex)
+        .some(old=>old.sig===rec.sig)
+    })),
     orderedCalls:ordered,slowWebGLCalls:p.slow}
   })
   r.preflight=before
