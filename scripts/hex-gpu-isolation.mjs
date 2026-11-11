@@ -20,6 +20,7 @@ for(const mode of cases){
  try{
   await page.goto('http://127.0.0.1:4174/?hexGpuDiag='+mode+
     '&hexProfile=1'+(mode==='radial'?'&hexRadialInstances=1':'')+
+    (mode==='attr-warm'?'&hexAttrWarm=1':'')+
     '#at=-26,20,0,0&autostart&skip',
     {waitUntil:'domcontentloaded',timeout:120000})
   await page.waitForFunction(async()=>{
@@ -35,6 +36,16 @@ for(const mode of cases){
       p.uploadedTextures===p.totalTextures && p.errors===0
   },null,{timeout:150000,polling:500})
   r.preflight=await page.evaluate(()=>({...window.__orbitaHexShaderPrep}))
+  if(mode==='attr-warm'){
+    await page.waitForFunction(()=>{
+      const a=window.__orbitaHexAttributeWarm
+      return a?.status==='ready'||a?.status==='failed'||
+        a?.status==='paused-expensive'
+    },null,{timeout:120000,polling:500})
+    r.attributePrewarm=await page.evaluate(()=>({...window.__orbitaHexAttributeWarm}))
+    if(r.attributePrewarm.status!=='ready'||r.attributePrewarm.done!==r.attributePrewarm.total)
+      throw Error('Attribute warmup did not finish safely: '+JSON.stringify(r.attributePrewarm))
+  }
   r.diag=await page.evaluate(()=>window.__orbitaHexGpuDiagStats??null)
   r.radial=await page.evaluate(()=>window.__orbitaHexRadial??null)
   if(mode==='radial' && !(r.radial?.meshCount>=5 && r.radial?.instances>=4000))
@@ -81,7 +92,8 @@ for(const mode of cases){
       culling:window.__orbitaHexCullStats,
       shaderPrep:window.__orbitaHexShaderPrep,
       isolatedGroup:window.__orbitaHexGpuDiagStats??null,
-      radial:window.__orbitaHexRadial??null
+      radial:window.__orbitaHexRadial??null,
+      attributePrewarm:window.__orbitaHexAttributeWarm??null
     }
   })
   await page.screenshot({path:'hex-gpu-isolation/'+mode+'.png',timeout:120000})
