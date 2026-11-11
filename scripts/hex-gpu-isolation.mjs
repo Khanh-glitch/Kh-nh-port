@@ -21,6 +21,7 @@ for(const mode of cases){
   await page.goto('http://127.0.0.1:4174/?hexGpuDiag='+mode+
     '&hexProfile=1'+(mode==='radial'?'&hexRadialInstances=1':'')+
     (mode==='attr-warm'?'&hexAttrWarm=1':'')+
+    (mode==='whole-gate'?'&hexWholeInstanceGate=1':'')+
     '#at=-26,20,0,0&autostart&skip',
     {waitUntil:'domcontentloaded',timeout:120000})
   await page.waitForFunction(async()=>{
@@ -47,6 +48,9 @@ for(const mode of cases){
       throw Error('Attribute warmup did not finish safely: '+JSON.stringify(r.attributePrewarm))
   }
   r.diag=await page.evaluate(()=>window.__orbitaHexGpuDiagStats??null)
+  r.wholeGate=await page.evaluate(()=>window.__orbitaHexWholeGate??null)
+  if(mode==='whole-gate' && !(r.wholeGate?.eligible>0))
+    throw Error('No static source instanced groups eligible for safe front gate: '+JSON.stringify(r.wholeGate))
   r.radial=await page.evaluate(()=>window.__orbitaHexRadial??null)
   if(mode==='radial' && !(r.radial?.meshCount>=5 && r.radial?.instances>=4000))
     throw Error('Static native instance sorting not initialized: '+JSON.stringify(r.radial))
@@ -96,7 +100,8 @@ for(const mode of cases){
       shaderPrep:window.__orbitaHexShaderPrep,
       isolatedGroup:window.__orbitaHexGpuDiagStats??null,
       radial:window.__orbitaHexRadial??null,
-      attributePrewarm:window.__orbitaHexAttributeWarm??null
+      attributePrewarm:window.__orbitaHexAttributeWarm??null,
+      wholeGate:window.__orbitaHexWholeGate??null
     }
   })
   await page.screenshot({path:'hex-gpu-isolation/'+mode+'.png',timeout:120000})
