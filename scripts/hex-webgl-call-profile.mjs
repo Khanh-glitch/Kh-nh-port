@@ -27,12 +27,60 @@ const instrument=()=>{
  const p={enabled:false,calls:{},slow:[],onAt:0,
    linked:[],clickStartLinkIndex:0}
  const sourceMeta=new WeakMap()
+ const shaderTextByHash=new Map()
  const linkedShaders=new WeakMap()
  const programMeta=new WeakMap()
  const hashCode=s=>{
    let h=2166136261
    for(let i=0;i<s.length;i++)h=Math.imul(h^s.charCodeAt(i),16777619)>>>0
    return h.toString(16).padStart(8,'0')
+ }
+ // Produce a tiny surgical GLSL diff, not a 100KB shader dump.
+ p.programDeltas=()=>{
+  const before=p.linked.slice(0,p.clickStartLinkIndex)
+  const after=p.linked.slice(p.clickStartLinkIndex)
+  const prefix=(a,b)=>{
+   let n=0
+   while(n<a.length&&n<b.length&&a.charCodeAt(n)===b.charCodeAt(n))n++
+   return n
+  }
+  const suffix=(a,b,front)=>{
+   let n=0
+   while(n<a.length-front&&n<b.length-front&&
+     a.charCodeAt(a.length-1-n)===b.charCodeAt(b.length-1-n))n++
+   return n
+  }
+  return after.map(rec=>{
+   const fs=rec.shaders[1],vs=rec.shaders[0]
+   if(!fs||!vs)return {sig:rec.sig,error:'no attached fragment/vertex pair'}
+   const newText=shaderTextByHash.get(fs.hash)
+   if(!newText)return {sig:rec.sig,error:'missing fragment source'}
+   const candidates=before.filter(old=>old.shaders[0]?.hash===vs.hash)
+   let best=null
+   for(const old of candidates){
+    const oldFS=old.shaders[1]
+    const oldText=shaderTextByHash.get(oldFS?.hash)
+    if(!oldText)continue
+    const front=prefix(oldText,newText)
+    const tail=suffix(oldText,newText,front)
+    const mismatch=(oldText.length-front-tail)+(newText.length-front-tail)
+    if(!best||mismatch<best.mismatch){
+      best={oldSig:old.sig,front,tail,mismatch,oldText}
+    }
+   }
+   if(!best)return {sig:rec.sig,shaders:rec.shaders,
+      error:'no prelinked vertex shader fingerprint match'}
+   const {oldText,front,tail}=best
+   return {sig:rec.sig,preSig:best.oldSig,
+    vertexUnchanged:true,
+    oldLength:oldText.length,newLength:newText.length,
+    prefixChars:front,suffixChars:tail,
+    oldChanged:oldText.slice(front,oldText.length-tail).slice(0,300),
+    newChanged:newText.slice(front,newText.length-tail).slice(0,300),
+    contextBefore:newText.slice(Math.max(0,front-100),front),
+    contextAfter:newText.slice(newText.length-tail,newText.length-tail+100),
+    mismatch:best.mismatch}
+  })
  }
  window.__hexGlProfiler=p
  for(const ctor of [window.WebGLRenderingContext,window.WebGL2RenderingContext]){
@@ -49,7 +97,9 @@ const instrument=()=>{
     // including when normal rAF/frame probes were not yet enabled.
     if(method==='shaderSource'&&typeof args[1]==='string'){
       const source=args[1]
-      sourceMeta.set(args[0],{hash:hashCode(source),length:source.length,
+      const hash=hashCode(source)
+      shaderTextByHash.set(hash,source)
+      sourceMeta.set(args[0],{hash,length:source.length,
         standard:/#define STANDARD\b/.test(source),
         physical:/#define PHYSICAL\b/.test(source),
         instanced:/#define USE_INSTANCING\b/.test(source),
@@ -176,6 +226,7 @@ for(const [idx,mode] of modes.entries()){
     hookedMethods:p.hooks.length,
     beforeClickProgramLinks:p.clickStartLinkIndex,
     prelinked:p.linked.slice(0,p.clickStartLinkIndex),
+    programDeltas:p.programDeltas(),
     newProgramLinks:p.linked.length-p.clickStartLinkIndex,
     newlyLinked:p.linked.slice(p.clickStartLinkIndex).map(rec=>({
       ...rec,
