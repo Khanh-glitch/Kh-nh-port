@@ -45,7 +45,11 @@ export const useStore = create<State>((set) => ({
   muted: false,
   touch: typeof window !== 'undefined' && window.matchMedia?.('(pointer: coarse)').matches,
   toast: null,
-  quality: 'low',
+  // Explicit CI-only high-fidelity HEX route; normal visitor defaults
+  // remain unchanged and can still select high through the portfolio UI.
+  quality: typeof window !== 'undefined' &&
+    new URLSearchParams(window.location.search).get('hexForceHigh') === '1'
+    ? 'high' : 'low',
   setLoading: (loading) => set({ loading }),
   setReady: () => set({ ready: true, loading: 1 }),
   setPhase: (phase) => set({ phase }),
