@@ -1,11 +1,5 @@
 name: Colossus unchanged-visual native hologram warmup A/B
 on:
-  pull_request:
-    branches: [main]
-    paths:
-      - 'scripts/colossus-gpu-trace.mjs'
-      - '.github/workflows/colossus-hologram-preflight-ab.yml'
-      - 'source/src/scene/ShowcaseWarmup.tsx'
   workflow_dispatch:
 permissions:
   contents: read
