@@ -24,6 +24,8 @@ try {
  await frame.locator('.energy-gate').first().waitFor({state:'visible',timeout:30000})
  report.stages.push('space3d-rendered')
  report.warpButton=await frame.locator('.energy-gate button').first().textContent()
+ report.extraBootScreens=await frame.locator('.boot').count()
+ if(report.extraBootScreens!==0)throw Error('Second boot/loading screen obscures the requested direct cockpit experience')
  report.hasCanvas=await frame.locator('canvas').count()
  report.hasParentCanvas=await page.locator('canvas').count()
  report.hasStageModule=await page.evaluate(()=>document.querySelector('script#orbita-embedded-map')?.textContent?.includes('orbita/stage/ShowSystem'))
@@ -50,30 +52,19 @@ try {
    shader:window.__orbitaHexShaderPrep?.status??null,
  }})
  report.stateBeforeWarp=state
- let normalReady=false
- try {
-   await page.waitForFunction(()=>{
-     const btn=document.querySelector('iframe')?.contentDocument?.querySelector('.energy-gate button')
-     return btn?.tagName==='BUTTON' && btn.disabled===false
-   },null,{timeout:35000,polling:400})
-   normalReady=true
- } catch {
-   // Headless Linux SwiftShader frequently cannot finish the entire unchanged
-   // UEH shader queue while two WebGL renderers are active. Verify the explicit
-   // USER-CONTROLLED fallback instead of pretending preflight has completed.
-   // This is a functional smoke pass only, NOT a GPU-smoothness release pass.
-   const recovery=page.getByRole('button',{name:'VÀO THỬ · BỎ QUA CHỜ GPU'})
-   await recovery.waitFor({state:'visible',timeout:15000})
-   await recovery.click()
-   report.degradedGpuRecovery=true
-   report.parentHandshakeAfterRecovery=await page.evaluate(()=>window.__orbitaEntryGate??null)
-   await page.waitForFunction(()=>{
-     const btn=document.querySelector('iframe')?.contentDocument?.querySelector('.energy-gate button')
-     return btn?.tagName==='BUTTON' && btn.disabled===false
-   },null,{timeout:20000,polling:400})
- }
- report.normalGpuReady=normalReady
+ // Navigability may not be blocked by unrelated HEX shader warming.
+ // Do not accept recovery, forced click, or simulated store transitions.
+ await page.waitForFunction(()=>{
+   const btn=document.querySelector('iframe')?.contentDocument?.querySelector('.energy-gate button')
+   return btn?.tagName==='BUTTON' && btn.disabled===false
+ },null,{timeout:40000,polling:250})
+ report.normalGpuReady=true
+ report.degradedGpuRecovery=false
  report.entryHandshake=await page.evaluate(()=>window.__orbitaEntryGate??null)
+ if(report.entryHandshake?.ready!==true ||
+    report.entryHandshake.progress!==100 ||
+    report.entryHandshake.gpuPreparationIsNonBlocking!==true)
+   throw Error('Real energy gate did not reach 100% from core assets: '+JSON.stringify(report.entryHandshake))
  report.ready=true
  report.stages.push('energy-filled')
  await frame.locator('.energy-gate button').first().click({timeout:30000})
