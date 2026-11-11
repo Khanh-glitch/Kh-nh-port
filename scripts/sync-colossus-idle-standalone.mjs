@@ -43,14 +43,14 @@ const output=ts.transpileModule(source,{
 })
 const errors=(output.diagnostics??[]).filter(x=>x.category===ts.DiagnosticCategory.Error)
 assert.equal(errors.length,0,'TS warmup transpilation must succeed')
-const js=output.outputText.replace(/(\\bfrom\\s*['"])(\\.{1,2}\\/[^'"]+)(['"])/g,(_all,before,importPath,after)=>{
+const js=output.outputText.replace(/(\bfrom\s*['"])(\.{1,2}\/[^'"]+)(['"])/g,(_all,before,importPath,after)=>{
   const abs=resolve(srcRoot,'scene',importPath)
-  const name=relative(srcRoot,abs).replace(/\\\\/g,'/').replace(/\\.(tsx?|jsx?)$/,'')
+  const name=relative(srcRoot,abs).replace(/\\/g,'/').replace(/\.(tsx?|jsx?)$/,'')
   assert(!name.startsWith('..'),'Forbidden external warmup import: '+importPath)
   assert(original['orbita/'+name],'Unresolved warmup import: '+name)
   return before+'orbita/'+name+after
 })
-assert(!/\\bfrom\\s*['"]\\.{1,2}\\//.test(js),'Unresolved local warmup import')
+assert(!/\bfrom\s*['"]\.{1,2}\//.test(js),'Unresolved local warmup import')
 const updated={...original,[key]:'data:text/javascript;base64,'+Buffer.from(js,'utf8').toString('base64')}
 for(const [name,value] of Object.entries(original)){
   if(name!==key)assert.equal(updated[name],value,'Standalone visual module changed: '+name)
@@ -58,7 +58,7 @@ for(const [name,value] of Object.entries(original)){
 const nextHash=createHash('sha256').update(updated[key]).digest('hex')
 const updatedBaseline={...frozen,[key]:nextHash}
 const updatedHtml=html.slice(0,jsonStart)+JSON.stringify(updated)+html.slice(end)
-const updatedBaselineText=JSON.stringify(updatedBaseline,null,2)+'\\n'
+const updatedBaselineText=JSON.stringify(updatedBaseline,null,2)+'\n'
 if(updatedHtml!==html)writeFileSync(htmlPath,updatedHtml)
 if(readFileSync(baselinePath,'utf8')!==updatedBaselineText)
   writeFileSync(baselinePath,updatedBaselineText)
