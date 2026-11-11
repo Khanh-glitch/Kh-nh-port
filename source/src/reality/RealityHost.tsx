@@ -7,7 +7,6 @@ import { useFrame, useThree } from '@react-three/fiber'
 import * as THREE from 'three'
 import { audio } from '../audio'
 import { setInteractiveFilter, player } from '../world'
-import { EXHIBITS } from '../layout'
 import { useStore, toast } from '../store'
 import { FRONT_MAX, RW, ease, frontReached, patchOld } from './mask'
 import { CENTER } from './site'
@@ -77,51 +76,20 @@ export function RealityHost() {
   const tc = useMemo(() => new THREE.Color(), [])
   const tc2 = useMemo(() => new THREE.Color(), [])
 
-  // HEX/UEH cooperative GPU preflight. Share source geometry and source materials;
-  // never replace textures, reduce shadow resolution or mutate the visible scene.
-  // A private 96px target uploads GPU resources a few meshes at a time, instead
-  // of exposing the entire multi-building UEH world on the first ignition frame.
-  // Conservative UEH scan culling: do not submit a mesh while the EXISTING
-  // patchNew shader would discard all its pixels. Unlike LOD, this cannot
-  // remove a visible surface; meshes return before the scan reaches them.
+  // Preserve exact HEX pixels: skip only opaque UEH meshes whose original
+  // materialization shader would discard every fragment at this front radius.
+  // The failed 96px private GPU prewarm is REMOVED entirely: it consumed
+  // 200-450ms in an idle frame, did not finish, and created 399 idle proxies.
   const hexCull = useRef([] as Array<{
     mesh: THREE.Mesh; threshold: number; hidden: boolean
   }>).current
-  const hexGpu = useRef({
-    stage: null as THREE.Scene | null,
-    target: null as THREE.WebGLRenderTarget | null,
-    camera: null as THREE.PerspectiveCamera | null,
-    proxies: [] as THREE.Object3D[],
-    lights: [] as THREE.Light[],
-    index: 0, lastPaintAt: 0, healthyPaints: 0, frame: 0,
-    blocked: false,
-    info: {
-      status: 'scheduled', total: 0, uploaded: 0,
-      maxPrivateCpuMs: 0, deferredFrames: 0,
-      renderer: '', error: '', gpuTarget: 'private-96px',
-    },
-  }).current
 
   useEffect(() => {
-    const stage = new THREE.Scene()
-    stage.environment = scene.environment
-    stage.fog = scene.fog
-    const proxies: THREE.Object3D[] = []
-    const priorities = new Map<THREE.Object3D, number>()
     hexCull.length = 0
     const cullCenter = new THREE.Vector3()
     const cullScale = new THREE.Vector3()
-    // Cloning without children reuses exactly the original GPU geometry,
-    // material and instance buffers. This is not a simplified scene.
     ueh.current?.traverse((source) => {
       const draw = source as THREE.Mesh
-      const sprite = source as THREE.Sprite
-      const points = source as THREE.Points
-      const line = source as THREE.Line
-      if (!draw.isMesh && !sprite.isSprite && !points.isPoints && !line.isLine) return
-      // Only static opaque materialized PBR/basic meshes can be omitted.
-      // Transparent weather, instanced geometry, VFX, animated sprites and
-      // unpatched shaders always render through the original path.
       if (draw.isMesh && !(draw as THREE.InstancedMesh).isInstancedMesh &&
           draw.visible && !Array.isArray(draw.material) &&
           !draw.material.transparent && !draw.material.alphaTest &&
@@ -146,168 +114,13 @@ export function RealityHost() {
           if (threshold > 0) hexCull.push({mesh:draw,threshold,hidden:false})
         }
       }
-      const proxy = source.clone(false)
-      proxy.visible = true
-      proxy.frustumCulled = false
-      proxy.position.set(0, 0, 0)
-      proxy.rotation.set(0, 0, 0)
-      proxy.scale.setScalar(1)
-      if ((source as THREE.InstancedMesh).isInstancedMesh) {
-        const src = source as THREE.InstancedMesh
-        const dst = proxy as THREE.InstancedMesh
-        dst.instanceMatrix = src.instanceMatrix
-        dst.instanceColor = src.instanceColor
-      }
-      source.updateWorldMatrix(true, false)
-      const wp = new THREE.Vector3().setFromMatrixPosition(source.matrixWorld)
-      priorities.set(proxy,Math.hypot(wp.x-CENTER.x,wp.z-CENTER.z))
-      proxies.push(proxy)
     })
-    // The innermost surfaces are revealed FIRST by the original radial scan.
-    // Warm their exact source geometry before distant buildings/foliage.
-    proxies.sort((a,b)=>(priorities.get(a)??0)-(priorities.get(b)??0))
-    // Keep shader light-count/shadow defines representative of the real stage.
-    scene.traverseVisible(o => {
-      if (!(o as THREE.Light).isLight) return
-      const light = (o as THREE.Light).clone(false)
-      if ((light as THREE.DirectionalLight).target) {
-        const target = (o as THREE.DirectionalLight).target.clone(false)
-        ;(light as THREE.DirectionalLight).target = target
-        stage.add(target)
-      }
-      if (light.castShadow && (light as THREE.Light & {shadow?:THREE.LightShadow}).shadow) {
-        (light as THREE.Light & {shadow:THREE.LightShadow}).shadow.mapSize.set(64, 64)
-      }
-      stage.add(light)
-      hexGpu.lights.push(light)
-    })
-    const target = new THREE.WebGLRenderTarget(96, 96, {
-      depthBuffer: true, stencilBuffer: false,
-    })
-    target.texture.colorSpace = gl.outputColorSpace
-    const cameraHex = new THREE.PerspectiveCamera(70, 1, 0.01, 9000)
-    cameraHex.position.set(0, 4, 16)
-    cameraHex.lookAt(0, 0, 0)
-    hexGpu.stage = stage
-    hexGpu.target = target
-    hexGpu.camera = cameraHex
-    hexGpu.proxies = proxies
-    hexGpu.info.total = proxies.length
-    const dbg = gl.getContext().getExtension('WEBGL_debug_renderer_info')
-    hexGpu.info.renderer = String(gl.getContext().getParameter(
-      dbg?.UNMASKED_RENDERER_WEBGL ?? gl.getContext().RENDERER))
-    // The first 6-proxy private draw took 214-450 ms on Metal and then
-    // backed off; it moved a hitch into idle without preparing the world.
-    // Keep it as a diagnostic A/B only until actual visitor benefit is proven.
-    const enabled = new URLSearchParams(window.location.search)
-      .get('hexPrivateGpuPrewarm') === 'on'
-    if (!enabled) {
-      hexGpu.blocked = true
-      hexGpu.info.status = 'disabled-unproven-private-gpu'
-    } else if (/SwiftShader|llvmpipe|Software/i.test(hexGpu.info.renderer)) {
-      hexGpu.blocked = true
-      hexGpu.info.status = 'skipped-software-renderer'
-    } else hexGpu.info.status = 'awaiting-idle'
-    ;(window as unknown as {__orbitaHexPrewarm:typeof hexGpu.info}).__orbitaHexPrewarm = hexGpu.info
     return () => {
-      target.dispose()
-      hexGpu.lights.forEach(l =>
-        (l as THREE.Light & {shadow?:THREE.LightShadow}).shadow?.dispose())
-      stage.clear()
       for (const entry of hexCull) if (entry.hidden) entry.mesh.visible = true
       hexCull.length = 0
-      hexGpu.proxies.length = 0
-      hexGpu.stage = null
-      hexGpu.target = null
     }
-  }, [scene, gl])
+  }, [scene])
 
-  useFrame((_, dtRaw) => {
-    const h = hexGpu
-    if (h.blocked || !h.stage || !h.target || !h.camera ||
-        h.index >= h.proxies.length) return
-    const realityPhase = useReality.getState().phase
-    // No competition with a clicked HEX, landing GPU preflight, or Colossus.
-    if (realityPhase !== 'idle' || useStore.getState().phase !== 'playing' ||
-        document.visibilityState !== 'visible') return
-    const landing = (window as unknown as {
-      __orbitaLandingPrewarm?: {status:string}
-    }).__orbitaLandingPrewarm
-    const colossus = (window as unknown as {
-      __orbitaColossusWarmup?: {status:string}
-    }).__orbitaColossusWarmup
-    const terminal = ['ready','failed','disabled','cancelled',
-      'skipped-entered','skipped-busy-or-entered','skipped-software-renderer',
-      'submitted-no-fence','prewarm-skipped-busy-renderer',
-      'diagnostic-prewarm-disabled','cancelled-on-summon',
-      'submitted-no-async-readback']
-    const hexDistance = Math.hypot(player.pos.x-CENTER.x,player.pos.z-CENTER.z)
-    const robotDistance = Math.hypot(player.pos.x-EXHIBITS.robot.x,
-      player.pos.z-EXHIBITS.robot.z)
-    // Do not compete with Colossus when the visitor is headed to it.
-    // When already much closer to the piano, reserve spare healthy frames
-    // for the HEX world the visitor is about to activate.
-    const hexPriority = hexDistance < 36 && hexDistance + 10 < robotDistance
-    if ((landing && !terminal.includes(landing.status)) ||
-        (colossus && !terminal.includes(colossus.status) && !hexPriority)) {
-      h.info.status = 'waiting-for-other-preflights'
-      return
-    }
-    const pendingInput = (navigator as Navigator & {
-      scheduling?:{isInputPending?:()=>boolean}
-    }).scheduling?.isInputPending?.() ?? false
-    // At most one small offscreen draw per three healthy frames.
-    // A busy renderer or pending user input is always favored over prewarm.
-    const healthy = dtRaw > 0 && dtRaw <= 0.05 && !pendingInput
-    h.healthyPaints = healthy ? h.healthyPaints + 1 : 0
-    if (h.healthyPaints < 3) { h.info.deferredFrames++; return }
-    h.healthyPaints = 0
-    const stage = h.stage, target = h.target
-    const batch = h.proxies.slice(h.index, h.index + 6)
-    const oldTarget = gl.getRenderTarget()
-    const viewport = gl.getViewport(new THREE.Vector4()).clone()
-    const scissor = gl.getScissor(new THREE.Vector4()).clone()
-    const scissorTest = gl.getScissorTest()
-    const xr = gl.xr.enabled, clear = gl.autoClear
-    const rw = RW.uRW.value.clone(), center = RW.uRWc.value.clone()
-    const started = performance.now()
-    try {
-      for (const obj of batch) stage.add(obj)
-      RW.uRW.value.set(FRONT_MAX, RW.uRW.value.y, 1, RW.uRW.value.w)
-      RW.uRWc.value.set(0, 0, 0)
-      gl.xr.enabled = false
-      gl.autoClear = true
-      gl.setRenderTarget(target)
-      gl.setViewport(0, 0, 96, 96)
-      gl.setScissorTest(false)
-      gl.clear(true, true, false)
-      gl.render(stage, h.camera)
-      h.index += batch.length
-      h.info.uploaded = h.index
-      h.info.status = h.index >= h.proxies.length ? 'ready' : 'warming-geometry'
-      h.info.maxPrivateCpuMs = Math.max(h.info.maxPrivateCpuMs,
-        Math.round(performance.now() - started))
-      // Do not make the visible portfolio pay for a saturated renderer.
-      if (performance.now() - started > 75) {
-        h.blocked = true
-        h.info.status = 'paused-expensive-private-draw'
-      }
-    } catch (e) {
-      h.info.error = String(e)
-      h.info.status = 'failed'
-      h.blocked = true
-    } finally {
-      RW.uRW.value.copy(rw)
-      RW.uRWc.value.copy(center)
-      for (const obj of batch) stage.remove(obj)
-      gl.setRenderTarget(oldTarget)
-      gl.setViewport(viewport)
-      gl.setScissor(scissor)
-      gl.setScissorTest(scissorTest)
-      gl.xr.enabled = xr
-      gl.autoClear = clear
-    }
-  })
   const recordHexTiming = (step: string, started: number) => {
     if (typeof window === 'undefined' || new URLSearchParams(location.search).get('hexProfile') !== '1') return
     const host = window as unknown as {__orbitaHexTimings?: Array<{step:string;ms:number;at:number}>}
