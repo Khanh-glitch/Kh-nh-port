@@ -130,6 +130,8 @@ export function RealityHost() {
     if (hexGpuDiag?.startsWith('no-ueh-')) {
       const filter = hexGpuDiag.slice('no-ueh-'.length)
       let total = 0
+      let instancedIndex = 0
+      const instancedManifest: Array<{index:number;group:string;count:number;shadow:boolean;material:string}> = []
       ueh.current?.traverse(o => {
         const d = o as THREE.Mesh
         if (!d.isMesh && !(o as THREE.Points).isPoints &&
@@ -142,12 +144,23 @@ export function RealityHost() {
         const transparent = mats.some(m => m.transparent || m.alphaTest > 0)
         const kind = instanced ? 'instanced' : shader ? 'shader' :
           transparent ? 'alpha' : 'opaque'
-        if (kind === filter) {
+        // Stable creation order from UEHWorld: underside roots, B1 fins,
+        // campus bulbs; then phượng leaves/blossoms/grass; then wind petals.
+        // This is a TEST-ONLY grouping. No production mesh is changed.
+        const idx = instanced ? instancedIndex++ : -1
+        const instanceGroup = idx < 0 ? '' :
+          idx < 3 ? 'architecture' : idx < 6 ? 'foliage' : 'wind'
+        if (instanced) instancedManifest.push({
+          index:idx,group:instanceGroup,count:(d as THREE.InstancedMesh).count,
+          shadow:d.castShadow,material:mats.map(m=>m.type).join(','),
+        })
+        if (kind === filter || (instanced && instanceGroup === filter)) {
           hexProbeSuppressed.push({object:o,originallyVisible:o.visible})
         }
       })
       ;(window as unknown as {__orbitaHexGpuDiagStats?:unknown}).__orbitaHexGpuDiagStats = {
         mode:hexGpuDiag,totalDrawables:total,hiddenDrawables:hexProbeSuppressed.length,
+        instances:instancedManifest,
       }
     }
     return () => {
