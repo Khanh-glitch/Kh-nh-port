@@ -277,6 +277,65 @@ export function RealityHost() {
     }
   }, [scene])
 
+  // DIAGNOSTIC ONLY: compile the EXACT native UEH group with the REAL
+  // scene's lights, fog, environment and camera, not standalone meshes.
+  // Restores hidden-world visibility synchronously before any visible draw.
+  // A full-scene shader variant may differ from a per-mesh preflight key.
+  const hexRealSceneCompile = typeof window !== 'undefined' &&
+    new URLSearchParams(window.location.search).get('hexRealSceneCompile') === '1'
+  const hexRealCompile = useRef({
+    started: false,
+    report: {
+      status:'disabled',
+      programCountBefore:0,programCountAfter:0,
+      compileSubmitMs:0,compileWallMs:0,error:'',
+    }
+  }).current
+  useFrame(() => {
+    if (!hexRealSceneCompile || hexRealCompile.started ||
+        !ueh.current || useReality.getState().phase !== 'idle' ||
+        useStore.getState().phase !== 'playing' ||
+        S.warmPass !== 2 || S.warmCompilePending ||
+        document.visibilityState !== 'visible') return
+    const landing=(window as unknown as {
+      __orbitaLandingPrewarm?:{status:string}
+    }).__orbitaLandingPrewarm
+    if(landing&&!['ready','disabled','failed','cancelled',
+      'skipped-entered','skipped-busy-or-entered',
+      'skipped-software-renderer','submitted-no-fence'].includes(landing.status))
+      return
+    const group=ueh.current
+    hexRealCompile.started=true
+    const report=hexRealCompile.report
+    const count=()=>gl.info.programs?.length??0
+    const originalVisibility=group.visible
+    report.programCountBefore=count()
+    const started=performance.now()
+    report.status='compiling'
+    try {
+      // compileAsync traverses visible children when initiating GPU programs.
+      group.visible=true
+      const pending=gl.compileAsync(group,camera,scene)
+      // Restore ORIGINAL visibility in same JS call, never in async finally.
+      group.visible=originalVisibility
+      report.compileSubmitMs=Math.round(performance.now()-started)
+      void pending.then(()=>{
+        report.compileWallMs=Math.round(performance.now()-started)
+        report.programCountAfter=count()
+        report.status='ready'
+      }).catch(err=>{
+        report.status='failed'
+        report.error=String(err)
+      })
+    } catch (err) {
+      group.visible=originalVisibility
+      report.status='failed'
+      report.error=String(err)
+    }
+    ;(window as unknown as {__orbitaHexRealCompile:typeof report})
+      .__orbitaHexRealCompile=report
+  })
+
   const recordHexTiming = (step: string, started: number) => {
     if (typeof window === 'undefined' || new URLSearchParams(location.search).get('hexProfile') !== '1') return
     const host = window as unknown as {__orbitaHexTimings?: Array<{step:string;ms:number;at:number}>}
