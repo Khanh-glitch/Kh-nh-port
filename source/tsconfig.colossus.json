@@ -1,0 +1,5 @@
+{
+  "extends": "./tsconfig.json",
+  "include": ["src/scene/ShowcaseWarmup.tsx"],
+  "exclude": []
+}
