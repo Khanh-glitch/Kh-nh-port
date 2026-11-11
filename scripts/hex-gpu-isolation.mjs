@@ -48,6 +48,8 @@ for(const mode of cases){
       throw Error('Attribute warmup did not finish safely: '+JSON.stringify(r.attributePrewarm))
   }
   r.diag=await page.evaluate(()=>window.__orbitaHexGpuDiagStats??null)
+  if(mode==='basic-instances' && !(r.diag?.replacedOriginalMaterials>=8))
+    throw Error('PBR shader isolation did not replace all 8 instanced drawables: '+JSON.stringify(r.diag))
   r.wholeGate=await page.evaluate(()=>window.__orbitaHexWholeGate??null)
   if(mode==='whole-gate' && !(r.wholeGate?.eligible>0))
     throw Error('No static source instanced groups eligible for safe front gate: '+JSON.stringify(r.wholeGate))
