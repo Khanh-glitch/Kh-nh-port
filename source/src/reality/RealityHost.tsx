@@ -277,26 +277,34 @@ export function RealityHost() {
     }
   }, [scene])
 
-  // DIAGNOSTIC ONLY: compile the EXACT native UEH group with the REAL
-  // scene's lights, fog, environment and camera, not standalone meshes.
-  // Restores hidden-world visibility synchronously before any visible draw.
-  // A full-scene shader variant may differ from a per-mesh preflight key.
+  // DIAGNOSTIC ONLY: source shaders must be precompiled for the SAME
+  // output color space the postprocessing composer uses at real first draw.
+  // Instrumentation proved 22/25 click-only fragments differ from their
+  // warm variants by EXACTLY "sRGB" -> "Linear" in linearToOutputTexel.
+  // A private 4x4 LINEAR render target is bound ONLY during compileAsync,
+  // with no draw, then every renderer/global state is restored synchronously.
+  // This never changes any visible color, PBR, Bloom, HDR, light or geometry.
   const hexRealSceneCompile = typeof window !== 'undefined' &&
     new URLSearchParams(window.location.search).get('hexRealSceneCompile') === '1'
+  const hexLinearTargetCompile = typeof window !== 'undefined' &&
+    new URLSearchParams(window.location.search).get('hexLinearTargetCompile') === '1'
   const hexRealCompile = useRef({
-    started: false,
-    report: {
-      status:'disabled',
+    started:false,
+    report:{
+      status:'disabled',target:'default',
       programCountBefore:0,programCountAfter:0,
-      compileSubmitMs:0,compileWallMs:0,error:'',
+      compileSubmitMs:0,compileWallMs:0,
+      beforeOutputColorSpace:'',afterOutputColorSpace:'',
+      error:''
     }
   }).current
-  useFrame(() => {
-    if (!hexRealSceneCompile || hexRealCompile.started ||
-        !ueh.current || useReality.getState().phase !== 'idle' ||
-        useStore.getState().phase !== 'playing' ||
-        S.warmPass !== 2 || S.warmCompilePending ||
-        document.visibilityState !== 'visible') return
+  useFrame(()=>{
+    if ((!hexRealSceneCompile&&!hexLinearTargetCompile) ||
+        hexRealCompile.started || !ueh.current ||
+        useReality.getState().phase!=='idle' ||
+        useStore.getState().phase!=='playing' ||
+        S.warmPass!==2 || S.warmCompilePending ||
+        document.visibilityState!=='visible')return
     const landing=(window as unknown as {
       __orbitaLandingPrewarm?:{status:string}
     }).__orbitaLandingPrewarm
@@ -308,16 +316,24 @@ export function RealityHost() {
     hexRealCompile.started=true
     const report=hexRealCompile.report
     const count=()=>gl.info.programs?.length??0
+    const previousTarget=gl.getRenderTarget()
+    const previousViewport=gl.getViewport(new THREE.Vector4()).clone()
+    const previousScissor=gl.getScissor(new THREE.Vector4()).clone()
+    const previousScissorTest=gl.getScissorTest()
     const originalVisibility=group.visible
+    const scratch=hexLinearTargetCompile?
+      new THREE.WebGLRenderTarget(4,4,{depthBuffer:false,stencilBuffer:false}):
+      null
+    if(scratch)scratch.texture.colorSpace=THREE.LinearSRGBColorSpace
+    report.target=scratch?'private-linear-srgb':'default'
+    report.beforeOutputColorSpace=gl.getRenderTarget()?.texture.colorSpace??gl.outputColorSpace
     report.programCountBefore=count()
     const started=performance.now()
     report.status='compiling'
     try {
-      // compileAsync traverses visible children when initiating GPU programs.
+      if(scratch)gl.setRenderTarget(scratch)
       group.visible=true
       const pending=gl.compileAsync(group,camera,scene)
-      // Restore ORIGINAL visibility in same JS call, never in async finally.
-      group.visible=originalVisibility
       report.compileSubmitMs=Math.round(performance.now()-started)
       void pending.then(()=>{
         report.compileWallMs=Math.round(performance.now()-started)
@@ -326,11 +342,20 @@ export function RealityHost() {
       }).catch(err=>{
         report.status='failed'
         report.error=String(err)
-      })
-    } catch (err) {
-      group.visible=originalVisibility
+      }).finally(()=>scratch?.dispose())
+    } catch(err) {
       report.status='failed'
       report.error=String(err)
+      scratch?.dispose()
+    } finally {
+      // Absolutely no temporary color-space or scene visibility leaks into
+      // the live R3F/postprocessing draw: restore before this callback exits.
+      group.visible=originalVisibility
+      gl.setRenderTarget(previousTarget)
+      gl.setViewport(previousViewport)
+      gl.setScissor(previousScissor)
+      gl.setScissorTest(previousScissorTest)
+      report.afterOutputColorSpace=gl.getRenderTarget()?.texture.colorSpace??gl.outputColorSpace
     }
     ;(window as unknown as {__orbitaHexRealCompile:typeof report})
       .__orbitaHexRealCompile=report
