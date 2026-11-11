@@ -52,6 +52,8 @@ assert.match(kitJs,/demoTexture/,'Standalone actually includes stable reel textu
 assert.doesNotMatch(source,/hexRadialInstances|hexRadialOn/,'Rejected radial reorder cannot reappear in a release')
 assert.doesNotMatch(source,/hexAttrWarm|hexAttrEnabled|__orbitaHexAttributeWarm/,
  'Rejected private GPU preupload must not add idle stalls to production')
+assert.doesNotMatch(source,/hexNativePbrWarm|hexNativePbrEnabled|__orbitaHexNativePbrWarm/,
+ 'Rejected native PBR preview must not add 159-385ms idle frame stalls')
 const front=read('source/src/reality/Front.tsx')
 assert.match(front,/const WALL_H = 120/,'Original wall height unchanged')
 assert.match(front,/new THREE\.CylinderGeometry\(1, 1, 1, 160, 24, true\)/,'Original wall mesh resolution retained')
