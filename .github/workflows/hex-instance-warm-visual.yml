@@ -1,0 +1,43 @@
+name: HEX GPU attribute warm original-scene visual parity on native Metal
+on:
+  push:
+    branches: [fix/hex-hitch-no-visual-loss]
+    paths: ['.github/workflows/hex-instance-warm-visual.yml','source/src/reality/RealityHost.tsx','scripts/hex-visual-parity-front.mjs','scripts/sync-hex-standalone.mjs']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  native-metal-visual:
+    runs-on: macos-15
+    timeout-minutes: 24
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: candidate
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build same full-quality source for original and flagged variant
+        run: |
+          npm ci --prefix candidate/source
+          npm install --prefix candidate/source --no-save --package-lock=false playwright@1.56.1
+          (cd candidate/source && npx playwright install chromium)
+          (cd candidate && npm run build --prefix source && node scripts/sync-hex-standalone.mjs && node scripts/build-pages.mjs && node tests/hex-preservation.mjs)
+      - name: Compare nine full 1280x720 visual stages baseline versus GPU attribute prewarm
+        env:
+          HEX_VISUAL_REFERENCE_LABEL: original-unflagged
+          HEX_VISUAL_CANDIDATE_QUERY: '?hexCooperativeLinear=1&hexShadowProgramWarm=1&hexPrimeFirstUse=1&hexCinemaFarLightGate=1&hexInstanceBufferWarm=1'
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 --directory candidate/dist-pages >/tmp/hex-instance-warm-default.log 2>&1 &
+          python3 -m http.server 4174 --bind 127.0.0.1 --directory candidate/dist-pages >/tmp/hex-instance-warm-flagged.log 2>&1 &
+          for n in {1..80}; do
+            if curl -fsS -o /dev/null http://127.0.0.1:4173/ && curl -fsS -o /dev/null http://127.0.0.1:4174/; then break; fi
+            sleep 1
+          done
+          node candidate/scripts/hex-visual-parity-front.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: hex-instance-buffer-warm-visual-18-stages
+          path: hex-visual-frames/
+          if-no-files-found: warn
