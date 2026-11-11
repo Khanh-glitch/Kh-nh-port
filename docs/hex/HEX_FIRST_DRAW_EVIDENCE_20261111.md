@@ -90,3 +90,18 @@ A new opt-in `?hexCooperativeLinear=1&hexShadowProgramWarm=1` precompiles equiva
 - Combined opt-in `prime-cinema-far` uses the existing original GLSL, actual PBR and depth program first-use preflight **together with** the distant Cinema readback gate. Opposite-order Metal profiler [workflow](https://github.com/Khanh-glitch/Kh-nh-port/actions/workflows/hex-combined-cinema-gpu-ab.yml) checks whether removing both independent sync points improves first-click rAF gaps. Its outcomes must be independently read before enabling anything.
 
 **Release rule:** count both first-click rAF largest gap and silent time after last callback, intro/idle long tasks, exact HIGH-quality nine-stage visual parity, source-map fidelity, and cold/repeat/switch/retract. A green build/CPU trace alone does not authorize promoting any flag. Do not move the hitch from piano to intro or Cinema approach.
+
+### Updated decision after combined cold Metal runs — 2026-11-11
+
+The completed [combined GPU + Cinema A/B run 42970788388](https://github.com/Khanh-glitch/Kh-nh-port/actions/runs/42970788388) measured in opposite execution orders:
+
+| Execution order | Program first-use only | Program first-use + distant Cinema readback gate |
+|---|---:|---:|
+| Combined first | 7783ms largest rAF gap / 7775ms max long task | 6100ms largest rAF gap / 715ms max long task |
+| First-use first | 6500ms largest rAF gap / 6499ms max long task | 5116ms largest rAF gap / 620ms max long task |
+
+The combined option substantially reduces the main-thread long-task component but **still fails** frame pacing: 5.1–6.1s rAF gap. Hence **NO RELEASE PROMOTION** and **no default activation**. All original source geometry, full-resolution cinema, physically based materials, native 2048 shadow maps, shaders, Bloom and ACES remain unchanged.
+
+The next diagnostic commit adds a **25ms independent JS timer heartbeat** to `scripts/hex-cpu-first-trigger-trace.mjs` and records `maxTimerGapMs` versus `maxGapMs`, `maxRafMinusTimerGapMs`, and `timersStillActiveWhileRafStarved`. New opposite-order native Metal CI [42979943719](https://github.com/Khanh-glitch/Kh-nh-port/actions/runs/42979943719) was queued/running during this handoff, **not yet accepted**. If the JS timer remains responsive while rAF stops, investigate GPU/compositor frame publication and first scene submissions; if both stop, inspect exact blocking main-thread call stacks in Chrome tracing. Never infer absence of a stall from short Long Tasks alone.
+
+**Current decision: continue diagnostics on this branch; production main untouched; HOLD.** The user does not need to change settings or sacrifice visual quality to proceed.
