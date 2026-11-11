@@ -2,7 +2,7 @@ name: HEX standalone source parity + build (branch only)
 on:
   push:
     branches: [fix/hex-hitch-no-visual-loss]
-    paths: ['source/src/reality/RealityHost.tsx','source/src/reality/Front.tsx','scripts/sync-hex-standalone.mjs','tests/hex-preservation.mjs','.github/workflows/hex-sync-build.yml']
+    paths: ['source/src/reality/RealityHost.tsx','source/src/reality/Front.tsx','source/src/reality/mask.ts','source/src/reality/kit.tsx','scripts/sync-hex-standalone.mjs','tests/hex-preservation.mjs','.github/workflows/hex-sync-build.yml']
   workflow_dispatch:
 permissions:
   contents: write
