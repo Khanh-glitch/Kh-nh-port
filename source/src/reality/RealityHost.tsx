@@ -90,6 +90,9 @@ export function RealityHost() {
     warmLinearMaxSubmitMs: 0,
     warmLinearSubmissions: 0,
     warmLinearRestoreErrors: 0,
+    warmShadowTotal: 0,
+    warmShadowDone: 0,
+    warmShadowErrors: 0,
     warmHealthyPaints: 0,
     warmPass: 0, // 0: đang upload tex/compile, 1: đang bật 1 frame silent shadow warm, 2: xong hoàn toàn
   }).current
@@ -529,6 +532,80 @@ export function RealityHost() {
     }
   }
 
+  // TEST ONLY: precompile the ORIGINAL shadow-depth program variants.
+  // WebGLShadowMap builds MeshDepthMaterial from each source material and
+  // reverses FrontSide/BackSide for the shadow pass. These variants were the
+  // final three uncached GPU programs after 83 cooperative Linear shaders.
+  // We use source geometry/InstancedMesh flags, but NEVER draw a preview,
+  // change 2048px shadow resolution, or touch original source materials.
+  const hexShadowProgramWarm = hexCooperativeLinear &&
+    typeof window !== 'undefined' &&
+    new URLSearchParams(window.location.search).get('hexShadowProgramWarm')==='1'
+  const hexShadowQueue = useRef({
+    items:[] as THREE.Object3D[],
+    ownedMaterials:[] as THREE.Material[]
+  }).current
+
+  useEffect(()=>{
+    if(!hexShadowProgramWarm)return
+    const variants=new Set<string>()
+    const programs:THREE.Object3D[]=[]
+    const owned:THREE.Material[]=[]
+    ueh.current?.traverse(node=>{
+      const mesh=node as THREE.Mesh
+      if(!mesh.isMesh||!mesh.castShadow||
+          !mesh.geometry||Array.isArray(mesh.material)||!mesh.material)return
+      const source=mesh.material as THREE.MeshStandardMaterial
+      const instanced=(mesh as THREE.InstancedMesh).isInstancedMesh===true
+      const isAlpha=source.alphaTest>0||source.alphaToCoverage===true
+      const side=source.shadowSide!==null?source.shadowSide:
+        source.side===THREE.FrontSide?THREE.BackSide:
+        source.side===THREE.BackSide?THREE.FrontSide:THREE.DoubleSide
+      const key=[
+        instanced?'inst':'mesh',
+        source.type,
+        source.map?'map':'nomap',
+        source.alphaMap?'alphamap':'none',
+        isAlpha?'cutout':'opaque',
+        source.alphaToCoverage?'atc':'noatc',
+        source.displacementMap?'displacement':'plain',
+        side,
+        source.wireframe?'wire':'solid'
+      ].join('|')
+      if(variants.has(key))return
+      variants.add(key)
+      const mat=mesh.customDepthMaterial ?? new THREE.MeshDepthMaterial()
+      if(!mesh.customDepthMaterial){
+        const depth=mat as THREE.MeshDepthMaterial
+        depth.side=side
+        depth.map=source.map
+        depth.alphaMap=source.alphaMap
+        depth.alphaTest=source.alphaToCoverage?0.5:source.alphaTest
+        depth.displacementMap=source.displacementMap
+        depth.displacementScale=source.displacementScale
+        depth.displacementBias=source.displacementBias
+        depth.wireframe=source.wireframe
+        depth.clipShadows=source.clipShadows
+        depth.clippingPlanes=source.clippingPlanes
+        depth.clipIntersection=source.clipIntersection
+        owned.push(depth)
+      }
+      const proxy=mesh.clone(false) as THREE.Mesh
+      proxy.material=mat
+      proxy.frustumCulled=false
+      proxy.castShadow=false
+      programs.push(proxy)
+    })
+    hexShadowQueue.items=programs
+    hexShadowQueue.ownedMaterials=owned
+    S.warmShadowTotal=programs.length
+    return ()=>{
+      hexShadowQueue.items.length=0
+      for(const material of owned)material.dispose()
+      owned.length=0
+    }
+  },[scene,hexShadowProgramWarm])
+
   // Hàng đợi chuẩn bị tài nguyên UEH phân bổ đều (texture + shader) để KHÔNG khựng khi lại gần đàn lần đầu
   const buildWarmQueues = () => {
     if (S.warmStarted) return
@@ -706,6 +783,16 @@ export function RealityHost() {
           S.warmCompilePending = false
           S.warmShaderDone++
         }
+      } else if (hexShadowProgramWarm && hexShadowQueue.items.length &&
+          !S.warmCompilePending) {
+        const shadowProxy=hexShadowQueue.items.shift()!
+        S.warmCompilePending=true
+        void compileHexCooperatively(shadowProxy).then(()=>{
+          S.warmShadowDone++
+        }).catch(err=>{
+          S.warmShadowErrors++
+          console.warn('[HEX preflight] native depth program',err)
+        }).finally(()=>{S.warmCompilePending=false})
       } else if (!S.warmCompilePending) {
         // The old one-frame ENTIRE-UEH visibility preflight caused a large
         // first GPU submission. Private source-mesh batches above replace it.
@@ -728,6 +815,9 @@ export function RealityHost() {
       linearMaxSubmitMs:Math.round(S.warmLinearMaxSubmitMs),
       linearRestoreErrors:S.warmLinearRestoreErrors,
       programCount:gl.info.programs?.length??0,
+      shadowVariantTotal:S.warmShadowTotal,
+      shadowVariantDone:S.warmShadowDone,
+      shadowVariantErrors:S.warmShadowErrors,
     }
     // Continue the cooperative material/texture queue AFTER entering the
     // world: the old intro-exit handler discarded every remaining UEH shader
