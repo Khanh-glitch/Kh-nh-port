@@ -9,6 +9,7 @@ import { Hit } from './Hit'
 import { Label } from './Label'
 import { openPanel } from './Player'
 import { PadRing, mats, useWorldColliders, worldPos } from './common'
+import { SocialDrops } from './SocialDrops'
 
 const ex = EXHIBITS.beacon
 const MAST_H = 9.5
@@ -172,6 +173,7 @@ export function Beacon() {
         </mesh>
       ))}
 
+      <SocialDrops signal={st} />
       <Hit id="beacon" label="Signal Beacon" hint="Phát tín hiệu liên hệ" panel="beacon" maxDist={55} shape="cylinder" size={[1.6, 11, 0]} position={[0, 5.5, 0]} onClick={send} />
       <Hit id="beacon-dish" label="Signal Beacon" hint="Phát tín hiệu liên hệ" panel="beacon" maxDist={55} shape="sphere" size={[2.4, 0, 0]} position={[0, MAST_H + 1.5, 0]} onClick={send} />
     </group>

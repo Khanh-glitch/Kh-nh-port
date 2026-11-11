@@ -5,6 +5,7 @@ import { EXHIBIT_LIST, DISC_R } from '../layout'
 import { player, input } from '../world'
 import { audio } from '../audio'
 import { closePanel, resumeGame, startGame } from '../scene/Player'
+import { useShow } from '../stage/showState'
 
 function Kbd({ children }: { children: React.ReactNode }) {
   return (
@@ -15,81 +16,58 @@ function Kbd({ children }: { children: React.ReactNode }) {
 }
 
 function Intro() {
-  const loading = useStore((s) => s.loading)
   const ready = useStore((s) => s.ready)
-  const touch = useStore((s) => s.touch)
-  return (
-    <div className="absolute inset-0 z-30 flex flex-col items-center justify-between overflow-hidden px-6 py-8 text-white">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(2,4,14,0.1)_0%,rgba(2,3,10,0.55)_55%,rgba(1,2,6,0.92)_100%)]" />
-      <div className="relative z-10 flex w-full max-w-6xl items-center justify-between text-[11px] tracking-[0.35em] text-white/60">
-        <span className="font-semibold text-white">{STUDIO.name}</span>
-        <span className="hidden sm:inline">LIVE PRODUCTION · DIGITAL PRODUCTS · CREATIVE TECH</span>
-        <span>2026</span>
-      </div>
+  const frame = useRef<HTMLIFrameElement>(null)
+  const stable = useRef({count:0,last:0,ready:false})
+  const [fallback, setFallback] = useState(false)
 
-      <div className="relative z-10 flex max-w-3xl flex-col items-center text-center">
-        <div className="mb-5 text-[11px] tracking-[0.5em] text-cyan-200/80 animate-[fadeUp_1s_ease-out_both]">PORTFOLIO TƯƠNG TÁC · GÓC NHÌN THỨ NHẤT</div>
-        <h1 className="font-display bg-gradient-to-b from-white via-white to-sky-300/70 bg-clip-text text-6xl font-bold leading-[0.95] tracking-tight text-transparent drop-shadow-[0_0_40px_rgba(120,160,255,0.45)] sm:text-8xl animate-[fadeUp_1.1s_0.1s_ease-out_both]">
-          Một chiếc đĩa
-          <br />
-          giữa vũ trụ.
-        </h1>
-        <p className="mt-6 max-w-xl text-base leading-relaxed text-white/70 sm:text-lg animate-[fadeUp_1.1s_0.25s_ease-out_both]">
-          Bước đi trên đĩa bay của <b className="text-white">{STUDIO.name}</b> — nghe cây grand piano tự chơi, xem khối Rubik tự giải, chạm vào quả cầu đen, đứng dưới chân người máy khổng lồ và bấm cue trên sân khấu thật.
-        </p>
+  useEffect(() => {
+    let raf = 0
+    let lastSent = 0
+    const origin = window.location.origin
+    const onMessage = (event: MessageEvent) => {
+      if (event.origin !== origin || event.source !== frame.current?.contentWindow) return
+      const data = event.data as {type?:string}
+      if (data?.type === 'ORBITA_SPACE_WARP_COMPLETE' && stable.current.ready) {
+        startGame() // retains the EXISTING distant-to-island camera descent
+      }
+      if (data?.type === 'ORBITA_SPACE_ENGAGE' && stable.current.ready) {
+        // Audio permission is requested by the spacecraft's actual click.
+        void audio.start()
+      }
+    }
+    window.addEventListener('message', onMessage)
+    const loop = (now:number) => {
+      const v=stable.current
+      const dt=v.last ? now-v.last : 16
+      v.last=now
+      const current=useStore.getState()
+      const landing=(window as any).__orbitaLandingPrewarm as {status?:string}|undefined
+      const shader=(window as any).__orbitaHexShaderPrep as {status?:string;errors?:number}|undefined
+      const landingOk=!landing || landing.status==='ready' || landing.status==='disabled' || landing.status==='skipped-software-renderer' || landing.status==='submitted-no-fence'
+      const shadersOk=!shader || shader.status==='complete-or-interrupted' || shader.status==='disabled' || shader.status==='ready'
+      const noErrors=!shader || !shader.errors
+      if (current.ready && landingOk && shadersOk && noErrors && dt<70 && dt>4) v.count=Math.min(95,v.count+1)
+      else if(dt>=110 || !current.ready || !landingOk || !shadersOk || !noErrors) v.count=0
+      v.ready=!!(current.ready && landingOk && shadersOk && noErrors && v.count>=90)
+      if(now-lastSent>180){
+        lastSent=now
+        const progress=Math.min(99,Math.round((current.loading*0.7+Math.min(1,v.count/90)*0.3)*100))
+        frame.current?.contentWindow?.postMessage({type:'ORBITA_SPACE_READY',progress:v.ready?100:progress,ready:v.ready},origin)
+      }
+      raf=requestAnimationFrame(loop)
+    }
+    raf=requestAnimationFrame(loop)
+    return()=>{cancelAnimationFrame(raf);window.removeEventListener('message',onMessage)}
+  },[])
 
-        <div className="mt-9 flex flex-col items-center gap-3 animate-[fadeUp_1.1s_0.4s_ease-out_both]">
-          <button
-            disabled={!ready}
-            onClick={startGame}
-            className="group relative overflow-hidden rounded-full border border-white/30 bg-white/10 px-10 py-4 text-sm font-semibold tracking-[0.3em] text-white backdrop-blur-md transition hover:scale-[1.04] hover:border-white/70 hover:bg-white/20 disabled:cursor-wait disabled:opacity-60"
-          >
-            <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/30 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
-            <span className="relative">{ready ? 'BƯỚC VÀO' : `ĐANG NẠP ÂM THANH ${Math.round(loading * 100)}%`}</span>
-          </button>
-          <div className="h-[2px] w-56 overflow-hidden rounded-full bg-white/15">
-            <div className="h-full bg-gradient-to-r from-cyan-300 to-fuchsia-400 transition-all duration-300" style={{ width: `${Math.round(loading * 100)}%` }} />
-          </div>
-          <div className="text-[11px] tracking-[0.25em] text-white/45">🎧 ĐEO TAI NGHE ĐỂ NGHE ÂM THANH 3D</div>
-        </div>
-      </div>
-
-      <div className="relative z-10 flex w-full max-w-6xl flex-col items-center justify-between gap-4 text-[11px] text-white/55 sm:flex-row">
-        {touch ? (
-          <div className="flex items-center gap-3">Kéo trái dưới để đi · Kéo màn hình để nhìn · Chạm vật thể để tương tác</div>
-        ) : (
-          <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
-            <span className="flex items-center gap-1">
-              <Kbd>W</Kbd>
-              <Kbd>A</Kbd>
-              <Kbd>S</Kbd>
-              <Kbd>D</Kbd> di chuyển
-            </span>
-            <span className="flex items-center gap-1">
-              <Kbd>CHUỘT</Kbd> nhìn
-            </span>
-            <span className="flex items-center gap-1">
-              <Kbd>CLICK</Kbd> kích hoạt
-            </span>
-            <span className="flex items-center gap-1">
-              <Kbd>E</Kbd> hồ sơ
-            </span>
-            <span className="flex items-center gap-1">
-              <Kbd>SHIFT</Kbd> chạy
-            </span>
-            <span className="flex items-center gap-1">
-              <Kbd>SPACE</Kbd> nhảy
-            </span>
-          </div>
-        )}
-        <div className="hidden max-w-xs text-right text-[10px] leading-snug text-white/35 lg:block">
-          Piano: Salamander Grand (A. Holm, CC-BY 3.0)
-          <br />
-          Cảm hứng: folio-2025 của Bruno Simon
-        </div>
-      </div>
-    </div>
-  )
+  return <div className="absolute inset-0 z-30 overflow-hidden bg-[#030611] text-white">
+    <iframe ref={frame} src="assets/immersive/index.html" title="Immersive Space Shift · ORBITA Entry" className="absolute inset-0 h-full w-full border-0" allow="autoplay" onError={()=>setFallback(true)} />
+    {fallback && <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-[#050916]">
+      <p className="text-lg">Không tải được buồng lái không gian.</p>
+      <button disabled={!ready} onClick={startGame} className="rounded-full border border-cyan-300 px-8 py-4 disabled:opacity-40">{ready?'BƯỚC VÀO':'ĐANG CHUẨN BỊ'}</button>
+    </div>}
+  </div>
 }
 
 function Minimap() {
@@ -136,7 +114,8 @@ function Hud() {
   const touch = useStore((s) => s.touch)
   const panel = useStore((s) => s.panel)
   const paused = useStore((s) => s.paused)
-  const active = !panel && !paused
+  const focus = useShow((s) => s.focus)
+  const active = !panel && !paused && !focus
 
   return (
     <div className="pointer-events-none absolute inset-0 z-20 text-white">
@@ -188,7 +167,7 @@ function Hud() {
           </span>
         </div>
       )}
-      <div className="absolute bottom-5 left-5">
+      <div className={`absolute bottom-5 left-5 transition-opacity duration-300 ${focus ? 'opacity-0' : 'opacity-100'}`}>
         <Minimap />
       </div>
       {toast && (

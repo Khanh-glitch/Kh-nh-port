@@ -1,0 +1,23 @@
+{
+  "baseline": "41a5184945d53f16cd103e416c7bdd8a71c6049b",
+  "opening": "immersive-spaceship-pov-portfolio (2).zip",
+  "stage": "developing-orbita-main-stage (5).zip",
+  "social": "3d-social-media-logos.zip",
+  "replacesExisting3d": false,
+  "cameraDescent": "startGame() unchanged",
+  "mainStageFiles": [
+    "Stage.tsx",
+    "ShowSystem.tsx",
+    "ledShow.ts",
+    "showState.ts",
+    "shows.ts"
+  ],
+  "socialBrands": [
+    "TikTok",
+    "Discord",
+    "Facebook",
+    "Instagram",
+    "GitHub",
+    "LinkedIn"
+  ]
+}

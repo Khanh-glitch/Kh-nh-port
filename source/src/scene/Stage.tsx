@@ -9,6 +9,12 @@ import { FONT, beamGeometry, beamMaterial, canvasTex, glowTexture, rand, rbox } 
 import { Hit } from './Hit'
 import { Label } from './Label'
 import { PadRing, isFacing, mats, useWorldColliders, worldPos } from './common'
+import { photoAllowed, type ShowId } from '../stage/shows'
+import { useShow, showById, showElapsed, mediaFor } from '../stage/showState'
+import { LED_W, LED_H, drawShowLED } from '../stage/ledShow'
+import { ShowSelector, InfoVeil, PhotoWings, FocusViewer, LedVideo, ShowFX, ShowPreloader, useInfoTexture, videoCoverage } from '../stage/ShowSystem'
+
+const clamp01 = (x: number) => (x < 0 ? 0 : x > 1 ? 1 : x)
 
 const ex = EXHIBITS.stage
 const LW = 832
@@ -218,7 +224,10 @@ const COUNT_S = 180
 export function Stage() {
   const busRef = useRef<Bus | null>(null)
   const led = useMemo(() => canvasTex(LW, LH, () => {}), [])
-  const st = useRef({ scene: 0, beatOn: false, lastDraw: 0, press: [0, 0, 0, 0, 0, 0], fireT: 99, sparkT: 99 }).current
+  const st = useRef({ scene: 0, beatOn: false, lastDraw: 0, press: [0, 0, 0, 0, 0, 0], fireT: 99, sparkT: 99, showLvl: 0, fallback: false, dropDone: false, lastConfetti: -1 }).current
+  const showLed = useMemo(() => canvasTex(LED_W, LED_H, (c, w, h) => { c.fillStyle = '#000'; c.fillRect(0, 0, w, h) }), [])
+  const root = useRef<THREE.Group>(null)
+  const infoTex = useInfoTexture()
   const heads = useMemo<Head[]>(
     () => HEAD_POS.map(([x, y, z, base]) => ({ pan: null, tilt: null, mat: beamMaterial('#ff2bd6', 1), base, x, y, z })),
     [],
@@ -298,6 +307,7 @@ export function Stage() {
     }
   }
   const setScene = (i: number) => {
+    if (useShow.getState().active) endShow(false)
     st.scene = i
     st.press[i] = 1
     audio.setBeatScene(i)
@@ -306,7 +316,7 @@ export function Stage() {
     if (!st.beatOn) toggleBeat()
     toast(`Cue ${i + 1} · ${SCENES[i].name}`)
   }
-  const fire = () => {
+  const fire = (silent = false) => {
     const b = bus()
     if (b) {
       audio.confetti(b)
@@ -341,7 +351,34 @@ export function Stage() {
       }
     }
     if (m?.instanceColor) m.instanceColor.needsUpdate = true
-    toast('Pháo giấy & pháo hoa!')
+    if (!silent) toast('Pháo giấy & pháo hoa!')
+  }
+
+  // ---- SHOWTIME: gọi lại một chương trình thật lên sân khấu
+  const endShow = (announce = true) => {
+    useShow.getState().select(null)
+    useShow.getState().setSelector(true)
+    if (st.fallback) {
+      audio.stopBeat()
+      st.beatOn = false
+      st.fallback = false
+    }
+    if (announce) toast('Sân khấu trở về DJ set')
+  }
+  const pickShow = (id: ShowId | null) => {
+    if (!id) return endShow()
+    if (st.beatOn) {
+      audio.stopBeat()
+      st.beatOn = false
+    }
+    st.fallback = false
+    st.dropDone = false
+    st.lastConfetti = -1
+    useShow.getState().select(id)
+    const b = bus()
+    if (b) audio.stageHit(b)
+    const s = showById(id)
+    if (s) toast(`${s.title} · ${s.dateLabel}`, 3200)
   }
 
   useFrame((state, dt) => {
@@ -362,25 +399,167 @@ export function Stage() {
     const energy = st.beatOn ? 1 : 0.45
     const strobeScene = st.scene === 2
 
-    // màn LED
-    if (near && t - st.lastDraw > 1 / 24) {
-      st.lastDraw = t
-      drawLED(led.ctx, st.scene, t, kick, energy)
-      led.tex.needsUpdate = true
+    // ---- trạng thái show
+    const ss = useShow.getState()
+    const show = showById(ss.active)
+    const el = show ? showElapsed() : 0
+    st.showLvl = THREE.MathUtils.damp(st.showLvl, show ? 1 : 0, 2.2, dt)
+    const look = show?.look
+    const sBeatF = look ? (el * look.bpm) / 60 : 0
+    const sBeat = look ? Math.exp(-(sBeatF % 1) * 5) : 0
+    const fadeOut = show ? clamp01(1 - el / 1.0) : 0 // blackout trước khi show thức dậy
+    const djScale = show ? fadeOut : Math.max(0.04, 1 - st.showLvl)
+    if (show && look) {
+      // drop: âm thanh + pháo giấy (GET DOWNTOWN)
+      if (!st.dropDone && el > 2.7) {
+        st.dropDone = true
+        const b = bus()
+        if (b) audio.stageHit(b)
+        if (look.confetti) fire(true)
+      }
+      if (look.confetti && el > 6) {
+        const sec = Math.floor(sBeatF / 64)
+        if (sec !== st.lastConfetti && sec > 0) {
+          st.lastConfetti = sec
+          fire(true)
+        }
+      } else if (st.lastConfetti < 0) st.lastConfetti = 0
+      // âm thanh dự phòng nếu footage không phát được
+      const vidBad = ss.video === 'error' || ss.video === 'blocked'
+      if (vidBad && el > 3 && !st.beatOn && audio.started) {
+        const b = bus()
+        if (b) {
+          audio.setBeatScene(look.beatScene)
+          audio.startBeat(b, look.beatScene)
+          st.beatOn = true
+          st.fallback = true
+        }
+      } else if (ss.video === 'playing' && st.fallback) {
+        audio.stopBeat()
+        st.beatOn = false
+        st.fallback = false
+      }
     }
-    if (ledMat.current) ledMat.current.color.setScalar(0.9 + kick * 0.35)
+
+    // màn LED
+    if (show) {
+      if (near && t - st.lastDraw > 1 / 30) {
+        st.lastDraw = t
+        const imgs: HTMLImageElement[] = []
+        for (const p of show.photos) {
+          if (!photoAllowed(p) || p.placement === 'foh') continue
+          const e = mediaFor(p.url)
+          if (e.ok && e.img) imgs.push(e.img)
+        }
+        drawShowLED(showLed.ctx, show, { t, el, beat: sBeat, bar: Math.floor(sBeatF / 4), video: videoCoverage(), imgs })
+        showLed.tex.needsUpdate = true
+      }
+      if (ledMat.current && ledMat.current.map !== showLed.tex) {
+        ledMat.current.map = showLed.tex
+        ledMat.current.needsUpdate = true
+      }
+      if (ledMat.current) ledMat.current.color.setScalar(0.92 + sBeat * (look?.mode === 'chase' ? 0.18 : 0.04))
+    } else {
+      if (ledMat.current && ledMat.current.map !== led.tex) {
+        ledMat.current.map = led.tex
+        ledMat.current.needsUpdate = true
+      }
+      if (near && t - st.lastDraw > 1 / 24) {
+        st.lastDraw = t
+        drawLED(led.ctx, st.scene, t, kick, energy)
+        led.tex.needsUpdate = true
+      }
+      if (ledMat.current) ledMat.current.color.setScalar((0.9 + kick * 0.35) * (0.15 + 0.85 * djScale))
+    }
 
     // moving heads
     heads.forEach((h, i) => {
+      if (show && look) {
+        const ign = el < 1.1 ? 0 : clamp01((el - 1.25 - (i < 5 ? Math.abs(i - 2) * 0.16 : 0.6)) / 0.45)
+        let pan = 0
+        let tilt = h.base
+        let inten = 1
+        let c = look.colors[0]
+        if (look.mode === 'chase') {
+          const sec = Math.floor(sBeatF / 8) % 4
+          c = look.colors[(sec + (i % 2)) % look.colors.length]
+          if (sec === 0) {
+            pan = Math.sin(sBeatF * Math.PI * 0.5 + i * 0.9) * 1.1
+            tilt = h.base + Math.sin(sBeatF * Math.PI * 0.25 + i) * 0.5
+          } else if (sec === 1) {
+            pan = (i % 2 ? 1 : -1) * (0.45 + 0.25 * Math.sin(sBeatF * Math.PI * 0.5))
+            tilt = h.base + 0.3 * Math.sin(sBeatF * Math.PI)
+          } else if (sec === 2) {
+            pan = (i - 3) * 0.22
+            tilt = -0.2 - sBeat * 0.12
+          } else {
+            pan = Math.sin(sBeatF * Math.PI + i * 1.3) * 1.3
+            tilt = h.base + Math.cos(sBeatF * Math.PI * 0.5 + i) * 0.6
+          }
+          inten = (0.65 + 1.5 * sBeat) * (sec === 2 ? (Math.sin(t * 28 + i * 2.1) > 0.1 ? 2.1 : 0.08) : 1)
+        } else if (look.mode === 'fan') {
+          const cyc = (sBeatF % 32) / 32
+          const conv = clamp01((cyc - 0.72) * 6) * clamp01((1 - cyc) * 12)
+          const spread = i < 5 ? (i - 2) * 0.34 : i === 5 ? -0.45 : 0.45
+          pan = spread * (1 - conv * 0.85) + Math.sin(t * 0.22 + i) * 0.05
+          tilt = h.base * 0.55 + Math.sin(t * 0.33 + i * 0.7) * 0.1
+          c = conv > 0.4 ? '#fff1e2' : look.colors[i % 3 === 0 ? 1 : i % 3 === 1 ? 0 : 2]
+          inten = (0.7 + 0.3 * Math.sin(t * 0.8 + i * 0.6) + conv * 0.6) * 0.62
+        } else {
+          const sky = clamp01(Math.sin(t * 0.21) * 1.6)
+          if (i >= 5 || i % 2 === 1) {
+            pan = (i - 3) * 0.05 + Math.sin(t * 0.1 + i) * 0.25
+            tilt = THREE.MathUtils.lerp(0.15, 2.75, sky) + Math.sin(t * 0.17 + i) * 0.08
+          } else {
+            pan = (i - 2) * 0.06 + Math.sin(t * 0.12 + i) * 0.06
+            tilt = -0.05 + Math.sin(t * 0.14 + i * 0.5) * 0.08
+          }
+          c = look.colors[i % 2 ? 0 : (i >> 1) % 2 ? 2 : 1]
+          inten = (0.85 + 0.2 * Math.sin(t * 0.5 + i)) * 0.5
+        }
+        ;(h.mat.uniforms.uColor.value as THREE.Color).set(c)
+        h.mat.uniforms.uIntensity.value = inten * ign
+        if (h.pan) h.pan.rotation.y = THREE.MathUtils.damp(h.pan.rotation.y, pan, look.mode === 'chase' ? 9 : 2.2, dt)
+        if (h.tilt) h.tilt.rotation.x = THREE.MathUtils.damp(h.tilt.rotation.x, tilt, look.mode === 'chase' ? 9 : 2.2, dt)
+        return
+      }
       const c = sc.colors[i % 3]
       ;(h.mat.uniforms.uColor.value as THREE.Color).set(c)
       let inten = (0.75 + 0.9 * kick) * (st.beatOn ? 1.15 : 0.8)
       if (strobeScene) inten = Math.sin(t * 30 + i * 2.1) > 0.2 ? 2.2 : 0.05
-      h.mat.uniforms.uIntensity.value = inten
+      h.mat.uniforms.uIntensity.value = inten * djScale
       const speed = st.beatOn ? 1.0 : 0.5
       if (h.pan) h.pan.rotation.y = Math.sin(t * 0.7 * speed + i * 1.3) * 1.2
       if (h.tilt) h.tilt.rotation.x = h.base + Math.sin(t * 0.9 * speed + i * 0.8) * 0.55 + kick * 0.15
     })
+    if (show && look) {
+      const lv = el < 1.0 ? fadeOut : clamp01((el - 1.3) / 1.2)
+      const pulse = look.mode === 'chase' ? sBeat : 0.35 + 0.15 * Math.sin(t * 0.8)
+      if (light.current) {
+        light.current.color.set(look.mode === 'chase' ? look.colors[Math.floor(sBeatF / 8) % 2 ? 1 : 0] : look.colors[1])
+        light.current.intensity = (260 + pulse * 700) * lv
+      }
+      if (light2.current) {
+        light2.current.color.set(look.colors[2])
+        light2.current.intensity = (90 + pulse * 120) * lv
+      }
+      sideBars.current.forEach((m, i) => {
+        if (m) m.color.set(look.colors[i % look.colors.length]).multiplyScalar((1.2 + pulse * 1.6) * lv)
+      })
+      const strobeOn = look.strobe > 0 && Math.floor(sBeatF / 8) % 4 === 2 && Math.sin(t * 30) > 0
+      strobes.current.forEach((m) => {
+        if (m) m.color.setScalar(strobeOn ? 6 * lv : 0.25)
+      })
+      haze.current.forEach((s, i) => {
+        if (!s) return
+        s.position.x = Math.sin(t * 0.09 + i * 2) * 7
+        s.position.z = 5 + Math.cos(t * 0.07 + i * 1.7) * 3
+        s.position.y = 2.4 + (i % 2) * 1.6
+        const m = s.material as THREE.SpriteMaterial
+        m.color.set(look.colors[(i + 1) % look.colors.length])
+        m.opacity = (0.03 + 0.03 * pulse) * look.haze * (0.4 + 0.6 * lv)
+      })
+    } else {
     if (light.current) {
       light.current.color.set(sc.colors[0])
       light.current.intensity = (500 + kick * 900) * (strobeScene ? (Math.sin(t * 30) > 0 ? 1.6 : 0.2) : 1)
@@ -401,8 +580,10 @@ export function Stage() {
       s.position.z = 5.5 + Math.cos(t * 0.1 + i * 1.7) * 2.5
       const m = s.material as THREE.SpriteMaterial
       m.color.set(sc.colors[i % 3])
-      m.opacity = 0.05 + 0.05 * kick * energy
+      m.opacity = (0.05 + 0.05 * kick * energy) * djScale
+      s.position.y = 1.8
     })
+    }
     platters.current.forEach((p, i) => {
       if (p) p.rotation.y += dt * (st.beatOn ? 3.2 : 0.4) * (i ? -1 : 1)
     })
@@ -463,7 +644,15 @@ export function Stage() {
 
   const padX = [-1.05, -0.35, 0.35, 1.05]
   return (
-    <group position={[ex.x, 0, ex.z]} rotation={[0, ex.rotY, 0]}>
+    <>
+    <FocusViewer />
+    <group ref={root} position={[ex.x, 0, ex.z]} rotation={[0, ex.rotY, 0]}>
+      <ShowPreloader stageGroup={root} />
+      <ShowSelector stageGroup={root} onPick={pickShow} />
+      <InfoVeil tex={infoTex} />
+      <PhotoWings />
+      <LedVideo stageGroup={root} />
+      <ShowFX beamGeo={beamGeo} />
       <PadRing radius={13.4} color={ex.color} />
       <Label title="Main Stage" sub="Live Production · LED · Sound" color={ex.color} position={[0, 13.5, 2]} scale={1.4} fadeFar={110} />
 
@@ -626,11 +815,12 @@ export function Stage() {
             <mesh material={boomMat}>
               <cylinderGeometry args={[0.32, 0.34, 0.1, 24]} />
             </mesh>
-            <Hit id="stage-fire" label="PHÁO GIẤY & PYRO" hint="Bắn pháo!" maxDist={7} panel="stage" size={[0.8, 0.5, 0.8]} position={[0, 0.1, 0]} onClick={fire} />
+            <Hit id="stage-fire" label="PHÁO GIẤY & PYRO" hint="Bắn pháo!" maxDist={7} panel="stage" size={[0.8, 0.5, 0.8]} position={[0, 0.1, 0]} onClick={() => fire()} />
           </group>
         </group>
       </group>
-      <Hit id="stage-body" label="Main Stage" hint="Đến bàn FOH để bấm cue" maxDist={60} panel="stage" size={[16.4, 9, 8.6]} position={[0, 4.5, -0.8]} onClick={() => toast('Hãy đến bàn FOH phía trước sân khấu và bấm pad cue')} />
+      <Hit id="stage-body" label="Main Stage" hint="Đến khu FOH để chọn chương trình" maxDist={60} panel="stage" size={[16.4, 9, 8.6]} position={[0, 4.5, -0.8]} onClick={() => toast('Đến khu FOH phía trước sân khấu để gọi lại một chương trình')} />
     </group>
+    </>
   )
 }
