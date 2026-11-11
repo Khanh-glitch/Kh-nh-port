@@ -1,0 +1,49 @@
+name: Colossus visual-parity standalone sync
+on:
+  push:
+    branches: [fix/colossus-idle-retry-no-visual-change-20261111]
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  sync-and-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: source/package-lock.json
+      - name: Install exact TypeScript build dependencies
+        run: npm ci --prefix source --ignore-scripts
+      - name: Reject cold-first-click terminal skip and check TypeScript
+        run: |
+          node --check scripts/sync-colossus-idle-standalone.mjs
+          npx --prefix source tsc --noEmit --project source/tsconfig.json
+      - name: Sync only corrected prewarm scheduler; keep visual modules immutable
+        run: node scripts/sync-colossus-idle-standalone.mjs
+      - name: Verify no other frozen module or navigation regressed
+        run: |
+          node tests/integration-regression.mjs
+          node scripts/build-pages.mjs
+          test -s dist-pages/index.html
+          cmp -s index.html dist-pages/index.html
+      - name: Prove idempotent production sync
+        run: |
+          sha256sum index.html tests/integration-original-modules.json > /tmp/orbita-hashes-before
+          node scripts/sync-colossus-idle-standalone.mjs
+          sha256sum index.html tests/integration-original-modules.json > /tmp/orbita-hashes-after
+          diff -u /tmp/orbita-hashes-before /tmp/orbita-hashes-after
+      - name: Commit only generated standalone and its one updated baseline hash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html tests/integration-original-modules.json
+          if ! git diff --cached --quiet; then
+            git commit -m 'build(colossus): embed resumable warmup, preserve every visual module'
+            git push
+          fi
