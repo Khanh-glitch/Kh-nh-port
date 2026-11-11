@@ -26,6 +26,10 @@ export interface ShowcaseProps {
 type AbilityMode = 0 | 1 | 2 // 0: Idle/Patrol, 1: A1 Target Lock & Dash Clamp, 2: A2 Armor Core Surge
 const LEGACY_ROUNDED_GEOMETRY = typeof window !== 'undefined' &&
   new URLSearchParams(window.location.search).get('colossusGeometryProbe') === 'legacy'
+// Experimental ONLY: bake exact static turbine/claw geometry inside its
+// ORIGINAL animated parent with identical material, shadows and depth order.
+const EXTENDED_BATCH_PROBE = typeof window !== 'undefined' &&
+  new URLSearchParams(window.location.search).get('colossusBatchProbe') === 'extended'
 
 
 /**
@@ -119,14 +123,20 @@ export function mergeTaggedArmorSiblings(root: THREE.Object3D) {
         combined.renderOrder=group[0].renderOrder
         combined.frustumCulled=group[0].frustumCulled
         combined.layers.mask=group[0].layers.mask
-        for(const mesh of group)mesh.visible=false
+        for(const mesh of group) {
+          mesh.visible=false
+          mesh.userData.colossusMergedAway = true
+        }
         parent.add(combined)
         totalParts += group.length
         savedDraws += group.length-1
         undo.push(()=>{
           parent.remove(combined)
           geometry.dispose()
-          for(const mesh of group)mesh.visible=true
+          for(const mesh of group) {
+            mesh.visible=true
+            delete mesh.userData.colossusMergedAway
+          }
         })
       } finally {
         for(const copy of copies)copy.dispose()
@@ -778,7 +788,8 @@ function ApexShowcaseImpl({ position, worldPosition, rotationY, summoned, scanPr
                 {/* Rotating 6-blade inner turbine */}
                 <group ref={tRef} position={[side * 0.2, 0, 0]} rotation={[0, side * (Math.PI / 2), 0]}>
                   {[0, 1, 2, 3, 4, 5].map((b) => (
-                    <mesh key={b} rotation={[0, 0, (b * Math.PI) / 3]} position={[0, 0, 0]} material={materials.orange}>
+                    <mesh key={b} userData={{colossusMergeStatic: EXTENDED_BATCH_PROBE}}
+                      rotation={[0, 0, (b * Math.PI) / 3]} position={[0, 0, 0]} material={materials.orange}>
                       <boxGeometry args={[0.045, 0.34, 0.03]} />
                     </mesh>
                   ))}
@@ -787,13 +798,13 @@ function ApexShowcaseImpl({ position, worldPosition, rotationY, summoned, scanPr
                 {/* Massive Arched C-Shaped Caliper Shield Segments curving high above head */}
                 <group rotation={[0, 0, side * 0.1]}>
                   {/* Lower arm strut */}
-                  <mesh position={[side * 0.22, 0.38, 0.04]} rotation={[0, 0, side * -0.18]} geometry={roundedBox(0.36, 0.68, 0.46, 0.06)} material={materials.dark} castShadow />
+                  <mesh userData={{colossusMergeStatic: EXTENDED_BATCH_PROBE}} position={[side * 0.22, 0.38, 0.04]} rotation={[0, 0, side * -0.18]} geometry={roundedBox(0.36, 0.68, 0.46, 0.06)} material={materials.dark} castShadow />
                   {/* Mid curved ivory armor shield */}
-                  <mesh position={[side * 0.24, 0.85, 0.08]} rotation={[-0.12, 0, side * 0.22]} geometry={roundedBox(0.42, 0.72, 0.5, 0.07)} material={materials.armor} castShadow />
+                  <mesh userData={{colossusMergeStatic: EXTENDED_BATCH_PROBE}} position={[side * 0.24, 0.85, 0.08]} rotation={[-0.12, 0, side * 0.22]} geometry={roundedBox(0.42, 0.72, 0.5, 0.07)} material={materials.armor} castShadow />
                   {/* Upper inward-arching caliper claw blade */}
-                  <mesh position={[side * 0.02, 1.38, 0.16]} rotation={[-0.25, 0, side * 0.68]} geometry={roundedBox(0.34, 0.68, 0.42, 0.06)} material={materials.armor} castShadow />
+                  <mesh userData={{colossusMergeStatic: EXTENDED_BATCH_PROBE}} position={[side * 0.02, 1.38, 0.16]} rotation={[-0.25, 0, side * 0.68]} geometry={roundedBox(0.34, 0.68, 0.42, 0.06)} material={materials.armor} castShadow />
                   {/* Dark inner pincer tip */}
-                  <mesh position={[side * -0.26, 1.56, 0.24]} rotation={[-0.3, 0, side * 1.05]} geometry={roundedBox(0.18, 0.4, 0.26, 0.03)} material={materials.dark} castShadow />
+                  <mesh userData={{colossusMergeStatic: EXTENDED_BATCH_PROBE}} position={[side * -0.26, 1.56, 0.24]} rotation={[-0.3, 0, side * 1.05]} geometry={roundedBox(0.18, 0.4, 0.26, 0.03)} material={materials.dark} castShadow />
                   {/* Orange hazard trim accent */}
                   <mesh position={[side * 0.36, 0.88, 0.12]} rotation={[-0.12, 0, side * 0.22]} geometry={roundedBox(0.06, 0.56, 0.12, 0.02)} material={materials.orange} />
                 </group>
