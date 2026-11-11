@@ -1,0 +1,65 @@
+name: ORBITA rebuild exact integrated artifacts and full warp acceptance
+on:
+  push:
+    branches: ['integration/space-shift-showtime-social']
+    paths:
+      - '.github/workflows/space-stage-social-rebuild-release.yml'
+      - 'source/immersive/src/**'
+      - 'source/src/ui/Overlay.tsx'
+      - 'source/src/scene/Beacon.tsx'
+      - 'source/src/scene/Stage.tsx'
+      - 'source/src/stage/**'
+      - 'scripts/rebuild-integrated-standalone.cjs'
+      - 'scripts/integration-browser-smoke.mjs'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  rebuild-and-accept:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install native source dependencies
+        run: |
+          npm ci --prefix source
+          npm ci --prefix source/immersive
+      - name: Build editable originals without replacing HEX art
+        run: |
+          npm run build --prefix source
+          npm run build --prefix source/immersive
+          node scripts/rebuild-integrated-standalone.cjs
+          node tests/integration-regression.mjs
+          node tests/hex-preservation.mjs
+          node scripts/build-pages.mjs
+          test -s dist-pages/assets/stage/mcyt-crew-stage.jpg
+      - name: Install browser
+        run: |
+          npm install --prefix source --no-save --package-lock=false playwright@1.56.1
+          (cd source && npx playwright install --with-deps chromium)
+      - name: Full visitor energy-gate, warp and original descent smoke
+        run: |
+          python3 -m http.server 4174 --bind 127.0.0.1 --directory dist-pages >/tmp/orbita-rebuilt.log 2>&1 &
+          for n in {1..90}; do
+            if curl -fsS -o /dev/null http://127.0.0.1:4174/; then break; fi
+            sleep 1
+          done
+          node scripts/integration-browser-smoke.mjs
+      - name: Commit ONLY verified reproducible standalone outputs
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html assets/immersive/index.html
+          if ! git diff --cached --quiet; then
+            git commit -m 'build(orbita): sync validated spaceship profile and fully tested 3D entry'
+            git push origin HEAD:integration/space-shift-showtime-social
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ORBITA-rebuilt-full-warp-evidence
+          path: integration-evidence/
+          if-no-files-found: warn
