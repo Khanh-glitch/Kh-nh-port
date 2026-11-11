@@ -97,6 +97,9 @@ export interface NewOpts {
   ao?: boolean
   wind?: number
   wet?: boolean
+  // Per-instance conservative vertex reject BEFORE fragment rasterization.
+  // Off by default; only for explicitly opted-in original foliage materials.
+  instanceVertexGate?: boolean
 }
 
 /**
@@ -121,9 +124,10 @@ export function patchMaterial(mat: THREE.Material, mode: 'old' | 'new', opts: Ne
   const useAo = mode === 'new' && opts.ao !== false
   const useWet = mode === 'new' && !!opts.wet
   const wind = opts.wind ?? 0
+  const instanceVertexGate = mode === 'new' && opts.instanceVertexGate === true
   // Numerical values MUST NOT split programs. The original numeric values
   // remain material-local uniforms, evaluated using exactly the same GLSL.
-  const tag = `rw-uniform-v2-${mode}-${grow ? 'g' : 'n'}-${useHaze ? 'h' : 'x'}-${useAo ? 'a' : 'x'}-${useWet ? 'wt' : 'x'}-${wind > 0 ? 'wind' : 'still'}`
+  const tag = `rw-uniform-v2-${mode}-${grow ? 'g' : 'n'}-${useHaze ? 'h' : 'x'}-${useAo ? 'a' : 'x'}-${useWet ? 'wt' : 'x'}-${wind > 0 ? 'wind' : 'still'}-${instanceVertexGate ? 'vertex-gate' : 'original'}`
   const scalars = {
     uRWGrowLen: { value: Number(gl.toFixed(1)) },
     uRWGlow: { value: Number(glow.toFixed(2)) },
@@ -188,6 +192,23 @@ export function patchMaterial(mat: THREE.Material, mode: 'old' | 'new', opts: Ne
             vRWp = (rwM * vec4(transformed, 1.0)).xyz;
           }`,
         )
+      if (instanceVertexGate && vs.includes('#include <project_vertex>')) {
+        // All three triangle vertices in one instance share aRWStart. A mesh
+        // outside the materialization front has exactly ZERO valid source
+        // fragments: clip it before the rasterizer without altering geometry,
+        // shaders at visible positions, instance matrices, material, or color.
+        // For active/retract, the original shader remains the sole visual
+        // authority; this is strictly a conservative invisible-fragment skip.
+        vs = 'attribute float aRWStart;\n' + vs.replace(
+          '#include <project_vertex>',
+          `#include <project_vertex>
+          #ifdef USE_INSTANCING
+            if (uRW.z < 0.5 || uRW.x < aRWStart) {
+              gl_Position = vec4(2.0, 2.0, 2.0, 1.0);
+            }
+          #endif`
+        )
+      }
       const head =
         mode === 'old'
           ? 'float rwE; float rwx = rwX(vRWp, rwE); if (uRW.z > 0.5 && rwx > 0.0) discard;'
