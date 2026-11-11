@@ -87,10 +87,16 @@ export function RealityHost() {
     mesh: THREE.Mesh; threshold: number; hidden: boolean
   }>).current
   const hexFarSkies = useRef([] as THREE.Mesh[]).current
+  // Only populated if an explicit test URL isolates a draw category.
+  // Production is unaffected: every original UEH object remains renderable.
+  const hexProbeSuppressed = useRef([] as Array<{
+    object: THREE.Object3D; originallyVisible: boolean
+  }>).current
 
   useEffect(() => {
     hexCull.length = 0
     hexFarSkies.length = 0
+    hexProbeSuppressed.length = 0
     const cullCenter = new THREE.Vector3()
     const cullScale = new THREE.Vector3()
     ueh.current?.traverse((source) => {
@@ -121,7 +127,32 @@ export function RealityHost() {
         }
       }
     })
+    if (hexGpuDiag?.startsWith('no-ueh-')) {
+      const filter = hexGpuDiag.slice('no-ueh-'.length)
+      let total = 0
+      ueh.current?.traverse(o => {
+        const d = o as THREE.Mesh
+        if (!d.isMesh && !(o as THREE.Points).isPoints &&
+            !(o as THREE.Line).isLine && !(o as THREE.Sprite).isSprite) return
+        total++
+        const mat = d.material
+        const mats = Array.isArray(mat) ? mat : mat ? [mat] : []
+        const instanced = (d as THREE.InstancedMesh).isInstancedMesh === true
+        const shader = mats.some(m => (m as THREE.ShaderMaterial).isShaderMaterial)
+        const transparent = mats.some(m => m.transparent || m.alphaTest > 0)
+        const kind = instanced ? 'instanced' : shader ? 'shader' :
+          transparent ? 'alpha' : 'opaque'
+        if (kind === filter) {
+          hexProbeSuppressed.push({object:o,originallyVisible:o.visible})
+        }
+      })
+      ;(window as unknown as {__orbitaHexGpuDiagStats?:unknown}).__orbitaHexGpuDiagStats = {
+        mode:hexGpuDiag,totalDrawables:total,hiddenDrawables:hexProbeSuppressed.length,
+      }
+    }
     return () => {
+      for(const d of hexProbeSuppressed) d.object.visible=d.originallyVisible
+      hexProbeSuppressed.length=0
       for (const entry of hexCull) if (entry.hidden) entry.mesh.visible = true
       for (const sky of hexFarSkies) sky.visible = true
       hexCull.length = 0
@@ -681,6 +712,10 @@ export function RealityHost() {
     if (ueh.current) {
       const reveal = st.phase === 'sweep' || st.phase === 'active' || st.phase === 'retract'
       ueh.current.visible = reveal && hexGpuDiag !== 'no-world'
+      // Category ablation is enabled exclusively by the benchmark query.
+      // This runs last so local weather/foliage animation cannot re-enable
+      // a deliberately isolated diagnostic drawable during its own useFrame.
+      for (const d of hexProbeSuppressed) d.object.visible=false
       if (reveal) {
         S.warmPass = 2
         S.warmTex.length = 0
