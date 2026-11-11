@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef } from 'react'
-import { useFrame } from '@react-three/fiber'
+import { useFrame, useThree } from '@react-three/fiber'
 import * as THREE from 'three'
 import { EXHIBITS } from '../layout'
 import { audio, type Bus } from '../audio'
@@ -16,6 +16,11 @@ const MAST_H = 9.5
 const RINGS = 8
 
 export function Beacon() {
+  const {gl} = useThree()
+  // Diagnostics are query-only. Public scene and signal choreography stay exact.
+  const benchmark = typeof window !== 'undefined' &&
+    new URLSearchParams(window.location.search).get('beaconProfile') === '1'
+  const traceIndex = useRef(0)
   const busRef = useRef<Bus | null>(null)
   const dishYaw = useRef<THREE.Group>(null)
   const dishTilt = useRef<THREE.Group>(null)
@@ -37,10 +42,46 @@ export function Beacon() {
     busRef.current = audio.createBus('beacon', worldPos(ex, 0, MAST_H, 0), { ref: 5, rolloff: 1.2, maxDist: 110, reverb: 0.6, gain: 0.8 })
   }, [])
 
+  const recordTrigger = (clickedAt:number) => {
+    if (!benchmark) return
+    const id = ++traceIndex.current
+    const shaderCount = gl.info.programs?.length ?? 0
+    const gaps:number[]=[]
+    let last=0, firstFrameMs:number|null=null
+    let lastFrame=clickedAt
+    let frames=0
+    const follow = (now:number) => {
+      if (traceIndex.current!==id) return
+      const clock=performance.now()
+      if (firstFrameMs===null) firstFrameMs=clock-clickedAt
+      if (last) gaps.push(clock-last)
+      last=clock
+      lastFrame=clock
+      frames++
+      if (clock-clickedAt<5300) requestAnimationFrame(follow)
+    }
+    requestAnimationFrame(follow)
+    window.setTimeout(()=>{
+      const elapsed=performance.now()-clickedAt
+      const tail=elapsed-(lastFrame-clickedAt)
+      const maxGap=Math.max(tail,firstFrameMs??0,...gaps)
+      const result={id, firstFrameMs:Math.round(firstFrameMs??-1),
+        maxGapMs:Math.round(maxGap),frames,
+        gapsOver120Ms:gaps.filter(x=>x>120).length,
+        shaderProgramsBefore:shaderCount,
+        shaderProgramsAfter:gl.info.programs?.length??0,
+        panelPhaseAfterMs:Math.round(elapsed),
+        browserVisible:document.visibilityState==='visible'}
+      const w=window as unknown as {__orbitaBeaconProfiles?:typeof result[]}
+      ;(w.__orbitaBeaconProfiles??=[]).push(result)
+      console.info('[Beacon] original first-trigger profile',result)
+    },5500)
+  }
   const send = () => {
     const now = performance.now() / 1000
     if (now - st.send < 2.5) return
     st.send = now
+    recordTrigger(performance.now())
     waves.forEach((w, i) => (w.t0 = now + i * 0.22))
     if (busRef.current) audio.ping(busRef.current)
     toast('Tín hiệu đã phát vào vũ trụ…')
@@ -48,6 +89,13 @@ export function Beacon() {
     st.pendingOpen = window.setTimeout(() => openPanel('beacon'), 1600)
   }
 
+  // Use the identical production signal pathway in GPU A/B automation.
+  useEffect(()=>{
+    if(!benchmark)return
+    const w=window as unknown as {__orbitaBeaconTestTrigger?:()=>void}
+    w.__orbitaBeaconTestTrigger=send
+    return ()=>{delete w.__orbitaBeaconTestTrigger}
+  },[])
   useFrame((state) => {
     const t = state.clock.elapsedTime
     const now = performance.now() / 1000
