@@ -82,8 +82,11 @@ export function SocialDrops({ signal }: { signal: {send:number} }) {
       traceRaf=requestAnimationFrame(traceIdle)
     }
     const nextHealthyFrame=async():Promise<boolean>=>{
+      // Never spin for hundreds of virtual-GPU frames; a busy renderer must
+      // stay free for gameplay, not keep trying a speculative GPU experiment.
       let healthy=0,last=0
-      for(let n=0;n<220&&!cancelled();n++){
+      const deadline=performance.now()+3500
+      for(let n=0;n<220&&!cancelled()&&performance.now()<deadline;n++){
         const timestamp=await new Promise<number>(resolve=>requestAnimationFrame(resolve))
         const dt=last?timestamp-last:0
         last=timestamp
