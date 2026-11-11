@@ -83,13 +83,16 @@ export function RealityHost() {
   const hexCull = useRef([] as Array<{
     mesh: THREE.Mesh; threshold: number; hidden: boolean
   }>).current
+  const hexFarSkies = useRef([] as THREE.Mesh[]).current
 
   useEffect(() => {
     hexCull.length = 0
+    hexFarSkies.length = 0
     const cullCenter = new THREE.Vector3()
     const cullScale = new THREE.Vector3()
     ueh.current?.traverse((source) => {
       const draw = source as THREE.Mesh
+      if (draw.isMesh && source.userData?.rwFarSky) hexFarSkies.push(draw)
       if (draw.isMesh && !(draw as THREE.InstancedMesh).isInstancedMesh &&
           draw.visible && !Array.isArray(draw.material) &&
           !draw.material.transparent && !draw.material.alphaTest &&
@@ -117,7 +120,9 @@ export function RealityHost() {
     })
     return () => {
       for (const entry of hexCull) if (entry.hidden) entry.mesh.visible = true
+      for (const sky of hexFarSkies) sky.visible = true
       hexCull.length = 0
+      hexFarSkies.length = 0
     }
   }, [scene])
 
@@ -657,6 +662,16 @@ export function RealityHost() {
         .__orbitaHexCullStats = { eligible:hexCull.length, culled, front:rt.front }
     }
 
+    // The original far-world sky material uses:
+    // rwX = front - (150 + abs(y / radius)*150) - hash*6.
+    // Therefore no sky fragment can exist at front < 150. Keep its exact
+    // original mesh/shader but omit the entire GPU draw until front=140,
+    // ten units BEFORE its earliest possible visible fragment.
+    for (const sky of hexFarSkies) {
+      const shouldRender = rt.front >= 140 &&
+        (st.phase === 'sweep' || st.phase === 'active' || st.phase === 'retract')
+      if (sky.visible !== shouldRender) sky.visible = shouldRender
+    }
     // The original newly generated world is completely shader-discarded
     // before HEX sweep begins. Do not submit its entire GPU geometry during
     // the 2.6s ignition. Actual scan/active/retract render remains unchanged.
