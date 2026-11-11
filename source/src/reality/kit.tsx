@@ -99,7 +99,7 @@ export function SkyDome({ world }: { world: 'ueh' | 'tomorrow' }) {
     ref.current?.position.copy(camera.position)
   })
   return (
-    <mesh ref={ref} material={mat} renderOrder={-30} frustumCulled={false}>
+    <mesh ref={ref} material={mat} renderOrder={-30} frustumCulled={false} userData={{ rwFarSky: true }}>
       <sphereGeometry args={[3000, 48, 24]} />
     </mesh>
   )
