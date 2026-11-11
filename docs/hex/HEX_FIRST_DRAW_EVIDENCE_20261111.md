@@ -34,3 +34,14 @@
 4. Keep a failing feature in opt-in diagnostic mode only. No merge before visual + functional + frame-pacing acceptance.
 
 **Important:** CI success means test execution success, not completion of frame pacing or visual acceptance. Earlier radial visual workflow passed but actual saved screenshots clearly showed lost foliage.
+
+## Follow-up verification (same date)
+
+| Test | Evidence | Decision |
+|---|---|---|
+| UEH shadow-depth isolation | [Run 42945093380](https://github.com/Khanh-glitch/Kh-nh-port/actions/runs/42945093380), two independently ordered virtual Metal jobs. `no-ueh-shadows` disabled castShadow on 133/399 drawables; max long task still 4.95–5.02 seconds. `no-ueh-instanced-shadows` disabled the two shadow-casting instanced groups; max long task remained 3.99–6.05 seconds. Normal jobs varied ~3.72–7.46s. | Shadows alone DO NOT explain the first-draw hitch. Keep full original 2048px shadows. |
+| Whole-mesh front gating (no reorder) | [Run 42954658615](https://github.com/Khanh-glitch/Kh-nh-port/actions/runs/42954658615) plus [9-stage visual evidence 42954766822](https://github.com/Khanh-glitch/Kh-nh-port/actions/runs/42954766822). Only ONE non-shadow static InstancedMesh was eligible and the gate opened at front radius ~5; repeated Metal first-draw long tasks were still ~3.9–5.3s on one runner and worse than controls on the other. | REJECTED; source logic removed in `c242e5a9` after A/B. No source instance data was ever modified. |
+| One-triangle private upload, with or without preceding compileAsync | [First run 42943677979](https://github.com/Khanh-glitch/Kh-nh-port/actions/runs/42943677979) and [async compile run 42944582218](https://github.com/Khanh-glitch/Kh-nh-port/actions/runs/42944582218). Some draws took 86–218ms even before visitor interaction; after 8/8 buffers were uploaded, a 5.05s first-HEX stall remained. | REJECTED and removed `e14d696c`, protected by `tests/hex-preservation.mjs`. Do not shift lag from first HEX click into walking/intro. |
+| Material-v-buffer isolation | [Live test run 42955546214](https://github.com/Khanh-glitch/Kh-nh-port/actions/runs/42955546214) compares original instanced PBR, eight unchanged source buffers with diagnostic basic shader, and the fully omitted instanced drawables in reversed order. | **DIAGNOSTIC ONLY**; no result claimed until logs / artifacts have been inspected. The default app retains original PBR and original shader/visuals. |
+
+Current release verdict stays **HOLD**. Production `main` remains at the already accepted Colossus `4454511b`. Compile/visual-invariant CI success must never be called performance acceptance.
