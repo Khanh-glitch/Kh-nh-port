@@ -31,7 +31,7 @@ jobs:
             if curl -fsS -o /dev/null http://127.0.0.1:4174/; then break; fi
             sleep 1
           done
-          node scripts/hex-gpu-isolation.mjs
+          node candidate/scripts/hex-gpu-isolation.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
