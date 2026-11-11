@@ -19,7 +19,7 @@ if(start<0||end<0)throw Error('HEX sync: standalone import map not found')
 const a=start+tag.length
 const map=JSON.parse(html.slice(a,end))
 const keys=Object.keys(map)
-const targets=['reality/RealityHost','reality/Front','reality/mask']
+const targets=['reality/RealityHost','reality/Front','reality/mask','reality/kit']
 for(const f of targets){
  const extension = f==='reality/mask' ? '.ts' : '.tsx'
  const source=readFileSync(resolve(src,f+extension),'utf8')
