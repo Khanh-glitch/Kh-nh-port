@@ -1,0 +1,54 @@
+name: HEX RELEASE BLOCKER — zero freezes across summon, switch, retract, replay
+on:
+  push:
+    branches: [fix/hex-hitch-no-visual-loss]
+    paths: ['.github/workflows/hex-release-no-hitch-gate.yml','scripts/hex-no-hitch-release-gate.mjs','scripts/hex-hitch-a-b.mjs','scripts/sync-hex-standalone.mjs','source/src/reality/**','source/src/scene/Cinema.tsx','index.html']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  native-metal-full-lifecycle:
+    runs-on: macos-15
+    timeout-minutes: 27
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: candidate
+      - uses: actions/checkout@v4
+        with:
+          ref: 4454511b31913531856549659bf55628ffc25578
+          path: baseline
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build authentic published HTML, original unchanged high-quality 3D
+        run: |
+          npm ci --prefix candidate/source
+          npm install --prefix candidate/source --no-save --package-lock=false playwright@1.56.1
+          (cd candidate/source && npx playwright install chromium)
+          (cd candidate && npm run build --prefix source && node scripts/sync-hex-standalone.mjs && node scripts/build-pages.mjs && node tests/hex-preservation.mjs)
+          (cd baseline && node scripts/build-pages.mjs)
+      - name: Capture authentic visitor first, switch, retract and second HEX with rAF silent tails
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 --directory baseline/dist-pages >/tmp/hex-gate-baseline.log 2>&1 &
+          python3 -m http.server 4174 --bind 127.0.0.1 --directory candidate/dist-pages >/tmp/hex-gate-candidate.log 2>&1 &
+          for n in {1..80}; do
+            if curl -fsS -o /dev/null http://127.0.0.1:4173/ && curl -fsS -o /dev/null http://127.0.0.1:4174/; then break; fi
+            sleep 1
+          done
+          node candidate/scripts/hex-hitch-a-b.mjs
+      - name: Reject remaining freezes and misleading CI green
+        if: always()
+        run: |
+          if test -f hex-evidence/bench.json; then
+            node candidate/scripts/hex-no-hitch-release-gate.mjs
+          else
+            echo "HEX_RELEASE_REJECTED: no actual benchmark evidence"
+            exit 1
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: hex-release-failure-or-acceptance-real-visual
+          path: hex-evidence/
+          if-no-files-found: warn
