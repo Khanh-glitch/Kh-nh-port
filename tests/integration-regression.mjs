@@ -16,6 +16,17 @@ function moduleSource(id) {
  assert(value?.startsWith('data:text/javascript;base64,'),'Embedded module missing: '+id);
  return Buffer.from(value.split(',')[1],'base64').toString('utf8');
 }
+// The only former baseline module intentionally changed besides the three
+// requested integrations is Experience: invisible island pixels are reduced
+// ONLY while the opaque spacecraft covers it; gameplay original DPR returns.
+const experience=moduleSource('scene/Experience');
+assert.match(experience,/phase\\s*===\\s*['\"]intro['\"]\\s*\\?\\s*0\\.5/,
+  'Published scene throttles unseen island rasterization during spaceship');
+const experienceSource=readFileSync('source/src/scene/Experience.tsx','utf8');
+assert(experienceSource.includes("phase === 'intro' ? 0.5 : low ? 1 : [1, 1.6]"),
+  'Visible game original DPR and high quality range must be restored');
+assert.match(experienceSource,/shadow-mapSize=\\{\\[2048,\\s*2048\\]\\}/,
+  'Full original shadows must remain unchanged in the visible world');
 const overlay=moduleSource('ui/Overlay');
 const stage=moduleSource('scene/Stage');
 const beacon=moduleSource('scene/Beacon');
