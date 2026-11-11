@@ -10,6 +10,10 @@ import { GLSL_COMMON, HEX_S, RW } from './mask'
 import { rt } from './state'
 import { music } from './music'
 
+// Opt-in GPU cause isolation ONLY. Normal portfolio never sets this query.
+const hexGpuDiag = typeof window !== 'undefined'
+  ? new URLSearchParams(window.location.search).get('hexGpuDiag') : null
+
 const latticeVS = /* glsl */ `
 ${GLSL_COMMON}
 attribute vec3 aC;
@@ -103,7 +107,7 @@ export function HexLattice() {
       }),
     [],
   )
-  return <mesh geometry={geo} material={mat} frustumCulled={false} renderOrder={20} userData={{ rwKeep: true, count }} />
+  return <mesh geometry={geo} material={mat} visible={hexGpuDiag !== 'no-hex'} frustumCulled={false} renderOrder={20} userData={{ rwKeep: true, count }} />
 }
 
 // ---------------------------------------------------------------- bức tường khuông nhạc
@@ -190,7 +194,7 @@ export function StaffWall() {
     g.translate(0, 0.5, 0)
     return g
   }, [])
-  return <mesh geometry={geo} material={mat} frustumCulled={false} renderOrder={21} userData={{ rwKeep: true }} />
+  return <mesh geometry={geo} material={mat} visible={hexGpuDiag !== 'no-hex'} frustumCulled={false} renderOrder={21} userData={{ rwKeep: true }} />
 }
 
 // ---------------------------------------------------------------- cột sáng + cầu năng lượng khi bốc cháy
@@ -280,7 +284,7 @@ export function Ignition() {
       beamMat.uniforms.uK.value = fl
       beamMat.uniforms.uT.value = rt.t
     }
-    if (light.current) light.current.intensity = (k * 160 + fl * 1400) * (1 + music.kick)
+    if (light.current) light.current.intensity = hexGpuDiag === 'no-ignition-light' ? 0 : (k * 160 + fl * 1400) * (1 + music.kick)
     if (pts.current) {
       pts.current.visible = k > 0.001
       emberMat.uniforms.uK.value = k
@@ -290,7 +294,7 @@ export function Ignition() {
     void dt
   })
   return (
-    <group userData={{ rwKeep: true }}>
+    <group visible={hexGpuDiag !== 'no-ignition' && hexGpuDiag !== 'no-ignition-vfx'} userData={{ rwKeep: true }}>
       <mesh ref={orb} material={orbMat} visible={false} frustumCulled={false}>
         <icosahedronGeometry args={[1, 3]} />
       </mesh>
