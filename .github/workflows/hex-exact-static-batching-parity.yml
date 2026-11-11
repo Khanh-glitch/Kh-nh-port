@@ -1,0 +1,57 @@
+name: HEX exact static geometry batching visual acceptance
+on:
+  push:
+    branches: [fix/hex-exact-static-sibling-batching-20261112]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  source-and-pixel-parity:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 23
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: source/package-lock.json
+      - run: npm ci --prefix source
+      - run: npm install --prefix source --no-save --package-lock=false playwright@1.56.1
+      - run: cd source && npx playwright install --with-deps chromium
+      - name: Build ONLY original HEX plus opt-in source batching
+        run: |
+          node --check scripts/sync-hex-exact-batching-standalone.mjs
+          node --check scripts/hex-exact-batch-pixel-parity.mjs
+          node scripts/sync-hex-exact-batching-standalone.mjs
+          node tests/integration-regression.mjs
+          node --test tests/hex-exact-batch-contract.mjs
+          node scripts/build-pages.mjs
+          cmp -s index.html dist-pages/index.html
+      - name: All original HEX meshes, lighting, shaders and 18 viewpoints must be intact
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 --directory dist-pages >/tmp/hex-exact-batch.log 2>&1 &
+          for n in {1..60}; do
+            if curl -fsS -o /dev/null http://127.0.0.1:4173/; then break; fi
+            sleep 1
+          done
+          node scripts/hex-exact-batch-pixel-parity.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: hex-original-geometry-source-identical-pixel-parity
+          path: hex-batch-evidence/
+          if-no-files-found: warn
+      - name: Commit only generated standalone and one HEX baseline hash
+        if: github.event_name == 'push'
+        run: |
+          node scripts/sync-hex-exact-batching-standalone.mjs
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html tests/integration-original-modules.json
+          if ! git diff --cached --quiet; then
+            git commit -m 'build(hex): embed opt-in exact opaque batching in actual standalone'
+            git push
+          fi
