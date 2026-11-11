@@ -1,0 +1,42 @@
+name: HEX preflight versus click exact GLSL variant diff
+on:
+  push:
+    branches: [fix/hex-hitch-no-visual-loss]
+    paths: ['.github/workflows/hex-program-prepost-diff.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: macos-15
+    timeout-minutes: 22
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: candidate
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build unchanged 3D source, original visual quality
+        run: |
+          npm ci --prefix candidate/source
+          npm install --prefix candidate/source --no-save --package-lock=false playwright@1.56.1
+          (cd candidate/source && npx playwright install chromium)
+          (cd candidate && npm run build --prefix source && node scripts/sync-hex-standalone.mjs && node scripts/build-pages.mjs)
+          (cd candidate && node tests/hex-preservation.mjs)
+      - name: Compare exact shader source hashes before click with new first-use programs
+        env:
+          HEX_GL_MODES: 'normal,no-ueh-instanced'
+        run: |
+          python3 -m http.server 4174 --bind 127.0.0.1 --directory candidate/dist-pages >/tmp/hex-prepost-glsl.log 2>&1 &
+          for n in {1..80}; do
+            if curl -fsS -o /dev/null http://127.0.0.1:4174/; then break; fi
+            sleep 1
+          done
+          node candidate/scripts/hex-webgl-call-profile.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: hex-preflight-v-cold-click-full-program-fingerprints
+          path: hex-gl-profile/
+          if-no-files-found: warn
