@@ -105,3 +105,23 @@ The combined option substantially reduces the main-thread long-task component bu
 The next diagnostic commit adds a **25ms independent JS timer heartbeat** to `scripts/hex-cpu-first-trigger-trace.mjs` and records `maxTimerGapMs` versus `maxGapMs`, `maxRafMinusTimerGapMs`, and `timersStillActiveWhileRafStarved`. New opposite-order native Metal CI [42979943719](https://github.com/Khanh-glitch/Kh-nh-port/actions/runs/42979943719) was queued/running during this handoff, **not yet accepted**. If the JS timer remains responsive while rAF stops, investigate GPU/compositor frame publication and first scene submissions; if both stop, inspect exact blocking main-thread call stacks in Chrome tracing. Never infer absence of a stall from short Long Tasks alone.
 
 **Current decision: continue diagnostics on this branch; production main untouched; HOLD.** The user does not need to change settings or sacrifice visual quality to proceed.
+
+
+### Uninterrupted continuation — GPU / compositor frame publication diagnostic
+
+Confirmed independent timer heartbeat from completed [native Metal run 42979943719](https://github.com/Khanh-glitch/Kh-nh-port/actions/runs/42979943719) on `7fa1a367`:
+
+| Metal job order | Mode | Largest rAF gap | Largest JS timer gap | Max browser Long Task | Readout |
+|---|---|---:|---:|---:|---|
+| Combined first | `prime-cinema-far` | 6750ms | 502ms | 498ms | rAF stops although JS timer continues |
+| Combined first | `prime-first-use` | 4867ms | 5003ms | 4865ms | main-thread readback stall remains |
+| Prime first | `prime-first-use` | 6133ms | 6304ms | 6126ms | main-thread readback stall remains |
+| Prime first | `prime-cinema-far` | 4433ms | 592ms | 505ms | rAF stops although JS timer continues |
+
+Thus the distance-safe Cinema readback gate measurably resolves the `getImageData` main-thread blocker, but the remaining 4.4–6.8s rAF stall is **not** simply a main-thread Long Task. Chrome CPU samples for the combined mode show substantial `(idle)` and `uniformMatrix4fv` work. Investigate GPU/context/compositor frame publication / 3D first-draw saturation, rather than further moving shader synchronization around. These are virtualized Apple Metal results and must not be treated as universal hardware timings.
+
+New **diagnostic-only** bisection at `b62f318` includes authentic source with `hexGpuDiag=no-ueh-instanced`, `no-ueh-foliage`, `no-ueh-architecture`, `no-ueh-wind`, `no-world`; new multi-job counterbalanced [run 42982818551](https://github.com/Khanh-glitch/Kh-nh-port/actions/runs/42982818551), created at `669ea8a`. These flags intentionally hide categories **only during diagnostics** and are prohibited in release. Compare each to unchanged `prime-cinema-far` using **max rAF silent gap, timer gap, Long Task**, then design a preservation-safe rendering solution for implicated category, instead of blind ablation or radial reorder. No such A/B result has yet been read/accepted for this new run at this checkpoint (jobs queued).
+
+**Visual acceptance to retain:** native [18-frame exact-source visual run 42970661748](https://github.com/Khanh-glitch/Kh-nh-port/actions/runs/42970661748) passed; native baseline-v-candidate visual [42970661914](https://github.com/Khanh-glitch/Kh-nh-port/actions/runs/42970661914) passed. They validate no obvious missing UEH geometry/foliage across 9 scan stages, switching, retract, second summon, but are not pixel-identical proof due to dynamic effects. Any new rendering approach must repeat these gates on its **exact commit** and preserve 2048px shadows, authentic PBR, full materialization shader, Bloom, ACES, 1024x450 cinema and complete original meshes.
+
+**Status:** HOLD on `fix/hex-hitch-no-visual-loss`, do not promote new defaults/merge main. Source/CI instrumentation is actively advanced; no claim of completed smoothness. Target next: preserve visual fidelity and reduce both long-task and rAF silent gap to a genuinely non-disruptive transition on cold and repeat action, with no new intro jank.
