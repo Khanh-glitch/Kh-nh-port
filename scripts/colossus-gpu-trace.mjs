@@ -3,7 +3,10 @@ import { mkdirSync, writeFileSync } from 'node:fs'
 const require = createRequire(import.meta.url)
 const { chromium } = require('../source/node_modules/playwright')
 const traceMode=process.env.COLOSSUS_TRACE_MODE === 'mixed' ? 'mixed' : 'full'
-const evidenceDir=process.env.COLOSSUS_TRACE_MODE ? 'browser-evidence/'+traceMode : 'browser-evidence'
+const batchMode=process.env.COLOSSUS_BATCH_MODE === 'extended' ? 'extended' : 'standard'
+const evidenceDir=process.env.COLOSSUS_BATCH_MODE
+  ? 'browser-evidence/batch-'+batchMode
+  : process.env.COLOSSUS_TRACE_MODE ? 'browser-evidence/'+traceMode : 'browser-evidence'
 mkdirSync(evidenceDir, {recursive:true})
 const browser = await chromium.launch({headless:true,args:[
   '--enable-webgl','--enable-gpu','--ignore-gpu-blocklist',
@@ -13,7 +16,10 @@ const page = await browser.newPage({viewport:{width:1280,height:720},deviceScale
 const failures=[]
 page.on('pageerror',e=>failures.push(e.message))
 try {
-  await page.goto('http://127.0.0.1:4173/' + (traceMode === 'mixed' ? '?colossusNativePassMode=mixed' : '') + '#at=0,-27,0,20&autostart&skip',
+  const params = new URLSearchParams()
+  if(traceMode==='mixed')params.set('colossusNativePassMode','mixed')
+  if(batchMode==='extended')params.set('colossusBatchProbe','extended')
+  await page.goto('http://127.0.0.1:4173/' + (params.size ? '?'+params : '') + '#at=0,-27,0,20&autostart&skip',
     {waitUntil:'domcontentloaded',timeout:120000})
   await page.waitForFunction(()=>!!window.__orbitaColossusWarmup,null,{timeout:120000})
   await page.waitForTimeout(6500)
@@ -49,7 +55,8 @@ try {
     const dbg=gl?.getExtension('WEBGL_debug_renderer_info')
     return {
       renderer:gl?.getParameter(dbg?.UNMASKED_RENDERER_WEBGL??gl.RENDERER),
-      warmup:window.__orbitaColossusWarmup
+      warmup:window.__orbitaColossusWarmup,
+      batching:window.__orbitaApexBatch,
     }
   })
   if (!/Metal/i.test(String(baseline.renderer)) || /SwiftShader/i.test(String(baseline.renderer)))
@@ -97,7 +104,8 @@ try {
   const graphics=events.filter(x=>/gpu|viz|compositor|shadow|render|raster|swap/i.test(String(x.cat)+' '+String(x.name)))
   const report={commit:process.env.GITHUB_SHA,attempted,backend:baseline.renderer,
     warmupAtClick:baseline.warmup?.status,laserReadyAtClick:baseline.warmup?.laserReady,
-    preClickIdle:idleProbe,nativePassMode:baseline.warmup?.nativePassMode,
+    preClickIdle:idleProbe,batchMode,batching:baseline.batching,
+    nativePassMode:baseline.warmup?.nativePassMode,
     nativeHologramPasses:baseline.warmup?.nativeHologramPasses,
     nativeScenePeakCpuMs:baseline.warmup?.nativeScenePeakCpuMs,
     fullyReadyBeforeClick:fullyReady,uploadedProxies:baseline.warmup?.uploadedProxies,
