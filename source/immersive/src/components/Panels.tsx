@@ -238,63 +238,30 @@ export function Comms({ lang, delay }: P) {
   const { email, phone, linkedin, github } = profile.contact;
   const [copied, setCopied] = useState(false);
   const timer = useRef<number>(0);
-
   const copy = async () => {
-    try {
-      await navigator.clipboard.writeText(email);
-    } catch {
-      const ta = document.createElement('textarea');
-      ta.value = email;
-      ta.style.position = 'fixed';
-      ta.style.opacity = '0';
-      document.body.appendChild(ta);
-      ta.select();
-      document.execCommand('copy');
-      ta.remove();
+    if (!email) return;
+    try { await navigator.clipboard.writeText(email); }
+    catch {
+      const ta=document.createElement('textarea');ta.value=email;ta.style.position='fixed';ta.style.opacity='0';
+      document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove();
     }
-    setCopied(true);
-    window.clearTimeout(timer.current);
-    timer.current = window.setTimeout(() => setCopied(false), 1800);
+    setCopied(true);window.clearTimeout(timer.current);
+    timer.current=window.setTimeout(()=>setCopied(false),1800);
   };
-
-  return (
-    <section className="mfd reveal" style={d(delay)} aria-label={ui.contact[lang]}>
-      <Head title={ui.contact[lang]} code="COMMS" />
-      <div className="comms">
-        <div className="comms-email">
-          <a className="comms-row" href={`mailto:${email}`}>
-            <Mail />
-            <span className="sr-only">Email</span>
-            <span className="v">{email}</span>
-          </a>
-          <button type="button" className="copy-btn" onClick={copy} aria-live="polite">
-            {copied ? ui.copied[lang] : ui.copy[lang]}
-          </button>
-        </div>
-        <a className="comms-row" href={`tel:${phone.replace(/\s+/g, '')}`}>
-          <Phone />
-          <span className="sr-only">{lang === 'vi' ? 'Di động' : 'Phone'}</span>
-          <span className="v">{phone}</span>
-        </a>
-        <a className="comms-row" href={linkedin.url} target="_blank" rel="noreferrer">
-          <LinkedIn />
-          <span className="sr-only">LinkedIn</span>
-          <span className="v">{linkedin.label}</span>
-          <ArrowOut className="go" />
-        </a>
-        <a className="comms-row" href={github.url} target="_blank" rel="noreferrer">
-          <GitHub />
-          <span className="sr-only">GitHub</span>
-          <span className="v">{github.label}</span>
-          <ArrowOut className="go" />
-        </a>
-      </div>
-      <p className="comms-foot">
-        <span className="dot" aria-hidden="true" />
-        {ui.responds[lang]}
-      </p>
-    </section>
-  );
+  return <section className="mfd reveal" style={d(delay)} aria-label={ui.contact[lang]}>
+    <Head title={ui.contact[lang]} code="COMMS" />
+    <div className="comms">
+      {email ? <div className="comms-email">
+        <a className="comms-row" href={`mailto:${email}`}><Mail /><span className="sr-only">Email</span><span className="v">{email}</span></a>
+        <button type="button" className="copy-btn" onClick={copy} aria-live="polite">{copied ? ui.copied[lang] : ui.copy[lang]}</button>
+      </div> : <div className="comms-row"><Mail /><span className="v">Email · đang cập nhật</span></div>}
+      {phone && <a className="comms-row" href={`tel:${phone.replace(/\\s+/g,'')}`}><Phone /><span className="v">{phone}</span></a>}
+      {linkedin.url ? <a className="comms-row" href={linkedin.url} target="_blank" rel="noreferrer"><LinkedIn /><span className="v">{linkedin.label}</span><ArrowOut className="go" /></a> :
+      <div className="comms-row"><LinkedIn /><span className="v">{linkedin.label}</span></div>}
+      <a className="comms-row" href={github.url} target="_blank" rel="noreferrer"><GitHub /><span className="v">{github.label}</span><ArrowOut className="go" /></a>
+    </div>
+    <p className="comms-foot"><span className="dot" aria-hidden="true" />{ui.responds[lang]}</p>
+  </section>;
 }
 
 /* ── calls to action ──────────────────────────────────────────────────────── */
@@ -316,7 +283,7 @@ export function Cta({ lang, onEngage, jumping,entryReady,entryProgress }: { lang
           {ui.cv[lang]}
         </a>
       ) : (
-        <a className="btn btn-ghost" href={`mailto:${profile.contact.email}`}>
+        <a className="btn btn-ghost" href={profile.contact.github.url} target="_blank" rel="noreferrer">
           <Mail />
           {ui.reach[lang]}
         </a>
