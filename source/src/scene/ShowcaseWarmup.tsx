@@ -538,7 +538,7 @@ export function ShowcaseWarmup({ arenaState }: { arenaState: { mode: string } })
           info.status = 'materialize-shaders'
           info.materializeVariantKeys = [...materializeVariants.keys()]
           if (!await nextPaint('laser')) {
-          if (info.status !== 'prewarm-skipped-busy-renderer') info.status='cancelled-on-summon'
+          info.status='cancelled-on-summon'
           return
         }
           if (interrupted()) { info.status='cancelled-on-summon'; return }
