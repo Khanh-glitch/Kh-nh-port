@@ -40,6 +40,26 @@ assert.match(source,/<StaffWall\s*\/>/,'Source five-line wall preserved')
 assert.match(source,/<Ignition\s*\/>/,'Ignition VFX preserved')
 assert.match(source,/<Sheets\s*\/>/,'Musical sheet triggers preserved')
 assert.match(source,/__orbitaHexCullStats/,'Real HEX scan culling remains observable')
+// HEX_VERTEX_GATE_INVARIANTS: optional original-geometry raster suppression.
+// No original vegetation is removed or reordered. This runs against the
+// exact standalone artifact visitors load, not only the editable source.
+const vegetation=read('source/src/reality/foliage.tsx')
+const vegetationEmbedded=map['orbita/reality/foliage']
+assert.ok(vegetationEmbedded?.startsWith('data:text/javascript;base64,'),
+  'Actual standalone must contain current foliage source')
+const vegetationJS=Buffer.from(vegetationEmbedded.split(',')[1],'base64').toString('utf8')
+for (const expected of [
+ 'hexVertexGate','attachConservativeHexGate','aRWStart',
+ 'greenLeaves.length','blossomClusters.length',
+ 'const N = low ? 2200 : 4200',
+ 'setMatrixAt','setColorAt',
+]){
+ assert.ok(vegetation.includes(expected),'Source foliage retains '+expected)
+ if(expected!=='const N = low ? 2200 : 4200')
+   assert.ok(vegetationJS.includes(expected),'Published foliage retains '+expected)
+}
+assert.doesNotMatch(vegetation,/\.count\s*=\s*spatialVisibleCount/,
+ 'Do not reorder, delete or change source vegetation instance counts')
 const mask=read('source/src/reality/mask.ts')
 for(const scalar of ['uRWGrowLen','uRWGlow','uRWWind']){
  assert.ok(mask.includes(scalar),'HEX preserves material-specific '+scalar+' as a shared GLSL uniform')
