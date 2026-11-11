@@ -45,13 +45,13 @@ try{
       }
       const before=await page.evaluate(()=>window.__orbitaBeaconProfiles?.length??0)
       await page.evaluate(()=>window.__orbitaBeaconTestTrigger())
-      await page.waitForTimeout(1100)
-      // Visual verification is separate from timing; no screenshots taken
-      // inside the critical click's first 1.1s.
-      await page.screenshot({path:'browser-evidence/beacon/'+mode+'-trigger-'+(i+1)+'.png',timeout:45000})
+      // IMPORTANT: a browser screenshot forces GPU readback/compositing.
+      // Never capture it during a frame-pacing measurement: that would create
+      // the very artificial hitch being diagnosed.
       await page.waitForFunction(n=>(window.__orbitaBeaconProfiles?.length??0)>n,
         before,{timeout:30000,polling:300})
       trials.push(await page.evaluate(()=>window.__orbitaBeaconProfiles?.at(-1)))
+      await page.screenshot({path:'browser-evidence/beacon/'+mode+'-after-'+(i+1)+'.png',timeout:45000})
     }
     const record={mode,backend:gpu,trials,errors}
     results.push(record)
