@@ -8,7 +8,7 @@ import * as THREE from 'three'
 import { audio } from '../audio'
 import { setInteractiveFilter, player } from '../world'
 import { useStore, toast } from '../store'
-import { FRONT_MAX, RW, ease, frontReached, patchOld } from './mask'
+import { FRONT_MAX, RW, ease, frontReached, patchOld, patchNew } from './mask'
 import { CENTER } from './site'
 import { HexLattice, Ignition, StaffWall } from './Front'
 import { Sheets } from './Sheets'
@@ -95,11 +95,17 @@ export function RealityHost() {
   const hexShadowSuppressed = useRef([] as Array<{
     object: THREE.Mesh; castOrig: boolean
   }>).current
+  const hexBasicDiagnostic = useRef([] as Array<{
+    mesh: THREE.InstancedMesh
+    original: THREE.Material
+    basic: THREE.MeshBasicMaterial
+  }>).current
   useEffect(() => {
     hexCull.length = 0
     hexFarSkies.length = 0
     hexProbeSuppressed.length = 0
     hexShadowSuppressed.length = 0
+    hexBasicDiagnostic.length = 0
     const cullCenter = new THREE.Vector3()
     const cullScale = new THREE.Vector3()
     ueh.current?.traverse((source) => {
@@ -130,6 +136,22 @@ export function RealityHost() {
         }
       }
     })
+    if (hexGpuDiag === 'basic-instances') {
+      ueh.current?.traverse(o=>{
+        const mesh=o as THREE.InstancedMesh
+        if (!mesh.isInstancedMesh || Array.isArray(mesh.material))return
+        const original=mesh.material
+        const basic=patchNew(new THREE.MeshBasicMaterial({
+          color:0xffffff,side:THREE.DoubleSide,
+          vertexColors:!!mesh.geometry.getAttribute('color'),
+        }),{grow:false,haze:false,ao:false,wind:0})
+        hexBasicDiagnostic.push({mesh,original,basic})
+        mesh.material=basic
+      })
+      ;(window as unknown as {__orbitaHexGpuDiagStats?:unknown}).__orbitaHexGpuDiagStats={
+        mode:'basic-instances',replacedOriginalMaterials:hexBasicDiagnostic.length,
+      }
+    }
     if (hexGpuDiag?.startsWith('no-ueh-')) {
       const filter = hexGpuDiag.slice('no-ueh-'.length)
       let total = 0
@@ -178,6 +200,8 @@ export function RealityHost() {
     return () => {
       for(const d of hexProbeSuppressed) d.object.visible=d.originallyVisible
       for(const d of hexShadowSuppressed) d.object.castShadow=d.castOrig
+      for(const d of hexBasicDiagnostic) {d.mesh.material=d.original;d.basic.dispose()}
+      hexBasicDiagnostic.length=0
       hexProbeSuppressed.length=0
       hexShadowSuppressed.length=0
       for (const entry of hexCull) if (entry.hidden) entry.mesh.visible = true
