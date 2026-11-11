@@ -1,7 +1,7 @@
 import {createRequire} from 'node:module'
 import {mkdirSync,writeFileSync} from 'node:fs'
 const require=createRequire(import.meta.url)
-const {chromium}=require('../candidate/source/node_modules/playwright')
+const {chromium}=require('../source/node_modules/playwright')
 mkdirSync('hex-radial-frames',{recursive:true})
 const browser=await chromium.launch({headless:true,args:[
  '--enable-webgl','--enable-gpu','--ignore-gpu-blocklist',
@@ -11,6 +11,14 @@ const report=[]
 for(const [name,port] of [['normal',4174],['radial',4174]]){
  const context=await browser.newContext({
   viewport:{width:1280,height:720},deviceScaleFactor:1,reducedMotion:'no-preference'
+ })
+ await context.addInitScript(()=>{
+  // Both runs use identical original procedural foliage placement and colors.
+  let seed=91726
+  Math.random=()=>{
+    seed=(Math.imul(seed,1664525)+1013904223)>>>0
+    return seed/4294967296
+  }
  })
  const page=await context.newPage(),r={name,frames:[],errors:[],network:[]}
  page.on('pageerror',e=>r.errors.push(e.message))
@@ -26,7 +34,7 @@ for(const [name,port] of [['normal',4174],['radial',4174]]){
   await page.waitForTimeout(2500)
   const snap=async(label)=>{
    await page.screenshot({path:'hex-radial-frames/'+name+'-'+label+'.png',timeout:120000})
-   const state=await page.evaluate(()=>{
+   const state=await page.evaluate(async()=>{
     const R=window.__orbitaReality
     const gl=document.querySelector('canvas')?.getContext('webgl2')
     return {phase:R?.useReality.getState().phase,
@@ -36,7 +44,8 @@ for(const [name,port] of [['normal',4174],['radial',4174]]){
      contextLost:gl?.isContextLost(),
      shaderPrep:window.__orbitaHexShaderPrep??null,
      cull:window.__orbitaHexCullStats??null,
-     radial:window.__orbitaHexRadial??null}
+     radial:window.__orbitaHexRadial??null,
+     quality:(await import('orbita/store')).useStore.getState().quality}
    })
    r.frames.push({label,...state})
   }
@@ -47,6 +56,11 @@ for(const [name,port] of [['normal',4174],['radial',4174]]){
    await page.evaluate(front=>{window.__orbitaReality.rt.dbg=front},front)
    await page.waitForTimeout(1300)
    await snap(label)
+   if(name==='radial' && front>=330){
+     const last=r.frames.at(-1)
+     if(!last.radial || last.radial.drawn !== last.radial.instances)
+       throw Error('Full HEX field did not restore every original instance: '+JSON.stringify(last.radial))
+   }
   }
   await page.evaluate(()=>window.__orbitaReality.requestReality('ngay-mai'))
   await page.waitForTimeout(2500)
