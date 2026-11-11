@@ -22,6 +22,7 @@ for(const mode of cases){
     '&hexProfile=1'+(mode==='radial'?'&hexRadialInstances=1':'')+
     (mode==='attr-warm'?'&hexAttrWarm=1':'')+
     (mode==='whole-gate'?'&hexWholeInstanceGate=1':'')+
+    (mode==='native-pbr'?'&hexNativePbrWarm=1':'')+
     '#at=-26,20,0,0&autostart&skip',
     {waitUntil:'domcontentloaded',timeout:120000})
   await page.waitForFunction(async()=>{
@@ -37,6 +38,16 @@ for(const mode of cases){
       p.uploadedTextures===p.totalTextures && p.errors===0
   },null,{timeout:150000,polling:500})
   r.preflight=await page.evaluate(()=>({...window.__orbitaHexShaderPrep}))
+  if(mode==='native-pbr'){
+    await page.waitForFunction(()=>{
+      const p=window.__orbitaHexNativePbrWarm
+      return p?.status==='ready'||p?.status==='failed'||
+        p?.status==='paused-expensive'
+    },null,{timeout:120000,polling:500})
+    r.nativePbr=await page.evaluate(()=>({...window.__orbitaHexNativePbrWarm}))
+    if(r.nativePbr.status!=='ready'||r.nativePbr.done!==r.nativePbr.total)
+      throw Error('Native PBR GPU preflight did not finish safely: '+JSON.stringify(r.nativePbr))
+  }
   if(mode==='attr-warm'){
     await page.waitForFunction(()=>{
       const a=window.__orbitaHexAttributeWarm
@@ -103,7 +114,8 @@ for(const mode of cases){
       isolatedGroup:window.__orbitaHexGpuDiagStats??null,
       radial:window.__orbitaHexRadial??null,
       attributePrewarm:window.__orbitaHexAttributeWarm??null,
-      wholeGate:window.__orbitaHexWholeGate??null
+      wholeGate:window.__orbitaHexWholeGate??null,
+      nativePbr:window.__orbitaHexNativePbrWarm??null
     }
   })
   await page.screenshot({path:'hex-gpu-isolation/'+mode+'.png',timeout:120000})
