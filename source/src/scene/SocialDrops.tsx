@@ -67,11 +67,20 @@ export function SocialDrops({ signal }: { signal: {send:number} }) {
     let stopped=false
     const info={
       status:'waiting-for-idle',total:0,done:0,maxSubmitMs:0,
-      maxFenceMs:0,errors:0,startedAt:performance.now(),
+      maxFenceMs:0,maxIdleRafGapMs:0,errors:0,startedAt:performance.now(),
       gpuSynced:false,
     }
     ;(window as unknown as {__orbitaBeaconGpuPrewarm?:typeof info}).__orbitaBeaconGpuPrewarm=info
     const cancelled=()=>stopped||signal.send>-90
+    let measuredFrame=0,traceRaf=0
+    const traceIdle=()=>{
+      if(stopped||signal.send>-90)return
+      const now=performance.now()
+      if(measuredFrame) info.maxIdleRafGapMs=Math.max(info.maxIdleRafGapMs,
+        Math.round(now-measuredFrame))
+      measuredFrame=now
+      traceRaf=requestAnimationFrame(traceIdle)
+    }
     const nextHealthyFrame=async():Promise<boolean>=>{
       let healthy=0,last=0
       for(let n=0;n<220&&!cancelled();n++){
@@ -93,6 +102,7 @@ export function SocialDrops({ signal }: { signal: {send:number} }) {
         info.status=cancelled()?'cancelled':'skipped-busy-renderer'
         return
       }
+      traceRaf=requestAnimationFrame(traceIdle)
       const target=new THREE.WebGLRenderTarget(40,40,
         {depthBuffer:true,stencilBuffer:false})
       target.texture.colorSpace=gl.outputColorSpace
@@ -185,9 +195,17 @@ export function SocialDrops({ signal }: { signal: {send:number} }) {
           }
           info.done++
         }
+        // Include the compositor frame immediately after the final GPU fence.
+        await new Promise<void>(resolve=>requestAnimationFrame(()=>resolve()))
+        await new Promise<void>(resolve=>requestAnimationFrame(()=>resolve()))
+        if(info.maxIdleRafGapMs>120){
+          info.status='rejected-idle-frame-stall'
+          return
+        }
         info.gpuSynced=typeof gl.readRenderTargetPixelsAsync==='function'
         info.status=info.gpuSynced?'ready':'submitted-no-gpu-fence'
       }finally{
+        cancelAnimationFrame(traceRaf)
         stage.clear()
         clonedLights.forEach(l=>(l as THREE.Light & {
           shadow?:THREE.LightShadow
@@ -199,7 +217,7 @@ export function SocialDrops({ signal }: { signal: {send:number} }) {
       info.status='failed';info.errors++
       console.warn('[Beacon] original-resource idle prewarm',err)
     })
-    return ()=>{stopped=true;info.status='disposed'}
+    return ()=>{stopped=true;cancelAnimationFrame(traceRaf);info.status='disposed'}
   },[gpuPrewarm,gl,scene,icons,signal,stableLights])
 
   useFrame((state)=>{
