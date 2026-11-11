@@ -2,7 +2,7 @@ name: HEX Reality Rewrite first trigger A/B + visual evidence
 on:
   push:
     branches: [fix/hex-hitch-no-visual-loss]
-    paths: ['.github/workflows/hex-hitch-benchmark.yml','source/src/reality/RealityHost.tsx','source/src/reality/Front.tsx','scripts/hex-hitch-a-b.mjs','scripts/sync-hex-standalone.mjs']
+    paths: ['.github/workflows/hex-hitch-benchmark.yml','source/src/reality/RealityHost.tsx','source/src/reality/Front.tsx','source/src/reality/mask.ts','source/src/reality/kit.tsx','scripts/hex-hitch-a-b.mjs','scripts/sync-hex-standalone.mjs']
   workflow_dispatch:
 permissions:
   contents: read
