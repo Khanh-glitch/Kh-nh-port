@@ -155,7 +155,7 @@ for(const [idx,mode] of modes.entries()){
  page.on('requestfailed',e=>r.network.push(e.url().slice(0,140)))
  results.push(r)
  try{
-  const q=(mode==='normal'?'':mode==='fast-program-logs'?'?hexSkipShaderLogs=1':mode==='real-scene-compile'?'?hexRealSceneCompile=1':mode==='linear-target-compile'?'?hexLinearTargetCompile=1':mode==='cooperative-linear'?'?hexCooperativeLinear=1':'?hexGpuDiag='+mode)
+  const q=(mode==='normal'?'':mode==='fast-program-logs'?'?hexSkipShaderLogs=1':mode==='real-scene-compile'?'?hexRealSceneCompile=1':mode==='linear-target-compile'?'?hexLinearTargetCompile=1':mode==='cooperative-linear'?'?hexCooperativeLinear=1':mode==='shadow-linear'?'?hexCooperativeLinear=1&hexShadowProgramWarm=1':'?hexGpuDiag='+mode)
   await page.goto('http://127.0.0.1:4174/'+q+'#at=-26,20,0,0&autostart&skip',
    {waitUntil:'domcontentloaded',timeout:120000})
   await page.waitForFunction(async()=>{
@@ -169,13 +169,18 @@ for(const [idx,mode] of modes.entries()){
       p.uploadedTextures===p.totalTextures&&p.errors===0
   },null,{timeout:180000,polling:600})
   const before=await page.evaluate(()=>({...window.__orbitaHexShaderPrep}))
-  if(mode==='cooperative-linear'){
+  if(mode==='cooperative-linear'||mode==='shadow-linear'){
     r.cooperative=before
     if(before.preflightTarget!=='linear-per-material'||
       before.linearSubmissions<20||before.linearRestoreErrors!==0)
       throw Error('Cooperative Linear precompile incomplete: '+JSON.stringify(before))
     if(before.linearMaxSubmitMs>120)
       throw Error('Idle shader submission exceeds 120ms: '+JSON.stringify(before))
+    if(mode==='shadow-linear' &&
+       (!(before.shadowVariantTotal>0)||
+         before.shadowVariantDone!==before.shadowVariantTotal||
+         before.shadowVariantErrors!==0))
+      throw Error('Native depth variant preflight incomplete: '+JSON.stringify(before))
   }
   if(mode==='real-scene-compile'||mode==='linear-target-compile'){
     await page.waitForFunction(()=>['ready','failed'].includes(window.__orbitaHexRealCompile?.status),null,
