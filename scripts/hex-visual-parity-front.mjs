@@ -1,7 +1,10 @@
 import {createRequire} from 'node:module'
-import {mkdirSync,writeFileSync} from 'node:fs'
+import {mkdirSync,writeFileSync,existsSync} from 'node:fs'
 const require=createRequire(import.meta.url)
-const {chromium}=require('../candidate/source/node_modules/playwright')
+const playwrightPath=existsSync(new URL('../candidate/source/node_modules/playwright/package.json', import.meta.url))
+  ? '../candidate/source/node_modules/playwright'
+  : '../source/node_modules/playwright'
+const {chromium}=require(playwrightPath)
 mkdirSync('hex-visual-frames',{recursive:true})
 const browser=await chromium.launch({headless:true,args:[
  '--enable-webgl','--enable-gpu','--ignore-gpu-blocklist',
