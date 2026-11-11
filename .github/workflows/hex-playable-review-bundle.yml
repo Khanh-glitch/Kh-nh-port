@@ -1,0 +1,34 @@
+name: HEX playable standalone review artifact — exact source and all 3D assets
+on:
+  push:
+    branches: [fix/hex-hitch-no-visual-loss]
+    paths: ['.github/workflows/hex-playable-review-bundle.yml','source/src/reality/**','source/src/scene/Cinema.tsx','scripts/sync-hex-standalone.mjs','tests/hex-preservation.mjs']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  package-exact-html:
+    runs-on: ubuntu-latest
+    timeout-minutes: 14
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Assemble EXACT playable source-matched standalone 3D experience
+        run: |
+          npm ci --prefix source
+          npm run build --prefix source
+          node scripts/sync-hex-standalone.mjs
+          node scripts/build-pages.mjs
+          node tests/hex-preservation.mjs
+          test -s dist-pages/index.html
+      - name: Identify build and preservation policy inside the download
+        run: |
+          printf 'ORBITA HEX TEST BUILD\nGit commit: %s\nOpen: index.html in Chrome/Edge while online.\nDefault is production-equivalent baseline, not experimental query flags.\nExperimental (NOT RELEASE): add ?hexVertexGate=leaves, then ?hexVertexGate=all before the # marker.\nRequirements: compare summon, sweep, both tracks, retract, second summon.\nDo not interpret this bundle as performance approval until native Metal and actual browser acceptance pass.\n' "$GITHUB_SHA" > dist-pages/READ_FIRST_HEX_TEST.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ORBITA-HEX-playable-review-${{ github.sha }}
+          path: dist-pages/
+          if-no-files-found: error
+          retention-days: 14
