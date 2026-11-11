@@ -188,9 +188,11 @@ export function RealityHost() {
     wrappers: [] as THREE.BufferGeometry[],
     previewMats: [] as THREE.Material[],
     index: 0, healthyFrames: 0,
+    programState: 'pending' as 'pending'|'compiling'|'ready'|'failed',
     report: {
       status: 'disabled', total: 0, done: 0,
       maxPrivateCpuMs: 0, totalPrivateCpuMs: 0,
+      compileSubmitMs: 0, compileWallMs: 0,
       samples: [] as Array<{object:number;ms:number}>,
       error: '',
     },
@@ -250,6 +252,7 @@ export function RealityHost() {
     hexAttr.previewMats = previewMats
     hexAttr.index = 0
     hexAttr.healthyFrames = 0
+    hexAttr.programState = 'pending'
     hexAttr.report.status = previews.length ? 'waiting-for-idle' : 'empty'
     hexAttr.report.total = previews.length
     hexAttr.report.done = 0
@@ -297,6 +300,31 @@ export function RealityHost() {
     h.healthyFrames++
     if (h.healthyFrames < 3) return
     h.healthyFrames = 0
+    if(h.programState==='pending'){
+      h.programState='compiling'
+      const preview=h.previews[0]
+      h.stage.add(preview)
+      const start=performance.now()
+      try {
+        void gl.compileAsync(h.stage,h.camera).then(()=>{
+          h.report.compileWallMs=Math.round(performance.now()-start)
+          h.programState='ready'
+        }).catch(err=>{
+          h.programState='failed'
+          h.report.status='failed'
+          h.report.error='Private preview shader compile: '+String(err)
+        }).finally(()=>h.stage?.remove(preview))
+        h.report.compileSubmitMs=Math.round(performance.now()-start)
+        h.report.status='compiling-preview'
+      } catch(err){
+        h.programState='failed'
+        h.report.status='failed'
+        h.report.error='Private preview shader submit: '+String(err)
+        h.stage.remove(preview)
+      }
+      return
+    }
+    if(h.programState!=='ready')return
     const preview = h.previews[h.index]
     if (!preview) {
       h.report.status = 'ready'
