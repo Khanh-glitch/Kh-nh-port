@@ -17,8 +17,8 @@ export const profile = {
   photo: pilotPhoto,
   timezone: 'Asia/Ho_Chi_Minh',
 
-  title: { vi: 'Kỹ sư Frontend', en: 'Frontend Engineer' } as L10n,
-  focus: ['React', 'TypeScript', 'WebGL'],
+  title: { vi: 'AI creative builder · Thiết kế trải nghiệm', en: 'AI creative builder · Experience design' } as L10n,
+  focus: ['Vibe coding', 'Interactive 3D', 'Creative AI'],
   availability: { vi: 'Sẵn sàng nhận việc', en: 'Open to work' } as L10n,
 
   headline: {
@@ -26,21 +26,21 @@ export const profile = {
     en: 'I build fast, crisp, highly interactive web interfaces.',
   } as L10n,
   summary: {
-    vi: 'Hơn 4 năm phát triển sản phẩm web với React, TypeScript và WebGL — chú trọng hiệu năng, trải nghiệm và chất lượng mã.',
-    en: '4+ years shipping web products with React, TypeScript and WebGL — focused on performance, UX and code quality.',
+    vi: 'Portfolio tương tác về thiết kế trải nghiệm, công cụ sáng tạo AI, sự kiện và game prototype.',
+    en: 'Interactive portfolio featuring experience design, AI-assisted creative tools, events and game prototypes.',
   } as L10n,
 
   stats: [
-    { value: '4+', label: { vi: 'Năm kinh nghiệm', en: 'Years experience' } },
-    { value: '20+', label: { vi: 'Dự án triển khai', en: 'Projects shipped' } },
-    { value: '5', label: { vi: 'Kỹ sư dẫn dắt', en: 'Engineers led' } },
-    { value: '98', label: { vi: 'Điểm Lighthouse', en: 'Lighthouse avg.' } },
+    { value: '3D', label: { vi: 'Không gian tương tác', en: 'Interactive worlds' } },
+    { value: 'AI', label: { vi: 'Công cụ sáng tạo', en: 'Creative tools' } },
+    { value: 'GAME', label: { vi: 'Prototype game', en: 'Game prototyping' } },
+    { value: 'EVENT', label: { vi: 'Trải nghiệm sự kiện', en: 'Event experiences' } },
   ] as { value: string; label: L10n }[],
 
   facts: [
     {
       label: { vi: 'Địa điểm', en: 'Location' },
-      value: { vi: 'TP. Hồ Chí Minh · UTC+7', en: 'Ho Chi Minh City · UTC+7' },
+      value: { vi: 'Việt Nam · UTC+7', en: 'Vietnam · UTC+7' },
     },
     {
       label: { vi: 'Hình thức', en: 'Work mode' },
@@ -48,87 +48,39 @@ export const profile = {
     },
     {
       label: { vi: 'Học vấn', en: 'Education' },
-      value: { vi: 'Cử nhân CNTT · 2020', en: 'B.Sc. in IT · 2020' },
+      value: { vi: 'Đang cập nhật hồ sơ', en: 'Résumé details pending' },
     },
     {
       label: { vi: 'Ngôn ngữ', en: 'Languages' },
-      value: { vi: 'Tiếng Việt · English', en: 'Vietnamese · English' },
+      value: { vi: 'Tiếng Việt', en: 'Vietnamese' },
     },
   ] as { label: L10n; value: L10n }[],
 
   experience: [
-    {
-      period: { vi: '2023 — nay', en: '2023 — now' },
-      role: 'Senior Frontend Engineer',
-      org: 'Nova Labs',
-      note: {
-        vi: 'Dẫn dắt nhóm 5 kỹ sư, xây dựng design system; giảm 40% thời gian tải trang.',
-        en: 'Lead a team of 5 and built the design system; cut page load time by 40%.',
-      },
-    },
-    {
-      period: { vi: '2021 — 2023', en: '2021 — 2023' },
-      role: 'Frontend Developer',
-      org: 'Orbit Studio',
-      note: {
-        vi: 'Phát triển 12+ web app và landing page tương tác cho khách hàng quốc tế.',
-        en: 'Shipped 12+ interactive web apps and landing pages for global clients.',
-      },
-    },
-    {
-      period: { vi: '2020 — 2021', en: '2020 — 2021' },
-      role: 'Web Developer',
-      org: 'Freelance',
-      note: {
-        vi: 'Thiết kế và lập trình website trọn gói cho doanh nghiệp vừa và nhỏ.',
-        en: 'Designed and built end-to-end websites for small and mid-size businesses.',
-      },
-    },
+    {period:{vi:'PORTFOLIO',en:'PORTFOLIO'},role:'ORBITA',org:'Interactive 3D',note:{vi:'Thiết kế triển lãm dự án trong thế giới 3D.',en:'Interactive 3D project exhibition.'}},
+    {period:{vi:'PROJECT',en:'PROJECT'},role:'Event Flow',org:'Creative tooling',note:{vi:'Thử nghiệm công cụ hỗ trợ quy trình sự kiện.',en:'Event workflow tooling experiment.'}},
+    {period:{vi:'PROJECT',en:'PROJECT'},role:'Soul of Heroes',org:'Game prototyping',note:{vi:'Thử nghiệm game, hệ thống gameplay và VFX.',en:'Game systems and VFX prototype.'}},
   ] as { period: L10n; role: string; org: string; note: L10n }[],
 
   projects: [
-    {
-      name: 'Aurora Analytics',
-      tag: 'SaaS',
-      metric: '−40% TTI',
-      note: {
-        vi: 'Dashboard dữ liệu thời gian thực · React, D3',
-        en: 'Real-time data dashboard · React, D3',
-      },
-    },
-    {
-      name: 'Stellar Commerce',
-      tag: 'E-commerce',
-      metric: '+27% CVR',
-      note: {
-        vi: 'Storefront headless, tối ưu Core Web Vitals · Next.js',
-        en: 'Headless storefront, Core Web Vitals tuned · Next.js',
-      },
-    },
-    {
-      name: 'Nebula Showroom',
-      tag: 'WebGL',
-      metric: '60 FPS',
-      note: {
-        vi: 'Trưng bày sản phẩm 3D trên trình duyệt · Three.js',
-        en: '3D product showroom in the browser · Three.js',
-      },
-    },
+    {name:'ORBITA',tag:'3D PORTFOLIO',metric:'LIVE',note:{vi:'Triển lãm dự án 3D · trình duyệt.',en:'Browser-based interactive 3D exhibition.'}},
+    {name:'Soul of Heroes',tag:'GAME',metric:'PROTOTYPE',note:{vi:'Thiết kế gameplay, môi trường và hiệu ứng.',en:'Gameplay, environments and visual effects.'}},
+    {name:'Event Flow',tag:'EVENT TECH',metric:'PROJECT',note:{vi:'Công cụ thử nghiệm cho quy trình sự kiện.',en:'Experimentation with event workflows.'}},
   ] as { name: string; tag: string; metric: string; note: L10n }[],
 
   stack: [
-    { label: 'UI', items: ['React', 'TypeScript', 'Next.js'] },
-    { label: 'Style', items: ['Tailwind CSS', 'Sass', 'Figma'] },
-    { label: '3D / FX', items: ['Three.js', 'GLSL', 'GSAP'] },
-    { label: 'Backend', items: ['Node.js', 'GraphQL', 'PostgreSQL'] },
-    { label: 'Tools', items: ['Git', 'CI/CD', 'Vitest', 'Docker'] },
+    {label:'AI',items:['AI-assisted building','Prompt workflows','Prototyping']},
+    {label:'3D / FX',items:['Three.js','WebGL','GLSL']},
+    {label:'Web',items:['React','TypeScript','HTML / CSS']},
+    {label:'Creative',items:['Visual design','Interaction design','Game concepts']},
+    {label:'Workflow',items:['GitHub','Iteration','Testing']},
   ],
 
   contact: {
-    email: 'khanh@example.com',
-    phone: '+84 900 000 000',
-    linkedin: { label: 'linkedin.com/in/username', url: 'https://www.linkedin.com/' },
-    github: { label: 'github.com/username', url: 'https://github.com/' },
+    email: '',
+    phone: '',
+    linkedin: { label: 'LinkedIn · đang cập nhật', url: '' },
+    github: { label: 'github.com/Khanh-glitch', url: 'https://github.com/Khanh-glitch' },
   },
 
   links: {
@@ -142,11 +94,11 @@ export const profile = {
 export const ui = {
   pilot: { vi: 'Phi công', en: 'Pilot' },
   pilotId: { vi: 'Hồ sơ', en: 'Pilot ID' },
-  verified: { vi: 'Đã xác thực', en: 'Verified' },
-  photoAlt: { vi: 'Ảnh chân dung Lê Quốc Khánh', en: 'Portrait of Le Quoc Khanh' },
+  verified: { vi: 'Ảnh minh họa', en: 'Illustrative portrait' },
+  photoAlt: { vi: 'Ảnh AI minh họa phi công', en: 'Illustrative AI pilot portrait' },
   overview: { vi: 'Tổng quan', en: 'Overview' },
   facts: { vi: 'Thông tin nhanh', en: 'Quick facts' },
-  experience: { vi: 'Kinh nghiệm', en: 'Experience' },
+  experience: { vi: 'Hành trình dự án', en: 'Project journey' },
   projects: { vi: 'Dự án tiêu biểu', en: 'Featured projects' },
   stack: { vi: 'Công nghệ', en: 'Tech stack' },
   contact: { vi: 'Liên hệ', en: 'Contact' },
@@ -175,7 +127,7 @@ export const ui = {
     en: 'Add your portfolio URL to links.portfolio in src/data/profile.ts to complete the jump.',
   },
   dismiss: { vi: 'Đóng', en: 'Dismiss' },
-  responds: { vi: 'Phản hồi trong 24 giờ', en: 'Replies within 24 hours' },
+  responds: { vi: 'Liên hệ đang cập nhật', en: 'Contact details pending' },
   bootTitle: { vi: 'Khởi động hệ thống', en: 'System start-up' },
   bootEngines: { vi: 'Động cơ', en: 'Engines' },
   bootNav: { vi: 'Định vị', en: 'Navigation' },
