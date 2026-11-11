@@ -50,8 +50,11 @@ for(const mode of cases){
   r.radial=await page.evaluate(()=>window.__orbitaHexRadial??null)
   if(mode==='radial' && !(r.radial?.meshCount>=5 && r.radial?.instances>=4000))
     throw Error('Static native instance sorting not initialized: '+JSON.stringify(r.radial))
-  if(mode.startsWith('no-ueh-') && !(r.diag?.hiddenDrawables>0))
-    throw Error('Diagnostic category is empty: '+JSON.stringify(r.diag))
+  if(mode.startsWith('no-ueh-')){
+    const shadow=mode==='no-ueh-shadows'||mode==='no-ueh-instanced-shadows'
+    const affected=shadow ? r.diag?.shadowsOff : r.diag?.hiddenDrawables
+    if(!(affected>0))throw Error('Diagnostic category is empty: '+JSON.stringify(r.diag))
+  }
   await page.waitForTimeout(500)
   await page.evaluate(()=>{
     window.__hfd={last:0,frames:[],tasks:[]}
