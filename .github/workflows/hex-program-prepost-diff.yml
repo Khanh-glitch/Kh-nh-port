@@ -2,7 +2,7 @@ name: HEX preflight versus click exact GLSL variant diff
 on:
   push:
     branches: [fix/hex-hitch-no-visual-loss]
-    paths: ['.github/workflows/hex-program-prepost-diff.yml']
+    paths: ['.github/workflows/hex-program-prepost-diff.yml','scripts/hex-webgl-call-profile.mjs']
   workflow_dispatch:
 permissions:
   contents: read
