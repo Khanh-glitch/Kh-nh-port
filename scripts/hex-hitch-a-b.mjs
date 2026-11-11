@@ -1,7 +1,9 @@
 import {createRequire} from 'node:module'
 import {mkdirSync,writeFileSync} from 'node:fs'
 const require=createRequire(import.meta.url)
-const {chromium}=require('../candidate/source/node_modules/playwright')
+// The script is executed from candidate/scripts/ in CI; require paths are
+// relative to THIS file rather than the working directory.
+const {chromium}=require('../source/node_modules/playwright')
 mkdirSync('hex-evidence',{recursive:true})
 const browser=await chromium.launch({headless:true,args:[
  '--enable-webgl','--enable-gpu','--ignore-gpu-blocklist',
