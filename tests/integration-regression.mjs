@@ -37,6 +37,10 @@ assert(overlay.includes('assets/immersive/index.html'),'Immersive entry must rep
 assert(overlay.includes('ORBITA_SPACE_WARP_COMPLETE'),'Immersive warp must trigger original camera descent');
 assert(overlay.includes('startGame()'),'Never discard existing camera descent');
 assert(!overlay.includes('Một chiếc đĩa'),'Text-heavy ORBITA intro must be replaced');
+assert(overlay.includes('gpuPreparationIsNonBlocking'),
+  'The actual entry gate must not wait for distant HEX shader preflight')
+assert(!overlay.includes('v.count>=90') && !overlay.includes('shadersOk'),
+  'Never reintroduce the 70% rAF/shader deadlock into the cockpit CTA')
 for (const id of ['stage/ShowSystem','stage/ledShow','stage/showState','stage/shows'])moduleSource(id);
 assert(stage.includes('ShowSelector')&&stage.includes('ShowFX'),'Keep original main stage SHOWTIME behavior');
 assert(beacon.includes('SocialDrops'),'Energy tower triggers icons without replacing original tower');
@@ -52,7 +56,10 @@ const shipMapMatch=ship.match(/<script type="importmap">([^<]+)<\/script>/);
 assert(shipMapMatch,'Spaceship import map missing');
 const shipMap=JSON.parse(shipMapMatch[1]).imports;
 assert(Object.keys(shipMap).filter(s=>s.startsWith('ship/')).length>=10,'Space source modules embedded');
-assert(Buffer.from(shipMap['ship/App'].split(',')[1],'base64').toString('utf8').includes('ORBITA_SPACE_WARP_COMPLETE'),'Ship warp transition handshake missing');
+const shipApp=Buffer.from(shipMap['ship/App'].split(',')[1],'base64').toString('utf8');
+assert(shipApp.includes('ORBITA_SPACE_WARP_COMPLETE'),'Ship warp transition handshake missing');
+assert(!shipApp.includes('ship/components/Boot'),
+ 'No second text-heavy boot/loading screen may cover the cockpit')
 for(const [name,mod] of Object.entries(map)){
  const text=Buffer.from(mod.split(',')[1],'base64').toString('utf8');
  for(const m of text.matchAll(/\bfrom\s+['"](orbita\/[^'"]+)['"]/g))assert(map[m[1]],`Unresolved source module ${name} -> ${m[1]}`);
