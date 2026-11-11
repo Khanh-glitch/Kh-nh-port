@@ -2,7 +2,7 @@ name: HEX visual parity across scan front main vs candidate
 on:
   push:
     branches: [fix/hex-hitch-no-visual-loss]
-    paths: ['.github/workflows/hex-visual-parity.yml']
+    paths: ['.github/workflows/hex-visual-parity.yml','scripts/hex-visual-parity-front.mjs','source/src/reality/RealityHost.tsx','source/src/reality/mask.ts','source/src/reality/kit.tsx']
   workflow_dispatch:
 permissions:
   contents: read
@@ -44,5 +44,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: hex-visual-parity-5-front-stages
-          path: hex-visual-frames/
+          path: |
+            hex-visual-frames/
+            candidate/dist-pages/index.html
           if-no-files-found: warn
