@@ -14,9 +14,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Original 53 untouched module fingerprints, HEX, SHOWTIME, 6 icons, and original flight
+      - name: Original asset presence before rebuild (source fingerprint gate runs after rebuild)
         run: |
-          node tests/integration-regression.mjs
           node scripts/build-pages.mjs
           test -s dist-pages/index.html
           test -s dist-pages/assets/immersive/index.html
