@@ -221,6 +221,7 @@ function HighGateMeter() {
 
 export function Experience() {
   const quality = useStore((s) => s.quality)
+  const phase = useStore((s) => s.phase)
   const low = quality === 'low'
   // DIAGNOSTIC ONLY: compare first-laser GPU scheduling with/without the
   // composer. Normal portfolio path always retains Bloom/AA/tonemapping.
@@ -251,7 +252,13 @@ export function Experience() {
 
   return (
     <Canvas
-      dpr={low ? 1 : [1, 1.6]}
+      // The entire island Canvas is hidden beneath the opaque spacecraft in
+      // intro. Keep its real scene, shaders, lighting and preflight active but
+      // rasterize that unseen surface at 0.5 DPR (one quarter the pixels).
+      // Restore the EXACT original visible DPR on 'playing' before descent.
+      // This cuts concurrent WebGL pressure without simplifying a single
+      // UEH/HEX mesh or reducing the game's 2048px shadow map.
+      dpr={phase === 'intro' ? 0.5 : low ? 1 : [1, 1.6]}
       shadows="percentage"
       camera={{ fov: 72, near: 0.1, far: 9000, position: [0, 17, 88] }}
       gl={{ antialias: false, powerPreference: 'high-performance', toneMapping: THREE.NoToneMapping, stencil: false }}
