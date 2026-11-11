@@ -8,6 +8,57 @@ import * as THREE from 'three'
 import { useStore } from '../store'
 import { EXHIBITS } from '../layout'
 import { patchNew } from './mask'
+import { CENTER } from './site'
+
+// DIAGNOSTIC ONLY: exact matrices, source materials, colors and canopy counts
+// remain untouched. The vertex stage skips an entire foliage instance only
+// while every source fragment is provably still beyond the HEX front.
+const hexVertexGate = typeof window === 'undefined'
+  ? '' : new URLSearchParams(window.location.search).get('hexVertexGate') ?? ''
+const gateLeaves = hexVertexGate === 'leaves' || hexVertexGate === 'all'
+const gateAll = hexVertexGate === 'all'
+
+function attachConservativeHexGate(mesh: THREE.InstancedMesh | null) {
+  if (!mesh || !mesh.geometry || !mesh.count) return
+  const geometry = mesh.geometry
+  if (!geometry.boundingSphere) geometry.computeBoundingSphere()
+  const bound = geometry.boundingSphere
+  if (!bound) return
+  mesh.updateWorldMatrix(true, false)
+  const transform = new THREE.Matrix4()
+  const worldTransform = new THREE.Matrix4()
+  const center = new THREE.Vector3()
+  const scale = new THREE.Vector3()
+  const distances = new Float32Array(mesh.count)
+  let clippedAtStart = 0
+  let maxThreshold = 0
+  for (let i = 0; i < mesh.count; i++) {
+    mesh.getMatrixAt(i, transform)
+    worldTransform.multiplyMatrices(mesh.matrixWorld, transform)
+    center.copy(bound.center).applyMatrix4(worldTransform)
+    scale.setFromMatrixScale(worldTransform)
+    const radius = bound.radius * Math.max(scale.x, scale.y, scale.z)
+    // Original rwX uses radius minus nonnegative 0..9m cell jitter.
+    // Extra 12m buffer covers full foliage wind/displacement and bounds.
+    // A far-sky branch starts at 135m; clip never applies past that boundary.
+    const threshold = Math.min(130,
+      Math.max(0, Math.hypot(center.x-CENTER.x, center.z-CENTER.z)-radius-12))
+    distances[i] = threshold
+    if (threshold > 0) clippedAtStart++
+    maxThreshold = Math.max(maxThreshold, threshold)
+  }
+  // InstancedBufferAttribute changes neither order nor value of original
+  // instanceMatrix/instanceColor. It is static across summon/retract/replay.
+  geometry.setAttribute('aRWStart', new THREE.InstancedBufferAttribute(distances,1))
+  const report = (window as unknown as {
+    __orbitaHexVertexGate?: Array<{mesh:string;total:number;gatedAtStart:number;maxThreshold:number}>
+  }).__orbitaHexVertexGate ?? []
+  report.push({mesh:mesh.material instanceof THREE.Material ?
+    mesh.material.type:'unknown',total:mesh.count,gatedAtStart:clippedAtStart,
+    maxThreshold:Math.round(maxThreshold)})
+  ;(window as unknown as {__orbitaHexVertexGate?:unknown}).__orbitaHexVertexGate=report
+}
+
 import { createBarkPBR } from './pbr'
 
 function rnd(seed: number) {
@@ -532,7 +583,7 @@ export function UEHFoliage() {
         emissive: new THREE.Color('#2d4214'),
         emissiveIntensity: 0.14,
       }),
-      { grow: true, growLen: 22, wind: 0.08, wet: true },
+      { grow: true, growLen: 22, wind: 0.08, wet: true, instanceVertexGate: gateLeaves },
     )
   }, [])
 
@@ -548,7 +599,7 @@ export function UEHFoliage() {
         emissive: new THREE.Color('#cf3418'),
         emissiveIntensity: 0.28,
       }),
-      { grow: true, growLen: 22, wind: 0.1 },
+      { grow: true, growLen: 22, wind: 0.1, instanceVertexGate: gateAll },
     )
   }, [])
 
@@ -572,6 +623,8 @@ export function UEHFoliage() {
       blossomRef.current.instanceMatrix.needsUpdate = true
       if (blossomRef.current.instanceColor) blossomRef.current.instanceColor.needsUpdate = true
     }
+    if (gateLeaves) attachConservativeHexGate(greenRef.current)
+    if (gateAll) attachConservativeHexGate(blossomRef.current)
   }, [greenLeaves, blossomClusters])
 
   return (
@@ -622,7 +675,7 @@ function CourtyardGrass({ low }: { low: boolean }) {
           roughness: 0.75,
           side: THREE.DoubleSide,
         }),
-        { grow: true, growLen: 6, wind: 0.08, wet: true },
+        { grow: true, growLen: 6, wind: 0.08, wet: true, instanceVertexGate: gateAll },
       ),
     [],
   )
@@ -672,6 +725,7 @@ function CourtyardGrass({ low }: { low: boolean }) {
     }
     im.instanceMatrix.needsUpdate = true
     if (im.instanceColor) im.instanceColor.needsUpdate = true
+    if (gateAll) attachConservativeHexGate(im)
   }, [N])
   return <instancedMesh ref={mesh} args={[geo, mat, N]} frustumCulled={false} />
 }
