@@ -18,88 +18,78 @@ function Kbd({ children }: { children: React.ReactNode }) {
 function Intro() {
   const ready = useStore((s) => s.ready)
   const frame = useRef<HTMLIFrameElement>(null)
-  const stable = useRef({count:0,last:0,ready:false,bypass:false,started:0})
+  const warpStarted = useRef(false)
+  const entry = useRef({ assetsReadyAt: 0, ready: false })
   const [fallback, setFallback] = useState(false)
-  const [slowGpu, setSlowGpu] = useState(false)
 
   useEffect(() => {
-    let raf = 0
     const origin = window.location.origin
     const onMessage = (event: MessageEvent) => {
       if (event.origin !== origin || event.source !== frame.current?.contentWindow) return
-      const data = event.data as {type?:string}
-      if (data?.type === 'ORBITA_SPACE_WARP_COMPLETE' && stable.current.ready) {
-        startGame() // retains the EXISTING distant-to-island camera descent
-      }
-      if (data?.type === 'ORBITA_SPACE_ENGAGE' && stable.current.ready) {
-        // Audio permission is requested by the spacecraft's actual click.
+      const data = event.data as { type?: string }
+      if (data?.type === 'ORBITA_SPACE_ENGAGE' && entry.current.ready) {
         void audio.start()
+      }
+      if (data?.type === 'ORBITA_SPACE_WARP_COMPLETE' &&
+          entry.current.ready && !warpStarted.current) {
+        warpStarted.current = true
+        // The original from-orbit-to-island descent stays completely intact.
+        startGame()
       }
     }
     window.addEventListener('message', onMessage)
-    const loop = (now:number) => {
-      const v=stable.current
-      if (!v.started) v.started=now
-      const dt=v.last ? now-v.last : 16
-      v.last=now
-      const current=useStore.getState()
-      const landing=(window as any).__orbitaLandingPrewarm as {status?:string}|undefined
-      const shader=(window as any).__orbitaHexShaderPrep as {status?:string;errors?:number}|undefined
-      const landingOk=!landing || landing.status==='ready' || landing.status==='disabled' || landing.status==='skipped-software-renderer' || landing.status==='submitted-no-fence'
-      const shadersOk=!shader || shader.status==='complete-or-interrupted' || shader.status==='disabled' || shader.status==='ready'
-      const noErrors=!shader || !shader.errors
-      if (current.ready && landingOk && shadersOk && noErrors && dt<70 && dt>4) v.count=Math.min(95,v.count+1)
-      else if(dt>=110 || !current.ready || !landingOk || !shadersOk || !noErrors) v.count=0
-      // Normal warp only opens after the existing 90 healthy frames plus
-      // completed audio/shader/GPU checks. On truly unsupported software GPUs
-      // never falsely claim preflight completed: offer a separate, explicitly
-      // acknowledged visitor-controlled recovery after 18 seconds instead.
-      v.ready=!!(current.ready && landingOk && shadersOk && noErrors && v.count>=90) || v.bypass
-      raf=requestAnimationFrame(loop)
-    }
-    // Deliver the readiness handshake from a JS timer, NOT the draw loop.
-    // On overloaded WebGL drivers timers can continue while rAF stalls for
-    // seconds; the visitor must never be trapped at an old 70% message.
-    stable.current.started=performance.now()
-    const notify = () => {
-      const v=stable.current
-      const current=useStore.getState()
-      const shader=(window as any).__orbitaHexShaderPrep as {status?:string;errors?:number}|undefined
-      if(!v.ready && current.ready && performance.now()-v.started>=18000) setSlowGpu(true)
-      const progress=Math.min(99,Math.round((current.loading*0.7+Math.min(1,v.count/90)*0.3)*100))
-      ;(window as any).__orbitaEntryGate={
-        ready:v.ready,bypass:v.bypass,progress:v.ready?100:progress,
-        shader:shader?.status??'not-started',stableFrames:v.count,assetsReady:current.ready,
+
+    // The energy ring represents the resources needed to ENTER the island.
+    // The old implementation waited for 90 "healthy" rAF ticks plus every
+    // unrelated HEX shader program; on real WebGL drivers that could hold
+    // the CTA at precisely 70% forever, even with the island fully loaded.
+    // HEX preflight continues independently and must never lock navigation.
+    // Timer-based handoff is robust even when the two WebGL compositors
+    // temporarily starve requestAnimationFrame.
+    const update = () => {
+      const current = useStore.getState()
+      const now = performance.now()
+      if (current.ready && entry.current.assetsReadyAt === 0)
+        entry.current.assetsReadyAt = now
+      const since = entry.current.assetsReadyAt
+        ? now - entry.current.assetsReadyAt : 0
+      const navigable = current.ready && since >= 1100
+      entry.current.ready = navigable
+      const progress = current.ready
+        ? Math.min(100, 86 + Math.floor(14 * Math.min(1, since / 1100)))
+        : Math.min(85, Math.round(current.loading * 85))
+      ;(window as any).__orbitaEntryGate = {
+        ready: navigable,
+        progress,
+        assetsReady: current.ready,
+        shader: (window as any).__orbitaHexShaderPrep?.status ?? 'not-started',
+        gpuPreparationIsNonBlocking: true,
       }
       frame.current?.contentWindow?.postMessage({
-        type:'ORBITA_SPACE_READY',progress:v.ready?100:progress,ready:v.ready,degraded:v.bypass,
-      },origin)
+        type: 'ORBITA_SPACE_READY',
+        progress,
+        ready: navigable,
+      }, origin)
     }
-    const heartbeat=window.setInterval(notify,180)
-    notify()
-    raf=requestAnimationFrame(loop)
-    return()=>{
-      cancelAnimationFrame(raf)
-      clearInterval(heartbeat)
-      window.removeEventListener('message',onMessage)
+    const heartbeat = window.setInterval(update, 120)
+    update()
+    return () => {
+      window.clearInterval(heartbeat)
+      window.removeEventListener('message', onMessage)
     }
-  },[])
+  }, [])
 
   return <div className="absolute inset-0 z-30 overflow-hidden bg-[#030611] text-white">
-    <iframe ref={frame} src="assets/immersive/index.html" title="Immersive Space Shift · ORBITA Entry" className="absolute inset-0 h-full w-full border-0" allow="autoplay" onError={()=>setFallback(true)} />
-    {slowGpu && !stable.current.bypass && <div className="absolute bottom-5 right-5 z-40 rounded-xl border p-4 text-xs leading-relaxed shadow-2xl backdrop-blur-md" style={{width:'min(360px,calc(100vw - 2.5rem))',borderColor:'rgba(253,230,138,0.35)',background:'rgba(6,18,37,0.96)'}} role="alert">
-      <div className="mb-1 font-semibold text-amber-200">GPU đang chuẩn bị lâu hơn dự kiến</div>
-      <div className="mb-3 text-white/75">Bạn có thể tiếp tục đợi để giảm giật, hoặc tự chọn vào thử ngay. Vào sớm có thể khựng khi hiệu ứng 3D tải lần đầu.</div>
-      <button className="rounded-lg border px-3 py-2 font-semibold text-white" style={{borderColor:'rgba(253,230,138,0.6)',background:'rgba(253,230,138,0.13)'}} onClick={()=>{
-        stable.current.bypass=true
-        stable.current.ready=true
-        setSlowGpu(false)
-        frame.current?.contentWindow?.postMessage({type:'ORBITA_SPACE_READY',ready:true,progress:100,degraded:true},window.location.origin)
-      }}>VÀO THỬ · BỎ QUA CHỜ GPU</button>
-    </div>}
+    <iframe ref={frame} src="assets/immersive/index.html"
+      title="Immersive Space Shift · ORBITA Entry"
+      className="absolute inset-0 h-full w-full border-0"
+      allow="autoplay" onError={() => setFallback(true)} />
     {fallback && <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-[#050916]">
       <p className="text-lg">Không tải được buồng lái không gian.</p>
-      <button disabled={!ready} onClick={startGame} className="rounded-full border border-cyan-300 px-8 py-4 disabled:opacity-40">{ready?'BƯỚC VÀO':'ĐANG CHUẨN BỊ'}</button>
+      <button disabled={!ready} onClick={startGame}
+        className="rounded-full border border-cyan-300 px-8 py-4 disabled:opacity-40">
+        {ready ? 'BƯỚC VÀO' : 'ĐANG CHUẨN BỊ'}
+      </button>
     </div>}
   </div>
 }
