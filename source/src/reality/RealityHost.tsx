@@ -95,11 +95,20 @@ export function RealityHost() {
   const hexShadowSuppressed = useRef([] as Array<{
     object: THREE.Mesh; castOrig: boolean
   }>).current
+  // Opt-in conservative gate for ENTIRE unmodified static instanced groups.
+  // Unlike the rejected radial sort this NEVER mutates instance count,
+  // matrix, color, draw order, geometry, shadow or material.
+  const hexWholeGateOn = typeof window !== 'undefined' &&
+    new URLSearchParams(window.location.search).get('hexWholeInstanceGate') === '1'
+  const hexWholeGate = useRef([] as Array<{
+    mesh: THREE.InstancedMesh; threshold: number; hidden: boolean
+  }>).current
   useEffect(() => {
     hexCull.length = 0
     hexFarSkies.length = 0
     hexProbeSuppressed.length = 0
     hexShadowSuppressed.length = 0
+    hexWholeGate.length = 0
     const cullCenter = new THREE.Vector3()
     const cullScale = new THREE.Vector3()
     ueh.current?.traverse((source) => {
@@ -130,6 +139,47 @@ export function RealityHost() {
         }
       }
     })
+    if (hexWholeGateOn) {
+      // Instanced source transforms have already been assigned by their
+      // original child effects. Compute a conservative global near bound
+      // without sorting or rewriting a SINGLE original instance.
+      const instanceMat = new THREE.Matrix4()
+      const combined = new THREE.Matrix4()
+      const worldPos = new THREE.Vector3()
+      const worldScale = new THREE.Vector3()
+      ueh.current?.updateWorldMatrix(true,true)
+      ueh.current?.traverse(obj => {
+        const m=obj as THREE.InstancedMesh
+        if(!m.isInstancedMesh || m.castShadow || m.material instanceof THREE.ShaderMaterial ||
+           m.renderOrder === 8 || m.count===0 ||
+           !m.geometry || !m.instanceMatrix || Array.isArray(m.material) ||
+           m.material.transparent || m.material.userData.__rwPatchMode !== 'new')
+          return
+        if(!m.geometry.boundingSphere)m.geometry.computeBoundingSphere()
+        const bounds=m.geometry.boundingSphere
+        if(!bounds)return
+        let minFront=150
+        for(let i=0;i<m.count;i++){
+          m.getMatrixAt(i,instanceMat)
+          combined.multiplyMatrices(m.matrixWorld,instanceMat)
+          worldPos.copy(bounds.center).applyMatrix4(combined)
+          worldScale.setFromMatrixScale(combined)
+          const radius=bounds.radius *
+            Math.max(worldScale.x,worldScale.y,worldScale.z)
+          const near=Math.hypot(worldPos.x-CENTER.x,worldPos.z-CENTER.z)-radius
+          // 24m slack strictly exceeds original 9m hex jitter plus
+          // foliage wind; all far-field shader fragments need front >=150.
+          minFront=Math.min(minFront,Math.max(0,near-24))
+        }
+        // If the group touches the center, don't gate it at all.
+        const threshold=Math.min(130,minFront)
+        if(threshold>0)hexWholeGate.push({mesh:m,threshold,hidden:false})
+      })
+      ;(window as unknown as {__orbitaHexWholeGate?:unknown}).__orbitaHexWholeGate={
+        status:'computed',eligible:hexWholeGate.length,
+        thresholds:hexWholeGate.map(x=>Math.round(x.threshold))
+      }
+    }
     if (hexGpuDiag?.startsWith('no-ueh-')) {
       const filter = hexGpuDiag.slice('no-ueh-'.length)
       let total = 0
@@ -178,6 +228,8 @@ export function RealityHost() {
     return () => {
       for(const d of hexProbeSuppressed) d.object.visible=d.originallyVisible
       for(const d of hexShadowSuppressed) d.object.castShadow=d.castOrig
+      for(const entry of hexWholeGate)if(entry.hidden)entry.mesh.visible=true
+      hexWholeGate.length=0
       hexProbeSuppressed.length=0
       hexShadowSuppressed.length=0
       for (const entry of hexCull) if (entry.hidden) entry.mesh.visible = true
@@ -721,6 +773,26 @@ export function RealityHost() {
     if (typeof window !== 'undefined') {
       ;(window as unknown as {__orbitaHexCullStats?:{eligible:number;culled:number;front:number}})
         .__orbitaHexCullStats = { eligible:hexCull.length, culled, front:rt.front }
+    }
+
+    if(hexWholeGateOn){
+      let hidden=0
+      for(const entry of hexWholeGate){
+        const shouldDraw=st.phase==='idle'||st.phase==='active'||
+          rt.front>=entry.threshold
+        if(!shouldDraw && !entry.hidden){
+          entry.mesh.visible=false
+          entry.hidden=true
+        }else if(shouldDraw && entry.hidden){
+          entry.mesh.visible=true
+          entry.hidden=false
+        }
+        if(entry.hidden)hidden++
+      }
+      ;(window as unknown as {__orbitaHexWholeGate?:unknown}).__orbitaHexWholeGate={
+        status:'active',eligible:hexWholeGate.length,hidden,
+        thresholds:hexWholeGate.map(x=>Math.round(x.threshold))
+      }
     }
 
     // The original far-world sky material uses:
