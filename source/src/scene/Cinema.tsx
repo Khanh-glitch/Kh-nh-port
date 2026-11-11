@@ -216,7 +216,23 @@ function posterTex(title: string, a: string, b: string, sub: string) {
 
 export function Cinema() {
   const busRef = useRef<Bus | null>(null)
-  const screenTex = useMemo(() => canvasTex(SW, SH, () => {}), [])
+  // A/B ONLY: keep the real 1024×450 cinema pixels and exact CanvasTexture,
+// but opt into a CPU-backed 2D canvas to avoid a native readback fence when
+// the 4×2 room-light sampler calls getImageData(). No display changes allowed.
+const screenTex = useMemo(() => {
+  if (typeof window === 'undefined' ||
+      new URLSearchParams(window.location.search).get('hexCinemaCpuCanvas') !== '1') {
+    return canvasTex(SW, SH, () => {})
+  }
+  const canvas = document.createElement('canvas')
+  canvas.width = SW
+  canvas.height = SH
+  const ctx = canvas.getContext('2d', { willReadFrequently: true })!
+  const tex = new THREE.CanvasTexture(canvas)
+  tex.colorSpace = THREE.SRGBColorSpace
+  tex.anisotropy = 8
+  return { canvas, ctx, tex }
+}, [])
   const tiny = useMemo(() => {
     const c = document.createElement('canvas')
     c.width = 4
