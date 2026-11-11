@@ -56,8 +56,8 @@ const instrument=()=>{
         shadow:/#define USE_SHADOWMAP\b/.test(source),
         map:/#define USE_MAP\b/.test(source),
         alphaTest:/#define USE_ALPHATEST\b/.test(source),
-        glslNew:source.includes('rwGrow(')||source.includes('uRWGrowLen'),
-        glslOld:source.includes('rwX(')
+        glslNew:source.includes('uRWGrowLen'),
+        glslOld:source.includes('rwX(')&&!source.includes('uRWGrowLen')
       })
     }
     if(method==='attachShader'){
