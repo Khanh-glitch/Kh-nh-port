@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import SpaceScene from './components/SpaceScene';
-import { Boot } from './components/Boot';
 import { CockpitFrame, Compass, Plx, Radar, Reticle, SpeedGauge, TargetMarker, TopHud } from './components/Cockpit';
 import { Brief, Comms, Console, Cta, Experience, Facts, LangToggle, PilotPhoto, Projects, Stack } from './components/Panels';
 import { profile, ui, type Lang } from './data/profile';
@@ -12,7 +11,7 @@ type Jump = 'idle' | 'charging' | 'flash' | 'notice';
 export default function App() {
   const vp = useViewport();
   const [lang, setLang] = useState<Lang>('vi');
-  const [live, setLive] = useState(false);
+  const [live] = useState(true);
   const [jump, setJump] = useState<Jump>('idle');
   const [gate, setGate] = useState({ready:false,progress:0});
   const timers = useRef<number[]>([]);
@@ -22,10 +21,10 @@ export default function App() {
     document.title = lang === 'vi' ? `${profile.name} — Buồng lái Portfolio` : `${profile.name} — Portfolio Cockpit`;
   }, [lang]);
 
-  // drop out of "hyperspace" as the cockpit powers on
-  const onBooted = useCallback(() => {
+  // The cockpit is the FIRST visible screen. Do not stack a second
+  // text-heavy boot/loading overlay above the spaceship or energy ring.
+  useEffect(() => {
     flight.speed = flight.reduced ? 0.4 : 6;
-    setLive(true);
   }, []);
 
   useEffect(() => {
@@ -184,7 +183,7 @@ export default function App() {
         </div>
       )}
       <div className="flash" aria-hidden="true" />
-      <Boot lang={lang} onDone={onBooted} />
+
     </div>
   );
 }
