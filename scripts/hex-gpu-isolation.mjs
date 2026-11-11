@@ -19,7 +19,8 @@ for(const mode of cases){
  results.push(r)
  try{
   await page.goto('http://127.0.0.1:4174/?hexGpuDiag='+mode+
-    '&hexProfile=1#at=-26,20,0,0&autostart&skip',
+    '&hexProfile=1'+(mode==='radial'?'&hexRadialInstances=1':'')+
+    '#at=-26,20,0,0&autostart&skip',
     {waitUntil:'domcontentloaded',timeout:120000})
   await page.waitForFunction(async()=>{
     const {useStore}=await import('orbita/store')
@@ -35,6 +36,9 @@ for(const mode of cases){
   },null,{timeout:150000,polling:500})
   r.preflight=await page.evaluate(()=>({...window.__orbitaHexShaderPrep}))
   r.diag=await page.evaluate(()=>window.__orbitaHexGpuDiagStats??null)
+  r.radial=await page.evaluate(()=>window.__orbitaHexRadial??null)
+  if(mode==='radial' && !(r.radial?.meshCount>=5 && r.radial?.instances>=4000))
+    throw Error('Static native instance sorting not initialized: '+JSON.stringify(r.radial))
   if(mode.startsWith('no-ueh-') && !(r.diag?.hiddenDrawables>0))
     throw Error('Diagnostic category is empty: '+JSON.stringify(r.diag))
   await page.waitForTimeout(500)
@@ -76,7 +80,8 @@ for(const mode of cases){
       front:Math.round(window.__orbitaReality.rt.front),
       culling:window.__orbitaHexCullStats,
       shaderPrep:window.__orbitaHexShaderPrep,
-      isolatedGroup:window.__orbitaHexGpuDiagStats??null
+      isolatedGroup:window.__orbitaHexGpuDiagStats??null,
+      radial:window.__orbitaHexRadial??null
     }
   })
   await page.screenshot({path:'hex-gpu-isolation/'+mode+'.png',timeout:120000})
