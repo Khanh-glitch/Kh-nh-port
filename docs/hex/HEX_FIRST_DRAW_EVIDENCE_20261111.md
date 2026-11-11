@@ -45,3 +45,18 @@
 | Material-v-buffer isolation | [Live test run 42955546214](https://github.com/Khanh-glitch/Kh-nh-port/actions/runs/42955546214) compares original instanced PBR, eight unchanged source buffers with diagnostic basic shader, and the fully omitted instanced drawables in reversed order. | **DIAGNOSTIC ONLY**; no result claimed until logs / artifacts have been inspected. The default app retains original PBR and original shader/visuals. |
 
 Current release verdict stays **HOLD**. Production `main` remains at the already accepted Colossus `4454511b`. Compile/visual-invariant CI success must never be called performance acceptance.
+
+
+## GPU driver-level finding — follow-up
+
+| Grounded evidence | Observations | Verdict |
+|---|---|---|
+| [Metal WebGL call trace 42956942228](https://github.com/Khanh-glitch/Kh-nh-port/actions/runs/42956942228) | At first HEX exposure, 24 newly linked shader programs; `getProgramInfoLog` consumed **9,116 ms cumulatively** (max individual 1,091 ms), whereas `bufferData` took **7 ms cumulatively** in that same run. In counterbalanced jobs, 24–26 first-use shader links remained. | First-use GPU program link/synchronization is a primary blocker, more specific than geometry upload. |
+| [Debug-log opt-in A/B 42957615245](https://github.com/Khanh-glitch/Kh-nh-port/actions/runs/42957615245) | `renderer.debug.checkShaderErrors=false` eliminated `getProgramInfoLog`, but the driver blocked on `getProgramParameter` instead: one job recorded **8,062 ms** total there; max frame gaps ranged **4.2–8.37 seconds** and were not consistently better than the default. [18-image visual fixture 42957694225](https://github.com/Khanh-glitch/Kh-nh-port/actions/runs/42957694225) passed with no repeat summon black rectangle. | REJECT for release: not a real performance fix. Only opt-in `?hexSkipShaderLogs=1`. |
+| [True-scene compileAsync 42958734925](https://github.com/Khanh-glitch/Kh-nh-port/actions/runs/42958734925) | Compiling the full authentic UEH group with actual scene/camera took 6–15 ms to submit, but cached program count remained **113 → 113**. First-click frame gaps still ranged **5.3–8.9 seconds**, with 24–27 first-use new programs linked on demand. | REJECT for release: no new relevant variants were precompiled; remains opt-in `?hexRealSceneCompile=1`. |
+| [PBR vs geometry isolation 42955546214](https://github.com/Khanh-glitch/Kh-nh-port/actions/runs/42955546214) | Diagnostic Basic material on the same eight original instance buffers had 1.5–3.9s first-click stalls. Original PBR varied ~0.6–5.4s; fully suppressing the instances reduced some stalls to 1.6–2.1s. | Both geometry/instancing and shader linking contribute. Never substitute Basic for PBR in release. |
+| [Shader-source fingerprint trace 42959530710](https://github.com/Khanh-glitch/Kh-nh-port/actions/runs/42959530710) | Instruments real `shaderSource`, `attachShader` and `linkProgram`, tracks GLSL hashes before/after the first click and classifies PBR, instancing and source HEX variants. | This is the next actionable root-cause gate; results require examination before any material/program change. |
+
+**Critical distinction:** Turning off a blocking WebGL log query does NOT remove the underlying GPU program linkage; it merely transfers the sync point to another API call. Retain default error checks until a whole-run A/B and real image parity have proved a genuine fix.
+
+**Production boundary:** The original `main` remains unchanged at `4454511b`. Current `fix/hex-hitch-no-visual-loss` diagnostic flags remain OFF by default. All eight original UEH instance groups, actual PBR, shadows, original HEX GLSL, Bloom and materials are still part of the normal render. Not accepted for merge.
