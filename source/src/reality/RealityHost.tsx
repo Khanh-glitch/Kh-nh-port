@@ -50,6 +50,22 @@ export function RealityHost() {
   // Diagnostic only: the default page has no opt-in flags or visual changes.
   const hexGpuDiag = typeof window !== 'undefined'
     ? new URLSearchParams(window.location.search).get('hexGpuDiag') : null
+  // DIAGNOSTIC ONLY: Three.js documents this as a release-build option.
+  // Checking link diagnostic logs can synchronize the driver for >1s
+  // per WebGLProgram even when shader compilation is otherwise successful.
+  // No shaders, lights, geometry, postprocessing or rendering state change.
+  const hexSkipShaderLogs = typeof window !== 'undefined' &&
+    new URLSearchParams(window.location.search).get('hexSkipShaderLogs') === '1'
+  useEffect(()=>{
+    if(!hexSkipShaderLogs)return
+    const original=gl.debug.checkShaderErrors
+    gl.debug.checkShaderErrors=false
+    ;(window as unknown as {__orbitaHexLogProbe?:unknown}).__orbitaHexLogProbe={
+      enabled:true,original,active:gl.debug.checkShaderErrors
+    }
+    return ()=>{gl.debug.checkShaderErrors=original}
+  },[gl,hexSkipShaderLogs])
+
   const S = useRef({
     managed: [] as Managed[],
     lights: [] as { o: THREE.Light; color: THREE.Color; gcolor?: THREE.Color; inten: number }[],
