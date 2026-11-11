@@ -378,6 +378,140 @@ export function RealityHost() {
       .__orbitaHexRealCompile=report
   })
 
+  // TEST ONLY: submit the original UEH InstancedBufferAttributes to the
+  // GPU in healthy idle frames. This uses borrowed ORIGINAL geometry,
+  // instanceMatrix and instanceColor attributes; no foliage or PBR material
+  // is removed, downsampled or modified. A 2px private target never appears
+  // in the portfolio. Keep disabled unless opposite-order Metal results
+  // prove the first HEX becomes smoother without intro/idle frame stalls.
+  const hexInstanceBufferWarm = typeof window !== 'undefined' &&
+    new URLSearchParams(window.location.search).get('hexInstanceBufferWarm') === '1'
+  const instanceBufferWarm = useRef({
+    status:'disabled', queue:[] as THREE.InstancedMesh[],
+    scene:null as THREE.Scene|null, target:null as THREE.WebGLRenderTarget|null,
+    camera:null as THREE.PerspectiveCamera|null,
+    mat:null as THREE.MeshBasicMaterial|null,
+    total:0,done:0,maxSubmitMs:0,errors:0,paused:false,healthy:0,
+    frameBudgetExceeded:false,
+  }).current
+  useEffect(()=>{
+    if(!hexInstanceBufferWarm)return
+    const sources:THREE.InstancedMesh[]=[]
+    ueh.current?.traverse(node=>{
+      const m=node as THREE.InstancedMesh
+      if(m.isInstancedMesh&&m.count>0&&m.geometry&&!Array.isArray(m.material))
+        sources.push(m)
+    })
+    const scratch=new THREE.Scene()
+    const mat=new THREE.MeshBasicMaterial({color:0xffffff,toneMapped:false})
+    const proxies=sources.map(source=>{
+      // Instance data MUST be the very same BufferAttributes that the
+      // visible UEH mesh later binds; copied arrays would only warm a fake.
+      const proxy=new THREE.InstancedMesh(source.geometry,mat,source.count)
+      proxy.instanceMatrix=source.instanceMatrix
+      proxy.instanceColor=source.instanceColor
+      proxy.frustumCulled=false
+      proxy.matrixAutoUpdate=false
+      source.updateWorldMatrix(true,false)
+      proxy.matrix.copy(source.matrixWorld)
+      return proxy
+    })
+    const target=new THREE.WebGLRenderTarget(2,2,{
+      depthBuffer:false,stencilBuffer:false
+    })
+    target.texture.colorSpace=THREE.LinearSRGBColorSpace
+    const warmCamera=new THREE.PerspectiveCamera(72,1,0.1,9000)
+    warmCamera.position.copy(camera.position)
+    warmCamera.lookAt(CENTER)
+    warmCamera.updateMatrixWorld(true)
+    Object.assign(instanceBufferWarm,{
+      status:proxies.length?'warming':'empty',
+      queue:proxies,scene:scratch,target,camera:warmCamera,mat,
+      total:proxies.length,done:0,maxSubmitMs:0,errors:0,paused:false,
+      frameBudgetExceeded:false,healthy:0,
+    })
+    return ()=>{
+      target.dispose()
+      mat.dispose()
+      scratch.clear()
+      Object.assign(instanceBufferWarm,{
+        status:'disposed',queue:[],scene:null,target:null,camera:null,mat:null,
+      })
+    }
+  },[gl,scene,camera,hexInstanceBufferWarm])
+
+  useFrame((_state,rawDt)=>{
+    if(!hexInstanceBufferWarm)return
+    const w=instanceBufferWarm
+    if(w.status!=='warming')return
+    if(S.warmPass!==2||useReality.getState().phase!=='idle'||
+       useStore.getState().phase!=='playing'||
+       document.visibilityState!=='visible'){
+      w.healthy=0
+      return
+    }
+    const inputPending=(navigator as Navigator & {
+      scheduling?:{isInputPending?:()=>boolean}
+    }).scheduling?.isInputPending?.()??false
+    w.healthy=rawDt>0&&rawDt<0.08&&!inputPending?w.healthy+1:0
+    if(w.healthy<2)return
+    w.healthy=0
+    const proxy=w.queue[w.done]
+    if(!proxy||!w.scene||!w.target||!w.camera){
+      w.status='ready'
+      return
+    }
+    const previousTarget=gl.getRenderTarget()
+    const previousViewport=gl.getViewport(new THREE.Vector4()).clone()
+    const previousScissor=gl.getScissor(new THREE.Vector4()).clone()
+    const previousScissorTest=gl.getScissorTest()
+    const previousAutoClear=gl.autoClear
+    const previousXr=gl.xr.enabled
+    const start=performance.now()
+    try{
+      w.scene.add(proxy)
+      gl.xr.enabled=false
+      gl.autoClear=true
+      gl.setRenderTarget(w.target)
+      gl.setViewport(0,0,2,2)
+      gl.setScissorTest(false)
+      gl.clear(true,true,false)
+      gl.render(w.scene,w.camera)
+      w.done++
+      w.status=w.done===w.total?'ready':'warming'
+    }catch(error){
+      w.errors++
+      w.status='failed'
+      console.warn('[HEX GPU attribute warmup] preserved production render',error)
+    }finally{
+      w.scene.remove(proxy)
+      gl.setRenderTarget(previousTarget)
+      gl.setViewport(previousViewport)
+      gl.setScissor(previousScissor)
+      gl.setScissorTest(previousScissorTest)
+      gl.autoClear=previousAutoClear
+      gl.xr.enabled=previousXr
+      const elapsed=performance.now()-start
+      w.maxSubmitMs=Math.max(w.maxSubmitMs,elapsed)
+      if(elapsed>120){
+        w.frameBudgetExceeded=true
+        w.paused=true
+        w.status='rejected-idle-stall'
+      }
+    }
+    ;(window as unknown as {
+      __orbitaHexInstanceBufferWarm?:{
+        status:string;total:number;done:number;maxSubmitMs:number;
+        errors:number;paused:boolean;frameBudgetExceeded:boolean;
+      }
+    }).__orbitaHexInstanceBufferWarm={
+      status:w.status,total:w.total,done:w.done,
+      maxSubmitMs:Math.round(w.maxSubmitMs),
+      errors:w.errors,paused:w.paused,
+      frameBudgetExceeded:w.frameBudgetExceeded,
+    }
+  })
+
   const recordHexTiming = (step: string, started: number) => {
     if (typeof window === 'undefined' || new URLSearchParams(location.search).get('hexProfile') !== '1') return
     const host = window as unknown as {__orbitaHexTimings?: Array<{step:string;ms:number;at:number}>}
