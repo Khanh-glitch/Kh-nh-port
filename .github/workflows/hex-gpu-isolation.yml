@@ -24,9 +24,9 @@ jobs:
           (cd candidate/source && npx playwright install chromium)
           (cd candidate && node scripts/sync-hex-standalone.mjs && node scripts/build-pages.mjs)
           (cd candidate && node tests/hex-preservation.mjs)
-      - name: Identify first GPU draw by five isolated UEH material categories
+      - name: Isolate eight original UEH instanced meshes by building, foliage and wind groups
         env:
-          HEX_GPU_MODES: 'normal,no-ueh-instanced,no-ueh-shader,no-ueh-alpha,no-ueh-opaque'
+          HEX_GPU_MODES: 'normal,no-ueh-architecture,no-ueh-foliage,no-ueh-wind,no-ueh-instanced'
         run: |
           python3 -m http.server 4174 --bind 127.0.0.1 --directory candidate/dist-pages >/tmp/hex-diagnostic.log 2>&1 &
           for n in {1..80}; do
