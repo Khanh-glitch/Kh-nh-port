@@ -24,7 +24,9 @@ jobs:
           (cd candidate/source && npx playwright install chromium)
           (cd candidate && node scripts/sync-hex-standalone.mjs && node scripts/build-pages.mjs)
           (cd candidate && node tests/hex-preservation.mjs)
-      - name: Run 6 fully warmed first-trigger GPU ablations on one Metal runner
+      - name: Identify first GPU draw by five isolated UEH material categories
+        env:
+          HEX_GPU_MODES: 'normal,no-ueh-instanced,no-ueh-shader,no-ueh-alpha,no-ueh-opaque'
         run: |
           python3 -m http.server 4174 --bind 127.0.0.1 --directory candidate/dist-pages >/tmp/hex-diagnostic.log 2>&1 &
           for n in {1..80}; do
