@@ -95,7 +95,28 @@ export function RealityHost() {
           group.push(mesh)
           buckets.set(key,group)
         }
-        for (const group of buckets.values()) {
+        // A merged drawable has one renderer-sort slot instead of many.
+        // Any overlapping sibling may depend on the ORIGINAL front/back
+        // ordering, including surfaces of a different material. Decline
+        // that optimization, rather than risking even one visible z-fight.
+        const siblingBounds = new Map<THREE.Mesh,THREE.Box3>()
+        for (const child of parent.children) {
+          const m = child as THREE.Mesh
+          if (!m.isMesh || !m.visible || !m.geometry) continue
+          if (!m.geometry.boundingBox) m.geometry.computeBoundingBox()
+          if (!m.geometry.boundingBox) continue
+          m.updateMatrix()
+          siblingBounds.set(m,m.geometry.boundingBox.clone().applyMatrix4(m.matrix))
+        }
+        for (const members of buckets.values()) {
+          const group=members.filter(mesh=>{
+            const bounds=siblingBounds.get(mesh)
+            if(!bounds)return false
+            for(const [other,box] of siblingBounds){
+              if(other!==mesh && bounds.intersectsBox(box))return false
+            }
+            return true
+          })
           if (group.length < 2) continue
           // Preserve source Float32 position, normals, UV and unchanged
           // triangle topology, baking only each sibling's LOCAL transform.
