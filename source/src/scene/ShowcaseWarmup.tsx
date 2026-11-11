@@ -228,7 +228,8 @@ export function ShowcaseWarmup({ arenaState }: { arenaState: { mode: string } })
       const chosen = new Map<string, THREE.Mesh>()
       for (const root of roots) root!.traverse(obj => {
         const mesh = obj as THREE.Mesh
-        if (!mesh.isMesh || (mesh as THREE.InstancedMesh).isInstancedMesh) return
+        if (!mesh.isMesh || (mesh as THREE.InstancedMesh).isInstancedMesh ||
+           mesh.userData.colossusMergedAway === true) return
         const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material]
         const mat = mats.find(m => m?.userData?.orbitaMaterialize)
         if (!mat) return
@@ -374,6 +375,9 @@ export function ShowcaseWarmup({ arenaState }: { arenaState: { mode: string } })
       const textures = new Set<THREE.Texture>()
       const priorityTextures = new Set<THREE.Texture>()
       roots.forEach((root, rootIndex) => root!.traverse(object => {
+        // Exact-batched originals cannot reappear: only the combined mesh is
+        // live. Avoid wasting uploads on discarded duplicate VBOs.
+        if (object.userData.colossusMergedAway === true) return
         const m = object as THREE.Mesh
         const sprite = object as THREE.Sprite
         if (!m.isMesh && !sprite.isSprite) return
