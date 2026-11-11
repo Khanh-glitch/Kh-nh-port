@@ -1,0 +1,49 @@
+name: HEX cinema CPU-backed canvas readback A/B on native Metal
+on:
+  push:
+    branches: [fix/hex-hitch-no-visual-loss]
+    paths: ['.github/workflows/hex-cinema-readback-ab.yml', 'source/src/scene/Cinema.tsx', 'scripts/hex-cpu-first-trigger-trace.mjs']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: macos-15
+    timeout-minutes: 28
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - label: original-first
+            modes: 'normal,cinema-cpu'
+          - label: cpu-first
+            modes: 'cinema-cpu,normal'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: candidate
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build original full 3D scene and synced standalone, assert visuals are preserved
+        run: |
+          npm ci --prefix candidate/source
+          npm install --prefix candidate/source --no-save --package-lock=false playwright@1.56.1
+          (cd candidate/source && npx playwright install chromium)
+          (cd candidate && npm run build --prefix source && node scripts/sync-hex-standalone.mjs && node scripts/build-pages.mjs && node tests/hex-preservation.mjs)
+      - name: Compare original Canvas2D readback to opt-in CPU-backed source pixels
+        env:
+          HEX_CPU_MODES: ${{ matrix.modes }}
+        run: |
+          python3 -m http.server 4174 --bind 127.0.0.1 --directory candidate/dist-pages >/tmp/hex-cinema-cpu-ab.log 2>&1 &
+          for n in {1..80}; do
+            if curl -fsS -o /dev/null http://127.0.0.1:4174/; then break; fi
+            sleep 1
+          done
+          node candidate/scripts/hex-cpu-first-trigger-trace.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: hex-cinema-cpu-readback-${{ matrix.label }}
+          path: hex-cpu-trace/
+          if-no-files-found: warn
