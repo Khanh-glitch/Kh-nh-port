@@ -129,6 +129,10 @@ export function patchMaterial(mat: THREE.Material, mode: 'old' | 'new', opts: Ne
     uRWGlow: { value: Number(glow.toFixed(2)) },
     uRWWind: { value: Number(wind.toFixed(3)) },
   }
+  // Stable semantic flag for draw gating. Shader cache keys are an internal
+  // optimization and may change independently; never infer materialization
+  // behavior by parsing them.
+  m.userData.__rwPatchMode = mode
   patched.set(m, tag)
 
   m.onBeforeCompile = (shader, renderer) => {
