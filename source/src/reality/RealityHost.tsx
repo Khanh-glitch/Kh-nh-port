@@ -126,7 +126,7 @@ export function RealityHost() {
           draw.visible && !Array.isArray(draw.material) &&
           !draw.material.transparent && !draw.material.alphaTest &&
           !(draw.material as THREE.ShaderMaterial).isShaderMaterial &&
-          draw.material.customProgramCacheKey().includes('rw-new-')) {
+          draw.material.userData.__rwPatchMode === 'new') {
         const geo = draw.geometry
         if (!geo.boundingSphere) geo.computeBoundingSphere()
         if (geo.boundingSphere) {
