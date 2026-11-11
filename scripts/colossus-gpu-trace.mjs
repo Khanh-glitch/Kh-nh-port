@@ -27,6 +27,23 @@ try {
       w.totalProxies > 0 && w.uploadedProxies >= w.totalProxies
   },null,{timeout:45000,polling:200}).then(()=>true,()=>false)
   if (!fullyReady) throw new Error('FULL_READY_PRECONDITION_FAILED: refuse confounded trace')
+  // Include the five-second no-click idle window: a candidate must not
+  // "fix" first click by moving the same perceptible stall into the visit.
+  const idleProbe=await page.evaluate(()=>new Promise(resolve=>{
+    const gaps=[]
+    let previous=0
+    let first=0
+    const collect=(time)=>{
+      if(!first)first=time
+      if(previous)gaps.push(time-previous)
+      previous=time
+      if(time-first>=5000){
+        resolve({maxGapMs:Math.round(Math.max(0,...gaps)),
+          samples:gaps.length,over120ms:gaps.filter(ms=>ms>120).length})
+      }else requestAnimationFrame(collect)
+    }
+    requestAnimationFrame(collect)
+  }))
   const baseline=await page.evaluate(()=>{
     const gl=document.querySelector('canvas')?.getContext('webgl2')
     const dbg=gl?.getExtension('WEBGL_debug_renderer_info')
@@ -80,6 +97,9 @@ try {
   const graphics=events.filter(x=>/gpu|viz|compositor|shadow|render|raster|swap/i.test(String(x.cat)+' '+String(x.name)))
   const report={commit:process.env.GITHUB_SHA,attempted,backend:baseline.renderer,
     warmupAtClick:baseline.warmup?.status,laserReadyAtClick:baseline.warmup?.laserReady,
+    preClickIdle:idleProbe,nativePassMode:baseline.warmup?.nativePassMode,
+    nativeHologramPasses:baseline.warmup?.nativeHologramPasses,
+    nativeScenePeakCpuMs:baseline.warmup?.nativeScenePeakCpuMs,
     fullyReadyBeforeClick:fullyReady,uploadedProxies:baseline.warmup?.uploadedProxies,
     totalProxies:baseline.warmup?.totalProxies,gpuSynced:baseline.warmup?.gpuSynced,
     recordedForMs:Date.now()-started,profile:{
