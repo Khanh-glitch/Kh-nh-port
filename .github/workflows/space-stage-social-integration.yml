@@ -1,0 +1,48 @@
+name: ORBITA integration — spaceship, SHOWTIME, social + HEX unchanged
+on:
+  push:
+    branches: ['integration/space-shift-showtime-social']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  static-and-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 27
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Original 53 untouched module fingerprints, HEX, SHOWTIME, 6 icons, and original flight
+        run: |
+          node tests/integration-regression.mjs
+          node scripts/build-pages.mjs
+          test -s dist-pages/index.html
+          test -s dist-pages/assets/immersive/index.html
+          test -s dist-pages/assets/stage/mcyt-crew-stage.jpg
+      - name: Install and compile editable source, including isolated 3D spaceship
+        run: |
+          npm ci --prefix source
+          npm ci --prefix source/immersive
+          npm run build --prefix source
+          npm run build --prefix source/immersive
+          node tests/hex-preservation.mjs
+      - name: Install native browser
+        run: |
+          npm install --prefix source --no-save --package-lock=false playwright@1.56.1
+          (cd source && npx playwright install --with-deps chromium)
+      - name: Boot exact visitor-facing Cloudflare output
+        run: |
+          python3 -m http.server 4174 --bind 127.0.0.1 --directory dist-pages >/tmp/orbita-integration.log 2>&1 &
+          for n in {1..80}; do
+            if curl -fsS -o /dev/null http://127.0.0.1:4174/; then break; fi
+            sleep 1
+          done
+          node scripts/integration-browser-smoke.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ORBITA-space-stage-social-acceptance
+          path: integration-evidence/
+          if-no-files-found: warn
