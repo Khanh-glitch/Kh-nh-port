@@ -175,6 +175,7 @@ for(const [idx,mode] of modes.entries()){
     isolated:dbg, contextLost:view?.isContextLost(),
     hookedMethods:p.hooks.length,
     beforeClickProgramLinks:p.clickStartLinkIndex,
+    prelinked:p.linked.slice(0,p.clickStartLinkIndex),
     newProgramLinks:p.linked.length-p.clickStartLinkIndex,
     newlyLinked:p.linked.slice(p.clickStartLinkIndex).map(rec=>({
       ...rec,
