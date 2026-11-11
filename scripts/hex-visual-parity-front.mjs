@@ -57,6 +57,38 @@ for(const [name,port] of [['main-4454511',4173],['hex-candidate',4174]]){
   await page.waitForFunction(()=>window.__orbitaReality?.useReality.getState().phase==='idle',null,{timeout:120000})
   await page.waitForTimeout(1000)
   await snap('07-after-retract')
+  // A previous HEX candidate rendered a deterministic 342x338 pure-black
+  // rectangle on the second summon. Gate that real visual regression.
+  await page.evaluate(()=>window.__orbitaReality.requestReality('mua-ha'))
+  await page.waitForFunction(()=>window.__orbitaReality?.useReality.getState().phase==='sweep',null,{timeout:120000})
+  await page.evaluate(()=>{window.__orbitaReality.rt.dbg=100})
+  await page.waitForTimeout(1800)
+  await snap('08-second-summon-front-100')
+  const png=await page.screenshot({timeout:120000})
+  const largestBlackRows=await page.evaluate(async dataUrl=>{
+    const img=new Image()
+    img.src=dataUrl
+    await img.decode()
+    const canvas=document.createElement('canvas')
+    canvas.width=img.naturalWidth;canvas.height=img.naturalHeight
+    const ctx=canvas.getContext('2d',{willReadFrequently:true})
+    ctx.drawImage(img,0,0)
+    const pixels=ctx.getImageData(0,0,canvas.width,canvas.height).data
+    let streak=0,best=0
+    for(let y=0;y<canvas.height;y++){
+      let run=0,longest=0
+      for(let x=0;x<canvas.width;x++){
+        const i=(y*canvas.width+x)*4
+        if(pixels[i]===0&&pixels[i+1]===0&&pixels[i+2]===0)run++
+        else {longest=Math.max(longest,run);run=0}
+      }
+      longest=Math.max(longest,run)
+      if(longest>=180){streak++;best=Math.max(best,streak)}else streak=0
+    }
+    return best
+  },'data:image/png;base64,'+png.toString('base64'))
+  r.blackRectangleConsecutiveRows=largestBlackRows
+  if(largestBlackRows>=140)throw Error('Visual regression: >180px pure-black rectangle persisted '+largestBlackRows+' rows on second HEX summon')
  }catch(e){r.error=String(e)}
  await context.close()
  writeFileSync('hex-visual-frames/report.json',JSON.stringify(report,null,2))
