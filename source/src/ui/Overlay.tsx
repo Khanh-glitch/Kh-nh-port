@@ -18,8 +18,9 @@ function Kbd({ children }: { children: React.ReactNode }) {
 function Intro() {
   const ready = useStore((s) => s.ready)
   const frame = useRef<HTMLIFrameElement>(null)
-  const stable = useRef({count:0,last:0,ready:false})
+  const stable = useRef({count:0,last:0,ready:false,bypass:false,started:0})
   const [fallback, setFallback] = useState(false)
+  const [slowGpu, setSlowGpu] = useState(false)
 
   useEffect(() => {
     let raf = 0
@@ -39,6 +40,7 @@ function Intro() {
     window.addEventListener('message', onMessage)
     const loop = (now:number) => {
       const v=stable.current
+      if (!v.started) v.started=now
       const dt=v.last ? now-v.last : 16
       v.last=now
       const current=useStore.getState()
@@ -49,7 +51,12 @@ function Intro() {
       const noErrors=!shader || !shader.errors
       if (current.ready && landingOk && shadersOk && noErrors && dt<70 && dt>4) v.count=Math.min(95,v.count+1)
       else if(dt>=110 || !current.ready || !landingOk || !shadersOk || !noErrors) v.count=0
-      v.ready=!!(current.ready && landingOk && shadersOk && noErrors && v.count>=90)
+      // Normal warp only opens after the existing 90 healthy frames plus
+      // completed audio/shader/GPU checks. On truly unsupported software GPUs
+      // never falsely claim preflight completed: offer a separate, explicitly
+      // acknowledged visitor-controlled recovery after 18 seconds instead.
+      v.ready=!!(current.ready && landingOk && shadersOk && noErrors && v.count>=90) || v.bypass
+      if (!v.ready && current.ready && now-v.started>18000) setSlowGpu(true)
       if(now-lastSent>180){
         lastSent=now
         const progress=Math.min(99,Math.round((current.loading*0.7+Math.min(1,v.count/90)*0.3)*100))
@@ -63,6 +70,16 @@ function Intro() {
 
   return <div className="absolute inset-0 z-30 overflow-hidden bg-[#030611] text-white">
     <iframe ref={frame} src="assets/immersive/index.html" title="Immersive Space Shift · ORBITA Entry" className="absolute inset-0 h-full w-full border-0" allow="autoplay" onError={()=>setFallback(true)} />
+    {slowGpu && !stable.current.bypass && <div className="absolute bottom-5 right-5 z-40 w-[min(360px,calc(100%-2.5rem))] rounded-xl border border-amber-300/30 bg-[#061225]/95 p-4 text-xs leading-relaxed shadow-2xl backdrop-blur-md" role="alert">
+      <div className="mb-1 font-semibold text-amber-200">GPU đang chuẩn bị lâu hơn dự kiến</div>
+      <div className="mb-3 text-white/75">Bạn có thể tiếp tục đợi để giảm giật, hoặc tự chọn vào thử ngay. Vào sớm có thể khựng khi hiệu ứng 3D tải lần đầu.</div>
+      <button className="rounded-lg border border-amber-200/60 bg-amber-100/10 px-3 py-2 font-semibold text-white hover:bg-amber-100/20" onClick={()=>{
+        stable.current.bypass=true
+        stable.current.ready=true
+        setSlowGpu(false)
+        frame.current?.contentWindow?.postMessage({type:'ORBITA_SPACE_READY',ready:true,progress:100,degraded:true},window.location.origin)
+      }}>VÀO THỬ · BỎ QUA CHỜ GPU</button>
+    </div>}
     {fallback && <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-[#050916]">
       <p className="text-lg">Không tải được buồng lái không gian.</p>
       <button disabled={!ready} onClick={startGame} className="rounded-full border border-cyan-300 px-8 py-4 disabled:opacity-40">{ready?'BƯỚC VÀO':'ĐANG CHUẨN BỊ'}</button>
