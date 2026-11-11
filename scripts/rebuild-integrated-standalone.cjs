@@ -6,7 +6,7 @@ let html=fs.readFileSync(htmlPath,'utf8');
 const tag='<script id="orbita-embedded-map" type="application/json">';const begin=html.indexOf(tag)+tag.length;const end=html.indexOf('</script>',begin);
 if(begin<tag.length||end<0)throw Error('Invalid original ORBITA bundled map');
 const map=JSON.parse(html.slice(begin,end));
-const items=['scene/Stage','scene/Beacon','scene/SocialDrops','scene/socialLogoPaths','stage/ShowSystem','stage/ledShow','stage/showState','stage/shows','ui/Overlay'];
+const items=['scene/Experience','scene/Stage','scene/Beacon','scene/SocialDrops','scene/socialLogoPaths','stage/ShowSystem','stage/ledShow','stage/showState','stage/shows','ui/Overlay'];
 const targetRoot=path.join(payload,'source','src');
 function ext(f){return fs.existsSync(path.join(targetRoot,f+'.tsx'))?'.tsx':'.ts'}
 function embed(rootFolder,f,modmap,prefix){
