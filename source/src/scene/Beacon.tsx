@@ -46,6 +46,10 @@ export function Beacon() {
     if (!benchmark) return
     const id = ++traceIndex.current
     const shaderCount = gl.info.programs?.length ?? 0
+    const warmAtClick=(window as unknown as {
+      __orbitaBeaconGpuPrewarm?: {status:string;done:number;total:number;maxSubmitMs:number;gpuSynced:boolean}
+    }).__orbitaBeaconGpuPrewarm
+    const warmStatusAtClick=warmAtClick ? {...warmAtClick} : null
     const gaps:number[]=[]
     let last=0, firstFrameMs:number|null=null
     let lastFrame=clickedAt
@@ -68,7 +72,7 @@ export function Beacon() {
       const result={id, firstFrameMs:Math.round(firstFrameMs??-1),
         maxGapMs:Math.round(maxGap),frames,
         gapsOver120Ms:gaps.filter(x=>x>120).length,
-        shaderProgramsBefore:shaderCount,
+        warmStatusAtClick,shaderProgramsBefore:shaderCount,
         shaderProgramsAfter:gl.info.programs?.length??0,
         panelPhaseAfterMs:Math.round(elapsed),
         browserVisible:document.visibilityState==='visible'}
