@@ -65,7 +65,7 @@ for(const [idx,mode] of modes.entries()){
  page.on('requestfailed',e=>r.network.push(e.url().slice(0,140)))
  results.push(r)
  try{
-  const q=(mode==='normal'?'':'?hexGpuDiag='+mode)
+  const q=(mode==='normal'?'':mode==='fast-program-logs'?'?hexSkipShaderLogs=1':'?hexGpuDiag='+mode)
   await page.goto('http://127.0.0.1:4174/'+q+'#at=-26,20,0,0&autostart&skip',
    {waitUntil:'domcontentloaded',timeout:120000})
   await page.waitForFunction(async()=>{
@@ -79,6 +79,9 @@ for(const [idx,mode] of modes.entries()){
       p.uploadedTextures===p.totalTextures&&p.errors===0
   },null,{timeout:180000,polling:600})
   const before=await page.evaluate(()=>({...window.__orbitaHexShaderPrep}))
+  r.debug=await page.evaluate(()=>window.__orbitaHexLogProbe??null)
+  if(mode==='fast-program-logs' && !(r.debug?.enabled && r.debug.active===false))
+    throw Error('Three.js renderer debug flag not actually disabled: '+JSON.stringify(r.debug))
   await page.evaluate(()=>{
    window.__hexProfileFrames=[]
    window.__hexProfileTasks=[]
