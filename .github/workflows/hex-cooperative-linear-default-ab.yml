@@ -1,0 +1,50 @@
+name: HEX cooperative Linear default-quality first-click A/B
+on:
+  push:
+    branches: [fix/hex-hitch-no-visual-loss]
+    paths: ['.github/workflows/hex-cooperative-linear-default-ab.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  metal:
+    runs-on: macos-15
+    timeout-minutes: 26
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - label: original-first
+            modes: 'normal,cooperative-linear,normal'
+          - label: cooperative-first
+            modes: 'cooperative-linear,normal,cooperative-linear'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: candidate
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build production source and standalone with original PBR/shadows
+        run: |
+          npm ci --prefix candidate/source
+          npm install --prefix candidate/source --no-save --package-lock=false playwright@1.56.1
+          (cd candidate/source && npx playwright install chromium)
+          (cd candidate && npm run build --prefix source && node scripts/sync-hex-standalone.mjs && node scripts/build-pages.mjs)
+          (cd candidate && node tests/hex-preservation.mjs)
+      - name: Measure program link counts and silent GPU tails before/after cooperative scheduling
+        env:
+          HEX_GL_MODES: ${{ matrix.modes }}
+        run: |
+          python3 -m http.server 4174 --bind 127.0.0.1 --directory candidate/dist-pages >/tmp/hex-coop-default.log 2>&1 &
+          for n in {1..80}; do
+            if curl -fsS -o /dev/null http://127.0.0.1:4174/; then break; fi
+            sleep 1
+          done
+          node candidate/scripts/hex-webgl-call-profile.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: hex-default-quality-cooperative-v-normal-${{ matrix.label }}
+          path: hex-gl-profile/
+          if-no-files-found: warn
