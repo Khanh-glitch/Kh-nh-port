@@ -15,7 +15,10 @@ try{
     const page=await context.newPage()
     const errors=[]
     page.on('pageerror',e=>errors.push(e.message))
-    const query='?beaconProfile=1'+(mode==='stable-lights'?'&beaconStableLights=1':'')
+    const stable=mode.includes('stable')
+    const warm=mode.includes('warm')
+    const query='?beaconProfile=1'+(stable?'&beaconStableLights=1':'')+
+      (warm?'&beaconGpuPrewarm=1':'')
     await page.goto('http://127.0.0.1:4173/'+query+'#at=-22,40,180,0&autostart&skip',
       {waitUntil:'domcontentloaded',timeout:120000})
     await page.waitForFunction(async()=>{
@@ -24,11 +27,23 @@ try{
         useStore.getState().phase==='playing'
     },null,{timeout:100000})
     const gpu=await page.evaluate(()=>{
-      const gl=document.querySelector('canvas')?.getContext('webgl2')
+      const gl=Array.from(document.querySelectorAll('canvas')).map(canvas=>
+        canvas.getContext('webgl2')).find(Boolean)
       const dbg=gl?.getExtension('WEBGL_debug_renderer_info')
       return String(gl?.getParameter(dbg?.UNMASKED_RENDERER_WEBGL??gl.RENDERER))
     })
     if(native&&!/Metal/i.test(gpu))throw Error('Wrong Metal GPU: '+gpu)
+    // The warm trial is only valid when the original geometry has actually
+    // reached the GPU. Refuse to mislabel a mid-warm click as a prewarmed one.
+    let beforeIdle=null
+    if(warm){
+      await page.waitForFunction(()=>{
+        const w=window.__orbitaBeaconGpuPrewarm
+        return ['ready','submitted-no-gpu-fence','rejected-idle-frame-stall',
+          'skipped-busy-renderer','failed','failed-fence','cancelled'].includes(w?.status)
+      },null,{timeout:90000,polling:300})
+      beforeIdle=await page.evaluate(()=>({...window.__orbitaBeaconGpuPrewarm}))
+    }
     // Identical first and repeat signal with the EXACT production callback.
     const trials=[]
     for(let i=0;i<2;i++){
@@ -53,7 +68,7 @@ try{
       trials.push(await page.evaluate(()=>window.__orbitaBeaconProfiles?.at(-1)))
       await page.screenshot({path:'browser-evidence/beacon/'+mode+'-after-'+(i+1)+'.png',timeout:45000})
     }
-    const record={mode,backend:gpu,trials,errors}
+    const record={mode,backend:gpu,beforeIdle,trials,errors}
     results.push(record)
     console.log('BEACON_FIRST_TRIGGER_AB '+JSON.stringify(record))
     await context.close()
