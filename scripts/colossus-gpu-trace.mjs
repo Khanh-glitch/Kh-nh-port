@@ -2,7 +2,9 @@ import { createRequire } from 'node:module'
 import { mkdirSync, writeFileSync } from 'node:fs'
 const require = createRequire(import.meta.url)
 const { chromium } = require('../source/node_modules/playwright')
-mkdirSync('browser-evidence', {recursive:true})
+const traceMode=process.env.COLOSSUS_TRACE_MODE === 'mixed' ? 'mixed' : 'full'
+const evidenceDir=process.env.COLOSSUS_TRACE_MODE ? 'browser-evidence/'+traceMode : 'browser-evidence'
+mkdirSync(evidenceDir, {recursive:true})
 const browser = await chromium.launch({headless:true,args:[
   '--enable-webgl','--enable-gpu','--ignore-gpu-blocklist',
   '--use-angle=metal','--disable-software-rasterizer'
@@ -11,7 +13,7 @@ const page = await browser.newPage({viewport:{width:1280,height:720},deviceScale
 const failures=[]
 page.on('pageerror',e=>failures.push(e.message))
 try {
-  await page.goto('http://127.0.0.1:4173/#at=0,-27,0,20&autostart&skip',
+  await page.goto('http://127.0.0.1:4173/' + (traceMode === 'mixed' ? '?colossusNativePassMode=mixed' : '') + '#at=0,-27,0,20&autostart&skip',
     {waitUntil:'domcontentloaded',timeout:120000})
   await page.waitForFunction(()=>!!window.__orbitaColossusWarmup,null,{timeout:120000})
   await page.waitForTimeout(6500)
@@ -69,7 +71,7 @@ try {
   await cdp.send('IO.close',{handle:complete.stream})
   await cdp.detach()
   const bytes=Buffer.concat(parts)
-  writeFileSync('browser-evidence/gpu-trace.json',bytes)
+  writeFileSync(evidenceDir+'/gpu-trace.json',bytes)
   const parsed=JSON.parse(bytes.toString('utf8'))
   const events=parsed.traceEvents??[]
   const long=events.filter(x=>x.ph==='X' && Number(x.dur)>=30000)
@@ -87,7 +89,7 @@ try {
     traceBytes:bytes.length,longEvents:long,errors:failures,
     caveat:'Trace recording changes timing. This is causal diagnosis only, not visual or smoothness acceptance. Apple Paravirtual Metal is not physical GPU certification.'
   }
-  writeFileSync('browser-evidence/gpu-trace-summary.json',JSON.stringify(report,null,2))
+  writeFileSync(evidenceDir+'/gpu-trace-summary.json',JSON.stringify(report,null,2))
   console.log('GPU_PIPELINE_TRACE '+JSON.stringify(report))
   if(!attempted||!profile||failures.length)process.exitCode=3
 } catch(err){console.error('GPU TRACE FAILED',String(err));process.exitCode=4}
