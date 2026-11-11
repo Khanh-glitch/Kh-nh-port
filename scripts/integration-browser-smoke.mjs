@@ -32,6 +32,35 @@ try {
  })
  if(report.hasCanvas<1||report.hasParentCanvas<1||!report.hasStageModule||!report.hasLogoModule)
    throw Error('One of the preserved original/space/show/social subsystems was not rendered')
+
+ // This MUST exercise the actual energy CTA, not just photograph a disabled button.
+ // A green iframe screenshot alone does NOT mean the visitor can enter the world.
+ const state=await page.evaluate(async()=>{const m=await import('orbita/store');return {
+   ready:m.useStore.getState().ready,loading:m.useStore.getState().loading,
+   phase:m.useStore.getState().phase,
+   landing:window.__orbitaLandingPrewarm?.status??null,
+   shader:window.__orbitaHexShaderPrep?.status??null,
+ }})
+ report.stateBeforeWarp=state
+ await page.waitForFunction(()=>{
+   const btn=document.querySelector('iframe')?.contentDocument?.querySelector('.energy-gate button')
+   return btn instanceof HTMLButtonElement && !btn.disabled
+ },null,{timeout:100000,polling:400})
+ report.ready=true
+ report.stages.push('energy-filled')
+ await frame.locator('.energy-gate button').first().click({timeout:30000})
+ report.stages.push('warp-clicked')
+ await page.waitForFunction(async()=>{
+   const m=await import('orbita/store')
+   return m.useStore.getState().phase==='playing'
+ },null,{timeout:45000,polling:400})
+ report.stages.push('original-island-descent-engaged')
+ await page.waitForTimeout(1600)
+ report.iframeAfterWarp=await page.locator('iframe[title*="Immersive Space Shift"]').count()
+ report.playingState=await page.evaluate(async()=>{const m=await import('orbita/store');return m.useStore.getState().phase})
+ await page.screenshot({path:'integration-evidence/island-after-warp.png',timeout:90000})
+ if(report.iframeAfterWarp!==0||report.playingState!=='playing')
+    throw Error('Space scene did not hand off to original island')
  if(report.errors.length)throw Error('Browser JS exceptions: '+JSON.stringify(report.errors.slice(0,5)))
 } catch(error) {
  report.error=String(error)
