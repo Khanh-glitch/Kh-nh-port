@@ -1,11 +1,5 @@
 name: Colossus cold-first-click Metal trace, full visuals
 on:
-  pull_request:
-    branches: [main]
-    paths:
-      - 'source/src/scene/ShowcaseWarmup.tsx'
-      - 'scripts/sync-colossus-idle-standalone.mjs'
-      - '.github/workflows/colossus-idle-metal-trace.yml'
   workflow_dispatch:
 permissions:
   contents: read
