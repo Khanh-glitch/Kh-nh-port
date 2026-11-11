@@ -258,6 +258,8 @@ export function Drift({ mode, count, colA, colB, size = 1, mirror = false }: { m
 class Reel {
   canvas = document.createElement('canvas')
   tex: THREE.Texture
+  private demoTexture: THREE.CanvasTexture
+  private useGeneration = 0
   video: HTMLVideoElement | null = null
   demo = true
   private ctx: CanvasRenderingContext2D
@@ -266,15 +268,18 @@ class Reel {
     this.canvas.width = 640
     this.canvas.height = 360
     this.ctx = this.canvas.getContext('2d')!
-    this.tex = new THREE.CanvasTexture(this.canvas)
-    this.tex.colorSpace = THREE.SRGBColorSpace
+    this.demoTexture = new THREE.CanvasTexture(this.canvas)
+    this.demoTexture.colorSpace = THREE.SRGBColorSpace
+    this.tex = this.demoTexture
   }
   async use(id: TrackId) {
+    const generation = ++this.useGeneration
     const tr = TRACKS[id]
     this.video?.pause()
     this.video = null
     this.demo = true
     if (tr.videoSrc && (await probeMedia(tr.videoSrc, 'video'))) {
+      if (generation !== this.useGeneration) return
       const v = document.createElement('video')
       v.src = tr.videoSrc
       v.muted = true
@@ -283,14 +288,19 @@ class Reel {
       v.crossOrigin = 'anonymous'
       v.currentTime = tr.highlight.start
       await v.play().catch(() => {})
+      if (generation !== this.useGeneration) { v.pause(); return }
       const vt = new THREE.VideoTexture(v)
       vt.colorSpace = THREE.SRGBColorSpace
       this.tex = vt
       this.video = v
       this.demo = false
-    } else {
-      this.tex = new THREE.CanvasTexture(this.canvas)
-      ;(this.tex as THREE.CanvasTexture).colorSpace = THREE.SRGBColorSpace
+    } else if (generation === this.useGeneration) {
+      // Keep the SAME full-resolution 640x360 GPU canvas texture across
+      // track changes and repeated HEX summon/retract. Recreating it could
+      // upload a blank new texture while an in-flight screen still samples
+      // the old one. Existing 20fps procedural imagery is unchanged.
+      this.tex = this.demoTexture
+      this.demoTexture.needsUpdate = true
     }
   }
   stop() {
@@ -387,10 +397,17 @@ export function MemoryFrames({ id, accent }: { id: TrackId; accent: string }) {
   const phase = useReality((s) => s.phase)
   useEffect(() => {
     mats.forEach((m) => m.uniforms.uAcc.value.set(accent))
-    if (phase !== 'idle') reel.use(id).then(() => mats.forEach((m) => (m.uniforms.uTex.value = reel.tex)))
-  }, [id, accent, phase, mats])
+    // RealityHost owns the single authoritative track request. The old
+    // duplicate reel.use() here raced it on each ignite/switch.
+    mats.forEach(m => { m.uniforms.uTex.value = reel.tex })
+  }, [id, accent, mats])
   useFrame((s, dt) => {
-    reel.draw(dt, s.clock.elapsedTime, id)
+    // Hidden idle frames do not need to upload a 640x360 texture 20 times/s.
+    // The first active frame resumes the exact same procedural drawing.
+    if (useReality.getState().phase !== 'idle') reel.draw(dt, s.clock.elapsedTime, id)
+    for (const m of mats) {
+      if (m.uniforms.uTex.value !== reel.tex) m.uniforms.uTex.value = reel.tex
+    }
     const g = groupRef.current
     if (!g) return
     const live = music.playing
