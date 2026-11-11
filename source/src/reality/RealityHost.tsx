@@ -93,6 +93,16 @@ export function RealityHost() {
     warmShadowTotal: 0,
     warmShadowDone: 0,
     warmShadowErrors: 0,
+    warmProgramCreated: [] as Array<{
+      isReady:()=>boolean;getUniforms:()=>unknown;getAttributes:()=>unknown
+    }>,
+    warmProgramSeen: new Set<unknown>(),
+    warmPrimeQueue: [] as Array<{
+      isReady:()=>boolean;getUniforms:()=>unknown;getAttributes:()=>unknown
+    }>,
+    warmPrimeSeeded:false,
+    warmPrimeTotal:0,warmPrimeDone:0,
+    warmPrimeMaxMs:0,warmPrimeErrors:0,warmPrimePaused:false,
     warmHealthyPaints: 0,
     warmPass: 0, // 0: đang upload tex/compile, 1: đang bật 1 frame silent shadow warm, 2: xong hoàn toàn
   }).current
@@ -508,6 +518,16 @@ export function RealityHost() {
     }
   },[gl,hexCooperativeLinear])
 
+  // Three.js r187 WebGLProgram.getUniforms()/getAttributes() call
+  // onFirstUse lazily, after compileAsync has resolved. The real HEX click
+  // was still synchronizing 27 shader diagnostic logs for those programs.
+  // TEST ONLY: initialize one original cached GPU program per healthy
+  // idle frame, with full original shader error checking still enabled.
+  const hexPrimeFirstUse=hexCooperativeLinear &&
+    new URLSearchParams(window.location.search).get('hexShadowProgramWarm')==='1' &&
+    typeof window!=='undefined' &&
+    new URLSearchParams(window.location.search).get('hexPrimeFirstUse')==='1'
+
   const compileHexCooperatively=(obj:THREE.Object3D)=>{
     const scratch=hexCooperativeLinear?hexCooperativeTarget.current:null
     if(!scratch)return gl.compileAsync(obj,camera,scene)
@@ -519,7 +539,22 @@ export function RealityHost() {
     try {
       gl.setRenderTarget(scratch)
       S.warmLinearSubmissions++
-      return gl.compileAsync(obj,camera,scene)
+      const seenBefore=hexPrimeFirstUse?
+        new Set(gl.info.programs??[]):null
+      const pending=gl.compileAsync(obj,camera,scene)
+      if(seenBefore){
+        const actual=(gl.info.programs??[]) as unknown as Array<{
+          isReady:()=>boolean;getUniforms:()=>unknown;getAttributes:()=>unknown
+        }>
+        for(const program of actual){
+          if(!seenBefore.has(program as never)&&
+              !S.warmProgramSeen.has(program)){
+            S.warmProgramSeen.add(program)
+            S.warmProgramCreated.push(program)
+          }
+        }
+      }
+      return pending
     }finally{
       gl.setRenderTarget(originalTarget)
       gl.setViewport(originalViewport)
@@ -793,6 +828,35 @@ export function RealityHost() {
           S.warmShadowErrors++
           console.warn('[HEX preflight] native depth program',err)
         }).finally(()=>{S.warmCompilePending=false})
+      } else if (hexPrimeFirstUse && !S.warmPrimeSeeded &&
+          !S.warmCompilePending) {
+        S.warmPrimeSeeded=true
+        S.warmPrimeQueue=[...S.warmProgramCreated]
+        S.warmPrimeTotal=S.warmPrimeQueue.length
+      } else if (hexPrimeFirstUse && S.warmPrimeQueue.length &&
+          !S.warmCompilePending) {
+        const program=S.warmPrimeQueue.shift()!
+        if(!program.isReady()){
+          S.warmPrimeQueue.push(program)
+        }else{
+          const began=performance.now()
+          try{
+            program.getUniforms()
+            program.getAttributes()
+            S.warmPrimeDone++
+          }catch(err){
+            S.warmPrimeErrors++
+            console.warn('[HEX GPU first-use preflight]',err)
+          }
+          const took=performance.now()-began
+          S.warmPrimeMaxMs=Math.max(S.warmPrimeMaxMs,took)
+          // A 200ms idle call is NOT a fix. Record, stop immediately and
+          // leave the option off in production if any such call occurs.
+          if(took>120){
+            S.warmPrimePaused=true
+            S.warmPrimeQueue.length=0
+          }
+        }
       } else if (!S.warmCompilePending) {
         // The old one-frame ENTIRE-UEH visibility preflight caused a large
         // first GPU submission. Private source-mesh batches above replace it.
@@ -818,6 +882,11 @@ export function RealityHost() {
       shadowVariantTotal:S.warmShadowTotal,
       shadowVariantDone:S.warmShadowDone,
       shadowVariantErrors:S.warmShadowErrors,
+      primeTotal:S.warmPrimeTotal,
+      primeDone:S.warmPrimeDone,
+      primeErrors:S.warmPrimeErrors,
+      primeMaxMs:Math.round(S.warmPrimeMaxMs),
+      primePaused:S.warmPrimePaused,
     }
     // Continue the cooperative material/texture queue AFTER entering the
     // world: the old intro-exit handler discarded every remaining UEH shader
@@ -831,6 +900,7 @@ export function RealityHost() {
       S.warmTex.length = 0
       S.warmMesh.length = 0
       S.warmCritical.length = 0
+      S.warmPrimeQueue.length=0
       S.warmPass = 2
     }
     // --- 2. Hiện diện của người chơi quanh đàn ---
