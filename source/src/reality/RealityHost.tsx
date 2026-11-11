@@ -92,10 +92,14 @@ export function RealityHost() {
   const hexProbeSuppressed = useRef([] as Array<{
     object: THREE.Object3D; originallyVisible: boolean
   }>).current
+  const hexShadowSuppressed = useRef([] as Array<{
+    object: THREE.Mesh; castOrig: boolean
+  }>).current
   useEffect(() => {
     hexCull.length = 0
     hexFarSkies.length = 0
     hexProbeSuppressed.length = 0
+    hexShadowSuppressed.length = 0
     const cullCenter = new THREE.Vector3()
     const cullScale = new THREE.Vector3()
     ueh.current?.traverse((source) => {
@@ -153,18 +157,29 @@ export function RealityHost() {
           index:idx,group:instanceGroup,count:(d as THREE.InstancedMesh).count,
           shadow:d.castShadow,material:mats.map(m=>m.type).join(','),
         })
-        if (kind === filter || (instanced && instanceGroup === filter)) {
+        const shadowDiagnostic = filter === 'shadows' ||
+          filter === 'instanced-shadows'
+        if (shadowDiagnostic) {
+          if(d.isMesh && d.castShadow &&
+              (filter === 'shadows' || instanced)){
+            hexShadowSuppressed.push({object:d,castOrig:d.castShadow})
+            d.castShadow=false
+          }
+        } else if(kind === filter || (instanced && instanceGroup === filter)) {
           hexProbeSuppressed.push({object:o,originallyVisible:o.visible})
         }
       })
       ;(window as unknown as {__orbitaHexGpuDiagStats?:unknown}).__orbitaHexGpuDiagStats = {
         mode:hexGpuDiag,totalDrawables:total,hiddenDrawables:hexProbeSuppressed.length,
+        shadowsOff:hexShadowSuppressed.length,
         instances:instancedManifest,
       }
     }
     return () => {
       for(const d of hexProbeSuppressed) d.object.visible=d.originallyVisible
+      for(const d of hexShadowSuppressed) d.object.castShadow=d.castOrig
       hexProbeSuppressed.length=0
+      hexShadowSuppressed.length=0
       for (const entry of hexCull) if (entry.hidden) entry.mesh.visible = true
       for (const sky of hexFarSkies) sky.visible = true
       hexCull.length = 0
