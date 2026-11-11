@@ -30,6 +30,18 @@ for(const [idx,mode] of modes.entries()){
    ? '?hexCinemaFarLightGate=1'
    : mode==='prime-cinema-far'
    ? '?hexCooperativeLinear=1&hexShadowProgramWarm=1&hexPrimeFirstUse=1&hexCinemaFarLightGate=1'
+   : mode==='gpu-no-instances'
+   ? '?hexCooperativeLinear=1&hexShadowProgramWarm=1&hexPrimeFirstUse=1&hexCinemaFarLightGate=1&hexGpuDiag=no-ueh-instanced'
+   : mode==='gpu-no-foliage'
+   ? '?hexCooperativeLinear=1&hexShadowProgramWarm=1&hexPrimeFirstUse=1&hexCinemaFarLightGate=1&hexGpuDiag=no-ueh-foliage'
+   : mode==='gpu-no-world'
+   ? '?hexCooperativeLinear=1&hexShadowProgramWarm=1&hexPrimeFirstUse=1&hexCinemaFarLightGate=1&hexGpuDiag=no-world'
+   : mode==='gpu-no-architecture'
+   ? '?hexCooperativeLinear=1&hexShadowProgramWarm=1&hexPrimeFirstUse=1&hexCinemaFarLightGate=1&hexGpuDiag=no-ueh-architecture'
+   : mode==='gpu-no-wind'
+   ? '?hexCooperativeLinear=1&hexShadowProgramWarm=1&hexPrimeFirstUse=1&hexCinemaFarLightGate=1&hexGpuDiag=no-ueh-wind'
+   : mode==='gpu-post-off'
+   ? '?hexCooperativeLinear=1&hexShadowProgramWarm=1&hexPrimeFirstUse=1&hexCinemaFarLightGate=1&colossusPostProbe=off'
    : ''
   await page.goto('http://127.0.0.1:4174/'+(flags?flags+'&hexProfile=1':'?hexProfile=1')+'#at=-26,20,0,0&autostart&skip',
    {waitUntil:'domcontentloaded',timeout:120000})
@@ -116,6 +128,7 @@ for(const [idx,mode] of modes.entries()){
     topLongTasks:[...window.__hexCpuTasks].sort((a,b)=>b.duration-a.duration).slice(0,8),
     phase:window.__orbitaReality.useReality.getState().phase,
     front:window.__orbitaReality.rt.front,
+    gpuDiag:window.__orbitaHexGpuDiagStats??null,
     shaderPrep:window.__orbitaHexShaderPrep,
     source:window.__orbitaHexTimings??null}
   })
