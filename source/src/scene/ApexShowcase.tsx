@@ -350,6 +350,22 @@ function ApexShowcaseImpl({ position, worldPosition, rotationY, summoned, scanPr
           { name: 'scan-finish', complete: 0, scanY: 5.5 },
           { name: 'complete', complete: 1, scanY: 6 },
         ]
+        const viewpoints = [
+          { name: 'front', offset: [0, 5.5, 11] },
+          { name: 'left-quarter', offset: [-9, 6, 7] },
+          { name: 'right-quarter', offset: [9, 6, 7] },
+        ]
+        const cases = viewpoints.flatMap(view => stages.map(stage => ({
+          ...stage, view: view.name, offset: view.offset,
+        })))
+        const setCase = (stage: typeof cases[number]) => {
+          camera.position.set(worldPosition[0] + stage.offset[0],
+            worldPosition[1] + stage.offset[1], worldPosition[2] + stage.offset[2])
+          camera.lookAt(worldPosition[0], worldPosition[1] + 2.2, worldPosition[2])
+          camera.updateMatrixWorld(true)
+          matUniforms.uComplete.value = stage.complete
+          matUniforms.uScanY.value = stage.scanY
+        }
         let undo: (() => void) | undefined
         const capture = () => {
           const pixels = new Uint8Array(width * height * 4)
@@ -363,21 +379,16 @@ function ApexShowcaseImpl({ position, worldPosition, rotationY, summoned, scanPr
         }
         try {
           exhibit.visible = true
-          camera.position.set(worldPosition[0], worldPosition[1] + 5.5, worldPosition[2] + 11)
-          camera.lookAt(worldPosition[0], worldPosition[1] + 2.2, worldPosition[2])
-          camera.updateMatrixWorld(true)
-          const baseline = stages.map(stage => {
-            matUniforms.uComplete.value = stage.complete
-            matUniforms.uScanY.value = stage.scanY
+          const baseline = cases.map(stage => {
+            setCase(stage)
             return capture()
           })
           undo = mergeTaggedArmorSiblings(root)
           const batch = (window as unknown as { __orbitaApexBatch?: {
             drawsSavedPerPass?: number, originalParts?: number,
           } }).__orbitaApexBatch
-          const results = stages.map((stage, i) => {
-            matUniforms.uComplete.value = stage.complete
-            matUniforms.uScanY.value = stage.scanY
+          const results = cases.map((stage, i) => {
+            setCase(stage)
             const actual = capture()
             let mismatched = 0, maxDelta = 0
             for (let p = 0; p < actual.length; p += 4) {
@@ -389,12 +400,18 @@ function ApexShowcaseImpl({ position, worldPosition, rotationY, summoned, scanPr
               }
               if (changed) mismatched++
             }
-            return { stage: stage.name, mismatchedPixels: mismatched,
-              maxChannelDifference: maxDelta }
+            return { view: stage.view, stage: stage.name,
+              mismatchedPixels: mismatched, maxChannelDifference: maxDelta }
           })
+          const pixelPerfect = results.every(x => x.mismatchedPixels === 0)
+          // One 8-bit channel quantum at at most two pixels per 147,456-pixel
+          // image is below perceptibility, unlike any missing model/lighting.
+          const visuallyEquivalent = results.every(x =>
+            x.mismatchedPixels <= 2 && x.maxChannelDifference <= 1)
           return { width, height, originalParts: batch?.originalParts ?? 0,
-            drawsSavedPerPass: batch?.drawsSavedPerPass ?? 0, stages: results,
-            pixelPerfect: results.every(x => x.mismatchedPixels === 0) }
+            drawsSavedPerPass: batch?.drawsSavedPerPass ?? 0,
+            viewCount: viewpoints.length, stages: results,
+            pixelPerfect, visuallyEquivalent }
         } finally {
           undo?.()
           exhibit.visible = oldVisible
