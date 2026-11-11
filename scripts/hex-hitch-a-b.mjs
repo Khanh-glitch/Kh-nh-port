@@ -76,6 +76,9 @@ for(const test of contexts){
    return sample
   }
   report.intro=await get()
+  if(test.port===4174 && (report.intro.cull?.eligible??0)<200){
+    throw Error('HEX source shader/cache change disabled scan culling: '+JSON.stringify(report.intro.cull))
+  }
   await page.screenshot({path:'hex-evidence/'+test.name+'-idle.png',timeout:90000})
   report.screenshots.push('idle')
   await measure('idle_frametime',async()=>{},2600)
