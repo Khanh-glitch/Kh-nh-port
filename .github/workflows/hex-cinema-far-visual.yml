@@ -2,7 +2,7 @@ name: HEX exact-source Cinema far-light visual A/B
 on:
   push:
     branches: [fix/hex-hitch-no-visual-loss]
-    paths: ['.github/workflows/hex-cinema-far-visual.yml','source/src/scene/Cinema.tsx','scripts/hex-visual-parity-front.mjs']
+    paths: ['.github/workflows/hex-cinema-far-visual.yml','source/src/scene/Cinema.tsx','scripts/sync-hex-standalone.mjs','tests/hex-preservation.mjs','scripts/hex-visual-parity-front.mjs']
   workflow_dispatch:
 permissions:
   contents: read
