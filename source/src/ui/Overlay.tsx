@@ -70,10 +70,10 @@ function Intro() {
 
   return <div className="absolute inset-0 z-30 overflow-hidden bg-[#030611] text-white">
     <iframe ref={frame} src="assets/immersive/index.html" title="Immersive Space Shift · ORBITA Entry" className="absolute inset-0 h-full w-full border-0" allow="autoplay" onError={()=>setFallback(true)} />
-    {slowGpu && !stable.current.bypass && <div className="absolute bottom-5 right-5 z-40 w-[min(360px,calc(100%-2.5rem))] rounded-xl border border-amber-300/30 bg-[#061225]/95 p-4 text-xs leading-relaxed shadow-2xl backdrop-blur-md" role="alert">
+    {slowGpu && !stable.current.bypass && <div className="absolute bottom-5 right-5 z-40 rounded-xl border p-4 text-xs leading-relaxed shadow-2xl backdrop-blur-md" style={{width:'min(360px,calc(100vw - 2.5rem))',borderColor:'rgba(253,230,138,0.35)',background:'rgba(6,18,37,0.96)'}} role="alert">
       <div className="mb-1 font-semibold text-amber-200">GPU đang chuẩn bị lâu hơn dự kiến</div>
       <div className="mb-3 text-white/75">Bạn có thể tiếp tục đợi để giảm giật, hoặc tự chọn vào thử ngay. Vào sớm có thể khựng khi hiệu ứng 3D tải lần đầu.</div>
-      <button className="rounded-lg border border-amber-200/60 bg-amber-100/10 px-3 py-2 font-semibold text-white hover:bg-amber-100/20" onClick={()=>{
+      <button className="rounded-lg border px-3 py-2 font-semibold text-white" style={{borderColor:'rgba(253,230,138,0.6)',background:'rgba(253,230,138,0.13)'}} onClick={()=>{
         stable.current.bypass=true
         stable.current.ready=true
         setSlowGpu(false)
