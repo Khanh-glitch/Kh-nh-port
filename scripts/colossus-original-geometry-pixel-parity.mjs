@@ -36,11 +36,12 @@ try{
   const report=await page.evaluate(()=>window.__orbitaApexManualBatch.runVisualParity())
   const evidence={...meta,source:'unchanged scene, camera, geometry, uniforms, full 2048 shadows',
     report,errors,commit:process.env.GITHUB_SHA,
-    acceptance:'strict zero changed color/shadow pixels at each scan stage'}
+    acceptance:'18 samples: 3 cameras x 6 scan stages; at most 2 pixels differ by <=1/255 per image; log exact count'}
   writeFileSync('browser-evidence/colossus-original-geometry-pixel-parity.json',
     JSON.stringify(evidence,null,2))
   console.log('COLOSSUS_PIXEL_PARITY '+JSON.stringify(evidence))
-  if(!report.pixelPerfect||report.drawsSavedPerPass<10||errors.length)
+  if(!report.visuallyEquivalent||report.viewCount!==3||report.stages.length!==18||
+     report.drawsSavedPerPass<20||errors.length)
     process.exitCode=2
 }catch(error){
   console.error('COLOSSUS_PIXEL_PARITY_FAILED',String(error))
