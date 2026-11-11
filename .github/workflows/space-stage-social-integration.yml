@@ -1,4 +1,7 @@
 name: ORBITA integration — spaceship, SHOWTIME, social + HEX unchanged
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 on:
   push:
     branches: ['integration/space-shift-showtime-social']

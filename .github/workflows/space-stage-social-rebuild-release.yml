@@ -1,4 +1,7 @@
 name: ORBITA rebuild exact integrated artifacts and full warp acceptance
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 on:
   push:
     branches: ['integration/space-shift-showtime-social']
@@ -11,6 +14,10 @@ on:
       - 'source/src/stage/**'
       - 'scripts/rebuild-integrated-standalone.cjs'
       - 'scripts/integration-browser-smoke.mjs'
+      - 'source/src/scene/Experience.tsx'
+      - 'tests/integration-original-modules.json'
+      - 'tests/integration-regression.mjs'
+      - '.github/workflows/space-stage-social-integration.yml'
   workflow_dispatch:
 permissions:
   contents: write

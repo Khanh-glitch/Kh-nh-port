@@ -1,4 +1,7 @@
 name: ORBITA native Metal — actual ready 100%, warp, island and no GPU fallback
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 on:
   push:
     branches: ['integration/space-shift-showtime-social']
@@ -8,6 +11,9 @@ on:
       - 'source/src/ui/Overlay.tsx'
       - 'source/immersive/src/**'
       - 'scripts/rebuild-integrated-standalone.cjs'
+      - 'source/src/scene/Experience.tsx'
+      - 'tests/integration-original-modules.json'
+      - 'tests/integration-regression.mjs'
   workflow_dispatch:
 permissions:
   contents: read
