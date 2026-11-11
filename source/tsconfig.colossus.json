@@ -1,0 +1,14 @@
+{
+  "extends": "./tsconfig.json",
+  "include": [
+    "src/scene/ShowcaseWarmup.tsx",
+    "src/scene/ApexShowcase.tsx"
+  ],
+  "exclude": [],
+  "compilerOptions": {
+    "types": [
+      "node",
+      "vite/client"
+    ]
+  }
+}

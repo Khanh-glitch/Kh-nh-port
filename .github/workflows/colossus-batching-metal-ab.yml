@@ -1,0 +1,62 @@
+name: Colossus original-geometry batching Metal A/B
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'source/src/scene/ApexShowcase.tsx'
+      - 'source/src/scene/ShowcaseWarmup.tsx'
+      - 'scripts/colossus-gpu-trace.mjs'
+      - '.github/workflows/colossus-batching-metal-ab.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  gpu:
+    runs-on: macos-14
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - order: standard-first
+            modes: standard extended
+          - order: extended-first
+            modes: extended standard
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: source/package-lock.json
+      - run: npm ci --prefix source
+      - run: npm install --prefix source --no-save --package-lock=false playwright@1.56.1
+      - run: cd source && npx playwright install chromium
+      - name: Preserve source production visuals and actual HTML embedding
+        run: |
+          node scripts/sync-colossus-idle-standalone.mjs
+          node tests/integration-regression.mjs
+          node --test tests/colossus-idle-retry-contract.mjs
+          npx --prefix source tsc --noEmit --project source/tsconfig.colossus.json
+          node scripts/build-pages.mjs
+      - name: Same-backend AB; do not move click stall into no-click idle
+        env:
+          BATCH_MODES: ${{ matrix.modes }}
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 --directory dist-pages >/tmp/colossus-batch.log 2>&1 &
+          for n in {1..80}; do
+            if curl -fsS -o /dev/null http://127.0.0.1:4173/; then break; fi
+            sleep 1
+          done
+          for mode in $BATCH_MODES; do
+            echo "COLOSSUS_BATCH_AB mode=$mode order=${{ matrix.order }}"
+            COLOSSUS_BATCH_MODE="$mode" node scripts/colossus-gpu-trace.mjs
+          done
+      - name: Exact six-stage original-geometry color and shadow pixel parity
+        run: node scripts/colossus-original-geometry-pixel-parity.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: colossus-original-geometry-batch-${{ matrix.order }}
+          path: browser-evidence/
+          if-no-files-found: warn

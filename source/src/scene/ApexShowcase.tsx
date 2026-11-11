@@ -1,5 +1,5 @@
 import { memo, useEffect, useLayoutEffect, useMemo, useRef } from 'react'
-import { useFrame } from '@react-three/fiber'
+import { useFrame, useThree } from '@react-three/fiber'
 import * as THREE from 'three'
 import { audio, type Bus } from '../audio'
 import { toast } from '../store'
@@ -26,6 +26,11 @@ export interface ShowcaseProps {
 type AbilityMode = 0 | 1 | 2 // 0: Idle/Patrol, 1: A1 Target Lock & Dash Clamp, 2: A2 Armor Core Surge
 const LEGACY_ROUNDED_GEOMETRY = typeof window !== 'undefined' &&
   new URLSearchParams(window.location.search).get('colossusGeometryProbe') === 'legacy'
+// Experimental ONLY: bake exact static turbine/claw geometry inside its
+// ORIGINAL animated parent with identical material, shadows and depth order.
+const EXTENDED_BATCH_PROBE = typeof window !== 'undefined' &&
+  (new URLSearchParams(window.location.search).get('colossusBatchProbe') === 'extended' ||
+   new URLSearchParams(window.location.search).get('colossusBatchProbe') === 'manual')
 
 
 /**
@@ -119,14 +124,20 @@ export function mergeTaggedArmorSiblings(root: THREE.Object3D) {
         combined.renderOrder=group[0].renderOrder
         combined.frustumCulled=group[0].frustumCulled
         combined.layers.mask=group[0].layers.mask
-        for(const mesh of group)mesh.visible=false
+        for(const mesh of group) {
+          mesh.visible=false
+          mesh.userData.colossusMergedAway = true
+        }
         parent.add(combined)
         totalParts += group.length
         savedDraws += group.length-1
         undo.push(()=>{
           parent.remove(combined)
           geometry.dispose()
-          for(const mesh of group)mesh.visible=true
+          for(const mesh of group) {
+            mesh.visible=true
+            delete mesh.userData.colossusMergedAway
+          }
         })
       } finally {
         for(const copy of copies)copy.dispose()
@@ -230,6 +241,7 @@ function makeHudCardTex() {
 const MODE_LABELS = ['IDLE · SCRAP SENTRY', 'A1 · TARGET LOCK & CLAMP', 'A2 · ARMOR CORE SURGE']
 
 function ApexShowcaseImpl({ position, worldPosition, rotationY, summoned, scanProgressRef, scanWorldYRef, activeRef, onRequestSummon, onFocus }: ShowcaseProps) {
+  const { gl, scene, camera } = useThree()
   const busRef = useRef<Bus | null>(null)
   const exhibitRef = useRef<THREE.Group>(null)
   const showcaseRootRef = useRef<THREE.Group>(null)
@@ -300,11 +312,125 @@ function ApexShowcaseImpl({ position, worldPosition, rotationY, summoned, scanPr
           m.castShadow = false
         })
       }
-      const batchLegacy = new URLSearchParams(window.location.search).get('colossusBatchProbe') === 'legacy'
+      const batchMode = new URLSearchParams(window.location.search).get('colossusBatchProbe')
+      const batchLegacy = batchMode === 'legacy' || batchMode === 'manual'
       if (!batchLegacy) restoreBatch = mergeTaggedArmorSiblings(newbotRoot.current)
       const skip = new Set<THREE.Object3D>()
       if (shieldRef.current) skip.add(shieldRef.current)
       scanCullEntries.current = collectScanCullMeshes(newbotRoot.current, skip)
+    }
+    // Diagnostic-only full source-shape color+shadow readback. A single JS
+    // callback renders the SAME scene and camera into a PRIVATE framebuffer
+    // before/after exact sibling merging, without allowing useFrame to advance.
+    // All visibility, uniforms, camera and renderer state are restored.
+    if (new URLSearchParams(window.location.search).get('colossusBatchProbe') === 'manual' &&
+        newbotRoot.current && exhibitRef.current) {
+      const root = newbotRoot.current
+      const exhibit = exhibitRef.current
+      const runVisualParity = () => {
+        const width = 512, height = 288
+        const target = new THREE.WebGLRenderTarget(width, height,
+          { depthBuffer: true, stencilBuffer: false })
+        target.texture.colorSpace = gl.outputColorSpace
+        const oldTarget = gl.getRenderTarget()
+        const oldViewport = gl.getViewport(new THREE.Vector4()).clone()
+        const oldScissor = gl.getScissor(new THREE.Vector4()).clone()
+        const oldScissorTest = gl.getScissorTest()
+        const oldXR = gl.xr.enabled
+        const oldVisible = exhibit.visible
+        const oldComplete = matUniforms.uComplete.value
+        const oldScanY = matUniforms.uScanY.value
+        const oldCameraPos = camera.position.clone()
+        const oldCameraQuat = camera.quaternion.clone()
+        const stages = [
+          { name: 'scan-low', complete: 0, scanY: 0.2 },
+          { name: 'scan-quarter', complete: 0, scanY: 1.2 },
+          { name: 'scan-middle', complete: 0, scanY: 2.4 },
+          { name: 'scan-high', complete: 0, scanY: 3.7 },
+          { name: 'scan-finish', complete: 0, scanY: 5.5 },
+          { name: 'complete', complete: 1, scanY: 6 },
+        ]
+        const viewpoints = [
+          { name: 'front', offset: [0, 5.5, 11] },
+          { name: 'left-quarter', offset: [-9, 6, 7] },
+          { name: 'right-quarter', offset: [9, 6, 7] },
+        ]
+        const cases = viewpoints.flatMap(view => stages.map(stage => ({
+          ...stage, view: view.name, offset: view.offset,
+        })))
+        const setCase = (stage: typeof cases[number]) => {
+          camera.position.set(worldPosition[0] + stage.offset[0],
+            worldPosition[1] + stage.offset[1], worldPosition[2] + stage.offset[2])
+          camera.lookAt(worldPosition[0], worldPosition[1] + 2.2, worldPosition[2])
+          camera.updateMatrixWorld(true)
+          matUniforms.uComplete.value = stage.complete
+          matUniforms.uScanY.value = stage.scanY
+        }
+        let undo: (() => void) | undefined
+        const capture = () => {
+          const pixels = new Uint8Array(width * height * 4)
+          gl.setRenderTarget(target)
+          gl.setViewport(0, 0, width, height)
+          gl.setScissorTest(false)
+          gl.clear(true, true, true)
+          gl.render(scene, camera)
+          gl.readRenderTargetPixels(target, 0, 0, width, height, pixels)
+          return pixels
+        }
+        try {
+          exhibit.visible = true
+          const baseline = cases.map(stage => {
+            setCase(stage)
+            return capture()
+          })
+          undo = mergeTaggedArmorSiblings(root)
+          const batch = (window as unknown as { __orbitaApexBatch?: {
+            drawsSavedPerPass?: number, originalParts?: number,
+          } }).__orbitaApexBatch
+          const results = cases.map((stage, i) => {
+            setCase(stage)
+            const actual = capture()
+            let mismatched = 0, maxDelta = 0
+            for (let p = 0; p < actual.length; p += 4) {
+              let changed = false
+              for (let c = 0; c < 4; c++) {
+                const delta = Math.abs(actual[p + c] - baseline[i][p + c])
+                if (delta > maxDelta) maxDelta = delta
+                if (delta > 0) changed = true
+              }
+              if (changed) mismatched++
+            }
+            return { view: stage.view, stage: stage.name,
+              mismatchedPixels: mismatched, maxChannelDifference: maxDelta }
+          })
+          const pixelPerfect = results.every(x => x.mismatchedPixels === 0)
+          // One 8-bit channel quantum at at most two pixels per 147,456-pixel
+          // image is below perceptibility, unlike any missing model/lighting.
+          const visuallyEquivalent = results.every(x =>
+            x.mismatchedPixels <= 2 && x.maxChannelDifference <= 1)
+          return { width, height, originalParts: batch?.originalParts ?? 0,
+            drawsSavedPerPass: batch?.drawsSavedPerPass ?? 0,
+            viewCount: viewpoints.length, stages: results,
+            pixelPerfect, visuallyEquivalent }
+        } finally {
+          undo?.()
+          exhibit.visible = oldVisible
+          matUniforms.uComplete.value = oldComplete
+          matUniforms.uScanY.value = oldScanY
+          camera.position.copy(oldCameraPos)
+          camera.quaternion.copy(oldCameraQuat)
+          camera.updateMatrixWorld(true)
+          gl.setRenderTarget(oldTarget)
+          gl.setViewport(oldViewport)
+          gl.setScissor(oldScissor)
+          gl.setScissorTest(oldScissorTest)
+          gl.xr.enabled = oldXR
+          target.dispose()
+        }
+      }
+      ;(window as unknown as { __orbitaApexManualBatch?: {
+        runVisualParity: typeof runVisualParity
+      } }).__orbitaApexManualBatch = { runVisualParity }
     }
     ;(window as unknown as { __orbitaApexShadowProbe?: unknown }).__orbitaApexShadowProbe = {
       modelShadowCastersSuppressed: shadowCasters.length,
@@ -778,7 +904,8 @@ function ApexShowcaseImpl({ position, worldPosition, rotationY, summoned, scanPr
                 {/* Rotating 6-blade inner turbine */}
                 <group ref={tRef} position={[side * 0.2, 0, 0]} rotation={[0, side * (Math.PI / 2), 0]}>
                   {[0, 1, 2, 3, 4, 5].map((b) => (
-                    <mesh key={b} rotation={[0, 0, (b * Math.PI) / 3]} position={[0, 0, 0]} material={materials.orange}>
+                    <mesh key={b} userData={{colossusMergeStatic: EXTENDED_BATCH_PROBE}}
+                      rotation={[0, 0, (b * Math.PI) / 3]} position={[0, 0, 0]} material={materials.orange}>
                       <boxGeometry args={[0.045, 0.34, 0.03]} />
                     </mesh>
                   ))}
@@ -787,13 +914,13 @@ function ApexShowcaseImpl({ position, worldPosition, rotationY, summoned, scanPr
                 {/* Massive Arched C-Shaped Caliper Shield Segments curving high above head */}
                 <group rotation={[0, 0, side * 0.1]}>
                   {/* Lower arm strut */}
-                  <mesh position={[side * 0.22, 0.38, 0.04]} rotation={[0, 0, side * -0.18]} geometry={roundedBox(0.36, 0.68, 0.46, 0.06)} material={materials.dark} castShadow />
+                  <mesh userData={{colossusMergeStatic: EXTENDED_BATCH_PROBE}} position={[side * 0.22, 0.38, 0.04]} rotation={[0, 0, side * -0.18]} geometry={roundedBox(0.36, 0.68, 0.46, 0.06)} material={materials.dark} castShadow />
                   {/* Mid curved ivory armor shield */}
-                  <mesh position={[side * 0.24, 0.85, 0.08]} rotation={[-0.12, 0, side * 0.22]} geometry={roundedBox(0.42, 0.72, 0.5, 0.07)} material={materials.armor} castShadow />
+                  <mesh userData={{colossusMergeStatic: EXTENDED_BATCH_PROBE}} position={[side * 0.24, 0.85, 0.08]} rotation={[-0.12, 0, side * 0.22]} geometry={roundedBox(0.42, 0.72, 0.5, 0.07)} material={materials.armor} castShadow />
                   {/* Upper inward-arching caliper claw blade */}
-                  <mesh position={[side * 0.02, 1.38, 0.16]} rotation={[-0.25, 0, side * 0.68]} geometry={roundedBox(0.34, 0.68, 0.42, 0.06)} material={materials.armor} castShadow />
+                  <mesh userData={{colossusMergeStatic: EXTENDED_BATCH_PROBE}} position={[side * 0.02, 1.38, 0.16]} rotation={[-0.25, 0, side * 0.68]} geometry={roundedBox(0.34, 0.68, 0.42, 0.06)} material={materials.armor} castShadow />
                   {/* Dark inner pincer tip */}
-                  <mesh position={[side * -0.26, 1.56, 0.24]} rotation={[-0.3, 0, side * 1.05]} geometry={roundedBox(0.18, 0.4, 0.26, 0.03)} material={materials.dark} castShadow />
+                  <mesh userData={{colossusMergeStatic: EXTENDED_BATCH_PROBE}} position={[side * -0.26, 1.56, 0.24]} rotation={[-0.3, 0, side * 1.05]} geometry={roundedBox(0.18, 0.4, 0.26, 0.03)} material={materials.dark} castShadow />
                   {/* Orange hazard trim accent */}
                   <mesh position={[side * 0.36, 0.88, 0.12]} rotation={[-0.12, 0, side * 0.22]} geometry={roundedBox(0.06, 0.56, 0.12, 0.02)} material={materials.orange} />
                 </group>

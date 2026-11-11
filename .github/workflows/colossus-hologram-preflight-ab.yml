@@ -1,0 +1,52 @@
+name: Colossus unchanged-visual native hologram warmup A/B
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  native-metal:
+    runs-on: macos-15
+    timeout-minutes: 28
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - order: full-first
+            modes: full mixed
+          - order: mixed-first
+            modes: mixed full
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: source/package-lock.json
+      - run: npm ci --prefix source
+      - run: npm install --prefix source --no-save --package-lock=false playwright@1.56.1
+      - run: cd source && npx playwright install chromium
+      - name: Verify production visual hash and compile original standalone
+        run: |
+          node scripts/sync-colossus-idle-standalone.mjs
+          node tests/integration-regression.mjs
+          node --test tests/colossus-idle-retry-contract.mjs
+          node scripts/build-pages.mjs
+      - name: Compare full versus mixed source shader private preflight, same Mac host
+        env:
+          PREFLIGHT_MODES: ${{ matrix.modes }}
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 --directory dist-pages >/tmp/colossus-ab.log 2>&1 &
+          for n in {1..80}; do
+            if curl -fsS -o /dev/null http://127.0.0.1:4173/; then break; fi
+            sleep 1
+          done
+          for mode in $PREFLIGHT_MODES; do
+            echo "COLOSSUS_AB_START mode=$mode order=${{ matrix.order }}"
+            COLOSSUS_TRACE_MODE="$mode" node scripts/colossus-gpu-trace.mjs
+          done
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: colossus-private-hologram-${{ matrix.order }}
+          path: browser-evidence/
+          if-no-files-found: warn
