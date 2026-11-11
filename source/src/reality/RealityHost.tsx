@@ -87,6 +87,9 @@ export function RealityHost() {
     warmTextureDone: 0,
     warmShaderTotal: 0,
     warmTextureTotal: 0,
+    warmLinearMaxSubmitMs: 0,
+    warmLinearSubmissions: 0,
+    warmLinearRestoreErrors: 0,
     warmHealthyPaints: 0,
     warmPass: 0, // 0: đang upload tex/compile, 1: đang bật 1 frame silent shadow warm, 2: xong hoàn toàn
   }).current
@@ -478,6 +481,54 @@ export function RealityHost() {
     }
   }
 
+  // Test-only successor to the REJECTED one-shot 32-variant Linear precompile.
+  // Keep the EXISTING one-material-per-healthy-frame schedule, but use the
+  // same Linear-sRGB output variant as the native postprocessing composer.
+  // gl.compileAsync is called with the private target bound synchronously;
+  // every R3F renderer state is restored before the callback returns.
+  // No original mesh, PBR material, texture, shadow or final framebuffer
+  // is replaced. Normal portfolio visits do not enable this experiment.
+  const hexCooperativeLinear = typeof window !== 'undefined' &&
+    new URLSearchParams(window.location.search).get('hexCooperativeLinear') === '1'
+  const hexCooperativeTarget = useRef<THREE.WebGLRenderTarget | null>(null)
+  useEffect(()=>{
+    if(!hexCooperativeLinear)return
+    const target=new THREE.WebGLRenderTarget(4,4,{
+      depthBuffer:false,stencilBuffer:false
+    })
+    target.texture.colorSpace=THREE.LinearSRGBColorSpace
+    hexCooperativeTarget.current=target
+    return ()=>{
+      if(hexCooperativeTarget.current===target)
+        hexCooperativeTarget.current=null
+      target.dispose()
+    }
+  },[gl,hexCooperativeLinear])
+
+  const compileHexCooperatively=(obj:THREE.Object3D)=>{
+    const scratch=hexCooperativeLinear?hexCooperativeTarget.current:null
+    if(!scratch)return gl.compileAsync(obj,camera,scene)
+    const originalTarget=gl.getRenderTarget()
+    const originalViewport=gl.getViewport(new THREE.Vector4()).clone()
+    const originalScissor=gl.getScissor(new THREE.Vector4()).clone()
+    const originalScissorTest=gl.getScissorTest()
+    const started=performance.now()
+    try {
+      gl.setRenderTarget(scratch)
+      S.warmLinearSubmissions++
+      return gl.compileAsync(obj,camera,scene)
+    }finally{
+      gl.setRenderTarget(originalTarget)
+      gl.setViewport(originalViewport)
+      gl.setScissor(originalScissor)
+      gl.setScissorTest(originalScissorTest)
+      const elapsed=performance.now()-started
+      S.warmLinearMaxSubmitMs=Math.max(S.warmLinearMaxSubmitMs,elapsed)
+      if(gl.getRenderTarget()!==originalTarget)
+        S.warmLinearRestoreErrors++
+    }
+  }
+
   // Hàng đợi chuẩn bị tài nguyên UEH phân bổ đều (texture + shader) để KHÔNG khựng khi lại gần đàn lần đầu
   const buildWarmQueues = () => {
     if (S.warmStarted) return
@@ -624,7 +675,7 @@ export function RealityHost() {
         const obj=S.warmCritical.shift()!
         S.warmCompilePending=true
         if(typeof gl.compileAsync==='function') {
-          void gl.compileAsync(obj,camera,scene).catch(err=>{
+          void compileHexCooperatively(obj).catch(err=>{
             S.warmErrors++;console.warn('[HEX preflight] critical shader',err)
           }).finally(()=>{S.warmCompilePending=false;S.warmShaderDone++})
         } else {
@@ -645,7 +696,7 @@ export function RealityHost() {
         const obj = S.warmMesh.shift()!
         S.warmCompilePending = true
         if (typeof gl.compileAsync === 'function') {
-          void gl.compileAsync(obj, camera, scene).catch(err => {
+          void compileHexCooperatively(obj).catch(err => {
             S.warmErrors++
             console.warn('[Piano preflight] shader', err)
           }).finally(() => { S.warmCompilePending = false; S.warmShaderDone++ })
@@ -672,6 +723,11 @@ export function RealityHost() {
       criticalRemaining: S.warmCritical.length,
       remainingTextures: S.warmTex.length,
       errors: S.warmErrors,
+      preflightTarget: hexCooperativeLinear?'linear-per-material':'default',
+      linearSubmissions:S.warmLinearSubmissions,
+      linearMaxSubmitMs:Math.round(S.warmLinearMaxSubmitMs),
+      linearRestoreErrors:S.warmLinearRestoreErrors,
+      programCount:gl.info.programs?.length??0,
     }
     // Continue the cooperative material/texture queue AFTER entering the
     // world: the old intro-exit handler discarded every remaining UEH shader
