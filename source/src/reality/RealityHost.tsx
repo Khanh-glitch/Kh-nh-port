@@ -92,19 +92,10 @@ export function RealityHost() {
   const hexProbeSuppressed = useRef([] as Array<{
     object: THREE.Object3D; originallyVisible: boolean
   }>).current
-  // EXPERIMENTAL, opt-in only. One original draw per InstancedMesh,
-  // with identical matrices/colors but near-to-far instance ordering.
-  const hexRadialOn = typeof window !== 'undefined' &&
-    new URLSearchParams(window.location.search).get('hexRadialInstances') === '1'
-  const hexRadial = useRef([] as Array<{
-    mesh: THREE.InstancedMesh; originalCount: number; thresholds: number[]
-  }>).current
-
   useEffect(() => {
     hexCull.length = 0
     hexFarSkies.length = 0
     hexProbeSuppressed.length = 0
-    hexRadial.length = 0
     const cullCenter = new THREE.Vector3()
     const cullScale = new THREE.Vector3()
     ueh.current?.traverse((source) => {
@@ -135,64 +126,6 @@ export function RealityHost() {
         }
       }
     })
-    if (hexRadialOn) {
-      const instancedWorld = new THREE.Matrix4()
-      const instanceMatrix = new THREE.Matrix4()
-      const sphereCenter = new THREE.Vector3()
-      const sphereScale = new THREE.Vector3()
-      ueh.current?.updateWorldMatrix(true, true)
-      ueh.current?.traverse(obj => {
-        const mesh = obj as THREE.InstancedMesh
-        // renderOrder 8 belongs to dynamically moving wind petals; never
-        // reorder instance IDs that are updated by a live particle simulation.
-        if (!mesh.isInstancedMesh || mesh.renderOrder === 8 ||
-            !mesh.geometry || !mesh.instanceMatrix ||
-            mesh.material instanceof THREE.ShaderMaterial ||
-            (Array.isArray(mesh.material) ?
-              mesh.material.some(m=>m.transparent) : mesh.material.transparent))
-          return
-        const geom = mesh.geometry
-        if (!geom.boundingSphere) geom.computeBoundingSphere()
-        const bounds = geom.boundingSphere
-        if (!bounds) return
-        const colored = mesh.instanceColor !== null
-        const items: Array<{
-          threshold: number; index: number; matrix: THREE.Matrix4;
-          color: THREE.Color | null
-        }> = []
-        for (let i=0;i<mesh.count;i++) {
-          mesh.getMatrixAt(i,instanceMatrix)
-          instancedWorld.multiplyMatrices(mesh.matrixWorld,instanceMatrix)
-          sphereCenter.copy(bounds.center).applyMatrix4(instancedWorld)
-          sphereScale.setFromMatrixScale(instancedWorld)
-          const radius=bounds.radius*Math.max(sphereScale.x,sphereScale.y,sphereScale.z)
-          // Original shader's near-field minimum is radial distance minus
-          // a <=9m hash offset and wind displacement. The additional 22m
-          // safety margin is deliberately conservative, and far field is
-          // fully masked until front >=150m.
-          const radial=Math.hypot(sphereCenter.x-CENTER.x,sphereCenter.z-CENTER.z)
-          const threshold=Math.min(130,Math.max(0,radial-radius-22))
-          const color=colored?new THREE.Color():null
-          if (color) mesh.getColorAt(i,color)
-          items.push({threshold,index:i,matrix:instanceMatrix.clone(),color})
-        }
-        items.sort((a,b)=>a.threshold-b.threshold||a.index-b.index)
-        for (let i=0;i<items.length;i++){
-          mesh.setMatrixAt(i,items[i].matrix)
-          if(items[i].color)mesh.setColorAt(i,items[i].color!)
-        }
-        mesh.instanceMatrix.needsUpdate=true
-        if(colored && mesh.instanceColor)mesh.instanceColor.needsUpdate=true
-        hexRadial.push({
-          mesh,originalCount:items.length,
-          thresholds:items.map(x=>x.threshold)
-        })
-      })
-      ;(window as unknown as {__orbitaHexRadial?:unknown}).__orbitaHexRadial = {
-        status: 'sorted', meshCount: hexRadial.length,
-        instances: hexRadial.reduce((acc,x)=>acc+x.originalCount,0)
-      }
-    }
     if (hexGpuDiag?.startsWith('no-ueh-')) {
       const filter = hexGpuDiag.slice('no-ueh-'.length)
       let total = 0
@@ -232,8 +165,6 @@ export function RealityHost() {
     return () => {
       for(const d of hexProbeSuppressed) d.object.visible=d.originallyVisible
       hexProbeSuppressed.length=0
-      for(const entry of hexRadial)entry.mesh.count=entry.originalCount
-      hexRadial.length=0
       for (const entry of hexCull) if (entry.hidden) entry.mesh.visible = true
       for (const sky of hexFarSkies) sky.visible = true
       hexCull.length = 0
@@ -775,32 +706,6 @@ export function RealityHost() {
     if (typeof window !== 'undefined') {
       ;(window as unknown as {__orbitaHexCullStats?:{eligible:number;culled:number;front:number}})
         .__orbitaHexCullStats = { eligible:hexCull.length, culled, front:rt.front }
-    }
-
-    if(hexRadialOn){
-      const details: Array<{total:number;drawn:number}> = []
-      for(const entry of hexRadial) {
-        const n=entry.originalCount
-        if(st.phase==='idle'||st.phase==='active'){
-          entry.mesh.count=n
-        } else {
-          // Exactly one native InstancedMesh / original material / source
-          // geometry, without changing display resolution or shadows.
-          let lo=0,hi=n
-          while(lo<hi){
-            const mid=(lo+hi)>>>1
-            if(entry.thresholds[mid]<=rt.front)lo=mid+1
-            else hi=mid
-          }
-          entry.mesh.count=lo
-        }
-        details.push({total:n,drawn:entry.mesh.count})
-      }
-      ;(window as unknown as {__orbitaHexRadial?:unknown}).__orbitaHexRadial = {
-        status:'active',meshes:details,meshCount:details.length,
-        instances:details.reduce((sum,d)=>sum+d.total,0),
-        drawn:details.reduce((sum,d)=>sum+d.drawn,0)
-      }
     }
 
     // The original far-world sky material uses:
