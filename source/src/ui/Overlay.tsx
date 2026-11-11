@@ -24,7 +24,6 @@ function Intro() {
 
   useEffect(() => {
     let raf = 0
-    let lastSent = 0
     const origin = window.location.origin
     const onMessage = (event: MessageEvent) => {
       if (event.origin !== origin || event.source !== frame.current?.contentWindow) return
@@ -56,16 +55,34 @@ function Intro() {
       // never falsely claim preflight completed: offer a separate, explicitly
       // acknowledged visitor-controlled recovery after 18 seconds instead.
       v.ready=!!(current.ready && landingOk && shadersOk && noErrors && v.count>=90) || v.bypass
-      if (!v.ready && current.ready && now-v.started>18000) setSlowGpu(true)
-      if(now-lastSent>180){
-        lastSent=now
-        const progress=Math.min(99,Math.round((current.loading*0.7+Math.min(1,v.count/90)*0.3)*100))
-        frame.current?.contentWindow?.postMessage({type:'ORBITA_SPACE_READY',progress:v.ready?100:progress,ready:v.ready},origin)
-      }
       raf=requestAnimationFrame(loop)
     }
+    // Deliver the readiness handshake from a JS timer, NOT the draw loop.
+    // On overloaded WebGL drivers timers can continue while rAF stalls for
+    // seconds; the visitor must never be trapped at an old 70% message.
+    stable.current.started=performance.now()
+    const notify = () => {
+      const v=stable.current
+      const current=useStore.getState()
+      const shader=(window as any).__orbitaHexShaderPrep as {status?:string;errors?:number}|undefined
+      if(!v.ready && current.ready && performance.now()-v.started>=18000) setSlowGpu(true)
+      const progress=Math.min(99,Math.round((current.loading*0.7+Math.min(1,v.count/90)*0.3)*100))
+      ;(window as any).__orbitaEntryGate={
+        ready:v.ready,bypass:v.bypass,progress:v.ready?100:progress,
+        shader:shader?.status??'not-started',stableFrames:v.count,assetsReady:current.ready,
+      }
+      frame.current?.contentWindow?.postMessage({
+        type:'ORBITA_SPACE_READY',progress:v.ready?100:progress,ready:v.ready,degraded:v.bypass,
+      },origin)
+    }
+    const heartbeat=window.setInterval(notify,180)
+    notify()
     raf=requestAnimationFrame(loop)
-    return()=>{cancelAnimationFrame(raf);window.removeEventListener('message',onMessage)}
+    return()=>{
+      cancelAnimationFrame(raf)
+      clearInterval(heartbeat)
+      window.removeEventListener('message',onMessage)
+    }
   },[])
 
   return <div className="absolute inset-0 z-30 overflow-hidden bg-[#030611] text-white">
