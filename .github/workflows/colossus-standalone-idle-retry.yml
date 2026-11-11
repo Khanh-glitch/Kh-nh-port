@@ -2,6 +2,8 @@ name: Colossus visual-parity standalone sync
 on:
   push:
     branches: [fix/colossus-idle-retry-no-visual-change-20261111]
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 permissions:
   contents: write
@@ -40,6 +42,7 @@ jobs:
           sha256sum index.html tests/integration-original-modules.json > /tmp/orbita-hashes-after
           diff -u /tmp/orbita-hashes-before /tmp/orbita-hashes-after
       - name: Commit only generated standalone and its one updated baseline hash
+        if: github.event_name == 'push'
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
