@@ -24,6 +24,8 @@ for(const [idx,mode] of modes.entries()){
    ? '?hexCooperativeLinear=1&hexShadowProgramWarm=1&hexPrimeFirstUse=1&hexPrimeSkipLogs=1'
    : mode==='shadow-linear'
    ? '?hexCooperativeLinear=1&hexShadowProgramWarm=1'
+   : mode==='cinema-cpu'
+   ? '?hexCinemaCpuCanvas=1'
    : ''
   await page.goto('http://127.0.0.1:4174/'+(flags?flags+'&hexProfile=1':'?hexProfile=1')+'#at=-26,20,0,0&autostart&skip',
    {waitUntil:'domcontentloaded',timeout:120000})
