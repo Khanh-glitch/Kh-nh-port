@@ -18,6 +18,21 @@ for(const p of ['reality/RealityHost','reality/Front']){
     'Failed private GPU prewarm must not allocate 96px framebuffer in production')
  }
 }
+// Native A/B must execute the changed Cinema in the real standalone HTML,
+// not an old pre-embedded Cinema while only recompiling HEX source modules.
+const cinemaSource=read('source/src/scene/Cinema.tsx')
+const cinemaEmbedded=map['orbita/scene/Cinema']
+assert.ok(cinemaEmbedded?.startsWith('data:text/javascript;base64,'),
+  'Full Cinema module remains part of the standalone')
+const cinemaJs=Buffer.from(cinemaEmbedded.split(',')[1],'base64').toString('utf8')
+for(const flag of ['hexCinemaCpuCanvas','hexCinemaFarLightGate']){
+ assert.ok(cinemaSource.includes(flag),'Cinema source includes test option '+flag)
+ assert.ok(cinemaJs.includes(flag),'Published standalone actually embeds Cinema '+flag)
+}
+assert.match(cinemaSource,/film\(ctx, SW, SH, t, st\.reel, st\.reelT\)/,
+ 'Cinema full-resolution original film rendering retained')
+assert.match(cinemaSource,/tiny\.getImageData\(0, 0, 4, 2\)/,
+ 'Original Cinema light sample is still present near the exhibit')
 const source=read('source/src/reality/RealityHost.tsx')
 assert.match(source,/<UEHWorld\s*\/>/,'Entire source 3D environment preserved')
 assert.match(source,/<HexLattice\s*\/>/,'Source hexagonal prism mesh preserved')
