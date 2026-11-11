@@ -47,6 +47,9 @@ for(const [idx,mode] of modes.entries()){
   await page.evaluate(()=>{
    window.__hexCpuFrames=[]
    window.__hexCpuTasks=[]
+   window.__hexCpuHeartbeats=[performance.now()]
+   // Independent of rAF: distinguish main-thread stalls from compositor/GPU-only starvation.
+   window.__hexCpuHeartbeat=setInterval(()=>window.__hexCpuHeartbeats.push(performance.now()),25)
    const obs=new PerformanceObserver(entries=>{
      for(const entry of entries.getEntries()){
        window.__hexCpuTasks.push({at:entry.startTime,duration:entry.duration,name:entry.name})
@@ -67,7 +70,9 @@ for(const [idx,mode] of modes.entries()){
   await page.evaluate(()=>{
     window.__hexCpuFrames=[]
     window.__hexCpuTasks=[]
+    window.__hexCpuHeartbeats=[]
     window.__hexCpuClicked=performance.now()
+    window.__hexCpuHeartbeats.push(window.__hexCpuClicked)
     window.__orbitaReality.requestReality('mua-ha')
   })
   await page.waitForTimeout(11000)
@@ -94,8 +99,18 @@ for(const [idx,mode] of modes.entries()){
   r.render=await page.evaluate(()=>{
    const frames=window.__hexCpuFrames
    const gaps=frames.slice(1).map((t,i)=>t-frames[i])
+   const ticks=window.__hexCpuHeartbeats
+   const timerGaps=ticks.slice(1).map((t,i)=>t-ticks[i])
    const now=performance.now()
+   clearInterval(window.__hexCpuHeartbeat)
+   const rafStall=Math.max(0,...gaps,now-(frames.at(-1)??window.__hexCpuClicked))
+   const timerStall=Math.max(0,...timerGaps,now-(ticks.at(-1)??window.__hexCpuClicked))
    return {durationMs:Math.round(now-window.__hexCpuClicked),
+    heartbeatSamples:ticks.length,
+    maxTimerGapMs:Math.round(timerStall),
+    timerGapsOver120Ms:timerGaps.filter(g=>g>120).length,
+    maxRafMinusTimerGapMs:Math.round(rafStall-timerStall),
+    timersStillActiveWhileRafStarved:rafStall-timerStall>1000,
     maxGapMs:Math.round(Math.max(0,...gaps,now-(frames.at(-1)??window.__hexCpuClicked))),
     longTaskMaxMs:Math.round(Math.max(0,...window.__hexCpuTasks.map(x=>x.duration))),
     topLongTasks:[...window.__hexCpuTasks].sort((a,b)=>b.duration-a.duration).slice(0,8),
