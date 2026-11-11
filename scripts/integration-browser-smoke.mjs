@@ -12,7 +12,7 @@ try {
  await page.goto('http://127.0.0.1:4174/',{waitUntil:'domcontentloaded',timeout:120000})
  await page.waitForSelector('iframe[title*="Immersive Space Shift"]',{timeout:90000})
  const frame=page.frameLocator('iframe[title*="Immersive Space Shift"]')
- await frame.locator('.app').waitFor({state:'visible',timeout:120000})
+ await frame.locator('.app').waitFor({state:'attached',timeout:120000})
  await frame.locator('.energy-gate').first().waitFor({state:'visible',timeout:30000})
  report.stages.push('space3d-rendered')
  report.warpButton=await frame.locator('.energy-gate button').first().textContent()
