@@ -8,7 +8,7 @@ const browser=await chromium.launch({headless:true,args:[
  '--use-angle=metal','--disable-software-rasterizer'
 ]})
 const report=[]
-for(const [name,port] of [['main-4454511',4173],['hex-candidate',4174]]){
+for(const [name,port] of [[process.env.HEX_VISUAL_REFERENCE_LABEL||'main-4454511',4173],['hex-candidate',4174]]){
  const context=await browser.newContext({
   viewport:{width:1280,height:720},deviceScaleFactor:1,reducedMotion:'no-preference'
  })
@@ -17,7 +17,8 @@ for(const [name,port] of [['main-4454511',4173],['hex-candidate',4174]]){
  page.on('requestfailed',e=>r.network.push(e.url().slice(0,150)))
  report.push(r)
  try{
-  await page.goto('http://127.0.0.1:'+port+'/#at=-26,20,0,0&autostart&skip',
+  const flag=port===4174 ? (process.env.HEX_VISUAL_CANDIDATE_QUERY||'') : ''
+  await page.goto('http://127.0.0.1:'+port+'/'+flag+'#at=-26,20,0,0&autostart&skip',
    {waitUntil:'domcontentloaded',timeout:120000})
   await page.waitForFunction(async()=>{
    const {useStore}=await import('orbita/store')
