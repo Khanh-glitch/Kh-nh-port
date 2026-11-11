@@ -1,0 +1,53 @@
+name: ORBITA native Metal — actual ready 100%, warp, island and no GPU fallback
+on:
+  push:
+    branches: ['integration/space-shift-showtime-social']
+    paths:
+      - '.github/workflows/space-stage-social-metal-acceptance.yml'
+      - 'scripts/integration-browser-smoke.mjs'
+      - 'source/src/ui/Overlay.tsx'
+      - 'source/immersive/src/**'
+      - 'scripts/rebuild-integrated-standalone.cjs'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  metal-end-to-end:
+    runs-on: macos-15
+    timeout-minutes: 32
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Compile original independent Three.js scenes without changing HEX
+        run: |
+          npm ci --prefix source
+          npm ci --prefix source/immersive
+          npm run build --prefix source
+          npm run build --prefix source/immersive
+          node scripts/rebuild-integrated-standalone.cjs
+          node tests/integration-regression.mjs
+          node tests/hex-preservation.mjs
+          node scripts/build-pages.mjs
+      - name: Install chromium (no Linux apt dependencies)
+        run: |
+          npm install --prefix source --no-save --package-lock=false playwright@1.56.1
+          (cd source && npx playwright install chromium)
+      - name: Actual viewer must charge warp naturally and enter preserved island
+        env:
+          ORBITA_TEST_ANGLE: metal
+        run: |
+          python3 -m http.server 4174 --bind 127.0.0.1 --directory dist-pages >/tmp/orbita-metal.log 2>&1 &
+          for n in {1..90}; do
+            if curl -fsS -o /dev/null http://127.0.0.1:4174/; then break; fi
+            sleep 1
+          done
+          node scripts/integration-browser-smoke.mjs
+          node -e "const r=require('./integration-evidence/report.json'); if(!r.normalGpuReady || r.degradedGpuRecovery || !r.stages.includes('original-island-descent-engaged')) throw Error('Native Metal must enter by a genuinely completed 100% GPU gate, no software fallback. '+JSON.stringify(r));"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ORBITA-metal-real-ready-and-warp
+          path: integration-evidence/
+          if-no-files-found: warn
