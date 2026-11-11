@@ -1,7 +1,7 @@
 import {createRequire} from 'node:module'
 import {mkdirSync,writeFileSync} from 'node:fs'
 const require=createRequire(import.meta.url)
-const {chromium}=require('../candidate/source/node_modules/playwright')
+const {chromium}=require('../source/node_modules/playwright')
 mkdirSync('hex-gpu-isolation',{recursive:true})
 const cases=['normal','no-ignition','no-ignition-light','no-hex','no-world','no-sheets']
 const browser=await chromium.launch({headless:true,args:[
