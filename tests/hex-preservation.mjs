@@ -50,14 +50,8 @@ assert.doesNotMatch(kit,/reel\.use\(id\)\.then\(/,'A second track owner must not
 const kitJs=Buffer.from(map['orbita/reality/kit'].split(',')[1],'base64').toString('utf8')
 assert.match(kitJs,/demoTexture/,'Standalone actually includes stable reel texture')
 assert.doesNotMatch(source,/hexRadialInstances|hexRadialOn/,'Rejected radial reorder cannot reappear in a release')
-assert.match(source,/get\('hexAttrWarm'\) === '1'/,
- 'Geometry buffer experiment must remain explicitly opt-in')
-assert.match(source,/preview\.instanceMatrix = source\.instanceMatrix/,
- 'Private upload must share original attribute buffer, not clone geometry data')
-assert.match(source,/wrapper\.setDrawRange\(0, 3\)/,
- 'Offscreen attribute prep is bounded to one triangle')
-assert.match(source,/preview\.count = 1/,
- 'Offscreen attribute prep is bounded to one instance')
+assert.doesNotMatch(source,/hexAttrWarm|hexAttrEnabled|__orbitaHexAttributeWarm/,
+ 'Rejected private GPU preupload must not add idle stalls to production')
 const front=read('source/src/reality/Front.tsx')
 assert.match(front,/const WALL_H = 120/,'Original wall height unchanged')
 assert.match(front,/new THREE\.CylinderGeometry\(1, 1, 1, 160, 24, true\)/,'Original wall mesh resolution retained')
