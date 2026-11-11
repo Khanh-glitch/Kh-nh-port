@@ -18,7 +18,11 @@ for(const [idx,mode] of modes.entries()){
  page.on('requestfailed',e=>r.requests.push(e.url().slice(0,140)))
  results.push(r)
  try{
-  const flags=mode==='prime-first-use'
+  const flags=mode==='batch-control'
+   ? '?hexCooperativeLinear=1&hexShadowProgramWarm=1&hexPrimeFirstUse=1&hexCinemaFarLightGate=1'
+   : mode==='batch-exact'
+   ? '?hexCooperativeLinear=1&hexShadowProgramWarm=1&hexPrimeFirstUse=1&hexCinemaFarLightGate=1&hexBatchProbe=extended'
+   : mode==='prime-first-use'
    ? '?hexCooperativeLinear=1&hexShadowProgramWarm=1&hexPrimeFirstUse=1'
    : mode==='prime-checked-fast'
    ? '?hexCooperativeLinear=1&hexShadowProgramWarm=1&hexPrimeFirstUse=1&hexPrimeSkipLogs=1'
@@ -148,6 +152,7 @@ for(const [idx,mode] of modes.entries()){
     phase:window.__orbitaReality.useReality.getState().phase,
     front:window.__orbitaReality.rt.front,
     gpuDiag:window.__orbitaHexGpuDiagStats??null,
+    exactBatch:window.__orbitaHexBatchStats??null,
     vertexGate:window.__orbitaHexVertexGate??null,
     shaderPrep:window.__orbitaHexShaderPrep,
     source:window.__orbitaHexTimings??null}
