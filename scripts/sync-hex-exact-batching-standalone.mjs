@@ -27,7 +27,7 @@ for(const [name,hash] of Object.entries(frozen)) {
 }
 const source=readFileSync(resolve(srcRoot,'reality/RealityHost.tsx'),'utf8')
 assert(source.includes("hexBatchProbe === 'extended'"),'Experiment must remain query-only')
-assert(source.includes("hexBatchProbe === 'manual'"),'Original-scene image parity diagnostic missing')
+assert(source.includes("hexBatchProbe !== 'manual'"),'Original-scene image parity diagnostic missing')
 assert(source.includes('hexMergedAway'),'Original geometry custody marker missing')
 const output=ts.transpileModule(source,{
   fileName:'reality/RealityHost.tsx',reportDiagnostics:true,
