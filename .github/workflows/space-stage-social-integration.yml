@@ -27,7 +27,13 @@ jobs:
           npm ci --prefix source/immersive
           npm run build --prefix source
           npm run build --prefix source/immersive
+          # Root HTML is a checked-in standalone. Rebuild it from CURRENT
+          # edited source before browser-testing, otherwise a green/failed
+          # smoke might silently exercise stale pre-integration JS.
+          node scripts/rebuild-integrated-standalone.cjs
+          node tests/integration-regression.mjs
           node tests/hex-preservation.mjs
+          node scripts/build-pages.mjs
       - name: Install native browser
         run: |
           npm install --prefix source --no-save --package-lock=false playwright@1.56.1
