@@ -59,12 +59,14 @@ try {
    await recovery.waitFor({state:'visible',timeout:15000})
    await recovery.click()
    report.degradedGpuRecovery=true
+   report.parentHandshakeAfterRecovery=await page.evaluate(()=>window.__orbitaEntryGate??null)
    await page.waitForFunction(()=>{
      const btn=document.querySelector('iframe')?.contentDocument?.querySelector('.energy-gate button')
      return btn instanceof HTMLButtonElement && !btn.disabled
    },null,{timeout:20000,polling:400})
  }
  report.normalGpuReady=normalReady
+ report.entryHandshake=await page.evaluate(()=>window.__orbitaEntryGate??null)
  report.ready=true
  report.stages.push('energy-filled')
  await frame.locator('.energy-gate button').first().click({timeout:30000})
@@ -83,6 +85,13 @@ try {
  if(report.errors.length)throw Error('Browser JS exceptions: '+JSON.stringify(report.errors.slice(0,5)))
 } catch(error) {
  report.error=String(error)
+ report.entryHandshakeAtFailure=await page.evaluate(()=>window.__orbitaEntryGate??null).catch(()=>null)
+ report.iframeGateAtFailure=await page.evaluate(()=>{
+   const iframe=document.querySelector('iframe')
+   const el=iframe?.contentDocument?.querySelector('.energy-gate')
+   return el?{ready:el.getAttribute('data-ready'),label:el.textContent?.slice(0,130),
+     buttonDisabled:el.querySelector('button')?.disabled}:null
+ }).catch(()=>null)
 } finally {
  writeFileSync('integration-evidence/report.json',JSON.stringify(report,null,2))
  console.log('ORBITA_INTEGRATION_BROWSER '+JSON.stringify(report).slice(0,12000))
