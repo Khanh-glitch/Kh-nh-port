@@ -155,7 +155,7 @@ for(const [idx,mode] of modes.entries()){
  page.on('requestfailed',e=>r.network.push(e.url().slice(0,140)))
  results.push(r)
  try{
-  const q=(mode==='normal'?'':mode==='fast-program-logs'?'?hexSkipShaderLogs=1':mode==='real-scene-compile'?'?hexRealSceneCompile=1':mode==='linear-target-compile'?'?hexLinearTargetCompile=1':mode==='cooperative-linear'?'?hexCooperativeLinear=1':mode==='shadow-linear'?'?hexCooperativeLinear=1&hexShadowProgramWarm=1':mode==='prime-first-use'?'?hexCooperativeLinear=1&hexShadowProgramWarm=1&hexPrimeFirstUse=1':'?hexGpuDiag='+mode)
+  const q=(mode==='normal'?'':mode==='fast-program-logs'?'?hexSkipShaderLogs=1':mode==='real-scene-compile'?'?hexRealSceneCompile=1':mode==='linear-target-compile'?'?hexLinearTargetCompile=1':mode==='cooperative-linear'?'?hexCooperativeLinear=1':mode==='shadow-linear'?'?hexCooperativeLinear=1&hexShadowProgramWarm=1':mode==='prime-first-use'?'?hexCooperativeLinear=1&hexShadowProgramWarm=1&hexPrimeFirstUse=1':mode==='prime-checked-fast'?'?hexCooperativeLinear=1&hexShadowProgramWarm=1&hexPrimeFirstUse=1&hexPrimeSkipLogs=1':'?hexGpuDiag='+mode)
   await page.goto('http://127.0.0.1:4174/'+q+'#at=-26,20,0,0&autostart&skip',
    {waitUntil:'domcontentloaded',timeout:120000})
   await page.waitForFunction(async()=>{
@@ -169,23 +169,25 @@ for(const [idx,mode] of modes.entries()){
       p.uploadedTextures===p.totalTextures&&p.errors===0
   },null,{timeout:180000,polling:600})
   const before=await page.evaluate(()=>({...window.__orbitaHexShaderPrep}))
-  if(['cooperative-linear','shadow-linear','prime-first-use'].includes(mode)){
+  if(['cooperative-linear','shadow-linear','prime-first-use','prime-checked-fast'].includes(mode)){
     r.cooperative=before
     if(before.preflightTarget!=='linear-per-material'||
       before.linearSubmissions<20||before.linearRestoreErrors!==0)
       throw Error('Cooperative Linear precompile incomplete: '+JSON.stringify(before))
     if(before.linearMaxSubmitMs>120)
       throw Error('Idle shader submission exceeds 120ms: '+JSON.stringify(before))
-    if((mode==='shadow-linear'||mode==='prime-first-use') &&
+    if(['shadow-linear','prime-first-use','prime-checked-fast'].includes(mode) &&
        (!(before.shadowVariantTotal>0)||
          before.shadowVariantDone!==before.shadowVariantTotal||
          before.shadowVariantErrors!==0))
       throw Error('Native depth variant preflight incomplete: '+JSON.stringify(before))
-    if(mode==='prime-first-use'){
+    if(mode==='prime-first-use'||mode==='prime-checked-fast'){
       r.firstUseProbe={
         total:before.primeTotal,done:before.primeDone,
         maxMs:before.primeMaxMs,paused:before.primePaused,
-        errors:before.primeErrors
+        errors:before.primeErrors,
+        linkFailures:before.primeLinkFailures,
+        loglessChecked:before.primeCheckedWithoutLogs
       }
       if(!(before.primeTotal>10))
         throw Error('No deferred Three.js program first-use work was discovered: '+JSON.stringify(before))
@@ -281,9 +283,10 @@ for(const [idx,mode] of modes.entries()){
 await browser.close()
 if(results.some(r=>r.error||r.errors.length||r.network.length||r.sample?.contextLost||
   !r.sample?.hookedMethods))process.exitCode=4
-if(results.some(r=>r.mode==='prime-first-use'&&
+if(results.some(r=>['prime-first-use','prime-checked-fast'].includes(r.mode)&&
   (!r.firstUseProbe||r.firstUseProbe.paused||r.firstUseProbe.errors||
-   r.firstUseProbe.maxMs>120||r.firstUseProbe.done!==r.firstUseProbe.total))){
+   r.firstUseProbe.maxMs>120||r.firstUseProbe.done!==r.firstUseProbe.total||r.firstUseProbe.linkFailures||
+   (r.mode==='prime-checked-fast'&&r.firstUseProbe.loglessChecked!==r.firstUseProbe.total)))){
   console.error('HEX_FIRST_USE_PRIME_REJECTED: idle GPU initialization exceeded frame budget or incomplete')
   process.exitCode=6
 }
