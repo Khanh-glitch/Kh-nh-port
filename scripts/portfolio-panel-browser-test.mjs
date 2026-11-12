@@ -18,12 +18,17 @@ const suites=[
 // heuristics during three.js background shader compilation. This still
 // requires the target to be under the pointer and its onClick to run.
 async function pointerClick(page,locator,label){
+  // On 390px phones the second tab is legitimately offscreen in an
+  // overflow-x:auto scroller. Reveal it as a visitor would before tapping.
+  await locator.evaluate(el=>el.scrollIntoView({
+    behavior:'instant',block:'nearest',inline:'center'
+  }))
   const hit=await locator.evaluate(el=>{
     const r=el.getBoundingClientRect()
     const x=r.x+r.width/2,y=r.y+r.height/2
     const top=document.elementFromPoint(x,y)
     return {x,y,w:r.width,h:r.height,hit:top===el||el.contains(top),
-      html:top?.outerHTML?.slice(0,140)}
+      html:top?.outerHTML?.slice(0,140),viewport:[innerWidth,innerHeight]}
   },{timeout:10000})
   if(!hit.hit||hit.w<8||hit.h<8)
     throw Error('Pointer target occluded '+label+': '+JSON.stringify(hit))
