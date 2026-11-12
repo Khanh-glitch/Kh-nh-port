@@ -8,7 +8,7 @@
     "--ignore-gpu-blocklist",
     "--disable-dev-shm-usage"
   ],
-  "startedAt": "2026-11-12T10:38:17.975Z",
+  "startedAt": "2026-11-12T10:49:35.749Z",
   "viewports": [
     "desktop"
   ],
@@ -20,8 +20,29 @@
       "stage": "world-entry:products",
       "backend": "SwiftShader",
       "suite": "desktop",
-      "error": "Error: WALK_BUDGET: the visitor walked 14.7m short of Product Lab pedestal in 189665ms (SwiftShader renders a few frames per second); this is a test-budget limit, not a closed source check. Walked to {\"x\":0,\"z\":37.41}",
-      "verdict": "UNPROVEN_TIME_BUDGET"
+      "error": "Error: Deep-linked viewpoint placed the visitor 23.1m from the requested walkable pose",
+      "verdict": "REAL_DEFECT"
+    },
+    {
+      "stage": "world-entry:rubik",
+      "backend": "SwiftShader",
+      "suite": "desktop",
+      "error": "Error: Deep-linked viewpoint placed the visitor 39.6m from the requested walkable pose",
+      "verdict": "REAL_DEFECT"
+    },
+    {
+      "stage": "world-entry:beacon",
+      "backend": "SwiftShader",
+      "suite": "desktop",
+      "error": "Error: Deep-linked viewpoint placed the visitor 23.4m from the requested walkable pose",
+      "verdict": "REAL_DEFECT"
+    },
+    {
+      "stage": "world-entry:piano",
+      "backend": "SwiftShader",
+      "suite": "desktop",
+      "error": "Error: Deep-linked viewpoint placed the visitor 40.5m from the requested walkable pose",
+      "verdict": "REAL_DEFECT"
     },
     {
       "stage": "suite-timeout",
@@ -32,6 +53,6 @@
     }
   ],
   "passed": false,
-  "finishedAt": "2026-11-12T10:43:17.976Z",
-  "totalMs": 300001
+  "finishedAt": "2026-11-12T10:54:35.752Z",
+  "totalMs": 300003
 }
