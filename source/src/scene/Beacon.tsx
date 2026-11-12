@@ -20,6 +20,14 @@ export function Beacon() {
   // Diagnostics are query-only. Public scene and signal choreography stay exact.
   const benchmark = typeof window !== 'undefined' &&
     new URLSearchParams(window.location.search).get('beaconProfile') === '1'
+  // Benchmark ablations are NEVER production modes or performance fixes.
+  // Isolate original panel compositor vs original SocialDrops shader cost.
+  const diagnostic = typeof window !== 'undefined'
+    ? new URLSearchParams(window.location.search) : null
+  const omitPanelForDiagnosis = benchmark &&
+    diagnostic?.get('beaconDiagNoPanel') === '1'
+  const omitSocialForDiagnosis = benchmark &&
+    diagnostic?.get('beaconDiagNoSocial') === '1'
   const traceIndex = useRef(0)
   const busRef = useRef<Bus | null>(null)
   const dishYaw = useRef<THREE.Group>(null)
@@ -140,7 +148,7 @@ export function Beacon() {
           at:Math.round(performance.now()),
         })
       }
-      openPanel('beacon')
+      if(!omitPanelForDiagnosis)openPanel('beacon')
     }, 1600)
   }
 
@@ -288,7 +296,7 @@ export function Beacon() {
         </mesh>
       ))}
 
-      <SocialDrops signal={st} />
+      {!omitSocialForDiagnosis && <SocialDrops signal={st} />}
       <Hit id="beacon" label="Signal Beacon" hint="Phát tín hiệu liên hệ" panel="beacon" maxDist={55} shape="cylinder" size={[1.6, 11, 0]} position={[0, 5.5, 0]} onClick={send} />
       <Hit id="beacon-dish" label="Signal Beacon" hint="Phát tín hiệu liên hệ" panel="beacon" maxDist={55} shape="sphere" size={[2.4, 0, 0]} position={[0, MAST_H + 1.5, 0]} onClick={send} />
     </group>
