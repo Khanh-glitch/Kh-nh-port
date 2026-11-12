@@ -4,6 +4,7 @@ import * as THREE from 'three'
 import { EXHIBITS } from '../layout'
 import { audio, type Bus } from '../audio'
 import { toast } from '../store'
+import { openPanel } from './Player'
 import { NOISE_GLSL, beamGeometry, beamMaterial, glowTexture, rand } from '../gfx'
 import { Hit } from './Hit'
 import { Label } from './Label'
@@ -217,10 +218,19 @@ export function Orb() {
 
   const trigger = () => {
     const t = performance.now() / 1000
-    if (t - st.t0 < 2.6) return
-    st.t0 = t
-    if (busRef.current) audio.orbCharge(busRef.current)
-    toast('Singularity Orb: tích năng lượng…')
+    // The energy animation is rate limited; the dossier is NOT. Clicking the
+    // orb used to be silently ignored while the animation was on cooldown, so
+    // the exhibit had no reachable dossier through real input at all.
+    if (t - st.t0 >= 2.6) {
+      st.t0 = t
+      if (busRef.current) audio.orbCharge(busRef.current)
+      toast('Singularity Orb: tích năng lượng…')
+    }
+  }
+  // Same behaviour as the keyboard "E" path: animate, then open the dossier.
+  const animateAndOpen = () => {
+    trigger()
+    openPanel('orb')
   }
 
   const shock = useMemo(() => new THREE.MeshBasicMaterial({ color: new THREE.Color('#9f8bff').multiplyScalar(2.4), toneMapped: false, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide }), [])
@@ -359,8 +369,8 @@ export function Orb() {
         <ringGeometry args={[0.95, 1, 128]} />
       </mesh>
 
-      <Hit id="orb" label="Singularity Orb" hint="Kích hoạt năng lượng" panel="orb" maxDist={60} shape="sphere" size={[4.2, 0, 0]} position={[0, ORB_Y, 0]} onClick={trigger} />
-      <Hit id="orb-base" label="Singularity Orb" hint="Kích hoạt năng lượng" panel="orb" maxDist={40} shape="cylinder" size={[3.4, 2, 0]} position={[0, 1, 0]} onClick={trigger} />
+      <Hit id="orb" label="Singularity Orb" hint="Kích hoạt năng lượng · mở hồ sơ" panel="orb" maxDist={60} shape="sphere" size={[4.2, 0, 0]} position={[0, ORB_Y, 0]} onClick={animateAndOpen} />
+      <Hit id="orb-base" label="Singularity Orb" hint="Kích hoạt năng lượng · mở hồ sơ" panel="orb" maxDist={40} shape="cylinder" size={[3.4, 2, 0]} position={[0, 1, 0]} onClick={animateAndOpen} />
     </group>
   )
 }

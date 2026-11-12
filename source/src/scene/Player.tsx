@@ -127,6 +127,17 @@ export function Player() {
       player.yaw = (parseFloat(m[3]) * Math.PI) / 180
       player.pitch = (parseFloat(m[4]) * Math.PI) / 180
     }
+    // Shareable viewpoint inside the walking world: #view=x,z,yawDeg,pitchDeg.
+    // Unlike #at it is only a start pose on the walkable island; moving,
+    // colliding and interacting then behave exactly like a normal visit, so a
+    // shared link never bypasses the exhibits' own interaction rules.
+    const view = hash.match(/view=(-?[\d.]+),(-?[\d.]+),(-?[\d.]+),(-?[\d.]+)/)
+    if (view) {
+      player.pos.x = parseFloat(view[1])
+      player.pos.z = parseFloat(view[2])
+      player.yaw = (parseFloat(view[3]) * Math.PI) / 180
+      player.pitch = (parseFloat(view[4]) * Math.PI) / 180
+    }
     if (hash.includes('skip')) trans.lastPhase = 'playing'
     if (hash.includes('autostart')) window.setTimeout(() => startGame(), 400)
     let dragging = false

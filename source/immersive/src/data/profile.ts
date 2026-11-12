@@ -1,11 +1,9 @@
 import pilotPhoto from '../assets/pilot.jpg';
 
 /**
- * ─────────────────────────────────────────────────────────────────────────
- *  TOÀN BỘ NỘI DUNG HỒ SƠ NẰM Ở FILE NÀY.
- *  Mọi số liệu, công ty, dự án, liên hệ bên dưới là DỮ LIỆU MẪU —
- *  hãy thay bằng thông tin thật của bạn. Ảnh: src/assets/pilot.jpg
- * ─────────────────────────────────────────────────────────────────────────
+ * Hồ sơ dự án của LÊ QUỐC KHÁNH. Chỉ dùng tên, sản phẩm và nguồn
+ * đã được xác minh. Ảnh phi công là ảnh AI minh họa.
+ * Không đặt công ty, bằng cấp, giải thưởng, số năm hay email giả.
  */
 
 export type Lang = 'vi' | 'en';
@@ -18,23 +16,23 @@ export const profile = {
   timezone: 'Asia/Ho_Chi_Minh',
 
   title: { vi: 'AI creative builder · Thiết kế trải nghiệm', en: 'AI creative builder · Experience design' } as L10n,
-  focus: ['Vibe coding', 'Interactive 3D', 'Creative AI'],
+  focus: ['Vibe coding', 'Interactive 3D', 'Game Design', 'Event Production'],
   availability: { vi: 'Sẵn sàng nhận việc', en: 'Open to work' } as L10n,
 
   headline: {
-    vi: 'Xây dựng giao diện web nhanh, sắc nét và giàu tương tác.',
-    en: 'I build fast, crisp, highly interactive web interfaces.',
+    vi: 'Biến ý tưởng thành game prototype, công cụ web và trải nghiệm 3D có thể kiểm chứng.',
+    en: 'Building testable game prototypes, web tools and interactive 3D experiences with AI.',
   } as L10n,
   summary: {
-    vi: 'Portfolio tương tác về thiết kế trải nghiệm, công cụ sáng tạo AI, sự kiện và game prototype.',
-    en: 'Interactive portfolio featuring experience design, AI-assisted creative tools, events and game prototypes.',
+    vi: 'Tôi là một vibecoder: tập trung vào ý tưởng, thiết kế luồng sản phẩm, điều phối AI và thử nghiệm thực tế. Khám phá ORBITA, EventFlow Pro, APEX CHAOS và Soul of Hero.',
+    en: 'I am an AI-assisted builder focused on product thinking, orchestration, iteration and real tests. Explore ORBITA, EventFlow Pro, APEX CHAOS and Soul of Hero.',
   } as L10n,
 
   stats: [
     { value: '3D', label: { vi: 'Không gian tương tác', en: 'Interactive worlds' } },
     { value: 'AI', label: { vi: 'Công cụ sáng tạo', en: 'Creative tools' } },
     { value: 'GAME', label: { vi: 'Prototype game', en: 'Game prototyping' } },
-    { value: 'EVENT', label: { vi: 'Trải nghiệm sự kiện', en: 'Event experiences' } },
+    { value: 'UEH', label: { vi: 'Quản trị sự kiện', en: 'Event management' } },
   ] as { value: string; label: L10n }[],
 
   facts: [
@@ -47,8 +45,8 @@ export const profile = {
       value: { vi: 'Remote · Hybrid · Onsite', en: 'Remote · Hybrid · Onsite' },
     },
     {
-      label: { vi: 'Học vấn', en: 'Education' },
-      value: { vi: 'Đang cập nhật hồ sơ', en: 'Résumé details pending' },
+      label: { vi: 'Học vấn / CV', en: 'Education / CV' },
+      value: { vi: 'UEH · Quản trị sự kiện · 2023–2026 (dự kiến)', en: 'UEH · Event Management · 2023–2026 expected' },
     },
     {
       label: { vi: 'Ngôn ngữ', en: 'Languages' },
@@ -56,37 +54,43 @@ export const profile = {
     },
   ] as { label: L10n; value: L10n }[],
 
+  // Project work, not unverified employment history.
   experience: [
-    {period:{vi:'PORTFOLIO',en:'PORTFOLIO'},role:'ORBITA',org:'Interactive 3D',note:{vi:'Thiết kế triển lãm dự án trong thế giới 3D.',en:'Interactive 3D project exhibition.'}},
-    {period:{vi:'PROJECT',en:'PROJECT'},role:'Event Flow',org:'Creative tooling',note:{vi:'Thử nghiệm công cụ hỗ trợ quy trình sự kiện.',en:'Event workflow tooling experiment.'}},
-    {period:{vi:'PROJECT',en:'PROJECT'},role:'Soul of Heroes',org:'Game prototyping',note:{vi:'Thử nghiệm game, hệ thống gameplay và VFX.',en:'Game systems and VFX prototype.'}},
+    {period:{vi:'THỰC TẬP',en:'INTERNSHIP'},role:'Event Production Intern',org:'Sen Viet Communication Investment Company Limited',note:{vi:'Theo CV: hỗ trợ lập kế hoạch và thực hiện sự kiện, phối hợp các nhóm sản xuất, thiết kế và truyền thông.',en:'Per résumé: supporting event planning, on-site production and cross-functional coordination.'}},
+    {period:{vi:'DỰ ÁN',en:'PROJECT'},role:'ORBITA',org:'Interactive portfolio',note:{vi:'Thiết kế hệ thống dẫn đường trong không gian 3D và khởi động bằng phi thuyền.',en:'A 3D navigable experience with a spaceship-first entry.'}},
+    {period:{vi:'DỰ ÁN',en:'PROJECT'},role:'EventFlow Pro',org:'Event operations tooling',note:{vi:'Demo quy trình brief, nhu cầu sản xuất, BOQ, báo giá và proposal; chưa triển khai production.',en:'Brief-to-production demo, BOQ, quotes and proposal workflow; not production-ready.'}},
+    {period:{vi:'DỰ ÁN',en:'PROJECT'},role:'APEX CHAOS',org:'Browser game',note:{vi:'Game đấu trường trình duyệt với engine và tài sản game riêng.',en:'A browser arena game with dedicated gameplay runtime and assets.'}},
+    {period:{vi:'DỰ ÁN',en:'PROJECT'},role:'Soul of Hero',org:'Pixel survival RPG',note:{vi:'Game sinh tồn đang phát triển, tập trung vào gameplay và VFX.',en:'In-development pixel survival game systems and VFX.'}},
   ] as { period: L10n; role: string; org: string; note: L10n }[],
 
   projects: [
-    {name:'ORBITA',tag:'3D PORTFOLIO',metric:'LIVE',note:{vi:'Triển lãm dự án 3D · trình duyệt.',en:'Browser-based interactive 3D exhibition.'}},
-    {name:'Soul of Heroes',tag:'GAME',metric:'PROTOTYPE',note:{vi:'Thiết kế gameplay, môi trường và hiệu ứng.',en:'Gameplay, environments and visual effects.'}},
-    {name:'Event Flow',tag:'EVENT TECH',metric:'PROJECT',note:{vi:'Công cụ thử nghiệm cho quy trình sự kiện.',en:'Experimentation with event workflows.'}},
+    {name:'ORBITA',tag:'3D PORTFOLIO',metric:'INTERACTIVE',note:{vi:'Phi thuyền và đảo 3D trưng bày dự án có thể tương tác.',en:'Interactive spaceship-and-island 3D project exhibition.'}},
+    {name:'EventFlow Pro',tag:'EVENT TECH',metric:'DEMO',note:{vi:'Workspace browser-local đã kiểm thử, chưa production-ready.',en:'Tested browser-local workspace demo; not production-ready.'}},
+    {name:'APEX CHAOS',tag:'BROWSER GAME',metric:'GAME',note:{vi:'Game đấu trường có mã nguồn và engine riêng.',en:'Arena game with published source and runtime.'}},
+    {name:'MathPath',tag:'LEARNING WEB',metric:'PROJECT',note:{vi:'Ứng dụng học Toán với Living Board và tiến trình học.',en:'Math learning workspace with Living Board and progress.'}},
+    {name:'Soul of Hero',tag:'SURVIVAL GAME',metric:'DEVELOPMENT',note:{vi:'Game pixel survival RPG đang phát triển.',en:'In-development pixel survival RPG.'}},
+    {name:'VNGGames Prompt To Play 2026',tag:'AI GAME JAM',metric:'TOP 26 / CV',note:{vi:'Theo CV cá nhân: Top 26, prototype puzzle-RPG trong 24 giờ. Kết quả chưa đối chiếu độc lập với BTC.',en:'Per personal résumé: Top 26 and a 24-hour puzzle-RPG prototype. Official event confirmation pending.'}},
   ] as { name: string; tag: string; metric: string; note: L10n }[],
 
   stack: [
     {label:'AI',items:['AI-assisted building','Prompt workflows','Prototyping']},
     {label:'3D / FX',items:['Three.js','WebGL','GLSL']},
     {label:'Web',items:['React','TypeScript','HTML / CSS']},
-    {label:'Creative',items:['Visual design','Interaction design','Game concepts']},
+    {label:'Creative',items:['Experience design','Audio/visual concepts','Game design']},
     {label:'Workflow',items:['GitHub','Iteration','Testing']},
   ],
 
   contact: {
-    email: '',
-    phone: '',
-    linkedin: { label: 'LinkedIn · đang cập nhật', url: '' },
+    email: 'mencan308@gmail.com',
+    phone: '+84 328 494 207',
+    linkedin: { label: 'linkedin.com/in/quockhanh-le', url: 'https://www.linkedin.com/in/quockhanh-le/' },
     github: { label: 'github.com/Khanh-glitch', url: 'https://github.com/Khanh-glitch' },
   },
 
   links: {
-    /** Đường dẫn tới portfolio chi tiết. Nút "Vào portfolio" sẽ nhảy siêu không gian rồi mở link này. */
+    /** The in-page CTA jumps into the embedded 3D island; no external link needed. */
     portfolio: '',
-    /** Đường dẫn file CV (PDF). Để trống thì nút thứ hai sẽ là "Liên hệ" (mailto). */
+    /** Resume PDF is in the owner's Library only, not public hosting; do not invent a URL. */
     cv: '',
   },
 };
@@ -121,13 +125,13 @@ export const ui = {
   language: { vi: 'Ngôn ngữ', en: 'Language' },
   velocity: { vi: 'Vận tốc', en: 'Velocity' },
   radar: { vi: 'Radar', en: 'Radar' },
-  noticeTitle: { vi: 'Chưa thiết lập đích đến', en: 'Destination not set' },
+  noticeTitle: { vi: 'Không kết nối được trạm 3D', en: '3D destination unavailable' },
   noticeBody: {
-    vi: 'Thêm đường dẫn portfolio vào links.portfolio trong src/data/profile.ts để hoàn tất bước nhảy.',
-    en: 'Add your portfolio URL to links.portfolio in src/data/profile.ts to complete the jump.',
+    vi: 'Trạm 3D chưa trả lời tín hiệu. Thử tải lại trang để kết nối.',
+    en: 'The 3D station did not acknowledge the flight. Reload to reconnect.',
   },
   dismiss: { vi: 'Đóng', en: 'Dismiss' },
-  responds: { vi: 'Liên hệ đang cập nhật', en: 'Contact details pending' },
+  responds: { vi: 'Kênh liên hệ lấy từ CV của chủ sở hữu', en: 'Contact details provided in the owner’s résumé' },
   bootTitle: { vi: 'Khởi động hệ thống', en: 'System start-up' },
   bootEngines: { vi: 'Động cơ', en: 'Engines' },
   bootNav: { vi: 'Định vị', en: 'Navigation' },

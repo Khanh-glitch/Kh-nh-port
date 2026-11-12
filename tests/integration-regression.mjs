@@ -23,8 +23,16 @@ const experience=moduleSource('scene/Experience');
 assert(experience.includes("phase === 'intro' ? 0.5"),
   'Published scene throttles unseen island rasterization during spaceship');
 const experienceSource=readFileSync('source/src/scene/Experience.tsx','utf8');
-assert(experienceSource.includes("phase === 'intro' ? 0.5 : low ? 1 : [1, 1.6]"),
+assert(experienceSource.includes("low ? 1 : [1, 1.6]"),
   'Visible game original DPR and high quality range must be restored');
+assert(experienceSource.includes("phase === 'intro' || panelOpen ? 0.5"),
+  'Only covered pixels may be rendered below full resolution (spacecraft or an open dossier)');
+assert(experienceSource.includes("frameloop={panelOpen && phase !== 'intro' ? 'demand' : 'always'}"),
+  'A covered island must not keep a full-rate frame loop under an open dossier');
+assert(experienceSource.includes('CoveredIslandBeat'),
+  'A covered island must keep animating on a slow beat, never freeze');
+assert(experienceSource.includes("invalidate(), 260"),
+  'The covered beat must be about four frames per second');
 assert(experienceSource.includes('shadow-mapSize={[2048, 2048]}'),
   'Full original shadows must remain unchanged in the visible world');
 const overlay=moduleSource('ui/Overlay');

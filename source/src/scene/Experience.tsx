@@ -248,6 +248,19 @@ function IslandFirstPaintGate() {
   return null
 }
 
+/** While a dossier covers the island the world is invisible, but it must not
+ * freeze: the exhibits keep animating so a visitor returns to a live world.
+ * Advancing about four frames per second keeps every animation and shader
+ * alive while leaving the main thread to the dossier above it. */
+function CoveredIslandBeat() {
+  const invalidate = useThree((s) => s.invalidate)
+  useEffect(() => {
+    const id = window.setInterval(() => invalidate(), 260)
+    return () => window.clearInterval(id)
+  }, [invalidate])
+  return null
+}
+
 function HighGateMeter() {
   useFrame((state, delta) => {
     highGuard.record(delta, useStore.getState().quality, state.gl)
@@ -258,6 +271,7 @@ function HighGateMeter() {
 export function Experience() {
   const quality = useStore((s) => s.quality)
   const phase = useStore((s) => s.phase)
+  const panelOpen = useStore((s) => Boolean(s.panel))
   const low = quality === 'low'
   // DIAGNOSTIC ONLY: compare first-laser GPU scheduling with/without the
   // composer. Normal portfolio path always retains Bloom/AA/tonemapping.
@@ -294,7 +308,20 @@ export function Experience() {
       // Restore the EXACT original visible DPR on 'playing' before descent.
       // This cuts concurrent WebGL pressure without simplifying a single
       // UEH/HEX mesh or reducing the game's 2048px shadow map.
-      dpr={phase === 'intro' ? 0.5 : low ? 1 : [1, 1.6]}
+      // While a dossier is open the island is fully covered by the dossier
+      // itself, so its pixels are invisible. Render the covered surface at a
+      // quarter resolution — the real exhibit behind it keeps every mesh,
+      // shader, light and its full 2048px shadow map, and the exact visible
+      // resolution returns the moment the dossier closes. This is the same
+      // "invisible pixels cost less" rule already used under the spacecraft,
+      // not a reduction of the world a visitor actually sees.
+      dpr={phase === 'intro' || panelOpen ? 0.5 : low ? 1 : [1, 1.6]}
+      // A dossier is an HTML layer, and the covered island keeps a whole
+      // WebGL frame loop on the same main thread. Throttling the covered
+      // surface to ~4 fps keeps the dossier's own clicks, focus and scrolling
+      // responsive — the world itself is untouched and resumes at full rate
+      // the instant the dossier closes.
+      frameloop={panelOpen && phase !== 'intro' ? 'demand' : 'always'}
       shadows="percentage"
       camera={{ fov: 72, near: 0.1, far: 9000, position: [0, 17, 88] }}
       gl={{ antialias: false, powerPreference: 'high-performance', toneMapping: THREE.NoToneMapping, stencil: false }}
@@ -311,6 +338,7 @@ export function Experience() {
         <RealityHost />
         {!postProbeOff && <Post low={low} />}
         <IslandFirstPaintGate />
+        {panelOpen && phase !== 'intro' && <CoveredIslandBeat />}
       </Suspense>
     </Canvas>
   )

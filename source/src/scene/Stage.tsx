@@ -7,6 +7,7 @@ import { audio, type Bus } from '../audio'
 import { toast } from '../store'
 import { FONT, beamGeometry, beamMaterial, canvasTex, glowTexture, rand, rbox } from '../gfx'
 import { Hit } from './Hit'
+import { openPanel } from './Player'
 import { Label } from './Label'
 import { PadRing, isFacing, mats, useWorldColliders, worldPos } from './common'
 import { photoAllowed, type ShowId } from '../stage/shows'
@@ -819,7 +820,9 @@ export function Stage() {
           </group>
         </group>
       </group>
-      <Hit id="stage-body" label="Main Stage" hint="Đến khu FOH để chọn chương trình" maxDist={60} panel="stage" size={[16.4, 9, 8.6]} position={[0, 4.5, -0.8]} onClick={() => toast('Đến khu FOH phía trước sân khấu để gọi lại một chương trình')} />
+      {/* Clicking the stage itself now opens the frozen Main Stage case study,
+          exactly like "E". The FOH selector is still the way to call a show. */}
+      <Hit id="stage-body" label="Main Stage" hint="Mở hồ sơ · FOH để chọn chương trình" maxDist={60} panel="stage" size={[16.4, 9, 8.6]} position={[0, 4.5, -0.8]} onClick={() => openPanel('stage')} />
     </group>
     </>
   )
