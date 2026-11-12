@@ -202,3 +202,36 @@ test('the evidence step captures harness output before failing', () => {
   assert.match(workflow, /Fail the run when a real defect was recorded/,
     'the verdict must be enforced in its own later step')
 })
+
+test('the evidence script survives a partial or missing harness report', async () => {
+  // The inline `node -e` reporter assumed report.viewports always existed, so a
+  // fatal/partial report made the evidence step itself fail and the diagnosis
+  // was lost. The reporter is now a script and must handle every shape.
+  const {execFileSync} = await import('node:child_process')
+  const {mkdtempSync, writeFileSync: write, readFileSync: read, rmSync} = await import('node:fs')
+  const {tmpdir} = await import('node:os')
+  const {join} = await import('node:path')
+  const dir = mkdtempSync(join(tmpdir(), 'dossier-evidence-'))
+  const run = (report) => {
+    if (report === null) { try { rmSync(join(dir, 'report.json')) } catch {} }
+    else write(join(dir, 'report.json'), JSON.stringify(report))
+    write(join(dir, 'harness-out.txt'), 'HARNESS_FATAL demo\n')
+    execFileSync('node', ['scripts/portfolio-interaction-evidence.mjs'],
+      {env: {...process.env, PORTFOLIO_EVIDENCE_DIR: dir}, stdio: 'pipe'})
+    return read('docs/evidence/portfolio-interaction-latest.md', 'utf8')
+  }
+  try {
+    const full = run({backend: 'SwiftShader', viewports: ['desktop'], worldViewports: ['desktop'],
+      worldEntry: [], panels: [], inputPaths: [], failures: [], plan: [], suites: [],
+      passed: true, finishedAt: 'now', totalMs: 1})
+    assert.match(full, /PASS — every planned proof ran/)
+    const partial = run({backend: 'SwiftShader', stage: {at: 'load-playwright'}, fatal: 'no playwright'})
+    assert.match(partial, /INCOMPLETE — the harness stopped part way/)
+    assert.match(partial, /harness fatal: no playwright/)
+    const none = run(null)
+    assert.match(none, /NO REPORT/)
+    assert.match(none, /HARNESS_FATAL demo/)
+  } finally {
+    rmSync(dir, {recursive: true, force: true})
+  }
+})

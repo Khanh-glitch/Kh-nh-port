@@ -68,52 +68,15 @@ jobs:
       - name: Commit the interaction evidence (never HTML) so defects are readable
         if: always()
         run: |
-          set -eu
-          if [ ! -f browser-evidence/portfolio/report.json ]; then
-            echo "NO_REPORT — the harness did not reach its reporter"
-            mkdir -p docs/evidence
-            { echo '# Dossier interaction evidence — NO REPORT'; echo
-              echo 'The interaction harness terminated before writing its report.'
-              echo 'The step log above contains the terminal error.'; } \
-              > docs/evidence/portfolio-interaction-latest.md
-            rm -f docs/evidence/portfolio-interaction-latest.json
-            git config user.name 'github-actions[bot]'
-            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-            git add docs/evidence
-            if ! git diff --cached --quiet; then
-              git commit -m 'evidence(dossier): harness did not report [skip ci]'
-              git push origin "HEAD:${{ github.ref_name }}"
-            fi
-            exit 0
-          fi
-          mkdir -p docs/evidence
-          cp browser-evidence/portfolio/report.json docs/evidence/portfolio-interaction-latest.json
-          cp browser-evidence/portfolio/harness-out.txt docs/evidence/portfolio-interaction-latest-out.txt || true
-          node -e "
-            const r = require('./browser-evidence/portfolio/report.json');
-            const lines = [];
-            lines.push('# Dossier interaction evidence — ' + r.backend);
-            lines.push('');
-            lines.push('- DOM viewports: ' + r.viewports.join(', '));
-            lines.push('- 3D world viewports: ' + (r.worldViewports || []).join(', '));
-            lines.push('- world entries (real visitor input): ' + r.worldEntry.length);
-            r.worldEntry.forEach(w => lines.push('  - ' + w.suite + ' · ' + w.exhibit + ' -> ' + w.opened + ' [' + w.via + ']'));
-            lines.push('- walk skipped: ' + JSON.stringify(r.suites ? r.suites.flatMap(x => x.walkSkipped || []) : []));
-            lines.push('- dossier audits: ' + r.panels.length + '/' + (r.viewports.length * 12));
-            lines.push('- independent input paths (E / ESC / scrim / reopen): ' + r.inputPaths.length);
-            lines.push('- failures: ' + r.failures.length);
-            r.failures.forEach(f => lines.push('  - [' + (f.verdict || '?') + '][' + f.stage + '] ' + f.suite + ': ' + f.error));
-            lines.push('- plan: ' + JSON.stringify(r.plan || []));
-            lines.push('- reached stage: ' + JSON.stringify(r.stage || {}));
-            lines.push('- harness fatal: ' + (r.fatal ? String(r.fatal).split('\n')[0] : 'none'));
-            lines.push('- total ms: ' + (r.totalMs ?? 'n/a'));
-            require('fs').writeFileSync('docs/evidence/portfolio-interaction-latest.md', lines.join('\n') + '\n');
-          "
-          cat docs/evidence/portfolio-interaction-latest.md
+          set -u
+          node scripts/portfolio-interaction-evidence.mjs
+          cp browser-evidence/portfolio/harness-out.txt /tmp/harness-out.txt || true
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add docs/evidence
-          if ! git diff --cached --quiet; then
+          if git diff --cached --quiet; then
+            echo "EVIDENCE_UNCHANGED"
+          else
             git commit -m 'evidence(dossier): interaction report [skip ci]'
             git push origin "HEAD:${{ github.ref_name }}"
           fi
