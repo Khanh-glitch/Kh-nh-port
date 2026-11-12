@@ -8,7 +8,7 @@
     "--ignore-gpu-blocklist",
     "--disable-dev-shm-usage"
   ],
-  "startedAt": "2026-11-12T10:27:25.474Z",
+  "startedAt": "2026-11-12T10:38:17.975Z",
   "viewports": [
     "desktop"
   ],
@@ -20,22 +20,18 @@
       "stage": "world-entry:products",
       "backend": "SwiftShader",
       "suite": "desktop",
-      "error": "Error: page.evaluate: TypeError: Cannot read properties of undefined (reading 'player')\n    at eval (eval at evaluate (:290:30), <anonymous>:3:18)\n    at UtilityScript.evaluate (<anonymous>:292:16)\n    at UtilityScript.<anonymous> (<anonymous>:1:44)"
-    },
-    {
-      "stage": "world-entry:rubik",
-      "backend": "SwiftShader",
-      "suite": "desktop",
-      "error": "Error: Visitor could not walk to rubik approach: {\"me\":{\"x\":0,\"y\":1.7,\"z\":41.4263354453892,\"yaw\":0,\"pitch\":0},\"d\":35.099010263953595,\"panel\":null,\"paused\":false,\"phase\":\"playing\"}"
+      "error": "Error: WALK_BUDGET: the visitor walked 14.7m short of Product Lab pedestal in 189665ms (SwiftShader renders a few frames per second); this is a test-budget limit, not a closed source check. Walked to {\"x\":0,\"z\":37.41}",
+      "verdict": "UNPROVEN_TIME_BUDGET"
     },
     {
       "stage": "suite-timeout",
       "backend": "SwiftShader",
       "suite": "desktop",
-      "error": "exceeded 300000ms"
+      "error": "exceeded 300000ms",
+      "verdict": "REAL_DEFECT"
     }
   ],
   "passed": false,
-  "finishedAt": "2026-11-12T10:32:25.477Z",
-  "totalMs": 300002
+  "finishedAt": "2026-11-12T10:43:17.976Z",
+  "totalMs": 300001
 }
