@@ -248,7 +248,7 @@ export const PANELS: Record<PanelId, PanelContent> = {
     stats:[{k:'Hồ sơ',v:'GitHub'},{k:'Kết nối',v:'Online'},{k:'Email',v:'Chưa xác minh'}],
     items:[
       {name:'GitHub · Khanh-glitch',meta:'VERIFIED CONTACT',desc:'Hồ sơ, dự án và lịch sử mã nguồn công khai.',url:'https://github.com/Khanh-glitch',evidence:'source',kind:'contact'},
-      {name:'Email cá nhân',meta:'CẦN XÁC MINH',desc:'Cần địa chỉ do chính chủ cung cấp; không dùng hello@orbita.studio.',evidence:'pending',kind:'contact'},
+      {name:'Email cá nhân',meta:'CẦN XÁC MINH',desc:'Cần địa chỉ do chính chủ xác minh; hiện chỉ có liên kết hồ sơ GitHub.',evidence:'pending',kind:'contact'},
     ],
     tags:['Work','Collaboration','GitHub'],accent:'#6aa8ff',
     action:{label:'MỞ HỒ SƠ GITHUB',url:'https://github.com/Khanh-glitch'},
