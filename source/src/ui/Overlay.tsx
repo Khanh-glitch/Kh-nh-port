@@ -314,7 +314,8 @@ function PanelView() {
     window.location.href = 'mailto:' + STUDIO.email + '?subject=' + subject + '&body=' + body
   }
   const proofLabel = active?.evidence === 'source'
-    ? 'SOURCE ĐÃ XÁC MINH'
+    ? 'SOURCE CÔNG KHAI'
+    : active?.evidence === 'private' ? 'DỰ ÁN ĐÃ ĐỐI CHIẾU · SOURCE RIÊNG TƯ'
     : active?.evidence === 'brief' ? 'DỰ ÁN DO CHỦ SỞ HỮU CUNG CẤP'
     : 'CHỜ ĐỐI CHIẾU TƯ LIỆU'
   return (
@@ -397,7 +398,9 @@ function PanelView() {
                     className="mt-7 inline-flex min-h-12 w-full items-center justify-center rounded-xl px-5 py-3 text-center text-xs font-bold tracking-[0.16em] text-black transition-opacity hover:opacity-85"
                     style={{background:p.accent}}>MỞ BẰNG CHỨNG / SOURCE ↗</a>
                 ) : <div className="mt-7 rounded-xl border border-dashed border-white/20 bg-white/[0.025] px-4 py-3 text-xs leading-relaxed text-white/50">
-                  Không hiển thị liên kết hoặc media chưa được xác minh là của dự án này.
+                  {active.evidence === 'private'
+                    ? 'Mã nguồn hiện chưa được công bố công khai. Cần bản demo hoặc case study được phép chia sẻ.'
+                    : 'Không hiển thị liên kết hoặc media chưa được xác minh là của dự án này.'}
                 </div>}
               </>}
               {id === 'beacon' && hasEmail && <div className="mt-7 space-y-3">
