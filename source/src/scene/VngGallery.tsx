@@ -161,6 +161,8 @@ export function VngGallery() {
       position={[0, 6.0, 0]} scale={0.9} fadeNear={4} fadeFar={60} />
     <MiniConsoleButton x={-0.78} color="#e65a26" text="PREV" onClick={() => changeSlide(-1)} />
     <MiniConsoleButton x={0.78} color="#38bdf8" text="NEXT" onClick={() => changeSlide(1)} />
+    <Hit id="vng-project-dossier" label="VNG · Hồ sơ cuộc thi" hint="Xem bài dự thi và chứng cứ"
+      panel="vng" maxDist={16} size={[1.45, 0.6, 0.45]} position={[0, 0.65, 2.35]} />
     <Hit id="vng-screen-next" label="VNG · Màn trình chiếu" hint="Bấm để chuyển trang"
       maxDist={14} onClick={() => changeSlide(1)}
       size={[2.9, 1.8, 0.25]} position={[3.45, 1.5, -0.65]} rotation={[0, -1.32, 0]} />
