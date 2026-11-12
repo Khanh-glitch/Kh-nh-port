@@ -35,9 +35,9 @@ jobs:
       matrix:
         include:
           - order: source-first
-            modes: batch-control,cinema-range-control,cinema-range-overlap
+            modes: batch-control,cinema-range-control,cinema-range-parallel4
           - order: candidate-first
-            modes: cinema-range-overlap,cinema-range-control,batch-control
+            modes: cinema-range-parallel4,cinema-range-control,batch-control
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
