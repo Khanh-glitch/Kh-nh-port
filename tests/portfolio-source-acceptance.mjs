@@ -59,7 +59,8 @@ test('actual 5 physical holograms correspond to verified source projects and cor
 test('source VNG booth has genuine contest dossier entrance, original Main Stage untouched',()=>{
  assert.match(vng,/vng-project-dossier/)
  assert.match(vng,/panel: "vng"|panel="vng"/)
- assert.match(vngSlides,/VNG Competition/)
+ assert.match(vngSlides,/VNGGames Prompt To Play 2026/)
+ assert.match(vngSlides,/Top 26/)
  assert.ok(!vngSlides.includes('My Work at VNG'),'No unverifiable employer implication')
  for(const id of ['orbita/scene/Stage','orbita/stage/ShowSystem',
    'orbita/stage/shows','orbita/scene/Experience']){
