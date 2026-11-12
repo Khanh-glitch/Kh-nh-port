@@ -118,6 +118,10 @@ export function Beacon() {
     if(!benchmark)return
     const w=window as unknown as {__orbitaBeaconTestTrigger?:()=>void}
     w.__orbitaBeaconTestTrigger=send
+    const context=gl.getContext()
+    const debug=context.getExtension('WEBGL_debug_renderer_info')
+    ;(w as typeof w & {__orbitaBeaconBackend?:string}).__orbitaBeaconBackend=
+      String(context.getParameter(debug?.UNMASKED_RENDERER_WEBGL??context.RENDERER))
     return ()=>{delete w.__orbitaBeaconTestTrigger}
   },[])
   useFrame((state) => {
