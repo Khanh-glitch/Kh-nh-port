@@ -40,8 +40,14 @@ try{
     else observe()
   })
   await page.goto('http://127.0.0.1:4173/',{waitUntil:'domcontentloaded',timeout:120000})
+  // A module-based standalone import map is parsed after DOMContentLoaded.
+  // DOMContentLoaded is NOT evidence that React has mounted. First wait for
+  // the exact real spaceship-first root, not a synthetic progress timer.
+  const mounted=await page.waitForSelector(
+    '[data-orbita-space-entry="true"]',{timeout:90000})
+  if(!mounted)throw Error('Public page did not mount spaceship-first entry')
   const entryCount=await page.locator('[data-orbita-space-entry="true"]').count()
-  if(entryCount!==1)throw Error('Public page did not mount spaceship-first entry')
+  if(entryCount!==1)throw Error('Multiple or missing spaceship-first entries')
   const spaceship=await page.waitForFunction(()=>{
     const g=window.__orbitaEntryGate
     return g?.shipRendered===true || g?.status==='ship-failed'
