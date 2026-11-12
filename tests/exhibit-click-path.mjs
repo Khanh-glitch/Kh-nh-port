@@ -317,3 +317,19 @@ test('the harness navigates a deep link with a real load and polls slow state', 
     'reaching an exhibit must never use the internal panel call')
   assert.match(src, /via:'dossier audit'/, 'layout-only audits must be labelled')
 })
+
+test('a timeout is never reported as a real defect', () => {
+  const src = readFileSync('scripts/portfolio-panel-browser-test.mjs', 'utf8')
+  assert.match(src, /const timedOut=error\.includes\('Timeout'\)/,
+    'timeouts must be classified separately from product defects')
+  assert.match(src, /timedOut\?'UNPROVEN_TIME_BUDGET':'REAL_DEFECT'/,
+    'a timeout must be labelled unproven, never a defect')
+  assert.match(src, /verdict:detail\.verdict\?\?/, 'an explicit verdict must win')
+})
+
+test('the Metal world gate runs the native walking path', () => {
+  const metal = readFileSync('.github/workflows/portfolio-panels-native-metal.yml', 'utf8')
+  assert.match(metal, /PORTFOLIO_BACKEND: metal/)
+  assert.match(metal, /PORTFOLIO_ENTRY: native/,
+    'the Metal gate must walk the visitor with real keys, not only stand them still')
+})

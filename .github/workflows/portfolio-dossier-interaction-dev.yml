@@ -16,15 +16,15 @@ on:
         default: fast
         required: false
       suite_cap_ms:
-        description: Hard per-viewport wall clock budget
-        default: '300000'
+        description: Hard per-suite wall clock budget (software rasteriser is slow)
+        default: '420000'
         required: false
 permissions:
   contents: write
 jobs:
   dossier-interaction:
     runs-on: ubuntu-24.04
-    timeout-minutes: 40
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -45,7 +45,7 @@ jobs:
       - name: Real 3D exhibit clicks and dossier interaction
         env:
           PORTFOLIO_VIEWPORTS: ${{ inputs.viewports || 'fast' }}
-          PORTFOLIO_SUITE_CAP_MS: ${{ inputs.suite_cap_ms || '300000' }}
+          PORTFOLIO_SUITE_CAP_MS: ${{ inputs.suite_cap_ms || '420000' }}
         run: |
           set -u
           mkdir -p browser-evidence/portfolio

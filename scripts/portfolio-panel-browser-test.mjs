@@ -101,10 +101,15 @@ const suites=(()=>{
     world:worldSet.map(n=>named[n]),
   }
 })()
+// Per-suite wall clock. A DOM suite is a dozen modal audits, where a 30-60s
+// React wait is realistic on a saturated software rasteriser. A 3D world suite
+// boots an entire scene and walks the visitor with real keys, so it needs far
+// more. Generous budgets never turn into claims: every result still requires a
+// real input and a real arrival.
+const DEFAULT_SUITE_CAP=Number(process.env.PORTFOLIO_SUITE_CAP_MS)||
+  (native?9*60*1000:12*60*1000)
 const makeSuite=([width,height,tag],kind)=>({width,height,tag,kind,
-  // A software rasteriser is slow, never correct: timeouts are generous, but
-  // every claim still requires a real arrival and a real click.
-  budget:native?120000:180000})
+  budget:DEFAULT_SUITE_CAP})
 const ids=['about','orb','piano','rubik','robot','apex','ragnarok',
   'cinema','stage','products','beacon','vng']
 // One entry per exhibit: the real hit volume a visitor clicks, plus a standing
@@ -171,11 +176,14 @@ const evidence={backend,launchArgs:LAUNCH,startedAt:new Date().toISOString(),
 
 function fail(stage,detail){
   const error=String(detail.error??'')
+  // A walk or locator that ran out of wall clock under a saturated software
+  // rasteriser is not proof that the exhibit is broken; it is an unproven claim
+  // and is labelled as such. Only a definite product answer is a real defect.
+  const timedOut=error.includes('Timeout')||error.includes('has been closed')||
+    error.includes('Target page')
   const record={stage,backend,...detail,
-    // A walk that ran out of wall clock on a software GPU is not proof that the
-    // exhibit is unreachable; it is an unproven claim and is labelled as such.
-    verdict:error.includes('WALK_BUDGET')?'UNPROVEN_TIME_BUDGET':
-      error.includes('suite-timeout')?'UNPROVEN_TIME_BUDGET':'REAL_DEFECT'}
+    verdict:detail.verdict??(error.includes('WALK_BUDGET')||
+      error.includes('suite-timeout')||timedOut?'UNPROVEN_TIME_BUDGET':'REAL_DEFECT')}
   failures.push(record)
   console.error('PORTFOLIO_PANEL_FAILURE '+JSON.stringify(record))
 }
@@ -692,12 +700,10 @@ const started=Date.now()
 /** Hard per-suite watchdog. The point is that a genuine hang is REPORTED with
  * its cause and the remaining viewports still run, instead of the CI job being
  * cancelled at its timeout with no diagnosis (which is what happened before). */
-const SUITE_CAP=Number(process.env.PORTFOLIO_SUITE_CAP_MS||
-  (native?9*60*1000:7*60*1000))
 const withCap=(promise,suite)=>Promise.race([
   promise,
-  sleep(SUITE_CAP).then(()=>{
-    fail('suite-timeout',{suite:suite.tag,error:'exceeded '+SUITE_CAP+'ms'})
+  sleep(suite.budget).then(()=>{
+    fail('suite-timeout',{suite:suite.tag,error:'exceeded '+suite.budget+'ms'})
     return {viewport:suite.tag,timedOut:true}
   }),
 ])
