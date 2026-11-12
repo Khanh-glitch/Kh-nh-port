@@ -53,7 +53,13 @@ test('the only 100% progress gate is real island-ready AND ship first paint',()=
   // Verify the user-facing copy in reviewed TSX and the retry path in HTML.
   const originalOverlay=readFileSync('source/src/ui/Overlay.tsx','utf8')
   assert.match(originalOverlay,/THỬ TẢI LẠI PHI THUYỀN/)
-  assert.match(originalOverlay,/TẢI LẠI TRẢI NGHIỆM/)
+  // The island-trouble notice must always offer a real recovery path, and it
+  // must recover IN PLACE: reloading the page under a visitor used to discard
+  // their position and any dossier interaction in progress.
+  assert.match(originalOverlay,/THỬ LẠI ĐẢO 3D/,
+    'the island trouble notice must offer an in-place recovery')
+  assert.doesNotMatch(originalOverlay,/location\.reload\(\)/,
+    'recovery must never reload the page under a visitor')
   assert.match(originalOverlay,/TẢI ĐẢO DỰ PHÒNG/)
   assert.match(originalOverlay,/setFallbackRequested/)
   assert.match(originalOverlay,/requestAnimationFrame\(onSpaceUnavailable\)/)

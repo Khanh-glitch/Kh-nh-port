@@ -166,8 +166,13 @@ function Intro({ onSpacePresented, onSpaceUnavailable }: SpaceEntryCallbacks) {
     {islandTrouble && !failure && (
       <div className="absolute bottom-6 left-1/2 z-40 w-[min(90vw,28rem)] -translate-x-1/2 rounded-xl border border-white/20 bg-[#050916]/95 p-4 text-center">
         <p className="text-sm">Đảo 3D chưa khởi tạo xong. Không thể vào khi chưa sẵn sàng.</p>
+        {/* Never reload the page from inside the experience: a reload throws
+            away the visitor's position, and if it happens while an exhibit
+            dossier is open it also destroys any interaction in progress. The
+            island recovers in place instead. */}
         <button className="mt-3 rounded-full border border-cyan-300 px-5 py-2 text-sm"
-          onClick={() => window.location.reload()}>TẢI LẠI TRẢI NGHIỆM</button>
+          onClick={requestFallback}
+          disabled={fallbackRequested && !islandReady}>THỬ LẠI ĐẢO 3D</button>
       </div>
     )}
   </div>

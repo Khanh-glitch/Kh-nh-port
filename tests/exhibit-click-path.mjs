@@ -355,3 +355,15 @@ test('the dossier scrim can never win a hit test over the dossier', () => {
   assert.ok(dialog, 'the dossier dialog must exist')
   assert.match(dialog[1], /\bz-10\b/, 'the dialog must sit above the scrim')
 })
+
+test('nothing in the experience reloads the page behind a visitor', () => {
+  // A location.reload() while a dossier is open throws away the visitor's
+  // position and any interaction in progress, and in CI it destroys the page
+  // context mid-audit. Recovery happens in place instead.
+  const overlay = readFileSync('source/src/ui/Overlay.tsx', 'utf8')
+  assert.doesNotMatch(overlay, /location\.reload\(\)/,
+    'the experience must never reload the page under a visitor')
+  const scroll = overlay.slice(overlay.indexOf('islandTrouble && !failure'))
+  assert.match(scroll.slice(0, 700), /onClick=\{requestFallback\}/,
+    'the trouble notice must recover in place')
+})
