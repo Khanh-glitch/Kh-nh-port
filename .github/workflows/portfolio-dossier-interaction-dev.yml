@@ -3,6 +3,12 @@ name: Portfolio dossier interaction (SwiftShader, evidence-committing)
 # It never rewrites published HTML; it only commits the JSON report so the
 # precise defect list is readable from the repository instead of a log blob.
 on:
+  # GitHub only registers a new workflow file for manual dispatch once it also
+  # exists on the default branch, so this loop is reachable from a push to the
+  # working branch until the PR lands.
+  push:
+    branches:
+      - feat/portfolio-source-truth-20261112
   workflow_dispatch:
     inputs:
       viewports:
