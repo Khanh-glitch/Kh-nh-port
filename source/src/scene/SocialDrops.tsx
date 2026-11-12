@@ -177,7 +177,7 @@ export function SocialDrops({ signal }: { signal: {send:number} }) {
               await new Promise<void>(resolve=>window.setTimeout(resolve,350))
             }
             if(cancelled()){info.status='cancelled';return}
-            let task:Promise<void>
+            let task:Promise<unknown>
             const begun=performance.now()
             try{
               gl.xr.enabled=false
