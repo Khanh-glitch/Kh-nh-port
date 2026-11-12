@@ -288,7 +288,13 @@ function PanelView() {
   const id = useStore((state) => state.panel)
   const [selected, setSelected] = useState(0)
   const [form, setForm] = useState({ name: '', msg: '' })
-  useEffect(() => { setSelected(0) }, [id])
+  useEffect(() => {
+    const w=window as unknown as {__orbitaPanelSelection?:{panel:string;index:number}}
+    const requested=w.__orbitaPanelSelection
+    const matched=requested && requested.panel===id
+    setSelected(matched ? Math.max(0,Math.floor(requested.index)) : 0)
+    if(matched)delete w.__orbitaPanelSelection
+  }, [id])
   useEffect(() => {
     if (!id) return
     const handle = (event: KeyboardEvent) => {
