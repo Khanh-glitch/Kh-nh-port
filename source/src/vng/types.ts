@@ -10,10 +10,10 @@ export interface ProjectorSlideInfo {
 }
 
 export const PROJECTOR_SLIDES: ProjectorSlideInfo[] = [
-  { id: 0, title: 'VNG Competition', subtitle: 'Bài dự thi · Không khẳng định công tác tại VNG', accentHex: '#E65A26' },
-  { id: 1, title: 'Competition Brief', subtitle: 'Tên cuộc thi & đề bài cần tư liệu xác minh', accentHex: '#F18D55' },
-  { id: 2, title: 'Process & Craft', subtitle: 'Ý tưởng · Vai trò · Quá trình thực hiện', accentHex: '#38BDF8' },
-  { id: 3, title: 'Evidence & Result', subtitle: 'Chỉ công bố chứng cứ và kết quả đã xác minh', accentHex: '#A78BFA' },
+  { id: 0, title: 'VNGGames Prompt To Play 2026', subtitle: 'AI GAME JAM · bài dự thi cá nhân', accentHex: '#E65A26' },
+  { id: 1, title: '24-Hour Puzzle RPG', subtitle: 'Prototype puzzle-RPG trong 24 giờ · theo CV', accentHex: '#F18D55' },
+  { id: 2, title: 'Pathfinding & Puzzles', subtitle: 'Gameplay tìm đường & cơ chế giải đố đa dạng', accentHex: '#38BDF8' },
+  { id: 3, title: 'Top 26 — per Résumé', subtitle: 'Kết quả theo CV · cần nguồn từ ban tổ chức', accentHex: '#A78BFA' },
 ];
 
 export interface CameraPreset {
