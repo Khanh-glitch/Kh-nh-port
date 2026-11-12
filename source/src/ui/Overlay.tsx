@@ -379,14 +379,25 @@ function PanelView() {
             </div>
             <div className="min-h-0 flex-1 overflow-y-auto px-5 py-6 sm:px-8 sm:py-8" role="tabpanel">
               {active && <>
-                <div className="relative flex min-h-[168px] flex-col justify-between overflow-hidden rounded-[20px] border border-white/15 bg-[#0e1529] p-5 sm:min-h-[208px] sm:p-7"
+                <div className="orbita-dossier-hero relative flex min-h-[168px] flex-col justify-between overflow-hidden rounded-[20px] border border-white/15 bg-[#0e1529] p-5 sm:min-h-[208px] sm:p-7"
                   style={{backgroundImage:'linear-gradient(120deg, ' + p.accent + '20 0%, transparent 62%)'}}>
-                  <div className="pointer-events-none absolute -right-6 -bottom-20 h-56 w-56 rounded-full border-[32px] opacity-10" style={{borderColor:p.accent}} />
+                  {active.visual && <>
+                    <img className="orbita-dossier-hero-photo" src={active.visual.src}
+                      alt={active.visual.alt} loading="lazy" decoding="async" />
+                    <div className="orbita-dossier-hero-shade" aria-hidden="true"/>
+                  </>}
+                  {!active.visual && <div className="pointer-events-none absolute -right-6 -bottom-20 h-56 w-56 rounded-full border-[32px] opacity-10" style={{borderColor:p.accent}} />}
                   <div className="relative flex items-center justify-between gap-2 text-[10px] font-bold tracking-[0.25em]">
-                    <span style={{color:p.accent}}>{active.meta}</span><span className="text-white/35">CASE / {String(selected+1).padStart(2,'0')}</span>
+                    <span style={{color:active.visual?'#fff':p.accent}}>{active.meta}</span><span className="text-white/75">CASE / {String(selected+1).padStart(2,'0')}</span>
                   </div>
-                  <h4 className="relative mt-8 max-w-[20ch] font-display text-[clamp(1.75rem,3vw,3rem)] font-bold leading-tight">{active.name}</h4>
+                  <h4 className="relative mt-8 max-w-[20ch] font-display text-[clamp(1.75rem,3vw,3rem)] font-bold leading-tight"
+                    style={active.visual?{textShadow:'0 2px 20px #000d'}:undefined}>{active.name}</h4>
                 </div>
+                {active.visual && <div className="orbita-dossier-media-caption">
+                  <span>{active.visual.caption}</span>
+                  <a href={active.visual.src} target="_blank" rel="noopener noreferrer"
+                    aria-label={'Xem ảnh tư liệu gốc: '+active.visual.alt}>XEM ẢNH GỐC ↗</a>
+                </div>}
                 <div className="mt-5 flex flex-wrap items-center gap-3">
                   <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/[0.04] px-3 py-1.5 text-[10px] font-semibold tracking-wider text-white/70">
                     <span className="h-1.5 w-1.5 rounded-full" style={{background:p.accent}} />{proofLabel}
