@@ -55,7 +55,9 @@ test('3 original public media files are correctly attributed without posing as p
    assert.ok(content.includes(name),'Image not attached to a project dossier: '+name)
  }
  assert.match(overlay,/orbita-dossier-hero-photo/)
- assert.match(overlay,/XEM ẢNH GỐC/)
+ assert.match(overlay,/orbita-dossier-media-caption/)
+ assert.match(overlay,/active\.visual\.src/)
+ assert.match(overlay,/aria-label/)
  assert.match(root,/orbita-dossier-media-caption/)
  assert.match(content,/không thay thế xác nhận thứ hạng từ BTC/)
  assert.match(content,/chưa phải audio player/)
