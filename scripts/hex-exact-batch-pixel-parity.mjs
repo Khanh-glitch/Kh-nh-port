@@ -14,7 +14,7 @@ page.setDefaultTimeout(240000)
 const errors=[]
 page.on('pageerror',error=>errors.push(error.message))
 try{
-  await page.goto('http://127.0.0.1:4173/?hexBatchProbe='+batchProbe+'#at=-26,20,0,0&autostart&skip',
+  await page.goto('http://127.0.0.1:4173/?hexProfile=1&hexBatchProbe='+batchProbe+'#at=-26,20,0,0&autostart&skip',
     {waitUntil:'domcontentloaded',timeout:120000})
   await page.waitForFunction(async()=>{
     const {useStore}=await import('orbita/store')
