@@ -37,7 +37,7 @@ jobs:
           - order: baseline-first
             modes: baseline,no-logs,stable-no-logs
           - order: stable-first
-            modes: stable-lights,baseline
+            modes: stable-no-logs,no-logs,baseline
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
