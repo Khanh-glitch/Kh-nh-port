@@ -101,10 +101,15 @@ export function SocialDrops({ signal }: { signal: {send:number} }) {
       return false
     }
     const start=async()=>{
-      if(!await nextHealthyFrame()){
-        info.status=cancelled()?'cancelled':'skipped-busy-renderer'
-        return
+      // A first-pass 3.5s timeout must NOT terminate prewarm for this
+      // whole visit. Entry can take longer while the spaceship GPU owns the
+      // compositor. Retry without issuing ANY GPU work until frames recover.
+      while(!cancelled()){
+        info.status='waiting-for-idle'
+        if(await nextHealthyFrame())break
+        await new Promise<void>(resolve=>window.setTimeout(resolve,350))
       }
+      if(cancelled()){info.status='cancelled';return}
       traceRaf=requestAnimationFrame(traceIdle)
       const target=new THREE.WebGLRenderTarget(40,40,
         {depthBuffer:true,stencilBuffer:false})
@@ -146,9 +151,14 @@ export function SocialDrops({ signal }: { signal: {send:number} }) {
       try{
         for(const mesh of queue){
           if(cancelled()){info.status='cancelled';return}
-          if(!await nextHealthyFrame()){
-            info.status='skipped-busy-renderer';return
+          // Avoid publishing a cold logo because the renderer was briefly
+          // busy: retry only on healthy frames, without stealing a draw.
+          while(!cancelled()){
+            info.status='waiting-for-idle'
+            if(await nextHealthyFrame())break
+            await new Promise<void>(resolve=>window.setTimeout(resolve,350))
           }
+          if(cancelled()){info.status='cancelled';return}
           info.status='submitting'
           const oldTarget=gl.getRenderTarget()
           const viewport=gl.getViewport(new THREE.Vector4()).clone()
