@@ -20,8 +20,10 @@ try{
     })
     const stable=mode.includes('stable')
     const warm=mode.includes('warm')
+    const shaderOnly=mode.includes('shader')
     const query='?beaconProfile=1'+(stable?'&beaconStableLights=1':'')+
       (warm?'&beaconGpuPrewarm=1':'')+
+      (shaderOnly?'&beaconShaderOnly=1':'')+
       (mode.includes('no-panel')?'&beaconDiagNoPanel=1':'')+
       (mode.includes('no-social')?'&beaconDiagNoSocial=1':'')
     await page.goto('http://127.0.0.1:4173/'+query+'#at=-22,40,180,0&autostart&skip',
@@ -68,13 +70,14 @@ try{
     // The warm trial is only valid when the original geometry has actually
     // reached the GPU. Refuse to mislabel a mid-warm click as a prewarmed one.
     let beforeIdle=null
-    if(warm){
+    if(warm||shaderOnly){
       // A busy virtual GPU is an experimental *outcome*, not a reason to
       // stall the whole benchmark until GitHub Actions times out.
       const ended=await page.waitForFunction(()=>{
         const w=window.__orbitaBeaconGpuPrewarm
         return ['ready','submitted-no-gpu-fence','rejected-idle-frame-stall',
-          'skipped-busy-renderer','failed','failed-fence','cancelled'].includes(w?.status)
+          'skipped-busy-renderer','failed','failed-fence','cancelled',
+          'shader-ready-unfenced'].includes(w?.status)
       },null,{timeout:30000,polling:300}).then(()=>true,()=>false)
       beforeIdle=await page.evaluate(()=>{
         const w=window.__orbitaBeaconGpuPrewarm
