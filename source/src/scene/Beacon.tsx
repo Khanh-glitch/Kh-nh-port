@@ -117,12 +117,20 @@ export function Beacon() {
   useEffect(()=>{
     if(!benchmark)return
     const w=window as unknown as {__orbitaBeaconTestTrigger?:()=>void}
+    // Publish backend BEFORE exposing the automation trigger: a thrown GL
+    // diagnostic may otherwise leave a callable trigger and no trustworthy
+    // GPU identity, producing invalid comparisons.
+    const stats=w as typeof w & {__orbitaBeaconBackend?:string}
+    try{
+      const context=gl.getContext()
+      const debug=context.getExtension('WEBGL_debug_renderer_info')
+      stats.__orbitaBeaconBackend=String(context.getParameter(
+        debug?.UNMASKED_RENDERER_WEBGL??context.RENDERER)??'unknown')
+    }catch(error){
+      stats.__orbitaBeaconBackend='unavailable: '+String(error)
+    }
     w.__orbitaBeaconTestTrigger=send
-    const context=gl.getContext()
-    const debug=context.getExtension('WEBGL_debug_renderer_info')
-    ;(w as typeof w & {__orbitaBeaconBackend?:string}).__orbitaBeaconBackend=
-      String(context.getParameter(debug?.UNMASKED_RENDERER_WEBGL??context.RENDERER))
-    return ()=>{delete w.__orbitaBeaconTestTrigger}
+    return ()=>{delete w.__orbitaBeaconTestTrigger;delete stats.__orbitaBeaconBackend}
   },[])
   useFrame((state) => {
     const t = state.clock.elapsedTime
