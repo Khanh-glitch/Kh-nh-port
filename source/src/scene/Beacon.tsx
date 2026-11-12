@@ -136,7 +136,7 @@ export function Beacon() {
           __orbitaBeaconPanelEvents?:Array<{afterMs:number;at:number}>
         }
         ;(w.__orbitaBeaconPanelEvents??=[]).push({
-          afterMs:Math.round(performance.now()/1000-now)*1000,
+          afterMs:Math.round(performance.now()-now*1000),
           at:Math.round(performance.now()),
         })
       }
