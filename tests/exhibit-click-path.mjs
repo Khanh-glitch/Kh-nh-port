@@ -343,3 +343,15 @@ test('dossier controls are clicked as elements, never at cached pixels', () => {
     'the close control must be clicked through the locator')
   assert.ok(src.includes("navigated the page to"), 'an accidental navigation must be reported')
 })
+
+test('the dossier scrim can never win a hit test over the dossier', () => {
+  // Playwright recorded 'a covering element blocks the tab': the full-bleed
+  // close scrim was painted over the dialog. Stacking order is now explicit.
+  const overlay = readFileSync('source/src/ui/Overlay.tsx', 'utf8')
+  const scrim = overlay.match(/<div className="([^"]*)" onClick=\{\(\) => closePanel\(true\)\} aria-hidden="true" \/>/)
+  assert.ok(scrim, 'the close scrim must exist')
+  assert.match(scrim[1], /\bz-0\b/, 'the scrim must sit below the dialog')
+  const dialog = overlay.match(/<aside role="dialog"[^>]*className="([^"]*)"/)
+  assert.ok(dialog, 'the dossier dialog must exist')
+  assert.match(dialog[1], /\bz-10\b/, 'the dialog must sit above the scrim')
+})

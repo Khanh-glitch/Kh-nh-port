@@ -369,9 +369,12 @@ function PanelView() {
   return (
     <div className="absolute inset-0 z-40 flex items-center justify-center bg-black/55 px-2 py-2 text-white sm:px-6 sm:py-6"
       data-project-dossier={id}>
-      <div className="absolute inset-0" onClick={() => closePanel(true)} aria-hidden="true" />
+      {/* The scrim closes the dossier, and it must never win a hit test over
+          the dossier itself. Explicit stacking order makes that a guarantee
+          instead of a consequence of paint order. */}
+      <div className="absolute inset-0 z-0" onClick={() => closePanel(true)} aria-hidden="true" />
       <aside role="dialog" aria-modal="true" aria-labelledby="dossier-title"
-        className="relative flex h-full w-full max-w-[1180px] flex-col overflow-hidden rounded-[24px] border border-white/15 bg-[#080e1c]/95 shadow-[0_24px_96px_rgba(0,0,0,0.8)] sm:h-[min(90vh,850px)] sm:rounded-[30px]"
+        className="relative z-10 flex h-full w-full max-w-[1180px] flex-col overflow-hidden rounded-[24px] border border-white/15 bg-[#080e1c]/95 shadow-[0_24px_96px_rgba(0,0,0,0.8)] sm:h-[min(90vh,850px)] sm:rounded-[30px]"
         style={{ boxShadow: '0 0 0 1px ' + p.accent + '35, 0 26px 100px #000d' }}>
         <div className="pointer-events-none absolute -right-16 -top-36 h-80 w-80 rounded-full opacity-10 blur-[90px]"
           style={{ background: p.accent }} />
