@@ -33,14 +33,19 @@ try{
     // The current main entry is genuinely ship-first. #autostart transitions
     // only after the spacecraft has painted and mounted the island. Do not
     // start a performance profile against an empty document/old boot loader.
-    await page.waitForFunction(async()=>{
-      const {useStore}=await import('orbita/store')
-      const st=useStore.getState()
-      return !!window.__orbitaBeaconTestTrigger && st.ready &&
-        st.phase==='playing' &&
+    // Resolve the module ONCE; observe the actual live Zustand store in
+    // a synchronous predicate. Never accept a Promise, an old island canvas,
+    // an intro phase or an unmounted interaction callback as "ready".
+    await page.evaluate(async()=>{
+      window.__orbitaBeaconTestStore=(await import('orbita/store')).useStore
+    })
+    await page.waitForFunction(()=>{
+      const st=window.__orbitaBeaconTestStore?.getState()
+      return typeof window.__orbitaBeaconTestTrigger==='function' &&
+        st?.ready===true && st?.phase==='playing' &&
         document.querySelectorAll('#root canvas').length>=1 &&
         document.querySelectorAll('iframe[title*="spaceship cockpit"]').length===0
-    },null,{timeout:110000,polling:300})
+    },null,{timeout:110000,polling:250})
     await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(
       ()=>requestAnimationFrame(resolve))))
     // WebGL contexts cannot be recovered with a different contextType
@@ -49,11 +54,15 @@ try{
     const audit=await page.evaluate(()=>({
       originalIslandIsVisible:!!document.querySelector('#root canvas') &&
         !document.querySelector('iframe[title*="spaceship cockpit"]'),
+      ready:window.__orbitaBeaconTestStore?.getState()?.ready??false,
+      phase:window.__orbitaBeaconTestStore?.getState()?.phase??'unknown',
       backend:window.__orbitaBeaconBackend??null,
       trigger:typeof window.__orbitaBeaconTestTrigger,
       canvasCount:document.querySelectorAll('canvas').length,
       mode:location.search,
     }))
+    if(!audit.originalIslandIsVisible||!audit.ready||audit.phase!=='playing'||audit.trigger!=='function')
+      throw Error('ABORT Beacon A/B: no real playing island or original callback at audit: '+JSON.stringify(audit))
     let cdpGpu=null
     try{
       const client=await browser.newBrowserCDPSession()
