@@ -96,6 +96,14 @@ try{
       }else{
         await page.waitForTimeout(1200)
       }
+      const active=await page.waitForFunction(()=>
+        typeof window.__orbitaBeaconTestTrigger==='function',null,
+        {timeout:12000,polling:250}).then(()=>true,()=>false)
+      if(!active){
+        errors.push('beacon real callback unmounted after panel close')
+        console.error('BEACON_REPEAT_HOOK_UNMOUNTED',mode,i)
+        break
+      }
       const before=await page.evaluate(()=>window.__orbitaBeaconProfiles?.length??0)
       await page.evaluate(()=>window.__orbitaBeaconTestTrigger())
       // IMPORTANT: a browser screenshot forces GPU readback/compositing.
@@ -104,6 +112,9 @@ try{
       await page.waitForFunction(n=>(window.__orbitaBeaconProfiles?.length??0)>n,
         before,{timeout:30000,polling:300})
       trials.push(await page.evaluate(()=>window.__orbitaBeaconProfiles?.at(-1)))
+      console.log('BEACON_TRIAL '+JSON.stringify({
+        mode,index:i,trial:trials.at(-1),gpu,
+      }))
       await page.screenshot({path:'browser-evidence/beacon/'+mode+'-after-'+(i+1)+'.png',timeout:45000})
     }
     const record={mode,backend:gpu,cdpGpu,
