@@ -40,6 +40,10 @@ test('opt-in stable lights preserve six source logos, EXTRUDE data and physical 
   assert.match(social,/\{stableLights && <pointLight/,
     'Experiment substitutes six real 0-intensity point lights')
   assert.match(beacon,/openPanel\('beacon'\)/)
+  assert.match(beacon,/get\('beaconSkipDriverShaderLogs'\) === '1'/)
+  assert.match(beacon,/gl\.debug\.checkShaderErrors=false/)
+  assert.match(beacon,/gl\.debug\.checkShaderErrors=previous/)
+  assert.match(beacon,/sourceVisualsUnchanged:true/)
   assert.match(beacon,/st\.pendingOpen = window\.setTimeout/)
   assert.match(beacon,/waves\.forEach/)
 })
