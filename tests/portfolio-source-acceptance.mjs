@@ -28,8 +28,12 @@ test('truthful public identity, sources, no invented agency/phone/impact statist
    assert.ok(!content.includes(token),'Fictitious public claim '+token)
  }
  assert.match(content,/NOT production-ready|CHƯA production-ready|chưa production-ready/)
- assert.match(content,/Khanh-glitch\/eventflow-pro/)
- assert.match(content,/Khanh-glitch\/MathPath/)
+ assert.ok(!content.includes('github.com/Khanh-glitch/eventflow-pro'),
+   'Private EventFlow GitHub link would 404 for recruiters')
+ assert.ok(!content.includes('github.com/Khanh-glitch/MathPath'),
+   'Private MathPath GitHub link would 404 for recruiters')
+ assert.match(content,/evidence:\s*['"]private['"]/)
+ assert.match(overlay,/SOURCE RIÊNG TƯ/)
  assert.match(content,/Khanh-glitch\/APEX-CHAOS/)
  assert.match(content,/Khanh-glitch\/Soul-of-Hero/)
 })
