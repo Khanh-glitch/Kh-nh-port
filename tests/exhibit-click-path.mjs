@@ -186,3 +186,19 @@ test('the harness reports its own load and launch failures', () => {
   assert.match(src, /launch-chromium/, 'a browser launch failure must be reported')
   assert.match(src, /writeFileSync\(OUT\+'\/report\.txt'/, 'the report must also be plain text')
 })
+
+test('the evidence step captures harness output before failing', () => {
+  // `set -eu` plus a pipeline made the step abort on the harness failure, so the
+  // captured diagnosis was discarded and the repository recorded "NO REPORT".
+  const workflow = readFileSync('.github/workflows/portfolio-dossier-interaction-dev.yml', 'utf8')
+  const step = workflow.slice(workflow.indexOf('Real 3D exhibit clicks and dossier interaction'))
+  const body = step.slice(0, step.indexOf('- name: Commit the interaction evidence'))
+  assert.match(body, /set \+e/, 'the step must disable errexit before running the harness')
+  assert.match(body, /> browser-evidence\/portfolio\/harness-out\.txt 2>&1/,
+    'harness output must be written to a file, not discarded by a failing pipeline')
+  assert.match(body, /cat browser-evidence\/portfolio\/harness-out\.txt/,
+    'the captured output must be printed')
+  assert.match(body, /exit 0/, 'the evidence step itself must complete so evidence can be committed')
+  assert.match(workflow, /Fail the run when a real defect was recorded/,
+    'the verdict must be enforced in its own later step')
+})

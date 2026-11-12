@@ -54,12 +54,17 @@ jobs:
             sleep 1
           done
           mkdir -p browser-evidence/portfolio
+          # set +e is essential: under `set -e` a failing pipeline aborts the
+          # step before the status is captured, so the captured output was
+          # thrown away and the diagnosis never reached the repository.
           set +e
-          node scripts/portfolio-panel-browser-test.mjs 2>&1 | tee browser-evidence/portfolio/harness-out.txt
-          STATUS=${PIPESTATUS[0]}
+          set +o pipefail
+          node scripts/portfolio-panel-browser-test.mjs > browser-evidence/portfolio/harness-out.txt 2>&1
+          STATUS=$?
+          cat browser-evidence/portfolio/harness-out.txt
           echo "--- harness exit status: $STATUS ---"
           echo "HARNESS_EXIT=$STATUS" >> browser-evidence/portfolio/harness-out.txt
-          exit $STATUS
+          exit 0
       - name: Commit the interaction evidence (never HTML) so defects are readable
         if: always()
         run: |
@@ -100,6 +105,7 @@ jobs:
             r.failures.forEach(f => lines.push('  - [' + (f.verdict || '?') + '][' + f.stage + '] ' + f.suite + ': ' + f.error));
             lines.push('- plan: ' + JSON.stringify(r.plan || []));
             lines.push('- reached stage: ' + JSON.stringify(r.stage || {}));
+            lines.push('- harness fatal: ' + (r.fatal ? String(r.fatal).split('\n')[0] : 'none'));
             lines.push('- total ms: ' + (r.totalMs ?? 'n/a'));
             require('fs').writeFileSync('docs/evidence/portfolio-interaction-latest.md', lines.join('\n') + '\n');
           "
@@ -111,6 +117,17 @@ jobs:
             git commit -m 'evidence(dossier): interaction report [skip ci]'
             git push origin "HEAD:${{ github.ref_name }}"
           fi
+      - name: Fail the run when a real defect was recorded
+        if: always()
+        run: |
+          test -f docs/evidence/portfolio-interaction-latest.md
+          cat docs/evidence/portfolio-interaction-latest.md
+          if grep -q '^- failures: 0$' docs/evidence/portfolio-interaction-latest.md; then
+            echo "DOSSIER_INTERACTION_PASS"
+            exit 0
+          fi
+          echo "DOSSIER_INTERACTION_INCOMPLETE — see docs/evidence above"
+          exit 1
       - uses: actions/upload-artifact@v4
         if: always()
         with:
