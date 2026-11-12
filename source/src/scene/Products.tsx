@@ -262,7 +262,7 @@ export function Products() {
                   <planeGeometry args={[0.01, 0.01]} />
                   <meshBasicMaterial visible={false} />
                 </mesh>
-                <Hit id={`product-${i}`} label={`${a.name} · ${a.sub}`} hint="Chọn ứng dụng" maxDist={40} panel="products" size={[1.8, 3.4, 0.6]} position={[0, 0, 0.1]} onClick={() => select(i)} />
+                <Hit id={`product-${i}`} label={`${a.name} · ${a.sub}`} hint="Chọn ứng dụng" maxDist={40} size={[1.8, 3.4, 0.6]} position={[0, 0, 0.1]} onClick={() => select(i)} />
               </group>
             </group>
           )
