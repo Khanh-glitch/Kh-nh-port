@@ -669,11 +669,16 @@ async function runSuite(suite){
         const r=el.getBoundingClientRect()
         const x=r.left+6,y=r.top+r.height/2
         const top=document.elementFromPoint(x,y)
-        return {x,y,hit:top===el||el.contains(top)}
+        return {x,y,h:r.height,hit:top===el||el.contains(top)}
       })
       if(!scrimHit.hit)throw Error('Scrim click target occluded')
-      await page.mouse.click(scrimHit.x,scrimHit.y,{delay:35})
-      await about.waitFor({state:'detached',timeout:12000})
+      // A plain mouse click is the honest input (no force), so the scrim is
+      // only credited if it really is reachable on its own.
+      const urlBeforeScrim=page.url()
+      await scrim.click({position:{x:6,y:Math.max(2,Math.round(scrimHit.h/2))},timeout:30000})
+      if(page.url()!==urlBeforeScrim)
+        throw Error('Clicking the dossier scrim navigated the page to '+page.url())
+      await about.waitFor({state:'detached',timeout:30000})
       // Close/reopen must not leak the previous project selection.
       await page.evaluate(async()=>{
         const {useStore}=await import('orbita/store')
