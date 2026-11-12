@@ -4,6 +4,7 @@ const require=createRequire(import.meta.url)
 const {chromium}=require('../source/node_modules/playwright')
 const backend=process.env.HEX_PARITY_BACKEND==='metal'?'metal':'software'
 const batchProbe=process.env.HEX_BATCH_PROBE_MODE==='manual-overlap'?'manual-overlap':'manual'
+const skipDriverLogs=process.env.HEX_PARITY_EXTRA_QUERY==='skip-driver-logs'
 const args=backend==='software'
   ? ['--enable-webgl','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']
   : ['--enable-webgl','--enable-gpu','--ignore-gpu-blocklist','--use-angle=metal','--disable-software-rasterizer']
@@ -14,7 +15,9 @@ page.setDefaultTimeout(240000)
 const errors=[]
 page.on('pageerror',error=>errors.push(error.message))
 try{
-  await page.goto('http://127.0.0.1:4173/?hexProfile=1&hexBatchProbe='+batchProbe+'#at=-26,20,0,0&autostart&skip',
+  await page.goto('http://127.0.0.1:4173/?hexProfile=1&hexBatchProbe='+batchProbe+
+    (skipDriverLogs?'&hexSkipDriverShaderLogs=1':'')+
+    '#at=-26,20,0,0&autostart&skip',
     {waitUntil:'domcontentloaded',timeout:120000})
   await page.waitForFunction(async()=>{
     const {useStore}=await import('orbita/store')
@@ -41,7 +44,7 @@ try{
   if(backend==='software'&&!/SwiftShader|Software/i.test(String(meta.renderer)))
     throw new Error('Expected software GL, got '+meta.renderer)
   const result=await page.evaluate(()=>window.__orbitaHexManualBatch.runVisualParity())
-  const report={commit:process.env.GITHUB_SHA,backend,batchProbe,...meta,errors,result,
+  const report={commit:process.env.GITHUB_SHA,backend,batchProbe,...meta,errors,result,skipDriverLogs,
     caveat:'Same-frame geometry/lighting/scan visual parity only; does not establish first-click frame pacing'}
   writeFileSync('hex-batch-evidence/18-stage-color-shadow-parity-'+batchProbe+'.json',JSON.stringify(report,null,2))
   console.log('HEX_EXACT_BATCH_PARITY '+JSON.stringify(report))
