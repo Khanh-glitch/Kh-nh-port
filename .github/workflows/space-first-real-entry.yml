@@ -13,6 +13,8 @@ jobs:
     timeout-minutes: 28
     steps:
       - uses: actions/checkout@v4
+      - name: Source/standalone embedded map inventory for portfolio PR
+        run: node scripts/portfolio-module-inventory.mjs
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
