@@ -65,13 +65,19 @@ for(const [idx,mode] of modes.entries()){
    const {useStore}=await import('orbita/store')
    return useStore.getState().ready&&useStore.getState().phase==='playing'
   },null,{timeout:120000})
-  await page.waitForFunction(()=>{
+  // A real visitor can open HEX before 83/83 shaders complete. Waiting
+  // three minutes creates an artificial test that never reaches the click on
+  // a busy GPU. Bound prep and record its true completeness at activation.
+  const fullPrewarm=await page.waitForFunction(()=>{
    const p=window.__orbitaHexShaderPrep
    return p?.status==='complete-or-interrupted'&&
      p.compiledShaders===p.totalShaders&&
      p.uploadedTextures===p.totalTextures
-  },null,{timeout:180000,polling:500})
-  r.prep=await page.evaluate(()=>({...window.__orbitaHexShaderPrep}))
+  },null,{timeout:12000,polling:350}).then(()=>true,()=>false)
+  r.prep=await page.evaluate(()=>({
+    ...(window.__orbitaHexShaderPrep??{status:'not-started'})
+  }))
+  r.fullPrewarmBeforeClick=fullPrewarm
   r.backend=await page.evaluate(()=>window.__orbitaHexRenderer??'unavailable')
   if(software&&!/SwiftShader|Software|llvmpipe/i.test(r.backend))
     throw Error('Expected actual software GPU, got '+r.backend)
@@ -181,7 +187,8 @@ for(const [idx,mode] of modes.entries()){
   writeFileSync('hex-cpu-trace/'+mode+'-'+idx+'.cpuprofile',JSON.stringify(profile))
   await page.screenshot({path:'hex-cpu-trace/'+mode+'-'+idx+'.png',timeout:120000})
   console.log('HEX_CPU_TRACE '+JSON.stringify({mode,backend:r.backend,
-   noClickIdle:r.noClickIdle,prep:r.prep,cpu:r.cpu.top.slice(0,15),
+   noClickIdle:r.noClickIdle,fullPrewarmBeforeClick:r.fullPrewarmBeforeClick,
+   prep:r.prep,cpu:r.cpu.top.slice(0,15),
    render:r.render,instanceBufferWarm:r.instanceBufferWarm,error:r.error}).slice(0,12000))
  }catch(e){r.error=String(e);console.error('HEX_CPU_TRACE_ERROR '+mode+' '+r.error)}
  writeFileSync('hex-cpu-trace/results.json',JSON.stringify(results,null,2))
