@@ -21,7 +21,7 @@ const vng=js(island,'orbita/scene/VngGallery')
 const vngSlides=js(island,'orbita/vng/types')
 const profile=js(ship,'ship/data/profile')
 test('truthful public identity, sources, no invented agency/phone/impact statistics',()=>{
- for(const token of ['LÊ QUỐC KHÁNH','EventFlow Pro','MathPath','APEX CHAOS','Soul of Hero','Quê Quá Quao','VNG Project Gallery'])
+ for(const token of ['LÊ QUỐC KHÁNH','EventFlow Pro','MathPath','APEX CHAOS','Soul of Hero','Quê Quá Quao','VNGGames Prompt To Play 2026'])
   assert.ok(content.includes(token),'Missing real project: '+token)
  for(const token of ['Lâm Anh Khoa','hello@orbita.studio','+84 90 123 4567',
    '1.8M+','38.000','99.99%','Vé xử lý / giờ','Năm kinh nghiệm']){
