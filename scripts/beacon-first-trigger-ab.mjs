@@ -14,7 +14,10 @@ try{
     const context=await browser.newContext({viewport:{width:1280,height:720},deviceScaleFactor:1})
     const page=await context.newPage()
     const errors=[]
-    page.on('pageerror',e=>errors.push(e.message))
+    page.on('pageerror',e=>{
+      errors.push(e.message)
+      console.error('BEACON_PAGE_ERROR',e.message)
+    })
     const stable=mode.includes('stable')
     const warm=mode.includes('warm')
     const query='?beaconProfile=1'+(stable?'&beaconStableLights=1':'')+
@@ -29,10 +32,34 @@ try{
     // WebGL contexts cannot be recovered with a different contextType
     // (canvas.getContext('webgl2') is null if R3F created 'webgl'). Read the
     // ACTUAL renderer context, published by the instrumented Beacon.
-    const gpu=await page.evaluate(()=>window.__orbitaBeaconBackend)
-    if(!gpu||gpu==='undefined'||gpu==='null')
-      throw Error('Beacon scene did not expose real WebGL backend')
-    if(native&&!/Metal/i.test(gpu))throw Error('Wrong Metal GPU: '+gpu)
+    const audit=await page.evaluate(()=>({
+      backend:window.__orbitaBeaconBackend??null,
+      trigger:typeof window.__orbitaBeaconTestTrigger,
+      canvasCount:document.querySelectorAll('canvas').length,
+      mode:location.search,
+    }))
+    let cdpGpu=null
+    try{
+      const client=await browser.newBrowserCDPSession()
+      const info=await client.send('SystemInfo.getInfo')
+      cdpGpu={
+        devices:info.gpu?.devices?.map(d=>({
+          vendor:d.vendorString,device:d.deviceString
+        })),
+        glRenderer:info.gpu?.auxAttributes?.glRenderer??null,
+        glVersion:info.gpu?.auxAttributes?.glVersion??null,
+      }
+      await client.detach()
+    }catch(e){cdpGpu={error:String(e)}}
+    const gpu=String(audit.backend??cdpGpu?.glRenderer??'unverified')
+    const nativeVerified=/Metal/i.test(gpu)
+    const softwareVerified=/SwiftShader|Software|llvmpipe/i.test(gpu)
+    console.log('BEACON_GPU_AUDIT '+JSON.stringify({
+      mode,audit,cdpGpu,gpu,nativeVerified,softwareVerified,errors
+    }).slice(0,2600))
+    // Continue gathering actual real-trigger evidence even when Chromium
+    // hides the debug extension. Never label a GPU run as Metal unless
+    // its identity can be independently established.
     // The warm trial is only valid when the original geometry has actually
     // reached the GPU. Refuse to mislabel a mid-warm click as a prewarmed one.
     let beforeIdle=null
@@ -74,13 +101,16 @@ try{
       trials.push(await page.evaluate(()=>window.__orbitaBeaconProfiles?.at(-1)))
       await page.screenshot({path:'browser-evidence/beacon/'+mode+'-after-'+(i+1)+'.png',timeout:45000})
     }
-    const record={mode,backend:gpu,beforeIdle,trials,errors}
+    const record={mode,backend:gpu,cdpGpu,
+      backendVerified:native?nativeVerified:softwareVerified,
+      beforeIdle,trials,errors}
     results.push(record)
     console.log('BEACON_FIRST_TRIGGER_AB '+JSON.stringify(record))
     await context.close()
   }
   writeFileSync('browser-evidence/beacon/ab-results.json',JSON.stringify(results,null,2))
-  if(results.some(x=>x.errors.length||x.trials.length!==2))process.exitCode=2
+  if(results.some(x=>x.errors.length||x.trials.length!==2||
+    (native&&!x.backendVerified)))process.exitCode=2
 }catch(err){
   console.error('BEACON_FIRST_TRIGGER_AB_FAILED',String(err))
   process.exitCode=3
