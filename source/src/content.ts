@@ -14,7 +14,7 @@ export interface PanelItem {
   meta: string
   desc: string
   url?: string
-  evidence?: 'source' | 'private' | 'brief' | 'pending'
+  evidence?: 'source' | 'private' | 'cv' | 'brief' | 'pending'
   kind?: 'game' | 'web' | 'music' | 'video' | 'social' | 'competition' | 'skill' | 'contact'
 }
 export interface PanelContent {
@@ -36,9 +36,9 @@ export const STUDIO = {
   person: 'LÊ QUỐC KHÁNH',
   role: 'Vibecoder · Interactive 3D · Game & Web Prototyping',
   // Verified personal contact has not been supplied; never send to a fake inbox.
-  email: '',
-  phone: '',
-  city: 'Việt Nam',
+  email: 'mencan308@gmail.com',
+  phone: '+84 328 494 207',
+  city: 'TP. Hồ Chí Minh, Việt Nam',
 }
 export const PANELS: Record<PanelId, PanelContent> = {
   about: {
@@ -98,39 +98,40 @@ export const PANELS: Record<PanelId, PanelContent> = {
   },
   rubik: {
     id:'rubik',
-    kicker:'NĂNG LỰC · HỌC VẤN · HÀNH TRÌNH',
+    kicker:'EDUCATION · EVENT PRACTICE · RESEARCH',
     title:'Capability Cube',
-    subtitle:'Mỗi mặt khối Rubik là một nhóm năng lực và chứng cứ.',
+    subtitle:'Từ học vấn UEH, thực tập sản xuất sự kiện đến game, AI và sản phẩm số.',
     body:[
-      'Dùng hình ảnh một khối Rubik được giải để kể quá trình học, thử nghiệm và phối hợp các công cụ: học kỹ thuật, hiểu sản phẩm, kiểm định kết quả và hoàn thiện UX.',
-      'Học vấn chính quy và chứng chỉ sẽ chỉ được công bố khi đối chiếu CV/tài liệu xác thực; không tự đặt tên trường, bằng cấp hay số năm kinh nghiệm.',
+      'Hành trình học tập bắt đầu tại Đại học Kinh tế TP. Hồ Chí Minh (UEH), chuyên ngành Quản trị dịch vụ sự kiện và giải trí, giai đoạn 2023–2026. CV tháng 10/2026 ghi mốc tốt nghiệp dự kiến; không trình bày là đã được cấp bằng.',
+      'Các mặt Rubik liên kết học thuật, thực tế sản xuất sự kiện, thiết kế game và tư duy thử nghiệm. Sự liên thông này thể hiện cách tôi dùng trải nghiệm ngành sự kiện để phát triển công cụ và nội dung tương tác.',
     ],
-    stats:[{k:'Thực hành',v:'Vibecoding'},{k:'Định hướng',v:'Product'},{k:'Bằng chứng',v:'Repositories'}],
+    stats:[{k:'Học vấn',v:'UEH'},{k:'Giai đoạn theo CV',v:'2023–26'},{k:'Hướng',v:'Event · AI'}],
     items:[
-      {name:'Workflow & Product Reasoning',meta:'THỰC HÀNH',desc:'Định nghĩa yêu cầu, chia nhỏ sản phẩm, kiểm tra source và chứng cứ nghiệm thu.',evidence:'brief',kind:'skill'},
-      {name:'Interactive Web / 3D',meta:'SẢN PHẨM',desc:'ORBITA, React, Three.js và WebGL trong portfolio đang triển khai.',url:'https://github.com/Khanh-glitch/Kh-nh-port',evidence:'source',kind:'skill'},
-      {name:'Game Design & Iteration',meta:'DỰ ÁN',desc:'Gameplay, hệ thống tương tác, game prototype và vòng lặp thử nghiệm.',url:'https://github.com/Khanh-glitch/Soul-of-Hero',evidence:'source',kind:'skill'},
-      {name:'Học vấn & chứng chỉ',meta:'XÁC THỰC',desc:'Chưa có đủ hồ sơ bằng cấp/trường/mốc thời gian để công bố chính xác.',evidence:'pending',kind:'skill'},
+      {name:'UEH · Quản trị dịch vụ sự kiện và giải trí',meta:'EDUCATION / CV',desc:'Đại học Kinh tế TP. Hồ Chí Minh, giai đoạn học 2023–2026 (dự kiến hoàn thành theo CV tháng 10/2026). Không khẳng định đã tốt nghiệp.',evidence:'cv',kind:'skill'},
+      {name:'Thực tập sản xuất sự kiện · Sen Việt',meta:'EXPERIENCE / CV',desc:'Event Production Intern tại Sen Viet Communication Investment Company Limited; hỗ trợ lập kế hoạch, triển khai hiện trường, phối hợp các nhóm sản xuất, thiết kế và truyền thông. Theo CV cá nhân.',evidence:'cv',kind:'skill'},
+      {name:'Khóa luận: Hình ảnh quảng bá sự kiện có AI tạo sinh',meta:'ACADEMIC RESEARCH',desc:'Đánh giá nội dung thị giác quảng bá sự kiện có sự tham gia của AI tạo sinh: so sánh nhóm phía sản xuất và người tham dự tại TP. Hồ Chí Minh. Tài liệu khóa luận đề ngày 26/10/2026.',evidence:'cv',kind:'skill'},
+      {name:'Interactive Web / 3D',meta:'PORTFOLIO SOURCE',desc:'ORBITA với trải nghiệm buồng lái, đảo 3D, HUD và không gian khám phá dự án.',url:'https://github.com/Khanh-glitch/Kh-nh-port',evidence:'source',kind:'skill'},
+      {name:'Game Design & Iteration',meta:'PORTFOLIO SOURCE',desc:'Các vòng thiết kế gameplay, xây dựng prototype, thử nghiệm tương tác và cải thiện UX trong các game cá nhân.',url:'https://github.com/Khanh-glitch/APEX-CHAOS',evidence:'source',kind:'skill'},
     ],
-    tags:['Learning','Process','Product thinking','Portfolio evidence'],accent:'#4dd8ff',
+    tags:['UEH','Event production','Research','Vibecoding','Game design'],accent:'#4dd8ff',
   },
   robot: {
     id:'robot',
-    kicker:'GAME PORTFOLIO · PROMPT TO PLAY',
+    kicker:'GAME PORTFOLIO · VNG GAMES PROMPT TO PLAY',
     title:'Colossus Game Lab',
-    subtitle:'Trạm triển lãm các thế giới game và hành trình làm game với AI.',
+    subtitle:'Các thế giới game và bài dự thi được kể bằng mô hình 3D, gameplay và mã nguồn thật.',
     body:[
-      'Kích hoạt Colossus để triệu hồi APEX CHAOS và Ragnarok trên hai bệ 3D. Các game thật có source riêng; mô hình trình diễn trên đảo không được gọi là game hoàn chỉnh.',
-      'Các cuộc thi và thử thách Prompt to Play thuộc hành trình thiết kế game, không nên bị trình bày như một giải thưởng khi chưa có chứng cứ kết quả.',
+      'Colossus triệu hồi APEX CHAOS và Ragnarok trên hai bệ. Bệ 3D là phương thức triển lãm, không được mô tả như một bản game đã hoàn thiện.',
+      'CV Game Designer có ghi nhận VNGGames Prompt To Play 2026: Top 26 và một prototype puzzle-RPG hoàn thiện trong 24 giờ. Đây là kết quả do ứng viên ghi trong CV; cần chứng nhận/link từ ban tổ chức để xác minh độc lập.',
     ],
-    stats:[{k:'Game',v:'APEX'},{k:'Game',v:'Ragnarok'},{k:'Phương pháp',v:'AI-assisted'}],
+    stats:[{k:'Game',v:'APEX'},{k:'Game',v:'Ragnarok'},{k:'Cuộc thi / CV',v:'Top 26'}],
     items:[
-      {name:'APEX CHAOS',meta:'BROWSER ARENA',desc:'Dự án game trình duyệt có engine, tài sản và các chế độ chơi; xem repo để đánh giá đúng phạm vi.',url:'https://github.com/Khanh-glitch/APEX-CHAOS',evidence:'source',kind:'game'},
-      {name:'Ragnarok · Soul of Hero',meta:'PIXEL SURVIVAL RPG',desc:'Game pixel sinh tồn đang phát triển, các hệ thống gameplay và VFX được triển khai theo workstreams.',url:'https://github.com/Khanh-glitch/Soul-of-Hero',evidence:'source',kind:'game'},
-      {name:'Alphabet Engine',meta:'WORD COMBAT ROGUELITE',desc:'Prototype roguelite sử dụng chữ cái, từ và tương tác chiến đấu hệ thống.',url:'https://github.com/Khanh-glitch/alphabet-engine',evidence:'source',kind:'game'},
-      {name:'Prompt to Play',meta:'GAME JAM / COMPETITION',desc:'Hành trình thi và làm game có AI hỗ trợ; hồ sơ thành tích/chứng nhận cần đối chiếu trước khi công bố.',evidence:'brief',kind:'competition'},
+      {name:'APEX CHAOS',meta:'BROWSER ARENA',desc:'Game trình duyệt với character abilities, combat mechanics, vật lý và sprite animations; có repo công khai.',url:'https://github.com/Khanh-glitch/APEX-CHAOS',evidence:'source',kind:'game'},
+      {name:'Ragnarok · Soul of Hero',meta:'PIXEL SURVIVAL RPG',desc:'Game sinh tồn đang phát triển, các hệ thống gameplay và VFX triển khai theo workstreams.',url:'https://github.com/Khanh-glitch/Soul-of-Hero',evidence:'source',kind:'game'},
+      {name:'Alphabet Engine',meta:'SYSTEMIC WORD COMBAT',desc:'Prototype roguelite chữ cái kết hợp thành từ và tạo ra vũ khí vật lý.',url:'https://github.com/Khanh-glitch/alphabet-engine',evidence:'source',kind:'game'},
+      {name:'VNGGames Prompt To Play 2026',meta:'TOP 26 · THEO CV',desc:'CV cá nhân ghi Top 26; xây dựng prototype puzzle-RPG có pathfinding và nhiều cơ chế giải đố trong 24 giờ. Chưa có bằng chứng chính thức của BTC liên kết tại đây.',evidence:'cv',kind:'competition'},
     ],
-    tags:['Game design','Browser game','Pixel art','Prompt to Play'],accent:'#ff8a3d',
+    tags:['Game design','Prompt to Play 2026','Browser game','Pixel art'],accent:'#ff8a3d',
   },
   apex: {
     id:'apex',
@@ -186,19 +187,20 @@ export const PANELS: Record<PanelId, PanelContent> = {
   },
   vng: {
     id:'vng',
-    kicker:'VNG · COMPETITION ENTRY',
-    title:'VNG Project Gallery',
-    subtitle:'Trưng bày bài dự thi và quá trình sáng tạo liên quan đến cuộc thi tại VNG.',
+    kicker:'VNGGAMES · PROMPT TO PLAY 2026',
+    title:'Prompt To Play',
+    subtitle:'Bài dự thi game jam: prototype puzzle-RPG trong 24 giờ.',
     body:[
-      'Khu vực VNG đã có mô hình studio, máy chiếu và bộ điều khiển slide 3D. Portfolio sẽ dùng vị trí này cho bài dự thi, quá trình thực hiện và chứng cứ đúng của cuộc thi.',
-      'Đây là câu chuyện về một cuộc thi tại VNG, không phải khẳng định từng làm nhân viên VNG hoặc đạt giải thưởng khi chưa có chứng cứ.',
+      'Theo CV Game Designer của LÊ QUỐC KHÁNH: tham gia cuộc thi VNGGames Prompt To Play 2026, đạt Top 26 và phát triển một prototype puzzle-RPG chơi được trong vòng 24 giờ, kết hợp pathfinding với nhiều cơ chế giải đố.',
+      'Khu VNG giới thiệu bối cảnh và cách làm sản phẩm trong cuộc thi, không phải kinh nghiệm làm nhân viên VNG. Top 26 là thông tin được công bố trong CV của chủ sở hữu, chưa được xác minh bằng kết quả chính thức của ban tổ chức.',
     ],
-    stats:[{k:'Bối cảnh',v:'Competition'},{k:'Trưng bày',v:'3D Gallery'},{k:'Chứng cứ',v:'Pending'}],
+    stats:[{k:'Cuộc thi',v:'VNGGames'},{k:'Thời gian / CV',v:'24 giờ'},{k:'Kết quả / CV',v:'Top 26'}],
     items:[
-      {name:'Bài dự thi tại VNG',meta:'COMPETITION',desc:'Tên cuộc thi, brief, bài nộp, vai trò và kết quả cần được xác minh bằng tư liệu gốc.',evidence:'brief',kind:'competition'},
-      {name:'Work Process & Evidence',meta:'CASE STUDY',desc:'Bố cục 4 slide có sẵn; cần thay nội dung placeholder bằng ảnh, video và liên kết chính xác.',evidence:'pending',kind:'competition'},
+      {name:'Prompt To Play 2026',meta:'AI GAME JAM / CV',desc:'Ứng viên ghi nhận Top 26. Kết quả cần chứng cứ BTC hoặc hình ảnh xác nhận trước khi gọi là độc lập xác minh.',evidence:'cv',kind:'competition'},
+      {name:'Puzzle-RPG prototype',meta:'24-HOUR GAME',desc:'Bài dự thi kết hợp tìm đường (pathfinding) và các cơ chế giải đố; mã nguồn/video gameplay của bài nộp cần được bổ sung đúng bản.',evidence:'cv',kind:'game'},
+      {name:'Quy trình & tư liệu dự thi',meta:'CASE STUDY / GALLERY',desc:'Bố cục bốn slide giữ nguyên trên máy chiếu VNG: brief, thực hiện, prototype, kết quả. Không dựng bằng chứng giả hoặc lấy footage không liên quan.',evidence:'brief',kind:'competition'},
     ],
-    tags:['VNG','Competition','Project evidence'],accent:'#e65a26',
+    tags:['VNGGames','Prompt To Play 2026','Puzzle-RPG','Game Jam'],accent:'#e65a26',
   },
   stage: {
     id:'stage',
@@ -241,16 +243,19 @@ export const PANELS: Record<PanelId, PanelContent> = {
     id:'beacon',
     kicker:'CONTACT · COLLABORATION',
     title:'Signal Beacon',
-    subtitle:'Kết nối để trao đổi dự án, cơ hội hoặc hợp tác.',
+    subtitle:'Kết nối để trao đổi cơ hội tuyển dụng, sản phẩm hoặc dự án.',
     body:[
-      'Liên hệ qua các kênh chính thức được xác minh. Email/điện thoại cá nhân chưa được cung cấp nên hệ thống sẽ không gửi thư tới một địa chỉ mẫu hoặc hứa phản hồi trong 24 giờ.',
+      'Các kênh liên hệ dưới đây được chủ sở hữu công bố trong CV ứng tuyển: email, điện thoại và LinkedIn. Bấm gửi tín hiệu để soạn email với lời nhắn của bạn.',
+      'Truy cập hồ sơ GitHub để xem các dự án có mã nguồn công khai. Không hứa thời gian phản hồi hoặc gán doanh thu/khách hàng chưa được xác minh.',
     ],
-    stats:[{k:'Hồ sơ',v:'GitHub'},{k:'Kết nối',v:'Online'},{k:'Email',v:'Chưa xác minh'}],
+    stats:[{k:'Email',v:'Direct'},{k:'Kết nối',v:'LinkedIn'},{k:'Dự án',v:'GitHub'}],
     items:[
-      {name:'GitHub · Khanh-glitch',meta:'VERIFIED CONTACT',desc:'Hồ sơ, dự án và lịch sử mã nguồn công khai.',url:'https://github.com/Khanh-glitch',evidence:'source',kind:'contact'},
-      {name:'Email cá nhân',meta:'CẦN XÁC MINH',desc:'Cần địa chỉ do chính chủ xác minh; hiện chỉ có liên kết hồ sơ GitHub.',evidence:'pending',kind:'contact'},
+      {name:'Email · LÊ QUỐC KHÁNH',meta:'CONTACT / CV',desc:'mencan308@gmail.com',url:'mailto:mencan308@gmail.com',evidence:'cv',kind:'contact'},
+      {name:'LinkedIn · Quoc Khanh Le',meta:'PROFILE / CV',desc:'Hồ sơ LinkedIn được ghi trong CV của chủ sở hữu.',url:'https://www.linkedin.com/in/quockhanh-le/',evidence:'cv',kind:'contact'},
+      {name:'GitHub · Khanh-glitch',meta:'OPEN SOURCE PROFILE',desc:'Các mã nguồn và dự án có quyền truy cập công khai.',url:'https://github.com/Khanh-glitch',evidence:'source',kind:'contact'},
     ],
-    tags:['Work','Collaboration','GitHub'],accent:'#6aa8ff',
-    action:{label:'MỞ HỒ SƠ GITHUB',url:'https://github.com/Khanh-glitch'},
+    tags:['Work','Collaboration','Email','LinkedIn','GitHub'],accent:'#6aa8ff',
+    action:{label:'LIÊN HỆ QUA EMAIL',url:'mailto:mencan308@gmail.com'},
   },
+}
 }
