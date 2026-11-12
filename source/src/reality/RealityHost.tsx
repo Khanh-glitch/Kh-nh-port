@@ -410,6 +410,8 @@ export function RealityHost() {
     warmMesh: [] as THREE.Object3D[],
     warmCritical: [] as THREE.Object3D[],
     warmCompilePending: false,
+    warmAsyncInFlight: 0,
+    warmAsyncPeak: 0,
     warmErrors: 0,
     warmShaderDone: 0,
     warmTextureDone: 0,
@@ -1003,6 +1005,24 @@ export function RealityHost() {
   const hexPrimeSkipLogs=hexPrimeFirstUse &&
     new URLSearchParams(window.location.search).get('hexPrimeSkipLogs')==='1'
 
+  // A/B ONLY: permit up to four KHR_parallel_shader_compile links to
+  // be pending concurrently, rather than SERIALIZING 83 source PBR shaders
+  // behind the first unresolved compileAsync promise. Submit at most ONE
+  // original shader object on a healthy frame. Exact materials/GLSL, lights,
+  // 2048 shadows and front framebuffer are unchanged.
+  const hexAsyncShaderFlights=hexCooperativeLinear &&
+    new URLSearchParams(window.location.search).get('hexAsyncShaderFlights')==='4'
+  const warmCanSubmit=()=>!S.warmCompilePending ||
+    (hexAsyncShaderFlights && S.warmAsyncInFlight<4)
+  const asyncBegin=()=>{
+    S.warmAsyncInFlight++
+    S.warmCompilePending=true
+    S.warmAsyncPeak=Math.max(S.warmAsyncPeak,S.warmAsyncInFlight)
+  }
+  const asyncEnd=()=>{
+    S.warmAsyncInFlight=Math.max(0,S.warmAsyncInFlight-1)
+    S.warmCompilePending=S.warmAsyncInFlight>0
+  }
   const compileHexCooperatively=(obj:THREE.Object3D)=>{
     const scratch=hexCooperativeLinear?hexCooperativeTarget.current:null
     if(!scratch)return gl.compileAsync(obj,camera,scene)
@@ -1264,36 +1284,38 @@ export function RealityHost() {
       // Interleave critical program compilation and texture uploads. An
       // all-shader-first queue can leave every large UEH texture cold when a
       // visitor activates the piano after only a few seconds.
-      if (S.warmCritical.length && !S.warmCompilePending &&
+      if (S.warmCritical.length && warmCanSubmit() &&
           (S.warmShaderDone <= S.warmTextureDone || !S.warmTex.length)) {
         const obj=S.warmCritical.shift()!
         S.warmCompilePending=true
         if(typeof gl.compileAsync==='function') {
+          asyncBegin()
           void compileHexCooperatively(obj).catch(err=>{
             S.warmErrors++;console.warn('[HEX preflight] critical shader',err)
-          }).finally(()=>{S.warmCompilePending=false;S.warmShaderDone++})
+          }).finally(()=>{asyncEnd();S.warmShaderDone++})
         } else {
           try{gl.compile(obj,camera,scene)}
           catch(err){S.warmErrors++;console.warn('[HEX preflight] critical shader fallback',err)}
           S.warmCompilePending=false
           S.warmShaderDone++
         }
-      } else if(S.warmCompilePending) {
-        // Let async compilation complete before starting the next resource.
+      } else if(S.warmCompilePending && !hexAsyncShaderFlights) {
+        // Original conservative serial queue remains default behavior.
       } else if (S.warmTex.length) {
         const tex = S.warmTex.shift()!
         try {
           gl.initTexture(tex)
           S.warmTextureDone++
         } catch (err) { S.warmErrors++; console.warn('[Piano preflight] texture', err) }
-      } else if (S.warmMesh.length && !S.warmCompilePending) {
+      } else if (S.warmMesh.length && warmCanSubmit()) {
         const obj = S.warmMesh.shift()!
         S.warmCompilePending = true
         if (typeof gl.compileAsync === 'function') {
+          asyncBegin()
           void compileHexCooperatively(obj).catch(err => {
             S.warmErrors++
             console.warn('[Piano preflight] shader', err)
-          }).finally(() => { S.warmCompilePending = false; S.warmShaderDone++ })
+          }).finally(() => { asyncEnd(); S.warmShaderDone++ })
         } else {
           try { gl.compile(obj, camera, scene) }
           catch (err) { S.warmErrors++; console.warn('[Piano preflight] shader fallback', err) }
@@ -1377,6 +1399,9 @@ export function RealityHost() {
       remainingTextures: S.warmTex.length,
       errors: S.warmErrors,
       preflightTarget: hexCooperativeLinear?'linear-per-material':'default',
+      asyncConcurrencyOptIn:hexAsyncShaderFlights,
+      asyncInFlight:S.warmAsyncInFlight,
+      asyncPeak:S.warmAsyncPeak,
       linearSubmissions:S.warmLinearSubmissions,
       linearMaxSubmitMs:Math.round(S.warmLinearMaxSubmitMs),
       linearRestoreErrors:S.warmLinearRestoreErrors,
