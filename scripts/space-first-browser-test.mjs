@@ -40,6 +40,21 @@ try{
     else observe()
   })
   await page.goto('http://127.0.0.1:4173/',{waitUntil:'domcontentloaded',timeout:120000})
+  // The legacy ORBITA loader must NEVER paint. It is still allowed as a
+  // hidden DOM node to retain real module-error recovery and CDN retry.
+  const legacyBoot=await page.evaluate(()=>{
+    const node=document.getElementById('orbita-loading')
+    return {
+      exists:!!node,
+      display:node?getComputedStyle(node).display:'missing',
+      hasError:!!node?.classList.contains('is-error'),
+      visible:!!node&&getComputedStyle(node).display!=='none',
+    }
+  })
+  results.legacyBoot=legacyBoot
+  if(legacyBoot.visible||legacyBoot.hasError)
+    throw Error('Old ORBITA text loader or error obscures first cosmic paint: '+
+      JSON.stringify(legacyBoot))
   // A module-based standalone import map is parsed after DOMContentLoaded.
   // DOMContentLoaded is NOT evidence that React has mounted. First wait for
   // the exact real spaceship-first root, not a synthetic progress timer.
