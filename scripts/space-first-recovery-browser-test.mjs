@@ -65,7 +65,7 @@ try{
   report.checks.push('ship-loading-error-is-explicit')
   const retry=page.getByRole('button',{name:'THỬ TẢI LẠI PHI THUYỀN'})
   await retry.waitFor({state:'visible',timeout:7000})
-  const islandFallback=page.getByRole('button',{name:/VÀO ĐẢO 3D|ĐẢO ĐANG KHỞI TẠO/})
+  const islandFallback=page.getByRole('button',{name:/TẢI ĐẢO DỰ PHÒNG|VÀO ĐẢO 3D|ĐẢO ĐANG KHỞI TẠO/})
   await islandFallback.waitFor({state:'visible',timeout:7000})
   // The fallback island button is NEVER unlocked by a timeout or progress
   // percentage. It can unlock only once the real island Canvas has painted.
@@ -74,9 +74,13 @@ try{
     island:window.__orbitaIslandFirstPaint??null,
   }))
   if(fallbackInfo.state?.ready)throw Error('Failed ship incorrectly unlocked normal warp')
-  if(fallbackInfo.island?.status!=='ready' && await islandFallback.isEnabled())
+  const fallbackText=await islandFallback.textContent()
+  if(fallbackInfo.island?.status!=='ready' &&
+      String(fallbackText).includes('VÀO ĐẢO 3D'))
     throw Error('Fallback island unlocked without real renderer')
-  report.checks.push('real-render-gated-fallback-not-fake')
+  if(!String(fallbackText).includes('TẢI ĐẢO DỰ PHÒNG'))
+    throw Error('Failed ship should defer expensive island loading to visitor action')
+  report.checks.push('recovery-ui-shows-before-any-optional-island-gpu-work')
   await retry.click()
   await page.waitForFunction(()=>window.__orbitaEntryGate?.shipRendered===true,
     null,{timeout:90000,polling:350})
