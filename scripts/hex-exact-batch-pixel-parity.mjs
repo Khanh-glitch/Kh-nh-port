@@ -24,6 +24,11 @@ try{
       document.querySelectorAll('#root canvas').length===1 &&
       document.querySelectorAll('iframe[title*="spaceship cockpit"]').length===0
   },null,{timeout:120000,polling:400})
+  // React runs manual parity registration in useLayoutEffect, while the
+  // authoritative WebGL backend is published in a later passive useEffect.
+  // Never reject Metal because the profiler ref is one frame behind.
+  await page.waitForFunction(()=>typeof window.__orbitaHexRenderer==='string',
+    null,{timeout:40000,polling:300})
   // This compares one exact synchronous WebGL frame with only the geometry
   // batch on/off. It is not a frame pacing test or a production quality toggle.
   const meta=await page.evaluate(()=>({
