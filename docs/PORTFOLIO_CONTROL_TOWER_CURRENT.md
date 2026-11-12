@@ -13,16 +13,16 @@ Goal: complete the portfolio today, but **do not certify completion on promises 
 ## Inventory and destination decisions
 | Area | Product meaning | Source status | Current action |
 |---|---|---|---|
-| Spaceship cockpit | First-pass overview, identity, strongest examples and route to island | Implemented; sample/placeholder content in `source/immersive/src/data/profile.ts` | #8, #12; bilingual honest data, no invented education |
+| Spaceship cockpit | First-pass overview, identity, strongest examples and route to island | Verified ship-first entry; cockpit project/CV overview now authored in PR #15 | #8, #12; CV-grounded UEH/Sen Viet and no falsely completed degree |
 | Main Stage | Event case studies with actual footage/photographs | Owner-final | FROZEN |
-| Colossus robot | APEX CHAOS, Ragnarok, Alphabet Engine, Prompt to Play | Actual game source; Prompt to Play assets unspecified | #10; demo/source, contest proof |
-| VNG Work Gallery | VNG competition entry, brief/process/evidence (NOT employment) | Full 3D kiosk+four slides, slide 1 explicitly awaits media | #10; new dossier entry and assets to verify |
+| Colossus robot | APEX CHAOS, Ragnarok, Alphabet Engine, Prompt to Play | Real game repos; owner's CV says VNGGames 2026 Top 26, 24h puzzle RPG (self-reported) | #10; demo/source, contest proof |
+| VNG Work Gallery | VNG competition entry, brief/process/evidence (NOT employment) | 3D kiosk and four truthful VNGGames 2026 slide labels drafted; photo library available but public rights/visibility not verified | #10; new dossier entry and assets to verify |
 | Cinema | Reel, video post-production, social shorts, TikTok Quê Quá Quao | 3D film simulation; personal media/URL missing | #10; verified reels only, no fabricated results |
 | Piano | Full-instrument music production and audio-reactive visualizer | Interactive piano exists; personal mastered song media missing | #10; must not pretend ambient piano plays completed song |
-| Product Lab | EventFlow Pro, MathPath, ORBITA, Alphabet Engine and browser game source | Existing five phones depict fake TicketFlow/LiveSync/etc | #11; replace all five concept previews with verified identities |
-| Rubik | Skills, education, project process, certificates | 3D cube exists; legacy contents invented show-control stats | #12; verified dates/degrees only |
+| Product Lab | EventFlow Pro, MathPath, ORBITA, Alphabet Engine and browser game source | Five real project identity cards implemented in PR #15; private EventFlow/MathPath source cannot link publicly | #11; replace all five concept previews with verified identities |
+| Rubik | Skills, education, project process, certificates | CV-based UEH Event Management 2023–2026 expected, Sen Viet internship and dated AI-generated visual communication thesis now drafted | #12; verified dates/degrees only |
 | Orb | AI-assisted creative method | 3D orb exists; old panel fictional lighting company | #8, #9; map genuine process examples |
-| Beacon | Honest, working contact CTA | Fake hello@orbita.studio in old source; real personal email unknown | #8, #10; GitHub valid, no fake email/SLA |
+| Beacon | Honest, working contact CTA | Verified personal CV contact details now drafted; no false inbox/SLA | #8, #10; working CV-based mailto, telephone and LinkedIn |
 
 ## Workstreams, dependency graph, priorities
 - **P0 #8** AUTH/TRUTH (all public copy and links depend on this).
@@ -36,7 +36,7 @@ Goal: complete the portfolio today, but **do not certify completion on promises 
 **Branches:** no editing production main directly. Each PR has source ownership. `#15 feat/portfolio-source-truth-20261112` is CONTENT+UI+PRODUCT preview initial implementation, unmerged until real standalone and visual evidence pass. #6/#7 stay separate. Do not overlap source file owners without rebasing/pinning tested SHAs.
 
 ## Evidence and no-fake-content policy
-Verified repo names/links: `Khanh-glitch/Kh-nh-port`, `eventflow-pro`, `MathPath`, `APEX-CHAOS`, `Soul-of-Hero`, `alphabet-engine`. EventFlow README states tested browser-local product demo, explicitly **NOT production-ready**. Personal `qu-sn-ts` project contains real portraits/family audio and MUST NOT be promoted without consent. Music track files, actual VNG contest results, TikTok account URLs, education, email and professional employment are **NOT verified**, therefore must remain uncited and unclaimed.
+Reviewed repo names: `Khanh-glitch/Kh-nh-port`, `eventflow-pro`, `MathPath`, `APEX-CHAOS`, `Soul-of-Hero`, `alphabet-engine`. `eventflow-pro` and `MathPath` are PRIVATE: never expose their GitHub URL as a publicly accessible CTA. EventFlow README states tested browser-local product demo, explicitly **NOT production-ready**. Personal `qu-sn-ts` project contains real portraits/family audio and MUST NOT be promoted without consent. Personal Library CV verifies owner-provided UEH 2023–2026 (expected, NOT award of degree), Sen Viet Event Production Intern, VNGGames Prompt To Play 2026 Top 26 and 24h puzzle-RPG as SELF-REPORTED. Oct 26 2026 thesis cover corroborates academic work. Professional contact email/phone/LinkedIn recorded from owner's CV and used with portfolio intent. Official VNG organizer ranking evidence, public contestant footage, accessible video, TikTok URL, publishable full-track audio and degree conferral remain NOT independently verified. Do not publish student ID, participant interview data, private family audio or nonpublic Drive folder IDs.
 Only claim complete when deployed media source and legal permission are demonstrated.
 
 ## Actual acceptance matrix for #14
