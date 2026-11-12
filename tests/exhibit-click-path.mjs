@@ -294,3 +294,26 @@ test('the evidence trap runs inside the harness step', () => {
     'the trap must generate the report')
   assert.doesNotMatch(step, /\| tee /, 'the harness output must not go through a pipeline')
 })
+
+test('the harness navigates a deep link with a real load and polls slow state', () => {
+  const src = readFileSync('scripts/portfolio-panel-browser-test.mjs', 'utf8')
+  // A fragment-only page.goto does not reload, so #view was never applied and
+  // every exhibit reported a 23-53m "placement" failure that was the harness's.
+  assert.match(src, /page\.reload\(\{waitUntil:'domcontentloaded'/,
+    'a deep-linked pose needs a real document load')
+  assert.match(src, /if\(page\.url\(\)!==url\)/, 'the navigation must be verified')
+  // The second tab is a React state flush; at ~1 fps it needs polling, not an
+  // instant textContent read.
+  assert.match(src, /while\(Date\.now\(\)<deadline\)\{[\s\S]{0,200}aria-selected/,
+    'the activated tab must be polled, not read once')
+  // Walking to a pose uses real keys and never fakes arrival.
+  assert.match(src, /page\.keyboard\.down\('KeyW'\)/, 'walking must use a real held W key')
+  assert.match(src, /UNPROVEN_TIME_BUDGET/, 'an unfinished walk must be labelled, not passed')
+  // Internal opening is allowed ONLY as a labelled layout audit of the dossier
+  // UI. It must never be the proof that a visitor can reach an exhibit.
+  const worldFns = src.slice(src.indexOf('async function clickWorldEntry'),
+    src.indexOf('async function auditPanel'))
+  assert.doesNotMatch(worldFns, /openPanel\(/,
+    'reaching an exhibit must never use the internal panel call')
+  assert.match(src, /via:'dossier audit'/, 'layout-only audits must be labelled')
+})
