@@ -1,7 +1,9 @@
 name: Ship first, actual 3D readiness, no map flash or fake progress
 on:
   push:
-    branches: [fix/space-first-real-readiness-entry-20261112]
+    branches:
+      - fix/space-first-real-readiness-entry-20261112
+      - feat/portfolio-source-truth-20261112
   pull_request:
     branches: [main]
   workflow_dispatch:
@@ -36,10 +38,37 @@ jobs:
           node scripts/sync-portfolio-standalone.mjs
           node --test tests/portfolio-source-acceptance.mjs
           node --test tests/space-first-entry-contract.mjs
+          node --test tests/exhibit-click-path.mjs
           node tests/integration-regression.mjs
           node scripts/build-pages.mjs
           cmp -s index.html dist-pages/index.html
           cmp -s assets/immersive/index.html dist-pages/assets/immersive/index.html
+      - name: Publishing is byte-idempotent (the served HTML is never stale)
+        run: |
+          set -eu
+          # Re-running the same publish step must not change a single byte. A
+          # previous revision re-appended the profile header on every run, and
+          # older CSS edits were skipped because the <style> id already existed,
+          # so committed standalone files silently drifted from source truth.
+          cp index.html /tmp/index.publish-1.html
+          cp assets/immersive/index.html /tmp/ship.publish-1.html
+          node scripts/sync-space-first-standalone.mjs
+          node scripts/sync-portfolio-standalone.mjs
+          node scripts/build-pages.mjs
+          cmp -s index.html /tmp/index.publish-1.html
+          cmp -s assets/immersive/index.html /tmp/ship.publish-1.html
+          echo "PUBLISH_IDEMPOTENT_OK"
+      - name: The committed standalone files equal a fresh build of this HEAD
+        run: |
+          set -eu
+          # index.html / assets/immersive/index.html are committed artifacts.
+          # If they differ from a fresh publish of this exact source HEAD, then
+          # the file recruiters load is not what this commit says it is.
+          git diff --exit-code -- index.html assets/immersive/index.html \
+            tests/integration-original-modules.json || {
+              echo "STALE_PUBLISHED_HTML: run scripts/sync-space-first-standalone.mjs + scripts/sync-portfolio-standalone.mjs and commit the result";
+              exit 1;
+            }
       - name: Install Playwright GPU browser
         run: cd source && npx playwright install --with-deps chromium
       - name: Actual cold Galaxy before island, 2 live renderers, real transition
@@ -52,61 +81,42 @@ jobs:
           node scripts/space-first-browser-test.mjs
       - name: Mobile recovery if spacecraft WebGL/HTML request initially fails
         run: node scripts/space-first-recovery-browser-test.mjs
-      # The full twelve-dossier × three-viewport native Metal interaction
-      # acceptance is performed by portfolio-dossier-metal-visual.yml.
-      # Do not repeat heavyweight scene+panel tests on SwiftShader during
-      # ship entry/recovery: software WebGL shader stalls are not actual
-      # pointer-interaction acceptance and can create false flaky results.
-      - name: Pin validated portfolio modules in real root and ship standalone PR
-        if: success() && github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'feat/portfolio-source-truth-20261112'
+      # Real dossier interaction on SwiftShader, INCLUDING opening exhibits by
+      # walking up to them and clicking them in the 3D world. This gate is not
+      # optional: a software GPU is slow, not exempt, and the earlier failure
+      # (workflow run 43184448178) was a real interaction defect, not a GPU
+      # artefact. Diagnostics are printed inline so no upload is required.
+      - name: Real 3D exhibit clicks, dossier tabs, close/reopen in 3 viewports
         run: |
           set -eu
-          TARGET=feat/portfolio-source-truth-20261112
-          mkdir -p /tmp/portfolio-tested/assets/immersive /tmp/portfolio-tested/tests
-          cp index.html /tmp/portfolio-tested/index.html
-          cp assets/immersive/index.html /tmp/portfolio-tested/assets/immersive/index.html
-          cp tests/integration-original-modules.json /tmp/portfolio-tested/tests/integration-original-modules.json
-          git reset --hard
-          git fetch origin "$TARGET"
-          git checkout -B "$TARGET" "origin/$TARGET"
-          EXPECTED=${{ github.event.pull_request.head.sha }}
-          ACTUAL=$(git rev-parse HEAD)
-          if [ "$ACTUAL" != "$EXPECTED" ]; then
-            echo "SOURCE_HEAD_MOVED: refuse to publish stale standalone against a newer source revision"
-            exit 0
-          fi
-          cp /tmp/portfolio-tested/index.html index.html
-          cp /tmp/portfolio-tested/assets/immersive/index.html assets/immersive/index.html
-          cp /tmp/portfolio-tested/tests/integration-original-modules.json tests/integration-original-modules.json
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add index.html assets/immersive/index.html tests/integration-original-modules.json
-          if ! git diff --cached --quiet; then
-            git commit -m 'build(portfolio): pin source-verified dossier and ship profile HTML [skip ci]'
-            git push origin "HEAD:$TARGET"
-          fi
-      - name: Commit only TESTED public HTML into the same draft PR branch
-        if: success() && github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'fix/space-first-real-readiness-entry-20261112'
+          python3 -m http.server 4173 --bind 127.0.0.1 --directory dist-pages >/tmp/portfolio-dossier-swiftshader.log 2>&1 &
+          for n in {1..90}; do
+            if curl -fsS -o /dev/null http://127.0.0.1:4173/; then break; fi
+            sleep 1
+          done
+          node scripts/portfolio-panel-browser-test.mjs
+      - name: Dossier interaction evidence (survives a failed upload)
+        if: always()
         run: |
-          set -eu
-          TARGET=fix/space-first-real-readiness-entry-20261112
-          mkdir -p /tmp/orbita-tested/assets/immersive /tmp/orbita-tested/tests
-          cp index.html /tmp/orbita-tested/index.html
-          cp assets/immersive/index.html /tmp/orbita-tested/assets/immersive/index.html
-          cp tests/integration-original-modules.json /tmp/orbita-tested/tests/integration-original-modules.json
-          git reset --hard
-          git fetch origin "$TARGET"
-          git checkout -B "$TARGET" "origin/$TARGET"
-          cp /tmp/orbita-tested/index.html index.html
-          cp /tmp/orbita-tested/assets/immersive/index.html assets/immersive/index.html
-          cp /tmp/orbita-tested/tests/integration-original-modules.json tests/integration-original-modules.json
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add index.html assets/immersive/index.html tests/integration-original-modules.json
-          if ! git diff --cached --quiet; then
-            git commit -m 'build(entry): pin browser-tested actual ship and island HTML'
-            git push origin "HEAD:$TARGET"
-          fi
+          echo '--- dossier report ---'
+          cat browser-evidence/portfolio/report.txt 2>/dev/null || echo 'NO_REPORT'
+      - name: Summary of real input paths
+        if: always()
+        run: |
+          test -f browser-evidence/portfolio/report.json
+          node -e "
+            const r=require('./browser-evidence/portfolio/report.json');
+            console.log('backend', r.backend, 'viewports', r.viewports.join(','));
+            console.log('world entries', r.worldEntry.length, JSON.stringify(r.worldEntry));
+            console.log('panel audits', r.panels.length);
+            console.log('input paths', JSON.stringify(r.inputPaths));
+            console.log('failures', r.failures.length);
+            if (r.failures.length) { for (const f of r.failures) console.log(JSON.stringify(f)); process.exit(1) }
+          "
+      # CI must never rewrite the reviewed artifacts. It previously pushed a
+      # bot commit that republished HTML from an older revision, which is how
+      # the served index.html drifted away from source truth. The gate above
+      # fails instead, and a human commits the regenerated files.
       - uses: actions/upload-artifact@v4
         if: success()
         with:

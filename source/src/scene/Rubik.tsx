@@ -5,6 +5,7 @@ import * as THREE from 'three'
 import { EXHIBITS } from '../layout'
 import { audio, type Bus } from '../audio'
 import { toast } from '../store'
+import { openPanel } from './Player'
 import { FONT, beamGeometry, beamMaterial, canvasTex, rbox, roundRect } from '../gfx'
 import { Hit } from './Hit'
 import { Label } from './Label'
@@ -215,6 +216,12 @@ export function Rubik() {
     toast('Rubik: tăng tốc ×3')
     if (busRef.current) audio.cubeClick(busRef.current, 1.4)
   }
+  // Clicking the cube used to only speed it up; the education/skills dossier
+  // was unreachable by clicking the exhibit. Keep the effect, then open.
+  const turboAndOpen = () => {
+    trigger()
+    openPanel('rubik')
+  }
 
   useFrame((state, dtRaw) => {
     const dt = Math.min(dtRaw, 0.05)
@@ -347,8 +354,8 @@ export function Rubik() {
       <Sparkles count={60} scale={[8, 7, 8]} size={5} speed={0.5} color="#7fe9ff" position={[0, CUBE_Y, 0]} />
       <pointLight ref={light} position={[0, CUBE_Y, 0]} color="#5fd8ff" intensity={160} distance={22} decay={2} />
 
-      <Hit id="rubik" label="Cube Solver" hint="Tăng tốc ×3" panel="rubik" maxDist={45} shape="sphere" size={[3.2, 0, 0]} position={[0, CUBE_Y, 0]} onClick={trigger} />
-      <Hit id="rubik-base" label="Cube Solver" hint="Tăng tốc ×3" panel="rubik" maxDist={30} shape="cylinder" size={[2.6, 1.2, 0]} position={[0, 0.6, 0]} onClick={trigger} />
+      <Hit id="rubik" label="Cube Solver" hint="Mở hồ sơ học vấn · tăng tốc ×3" panel="rubik" maxDist={45} shape="sphere" size={[3.2, 0, 0]} position={[0, CUBE_Y, 0]} onClick={turboAndOpen} />
+      <Hit id="rubik-base" label="Cube Solver" hint="Mở hồ sơ học vấn · tăng tốc ×3" panel="rubik" maxDist={30} shape="cylinder" size={[2.6, 1.2, 0]} position={[0, 0.6, 0]} onClick={turboAndOpen} />
     </group>
   )
 }

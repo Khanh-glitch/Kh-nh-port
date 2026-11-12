@@ -284,7 +284,39 @@ function Hud() {
 /** Source-verified project dossiers, not the old universal 540px text drawer.
  * Main Stage 3D ShowSystem.tsx / case study is intentionally untouched.
  */
+/** Read-only acceptance probe. It can only REPORT state that normal visitor
+ * input already produced. It never opens, closes or selects anything, so it
+ * cannot make a broken interaction look healthy. */
+function useAcceptanceProbe() {
+  useEffect(() => {
+    const probe = {
+      exhibits: EXHIBIT_LIST.map((e) => ({ id: e.id, name: e.name, x: e.x, z: e.z, rotY: e.rotY })),
+      player: () => ({ x: player.pos.x, y: player.pos.y, z: player.pos.z,
+        yaw: player.yaw, pitch: player.pitch }),
+      panel: () => useStore.getState().panel,
+      phase: () => useStore.getState().phase,
+      paused: () => useStore.getState().paused,
+      locked: () => useStore.getState().locked,
+      freeMouse: () => useStore.getState().freeMouse,
+      pointerLocked: () => document.pointerLockElement !== null,
+      // Vertical field of view of the live island camera (degrees), read from
+      // the actual canvas so the harness never guesses the projection.
+      vfov: () => {
+        const canvas = document.querySelector('#root canvas') as
+          (HTMLCanvasElement & {__r3f?: {root?: {getState?: () => {camera?: {fov?: number}}}}}) | null
+        const fov = canvas?.__r3f?.root?.getState?.()?.camera?.fov
+        return typeof fov === 'number' ? fov : 72
+      },
+      dossiers: () => [...document.querySelectorAll('[data-project-dossier]')]
+        .map((n) => n.getAttribute('data-project-dossier')),
+    }
+    ;(window as unknown as { __orbitaProbe?: typeof probe }).__orbitaProbe = probe
+    return () => { delete (window as unknown as { __orbitaProbe?: typeof probe }).__orbitaProbe }
+  }, [])
+}
+
 function PanelView() {
+  useAcceptanceProbe()
   const id = useStore((state) => state.panel)
   const [selected, setSelected] = useState(0)
   const [form, setForm] = useState({ name: '', msg: '' })

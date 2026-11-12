@@ -268,7 +268,11 @@ export function Products() {
           )
         })}
       </group>
-      <Hit id="product-base" label="Product Lab" hint="Xem danh mục sản phẩm" maxDist={30} panel="products" shape="cylinder" size={[1.8, 1.4, 0]} position={[0, 0.7, 0]} />
+      {/* The pedestal used to have no onClick at all: clicking the most obvious
+          part of the exhibit did nothing unless the visitor happened to hit a
+          screen. Open the dossier's first screen, like "E" and like a screen
+          click, and keep the five screens as the explicit selection path. */}
+      <Hit id="product-base" label="Product Lab" hint="Mở hồ sơ sản phẩm" maxDist={30} panel="products" shape="cylinder" size={[1.8, 1.4, 0]} position={[0, 0.7, 0]} onClick={() => select(0)} />
     </group>
   )
 }

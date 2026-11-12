@@ -25,6 +25,7 @@ jobs:
         run: |
           node scripts/sync-portfolio-standalone.mjs
           node --test tests/portfolio-source-acceptance.mjs
+          node --test tests/exhibit-click-path.mjs
           node tests/integration-regression.mjs
           node scripts/build-pages.mjs
           cmp -s index.html dist-pages/index.html
@@ -38,6 +39,11 @@ jobs:
             sleep 1
           done
           node scripts/portfolio-panel-browser-test.mjs
+      - name: Dossier interaction evidence (survives a failed upload)
+        if: always()
+        run: |
+          echo '--- dossier report (Metal) ---'
+          cat browser-evidence/portfolio/report.txt 2>/dev/null || echo 'NO_REPORT'
       - uses: actions/upload-artifact@v4
         if: always()
         with:

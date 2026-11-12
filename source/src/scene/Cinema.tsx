@@ -4,6 +4,7 @@ import * as THREE from 'three'
 import { EXHIBITS } from '../layout'
 import { audio, type Bus } from '../audio'
 import { toast } from '../store'
+import { openPanel } from './Player'
 import { FONT, beamGeometry, beamMaterial, canvasTex, rbox, roundRect } from '../gfx'
 import { useReality } from '../reality/state'
 import { Hit } from './Hit'
@@ -286,6 +287,13 @@ export function Cinema() {
     if (busRef.current) audio.cubeClick(busRef.current, 0.6)
     toast(`Rạp phim: ${TITLES[st.reel]}`)
   }
+  // Clicking the cinema now advances the reel AND opens its dossier, matching
+  // the keyboard "E" path. Before this, a visitor could only change reels and
+  // never reach the Cinema case study by clicking the screen.
+  const nextAndOpen = () => {
+    next()
+    openPanel('cinema')
+  }
 
   useFrame((state, dt) => {
     const t = state.clock.elapsedTime
@@ -508,8 +516,8 @@ export function Cinema() {
       <pointLight ref={roomLight} position={[0, 2.8, -4.2]} color="#ffffff" intensity={55} distance={13} decay={2} />
       <pointLight position={[0, 4, 9]} color="#ff4d4d" intensity={90} distance={14} decay={2} />
 
-      <Hit id="cinema-screen" label="Mini Cinema · Màn hình" hint="Đổi phim" panel="cinema" maxDist={40} size={[8.4, 3.8, 0.3]} position={[0, 2.95, -5.8]} onClick={next} />
-      <Hit id="cinema-sign" label="Mini Cinema" hint="Đổi phim" panel="cinema" maxDist={40} size={[9.4, 1.8, 0.6]} position={[0, 4.75, 6.5]} onClick={next} />
+      <Hit id="cinema-screen" label="Mini Cinema · Màn hình" hint="Mở hồ sơ · đổi phim" panel="cinema" maxDist={40} size={[8.4, 3.8, 0.3]} position={[0, 2.95, -5.8]} onClick={nextAndOpen} />
+      <Hit id="cinema-sign" label="Mini Cinema" hint="Mở hồ sơ · đổi phim" panel="cinema" maxDist={40} size={[9.4, 1.8, 0.6]} position={[0, 4.75, 6.5]} onClick={nextAndOpen} />
     </group>
   )
 }

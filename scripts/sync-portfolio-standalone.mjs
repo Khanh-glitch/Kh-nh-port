@@ -23,7 +23,13 @@ const shipSource=resolve(root,'source/immersive/src')
 const islandTag='<script id="orbita-embedded-map" type="application/json">'
 const shipTag='<script type="importmap">'
 const closeTag='</script>'
-const islandModules=['content','ui/Overlay','scene/Products','scene/VngGallery','vng/types']
+// Modules whose SOURCE this branch owns: verified content, the dossier UI, and
+// the exhibits whose real click path had to be repaired (a visitor could not
+// open most exhibits with the mouse). Shaders, geometry, materials and every
+// other 3D module stay byte-frozen and hash-checked below.
+const islandModules=['content','ui/Overlay','scene/Products','scene/VngGallery',
+ 'vng/types','scene/Orb','scene/Cinema','scene/Rubik','scene/Piano','scene/Stage',
+ 'scene/Beacon','scene/Robot','scene/ApexShowcase','scene/RagnarokShowcase']
 const islandModified=new Set(islandModules.map(x=>'orbita/'+x))
 const shipModules=['data/profile']
 function getMap(html,tag,ship=false){
@@ -210,10 +216,17 @@ const uiStyle=String.raw`<style id="orbita-project-dossier-css">
  [data-project-dossier] *{transition:none!important;animation:none!important}
 }
 </style>`
-if(!html.includes('id="orbita-project-dossier-css"')){
- const h=html.match(/<head[^>]*>/i)
- assert(h,'Root HTML head missing')
- html=html.replace(h[0],h[0]+uiStyle)
+// The scoped dossier CSS is owned by this script. Always replace a previously
+// published block instead of skipping it: skipping left the served standalone
+// pinned to an older stylesheet revision while the sync script advanced, which
+// silently dropped the media hero/caption rules from the real published HTML.
+const styleBlock=/<style id="orbita-project-dossier-css">[\s\S]*?<\/style>/
+if(styleBlock.test(html)){
+  html=html.replace(styleBlock,uiStyle)
+}else{
+  const h=html.match(/<head[^>]*>/i)
+  assert(h,'Root HTML head missing')
+  html=html.replace(h[0],h[0]+uiStyle)
 }
 // Ship profile has a 350kB original inlined pilot JPEG. Never re-encode it or
 // export/upload any photo asset; reuse EXACT original data URI module prefix.
@@ -227,7 +240,19 @@ const profileMarker='export const profile ='
 const at=prior.indexOf(profileMarker)
 assert(at>200000 && prior.startsWith("const pilotPhoto = 'data:image/jpeg;base64,"),
  'Original pilot image prefix absent; refuse to change photo')
-const photoPrefix=prior.slice(0,at)
+// Keep the EXACT original data URI and nothing else. Earlier revisions of this
+// script carried prior.slice(0,at) forward, so every run re-appended the source
+// header comment block on top of the previously published one. The photo bytes
+// were always identical, but the module grew on every publish (an unbounded,
+// non-idempotent rewrite of the served ship HTML). Rebuild the prefix from the
+// live photo literal only so publishing is byte-stable.
+const photoLiteral=prior.slice(0,prior.indexOf("'",prior.indexOf('base64,')+7)+1)
+assert(photoLiteral.startsWith("const pilotPhoto = 'data:image/jpeg;base64,/9j/"),
+ 'Original pilot JPEG signature changed')
+const previousPhoto=prior.slice(0,at).match(/data:image\/jpeg;base64,[A-Za-z0-9+/=]+/)?.[0]
+assert(previousPhoto===photoLiteral.match(/data:image\/jpeg;base64,[A-Za-z0-9+/=]+/)?.[0],
+ 'Pilot JPEG data URI was re-encoded; refuse to change photo')
+const photoPrefix=photoLiteral+'\n\n'
 const fresh=compile(shipSource,'data/profile','ship/',oldShip,true)
 assert(fresh.includes(profileMarker),'New ship profile export missing')
 assert(!fresh.includes('DỮ LIỆU MẪU'),'Sample data warning survived')
