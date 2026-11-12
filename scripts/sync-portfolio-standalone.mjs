@@ -23,7 +23,7 @@ const shipSource=resolve(root,'source/immersive/src')
 const islandTag='<script id="orbita-embedded-map" type="application/json">'
 const shipTag='<script type="importmap">'
 const closeTag='</script>'
-const islandModules=['content','ui/Overlay','scene/Products','scene/VngGallery']
+const islandModules=['content','ui/Overlay','scene/Products','scene/VngGallery','vng/types']
 const islandModified=new Set(islandModules.map(x=>'orbita/'+x))
 const shipModules=['data/profile']
 function getMap(html,tag,ship=false){
@@ -33,7 +33,7 @@ function getMap(html,tag,ship=false){
  return {whole,map:ship?whole.imports:whole,start,end,tag}
 }
 function compile(srcRoot,name,prefix,map,removePilot=false){
- const ext=name==='content'||name==='data/profile'?'.ts':'.tsx'
+ const ext=name==='content'||name==='data/profile'||name==='vng/types'?'.ts':'.tsx'
  const path=resolve(srcRoot,name+ext)
  let code=readFileSync(path,'utf8')
  if(removePilot){
