@@ -85,6 +85,31 @@ try{
       })
       if(!ended)beforeIdle.status='incomplete-after-30s'
     }
+    // Measure approach/idle frame pacing *before* the user presses Beacon.
+    // A stable light-count fix is rejected if it simply recompiles all PBR
+    // shaders during exploration and stalls the renderer ahead of the click.
+    const beforeClickIdle=await page.evaluate(()=>new Promise(resolve=>{
+      const samples=[]
+      let first=0,last=0
+      let done=false
+      const finish=()=>{
+        if(done)return
+        done=true
+        resolve({samples:samples.length,maxGapMs:Math.round(
+          Math.max(0,...samples,performance.now()-last)),
+          gapsOver120Ms:samples.filter(x=>x>120).length})
+      }
+      const raf=t=>{
+        if(done)return
+        if(!first)first=t
+        if(last)samples.push(t-last)
+        last=t
+        if(t-first>=4000)finish()
+        else requestAnimationFrame(raf)
+      }
+      requestAnimationFrame(raf)
+      setTimeout(finish,12000)
+    }))
     // Identical first and repeat signal with the EXACT production callback.
     const trials=[]
     for(let i=0;i<2;i++){
@@ -122,7 +147,7 @@ try{
     }
     const record={mode,backend:gpu,cdpGpu,
       backendVerified:native?nativeVerified:softwareVerified,
-      beforeIdle,trials,errors}
+      beforeIdle,beforeClickIdle,trials,errors}
     results.push(record)
     console.log('BEACON_FIRST_TRIGGER_AB '+JSON.stringify(record))
     await context.close()
