@@ -138,10 +138,12 @@ export function SocialDrops({ signal }: { signal: {send:number} }) {
         stage.add(clone)
         clonedLights.push(clone)
       })
+      const extraLights:THREE.PointLight[]=[]
       if(!stableLights){
         for(const item of icons){
           const light=new THREE.PointLight(item.color,2.6,5,2)
-          stage.add(light)
+          if(shaderOnly)extraLights.push(light)
+          else stage.add(light)
           clonedLights.push(light)
         }
       }
@@ -152,38 +154,61 @@ export function SocialDrops({ signal }: { signal: {send:number} }) {
       if(ring)queue.push(new THREE.Mesh(ring.geometry,ring.material))
       info.total=queue.length
       if(shaderOnly){
-        // Low-disruption alternative: compile the exact source logos under
-        // the SIX unchanged signal lights, with no GPU draw, no readPixels,
-        // no geometry staging, and no public texture/shadow mutation.
-        // It is intentionally NOT equivalent to full GPU resource prewarm.
+        // Compile each genuine 1..6 point-light PBR variant asynchronously
+        // WITHOUT introducing six always-on zero-brightness lights into the
+        // public scene. The live signal keeps all original geometry/light
+        // activation timings and materials byte-for-byte.
         const oldTarget=gl.getRenderTarget()
         const oldViewport=gl.getViewport(new THREE.Vector4()).clone()
         const oldScissor=gl.getScissor(new THREE.Vector4()).clone()
         const oldScissorTest=gl.getScissorTest()
         const oldXR=gl.xr.enabled
         target.texture.colorSpace=THREE.LinearSRGBColorSpace
+        const variants=stableLights?1:extraLights.length
+        info.total=variants
+        info.done=0
         try{
           for(const mesh of queue)stage.add(mesh)
-          gl.xr.enabled=false
-          gl.setRenderTarget(target)
-          gl.setViewport(0,0,40,40)
-          gl.setScissorTest(false)
-          const begun=performance.now()
-          const task=gl.compileAsync(stage,warmCamera,scene)
-          // Renderer state must be restored synchronously, not after the
-          // asynchronous shader completion resolves.
-          gl.setRenderTarget(oldTarget)
-          gl.setViewport(oldViewport)
-          gl.setScissor(oldScissor)
-          gl.setScissorTest(oldScissorTest)
-          gl.xr.enabled=oldXR
-          info.maxSubmitMs=Math.round(performance.now()-begun)
-          if(info.maxSubmitMs>120){
-            info.status='rejected-idle-frame-stall'
-            return
+          for(let variant=0;variant<variants;variant++){
+            if(!stableLights)stage.add(extraLights[variant])
+            while(!cancelled()){
+              info.status='waiting-for-idle'
+              if(await nextHealthyFrame())break
+              await new Promise<void>(resolve=>window.setTimeout(resolve,350))
+            }
+            if(cancelled()){info.status='cancelled';return}
+            let task:Promise<void>
+            const begun=performance.now()
+            try{
+              gl.xr.enabled=false
+              gl.setRenderTarget(target)
+              gl.setViewport(0,0,40,40)
+              gl.setScissorTest(false)
+              // Do NOT pass the public scene as the third argument: that
+              // would replace the private 1..6 test light variants with
+              // the public scene lighting, defeating program preparation.
+              task=gl.compileAsync(stage,warmCamera)
+            }finally{
+              gl.setRenderTarget(oldTarget)
+              gl.setViewport(oldViewport)
+              gl.setScissor(oldScissor)
+              gl.setScissorTest(oldScissorTest)
+              gl.xr.enabled=oldXR
+            }
+            info.maxSubmitMs=Math.max(info.maxSubmitMs,
+              Math.round(performance.now()-begun))
+            if(info.maxSubmitMs>120){
+              info.status='rejected-idle-frame-stall'
+              return
+            }
+            info.status='compiling-shaders'
+            await task!
+            info.done++
+            if(info.maxIdleRafGapMs>120){
+              info.status='rejected-idle-frame-stall'
+              return
+            }
           }
-          info.status='compiling-shaders'
-          await task
           await new Promise<void>(resolve=>requestAnimationFrame(()=>resolve()))
           await new Promise<void>(resolve=>requestAnimationFrame(()=>resolve()))
           if(cancelled()){info.status='cancelled';return}
@@ -191,7 +216,6 @@ export function SocialDrops({ signal }: { signal: {send:number} }) {
             info.status='rejected-idle-frame-stall'
             return
           }
-          info.done=queue.length
           info.gpuSynced=false
           info.status='shader-ready-unfenced'
         }catch(error){
