@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useStore } from '../store'
 import { PANELS, STUDIO } from '../content'
 import { EXHIBIT_LIST, DISC_R } from '../layout'
@@ -29,26 +29,29 @@ function Intro({ onSpacePresented, onSpaceUnavailable }: SpaceEntryCallbacks) {
   const fallbackReported = useRef(false)
   const entry = useRef({ ready: false })
   const [failure, setFailure] = useState<string | null>(null)
+  const failureRef = useRef<string | null>(null)
+  const failSpace = useCallback((reason: string) => {
+    if (fallbackReported.current) return
+    fallbackReported.current = true
+    failureRef.current = reason
+    entry.current.ready = false
+    setFailure(reason)
+    // Even a late WebGL context loss must offer actual recovery. The island
+    // fallback still unlocks only if ITS real renderer has painted.
+    onSpaceUnavailable()
+  }, [onSpaceUnavailable])
   const [islandTrouble, setIslandTrouble] = useState(false)
   const [attempt, setAttempt] = useState(0)
 
   useEffect(() => {
     const origin = window.location.origin
     const started = performance.now()
-    const failSpace = (reason: string) => {
-      if (spacePainted.current || fallbackReported.current) return
-      fallbackReported.current = true
-      setFailure(reason)
-      // A dead ship renderer must not cause an infinite block. The real
-      // island still has to mount and paint before its fallback CTA unlocks.
-      onSpaceUnavailable()
-    }
     const onMessage = (event: MessageEvent) => {
       if (event.origin !== origin ||
           event.source !== frame.current?.contentWindow) return
       const data = event.data as { type?: string }
       if (data?.type === 'ORBITA_SPACE_FRAME_READY') {
-        if (spacePainted.current) return
+        if (spacePainted.current || fallbackReported.current) return
         spacePainted.current = true
         setFailure(null)
         onSpacePresented()
@@ -74,12 +77,11 @@ function Intro({ onSpacePresented, onSpaceUnavailable }: SpaceEntryCallbacks) {
       const now = performance.now()
       const current = useStore.getState()
       const shipRendered = spacePainted.current
-      const ready = current.ready && shipRendered && !failure
+      const ready = current.ready && shipRendered && !failureRef.current
       entry.current.ready = ready
-      const status = ready ? 'ready'
-        : failure ? 'ship-failed'
-        : !shipRendered ? 'rendering-space'
-        : current.ready ? 'ready' : 'rendering-island'
+      const status = failureRef.current ? 'ship-failed'
+        : ready ? 'ready'
+        : !shipRendered ? 'rendering-space' : 'rendering-island'
       const progress = ready ? 100 : 0
       ;(window as unknown as { __orbitaEntryGate?: unknown }).__orbitaEntryGate = {
         ready, progress, status,
@@ -108,9 +110,10 @@ function Intro({ onSpacePresented, onSpaceUnavailable }: SpaceEntryCallbacks) {
       window.clearInterval(heartbeat)
       window.removeEventListener('message', onMessage)
     }
-  }, [attempt, onSpacePresented, onSpaceUnavailable, failure])
+  }, [attempt, onSpacePresented, failSpace])
 
   const retryShip = () => {
+    failureRef.current = null
     setFailure(null)
     setIslandTrouble(false)
     fallbackReported.current = false
@@ -128,14 +131,8 @@ function Intro({ onSpacePresented, onSpaceUnavailable }: SpaceEntryCallbacks) {
       title="Immersive Space Shift · spaceship cockpit"
       className="absolute inset-0 h-full w-full border-0"
       allow="autoplay"
-      onError={() => {
-        if (!spacePainted.current) {
-          fallbackReported.current = true
-          setFailure('Không tải được buồng lái không gian.')
-          onSpaceUnavailable()
-        }
-      }} />
-    {failure && !spacePainted.current && (
+      onError={() => failSpace('Không tải được buồng lái không gian.')} />
+    {failure && (
       <div className="absolute inset-0 z-40 flex flex-col items-center justify-center gap-5 bg-[#02040a] px-6 text-center">
         <p className="text-base text-white/85">{failure}</p>
         <div className="flex flex-wrap items-center justify-center gap-3">
