@@ -101,6 +101,33 @@ const KEY_ENTRY=[
   {id:'vng',hit:'vng-project-dossier',stand:{x:20,z:-33,yaw:180,pitch:-16},
    affordance:'VNG competition kiosk'},
 ]
+const STAGE={at:'config',suite:null,step:null}
+function flushReport(){
+  try{
+    evidence.failures=failures
+    evidence.stage={...STAGE}
+    evidence.passed=failures.length===0
+    evidence.finishedAt=evidence.finishedAt??null
+    mkdirSync(OUT,{recursive:true})
+    writeFileSync(OUT+'/report.json',JSON.stringify(evidence,null,2))
+    writeFileSync(OUT+'/report.txt',JSON.stringify(evidence))
+  }catch(error){console.error('PORTFOLIO_REPORT_WRITE_FAILED '+String(error))}
+}
+process.on('uncaughtException',(error)=>{
+  console.error('PORTFOLIO_HARNESS_FATAL '+String(error&&error.stack||error))
+  failures.push({stage:'fatal',verdict:'HARNESS_ERROR',error:String(error&&error.stack||error),
+    at:{...STAGE}})
+  flushReport()
+  process.exit(3)
+})
+process.on('unhandledRejection',(reason)=>{
+  console.error('PORTFOLIO_HARNESS_FATAL_REJECTION '+String(reason&&reason.stack||reason))
+  failures.push({stage:'fatal-rejection',verdict:'HARNESS_ERROR',
+    error:String(reason&&reason.stack||reason),at:{...STAGE}})
+  flushReport()
+  process.exit(3)
+})
+flushReport()
 const failures=[]
 const evidence={backend,launchArgs:LAUNCH,startedAt:new Date().toISOString(),
   viewports:suites.dom.map(s=>s[2]),
@@ -128,6 +155,8 @@ const probe=(page,fn,...args)=>page.evaluate(([fn,args])=>{
   return typeof f==='function'?f(...args):f
 },[fn,args])
 async function boot(page,suite){
+  STAGE.at='boot'
+  flushReport()
   const errors=[]
   page.on('pageerror',e=>errors.push(String(e)))
   page.on('console',m=>{if(m.type()==='error')errors.push('console: '+m.text().slice(0,200))})
@@ -168,6 +197,8 @@ const readWorld = (page) => page.evaluate(() => {
  * Player.look(): yaw -= dx * 0.0022 * -1.15 => a rightward drag ADDS 0.00253
  * rad; pitch -= dy * 0.00253. */
 async function aimAt(page,suite,hitId){
+  STAGE.at='aimAt:'+hitId
+  flushReport()
   const size=page.viewportSize()
   const cx=Math.round(size.width/2),cy=Math.round(size.height/2)
   const wrap=(a)=>Math.atan2(Math.sin(a),Math.cos(a))
@@ -206,6 +237,8 @@ async function aimAt(page,suite,hitId){
 
 /** Re-enter the world at a real standing pose using the product's deep link. */
 async function standAt(page,suite,pose){
+  STAGE.at='standAt:navigate'
+  flushReport()
   const errors=[]
   page.on('pageerror',e=>errors.push(String(e)))
   await page.goto('http://127.0.0.1:4173/#view='+pose.x+','+pose.z+','+pose.yaw+','+
@@ -226,6 +259,8 @@ async function standAt(page,suite,pose){
 
 /** A: real pointer click on the exhibit's hit volume. */
 async function clickWorldEntry(page,suite,entry){
+  STAGE.at='clickWorldEntry:'+entry.id
+  flushReport()
   const started=Date.now()
   const {me}=await standAt(page,suite,entry.stand)
   const aim=await aimAt(page,suite,entry.hit)
@@ -323,6 +358,8 @@ async function closeDossier(page,id){
   await root.waitFor({state:'detached',timeout:12000})
 }
 async function auditPanel(page,suite,id){
+  STAGE.at='auditPanel:'+id
+  flushReport()
   const root=page.locator('[data-project-dossier="'+id+'"]')
   await root.waitFor({state:'visible',timeout:15000})
   const info=await page.evaluate(id=>{
@@ -374,8 +411,12 @@ async function auditPanel(page,suite,id){
   return info
 }
 async function runSuite(suite){
+  STAGE.suite=suite.tag
+  STAGE.at='suite-start'
+  flushReport()
   const page=await browser.newPage({viewport:{width:suite.width,height:suite.height},
     deviceScaleFactor:1})
+  STAGE.at='suite-boot'
   const out={viewport:suite.tag,kind:suite.kind,
     size:suite.width+'x'+suite.height,panels:[],errors:null}
   try{
