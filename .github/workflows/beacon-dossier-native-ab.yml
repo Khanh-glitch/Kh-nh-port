@@ -1,0 +1,60 @@
+name: Beacon real trigger with final dossier panel A-B (native Metal)
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [integration/beacon-dossier-native-ab-20261112]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  integrated-native-metal:
+    runs-on: macos-15
+    timeout-minutes: 29
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - order: source-first
+            modes: baseline,stable-no-logs
+          - order: candidate-first
+            modes: stable-no-logs,baseline
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: source/package-lock.json
+      - run: npm ci --prefix source
+      - run: npm ci --prefix source/immersive
+      - run: npm install --prefix source --no-save --package-lock=false playwright@1.56.1
+      - run: cd source && npx playwright install chromium
+      - name: Actual ship, dossier and full-quality Beacon are source-identical
+        run: |
+          node scripts/check-space-entry-types.mjs
+          node scripts/sync-portfolio-standalone.mjs
+          node scripts/sync-beacon-stable-standalone.mjs
+          node --test tests/portfolio-source-acceptance.mjs
+          node --test tests/beacon-stable-six-contract.mjs
+          node tests/integration-regression.mjs
+          node scripts/build-pages.mjs
+          cmp -s index.html dist-pages/index.html
+          cmp -s assets/immersive/index.html dist-pages/assets/immersive/index.html
+      - name: Real signal, no-click idle, 2 triggers, final dossier, reversed A-B
+        env:
+          BEACON_BACKEND: metal
+          BEACON_AB_MODES: ${{ matrix.modes }}
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 --directory dist-pages >/tmp/beacon-dossier-native.log 2>&1 &
+          for n in {1..80}; do
+            if curl -fsS -o /dev/null http://127.0.0.1:4173/; then break; fi
+            sleep 1
+          done
+          node scripts/beacon-stable-six-lights-ab.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: beacon-final-dossier-original-light-${{ matrix.order }}
+          path: browser-evidence/beacon/
+          if-no-files-found: warn
