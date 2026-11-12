@@ -1,0 +1,55 @@
+name: HEX original Cinema physically invisible readback first-open A/B
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  first-open:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 32
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - order: original-first
+            modes: batch-control,cinema-range-control,cinema-range-overlap
+          - order: range-first
+            modes: cinema-range-overlap,cinema-range-control,batch-control
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: source/package-lock.json
+      - run: npm ci --prefix source
+      - run: npm install --prefix source --no-save --package-lock=false playwright@1.56.1
+      - run: cd source && npx playwright install --with-deps chromium
+      - name: Only original Cinema and original HEX eligible to change in actual HTML
+        run: |
+          node --check scripts/sync-hex-exact-batching-standalone.mjs
+          node scripts/sync-hex-exact-batching-standalone.mjs
+          node --test tests/hex-cinema-cpu-contract.mjs
+          node --test tests/hex-exact-batch-contract.mjs
+          node tests/integration-regression.mjs
+          node scripts/build-pages.mjs
+          cmp -s dist-pages/index.html index.html
+      - name: Reversed-order first-real-HEX, no-click idle and GPU/CPU stall
+        env:
+          HEX_CPU_BACKEND: software
+          HEX_CPU_MODES: ${{ matrix.modes }}
+        run: |
+          python3 -m http.server 4174 --bind 127.0.0.1 --directory dist-pages >/tmp/hex-range.log 2>&1 &
+          for n in {1..60}; do
+            if curl -fsS -o /dev/null http://127.0.0.1:4174/; then break; fi
+            sleep 1
+          done
+          node scripts/hex-cpu-first-trigger-trace.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: hex-source-identical-cinema-distance-original-${{ matrix.order }}
+          path: hex-cpu-trace/
+          if-no-files-found: warn
