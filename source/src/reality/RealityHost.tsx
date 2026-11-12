@@ -55,7 +55,11 @@ export function RealityHost() {
   const hexBatchProbe = typeof window !== 'undefined'
     ? new URLSearchParams(window.location.search).get('hexBatchProbe') : null
   useLayoutEffect(() => {
-    if (hexBatchProbe !== 'extended' && hexBatchProbe !== 'manual') return
+    if (!['extended','manual','extended-overlap','manual-overlap'].includes(hexBatchProbe??'')) return
+    // Query-only: preserve the original conservative mode while evaluating
+    // same-material and same-sort opaque siblings separately. NEVER default.
+    const sourceExactOverlapProbe =
+      hexBatchProbe === 'manual-overlap' || hexBatchProbe === 'extended-overlap'
     const root = ueh.current
     if (!root) return
     const merge = () => {
@@ -82,6 +86,7 @@ export function RealityHost() {
           return true
         }) as THREE.Mesh[]
         const buckets = new Map<string, THREE.Mesh[]>()
+        const batchKeyByMesh = new Map<THREE.Mesh,string>()
         for (const mesh of candidates) {
           const geometry = mesh.geometry
           const names = Object.keys(geometry.attributes).sort()
@@ -94,6 +99,7 @@ export function RealityHost() {
           const group = buckets.get(key) ?? []
           group.push(mesh)
           buckets.set(key,group)
+          batchKeyByMesh.set(mesh,key)
         }
         // A merged drawable has one renderer-sort slot instead of many.
         // Any overlapping sibling may depend on the ORIGINAL front/back
@@ -113,7 +119,15 @@ export function RealityHost() {
             const bounds=siblingBounds.get(mesh)
             if(!bounds)return false
             for(const [other,box] of siblingBounds){
-              if(other!==mesh && bounds.intersectsBox(box))return false
+              if(other!==mesh && bounds.intersectsBox(box)){
+                 // Allow only EXACT same opaque material/shadow/sort/attribute
+                 // pipeline in the experimental overlap branch. Visibility
+                 // is verified for 18 genuine scan/view samples before any
+                 // promotion; cross-material overlap remains disallowed.
+                 if(!sourceExactOverlapProbe ||
+                    batchKeyByMesh.get(other)!==batchKeyByMesh.get(mesh))
+                   return false
+               }
             }
             return true
           })
@@ -249,11 +263,12 @@ export function RealityHost() {
       }
       ;(window as unknown as {__orbitaHexBatchStats?:unknown}).__orbitaHexBatchStats = {
         mode:hexBatchProbe,sourceMeshes,batches,drawsSavedPerPass:savedCalls,
+         overlapExperiment:sourceExactOverlapProbe,
         sourceGeometryAndMaterialsPreserved:true,
       }
       return () => { for (let i=undo.length-1;i>=0;i--)undo[i]() }
     }
-    if (hexBatchProbe === 'extended') {
+    if (hexBatchProbe === 'extended' || hexBatchProbe === 'extended-overlap') {
       const undo=merge()
       return () => {undo();delete (window as unknown as {__orbitaHexBatchStats?:unknown}).__orbitaHexBatchStats}
     }
