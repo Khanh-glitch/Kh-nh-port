@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
 import * as THREE from 'three'
 import { EXHIBITS } from '../layout'
@@ -17,6 +17,26 @@ const RINGS = 8
 
 export function Beacon() {
   const {gl} = useThree()
+  // Opt-in A/B: driver synchronous getProgramInfoLog/getShaderInfoLog caused
+  // multi-second HEX first-use stalls. These are diagnostic reads, not a
+  // shader, light, material or visual property. Restore policy on unmount.
+  // Never enable in production until original first/repeat signal and idle
+  // plus no-visual-change cross-browser checks are accepted.
+  const skipDriverLogs = typeof window !== 'undefined' &&
+    new URLSearchParams(window.location.search).get('beaconSkipDriverShaderLogs') === '1'
+  useLayoutEffect(()=>{
+    if(!skipDriverLogs)return
+    const previous=gl.debug.checkShaderErrors
+    gl.debug.checkShaderErrors=false
+    ;(window as unknown as {__orbitaBeaconShaderLogPolicy?:unknown})
+      .__orbitaBeaconShaderLogPolicy={active:true,original:previous,
+        current:gl.debug.checkShaderErrors,sourceVisualsUnchanged:true}
+    return ()=>{
+      gl.debug.checkShaderErrors=previous
+      delete (window as unknown as {__orbitaBeaconShaderLogPolicy?:unknown})
+        .__orbitaBeaconShaderLogPolicy
+    }
+  },[gl,skipDriverLogs])
   // Diagnostics are query-only. Public scene and signal choreography stay exact.
   const benchmark = typeof window !== 'undefined' &&
     new URLSearchParams(window.location.search).get('beaconProfile') === '1'
