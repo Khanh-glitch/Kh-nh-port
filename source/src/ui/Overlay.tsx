@@ -316,6 +316,7 @@ function PanelView() {
   const proofLabel = active?.evidence === 'source'
     ? 'SOURCE CÔNG KHAI'
     : active?.evidence === 'private' ? 'DỰ ÁN ĐÃ ĐỐI CHIẾU · SOURCE RIÊNG TƯ'
+    : active?.evidence === 'cv' ? 'THÔNG TIN TRONG CV · CHƯA XÁC MINH ĐỘC LẬP'
     : active?.evidence === 'brief' ? 'DỰ ÁN DO CHỦ SỞ HỮU CUNG CẤP'
     : 'CHỜ ĐỐI CHIẾU TƯ LIỆU'
   return (
@@ -396,7 +397,7 @@ function PanelView() {
                 {active.url ? (
                   <a href={active.url} target="_blank" rel="noopener noreferrer"
                     className="mt-7 inline-flex min-h-12 w-full items-center justify-center rounded-xl px-5 py-3 text-center text-xs font-bold tracking-[0.16em] text-black transition-opacity hover:opacity-85"
-                    style={{background:p.accent}}>MỞ BẰNG CHỨNG / SOURCE ↗</a>
+                    style={{background:p.accent}}>{active.kind === 'contact' ? 'MỞ KÊNH LIÊN HỆ ↗' : 'MỞ BẰNG CHỨNG / SOURCE ↗'}</a>
                 ) : <div className="mt-7 rounded-xl border border-dashed border-white/20 bg-white/[0.025] px-4 py-3 text-xs leading-relaxed text-white/50">
                   {active.evidence === 'private'
                     ? 'Mã nguồn hiện chưa được công bố công khai. Cần bản demo hoặc case study được phép chia sẻ.'
