@@ -56,6 +56,16 @@ test('the only 100% progress gate is real island-ready AND ship first paint',()=
   assert.match(originalOverlay,/TẢI LẠI TRẢI NGHIỆM/)
   assert.match(overlay,/onSpaceUnavailable/)
 })
+test('legacy root ORBITA word loader is never visible before React or ship loads',()=>{
+  assert.match(html,/id="orbita-no-legacy-loader"/)
+  assert.match(html,/#orbita-loading:not\(\.is-error\)\{display:none!important\}/)
+  assert.match(html,/id="orbita-loading"/,
+    'Retain a real CDN failure/retry surface rather than hiding broken imports')
+  assert.match(html,/window\.__orbitaImported = function/)
+  assert.match(html,/document\.querySelector\('\[data-orbita-space-entry=\\"true\\"\]'\)/)
+  assert.match(html,/window\.__orbitaFailed = fail/,
+    'Keep genuine module loading failure and backup CDN entry path')
+})
 test('all unrelated original shaders, artworks, gameplay modules stay identical',()=>{
   for(const [key,hash] of Object.entries(frozen)){
     assert.equal(createHash('sha256').update(original[key]??'').digest('hex'),hash,
