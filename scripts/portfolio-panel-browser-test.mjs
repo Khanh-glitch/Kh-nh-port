@@ -523,11 +523,24 @@ async function auditPanel(page,suite,id){
       await tab.click({timeout:30000})
     }catch(error){
       const message=String(error)
+      // Name the exact element that covers the control, so the evidence points
+      // at the element instead of making the next reader guess.
+      const cover=await tab.evaluate(el=>{
+        const r=el.getBoundingClientRect()
+        const top=document.elementFromPoint(r.x+r.width/2,r.y+r.height/2)
+        if(!top||top===el||el.contains(top)||top.contains(el))return null
+        const chain=[]
+        for(let n=top;n&&n!==document.body&&chain.length<6;n=n.parentElement)
+          chain.push(n.tagName.toLowerCase()+(n.className&&typeof n.className==='string'
+            ?'.'+n.className.trim().split(/\s+/).slice(0,4).join('.') : ''))
+        return chain.join(' < ')
+      }).catch(()=>null)
       const covered=/intercepts pointer events/i.test(message)
-      interception=covered?'a covering element blocks the tab'
+      interception=covered?('a covering element blocks the tab')
         :/not stable/i.test(message)?'the layout never settles'
         :'the tab did not accept a click'
-      throw Object.assign(Error(interception+' on '+id),{verdict:'REAL_DEFECT'})
+      throw Object.assign(Error(interception+' on '+id+' | cover='+(cover??'none')),
+        {verdict:'REAL_DEFECT'})
     }
     if(page.url()!==urlBefore)
       throw Error('Clicking a dossier tab navigated the page to '+page.url())
