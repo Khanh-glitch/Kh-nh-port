@@ -16,14 +16,21 @@ page.on('pageerror',error=>errors.push(error.message))
 try{
   await page.goto('http://127.0.0.1:4173/?hexBatchProbe='+batchProbe+'#at=-26,20,0,0&autostart&skip',
     {waitUntil:'domcontentloaded',timeout:120000})
-  await page.waitForFunction(()=>!!window.__orbitaHexManualBatch,null,{timeout:120000})
+  await page.waitForFunction(async()=>{
+    const {useStore}=await import('orbita/store')
+    return !!window.__orbitaHexManualBatch &&
+      useStore.getState().ready &&
+      useStore.getState().phase==='playing' &&
+      document.querySelectorAll('#root canvas').length===1 &&
+      document.querySelectorAll('iframe[title*="spaceship cockpit"]').length===0
+  },null,{timeout:120000,polling:400})
   // This compares one exact synchronous WebGL frame with only the geometry
   // batch on/off. It is not a frame pacing test or a production quality toggle.
-  const meta=await page.evaluate(()=>{
-    const ctx=document.querySelector('canvas')?.getContext('webgl2')
-    const dbg=ctx?.getExtension('WEBGL_debug_renderer_info')
-    return {renderer:ctx?.getParameter(dbg?.UNMASKED_RENDERER_WEBGL??ctx.RENDERER)}
-  })
+  const meta=await page.evaluate(()=>({
+    renderer:window.__orbitaHexRenderer??null,
+    spaceIframeCount:document.querySelectorAll('iframe[title*="spaceship cockpit"]').length,
+    islandCanvasCount:document.querySelectorAll('#root canvas').length,
+  }))
   if(backend==='metal'&&!/Metal/i.test(String(meta.renderer)))
     throw new Error('Expected ANGLE Metal, got '+meta.renderer)
   if(backend==='software'&&!/SwiftShader|Software/i.test(String(meta.renderer)))
