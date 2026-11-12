@@ -66,6 +66,12 @@ jobs:
           git reset --hard
           git fetch origin "$TARGET"
           git checkout -B "$TARGET" "origin/$TARGET"
+          EXPECTED=${{ github.event.pull_request.head.sha }}
+          ACTUAL=$(git rev-parse HEAD)
+          if [ "$ACTUAL" != "$EXPECTED" ]; then
+            echo "SOURCE_HEAD_MOVED: refuse to publish stale standalone against a newer source revision"
+            exit 0
+          fi
           cp /tmp/portfolio-tested/index.html index.html
           cp /tmp/portfolio-tested/assets/immersive/index.html assets/immersive/index.html
           cp /tmp/portfolio-tested/tests/integration-original-modules.json tests/integration-original-modules.json
