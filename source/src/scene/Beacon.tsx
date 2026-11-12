@@ -1,9 +1,9 @@
-import { useEffect, useMemo, useRef } from 'react'
-import { useFrame } from '@react-three/fiber'
+import { useEffect, useLayoutEffect, useMemo, useRef } from 'react'
+import { useFrame, useThree } from '@react-three/fiber'
 import * as THREE from 'three'
 import { EXHIBITS } from '../layout'
 import { audio, type Bus } from '../audio'
-import { toast } from '../store'
+import { toast, useStore } from '../store'
 import { beamGeometry, beamMaterial, glowTexture, rand } from '../gfx'
 import { Hit } from './Hit'
 import { Label } from './Label'
@@ -16,6 +16,39 @@ const MAST_H = 9.5
 const RINGS = 8
 
 export function Beacon() {
+  const {gl} = useThree()
+  // Opt-in A/B: driver synchronous getProgramInfoLog/getShaderInfoLog caused
+  // multi-second HEX first-use stalls. These are diagnostic reads, not a
+  // shader, light, material or visual property. Restore policy on unmount.
+  // Never enable in production until original first/repeat signal and idle
+  // plus no-visual-change cross-browser checks are accepted.
+  const skipDriverLogs = typeof window !== 'undefined' &&
+    new URLSearchParams(window.location.search).get('beaconSkipDriverShaderLogs') === '1'
+  useLayoutEffect(()=>{
+    if(!skipDriverLogs)return
+    const previous=gl.debug.checkShaderErrors
+    gl.debug.checkShaderErrors=false
+    ;(window as unknown as {__orbitaBeaconShaderLogPolicy?:unknown})
+      .__orbitaBeaconShaderLogPolicy={active:true,original:previous,
+        current:gl.debug.checkShaderErrors,sourceVisualsUnchanged:true}
+    return ()=>{
+      gl.debug.checkShaderErrors=previous
+      delete (window as unknown as {__orbitaBeaconShaderLogPolicy?:unknown})
+        .__orbitaBeaconShaderLogPolicy
+    }
+  },[gl,skipDriverLogs])
+  // Diagnostics are query-only. Public scene and signal choreography stay exact.
+  const benchmark = typeof window !== 'undefined' &&
+    new URLSearchParams(window.location.search).get('beaconProfile') === '1'
+  // Benchmark ablations are NEVER production modes or performance fixes.
+  // Isolate original panel compositor vs original SocialDrops shader cost.
+  const diagnostic = typeof window !== 'undefined'
+    ? new URLSearchParams(window.location.search) : null
+  const omitPanelForDiagnosis = benchmark &&
+    diagnostic?.get('beaconDiagNoPanel') === '1'
+  const omitSocialForDiagnosis = benchmark &&
+    diagnostic?.get('beaconDiagNoSocial') === '1'
+  const traceIndex = useRef(0)
   const busRef = useRef<Bus | null>(null)
   const dishYaw = useRef<THREE.Group>(null)
   const dishTilt = useRef<THREE.Group>(null)
@@ -37,17 +70,130 @@ export function Beacon() {
     busRef.current = audio.createBus('beacon', worldPos(ex, 0, MAST_H, 0), { ref: 5, rolloff: 1.2, maxDist: 110, reverb: 0.6, gain: 0.8 })
   }, [])
 
+  const recordTrigger = (clickedAt:number) => {
+    if (!benchmark) return
+    const id = ++traceIndex.current
+    const shaderCount = gl.info.programs?.length ?? 0
+    const renderer=gl.getContext()
+    const debug=renderer.getExtension('WEBGL_debug_renderer_info')
+    const rendererName=String(renderer.getParameter(
+      debug?.UNMASKED_RENDERER_WEBGL??renderer.RENDERER))
+    const w=window as unknown as {
+      __orbitaBeaconBackend?:string
+    }
+    w.__orbitaBeaconBackend=rendererName
+    const warmAtClick=(window as unknown as {
+      __orbitaBeaconGpuPrewarm?: {status:string;done:number;total:number;maxSubmitMs:number;gpuSynced:boolean}
+    }).__orbitaBeaconGpuPrewarm
+    const warmStatusAtClick=warmAtClick ? {...warmAtClick} : null
+    const gaps:number[]=[]
+    // Timers and LongTasks distinguish CPU/JS blocking from rAF-only GPU
+    // compositor starvation without synchronizing the renderer.
+    const timers:number[]=[]
+    const longTasks:number[]=[]
+    const tick=window.setInterval(()=>timers.push(performance.now()),25)
+    let observer:PerformanceObserver|null=null
+    try{
+      observer=new PerformanceObserver(entries=>{
+        for(const entry of entries.getEntries())longTasks.push(entry.duration)
+      })
+      observer.observe({entryTypes:['longtask']})
+    }catch{ /* Safari and older browsers may lack LongTaskObserver */ }
+    let prePanelMaxGap=0, postPanelMaxGap=0
+    let last=0, firstFrameMs:number|null=null
+    let lastFrame=clickedAt
+    let frames=0
+    const follow = () => {
+      if (traceIndex.current!==id) return
+      const clock=performance.now()
+      if (firstFrameMs===null) firstFrameMs=clock-clickedAt
+      if (last) {
+        const gap=clock-last
+        gaps.push(gap)
+        // Separate materialization from the intentionally scheduled
+        // 1600 ms contact-panel transition. This cannot move or omit it.
+        if(clock-clickedAt<=1600) prePanelMaxGap=Math.max(prePanelMaxGap,gap)
+        else postPanelMaxGap=Math.max(postPanelMaxGap,gap)
+      }
+      last=clock
+      lastFrame=clock
+      frames++
+      if (clock-clickedAt<5300) requestAnimationFrame(follow)
+    }
+    requestAnimationFrame(follow)
+    window.setTimeout(()=>{
+      const elapsed=performance.now()-clickedAt
+      window.clearInterval(tick)
+      observer?.disconnect()
+      const timerIntervals=timers.slice(1).map((v,i)=>v-timers[i])
+      const timerLongest=Math.max(0,...timerIntervals)
+      const tail=elapsed-(lastFrame-clickedAt)
+      const maxGap=Math.max(tail,firstFrameMs??0,...gaps)
+      const result={id, firstFrameMs:Math.round(firstFrameMs??-1),
+        maxGapMs:Math.round(maxGap),frames,
+        maxTimerGapMs:Math.round(timerLongest),
+        longTaskMaxMs:Math.round(Math.max(0,...longTasks)),
+        rafMinusTimerGapMs:Math.round(maxGap-timerLongest),
+        timerSamples:timers.length,
+        prePanelMaxGapMs:Math.round(Math.max(prePanelMaxGap,
+          firstFrameMs??0)),
+        postPanelMaxGapMs:Math.round(postPanelMaxGap),
+        rendererName,
+        gapsOver120Ms:gaps.filter(x=>x>120).length,
+        warmStatusAtClick,shaderProgramsBefore:shaderCount,
+        shaderProgramsAfter:gl.info.programs?.length??0,
+        panelPhaseAfterMs:Math.round(elapsed),
+        panelOpenAtEnd:useStore.getState().panel==='beacon',
+        diagnosticPanelOmitted:omitPanelForDiagnosis,
+        diagnosticSocialOmitted:omitSocialForDiagnosis,
+        browserVisible:document.visibilityState==='visible'}
+      const w=window as unknown as {__orbitaBeaconProfiles?:typeof result[]}
+      ;(w.__orbitaBeaconProfiles??=[]).push(result)
+      console.info('[Beacon] original first-trigger profile',result)
+    },5500)
+  }
   const send = () => {
     const now = performance.now() / 1000
     if (now - st.send < 2.5) return
     st.send = now
+    recordTrigger(performance.now())
     waves.forEach((w, i) => (w.t0 = now + i * 0.22))
     if (busRef.current) audio.ping(busRef.current)
     toast('Tín hiệu đã phát vào vũ trụ…')
     window.clearTimeout(st.pendingOpen)
-    st.pendingOpen = window.setTimeout(() => openPanel('beacon'), 1600)
+    st.pendingOpen = window.setTimeout(() => {
+      if(benchmark){
+        const w=window as unknown as {
+          __orbitaBeaconPanelEvents?:Array<{afterMs:number;at:number}>
+        }
+        ;(w.__orbitaBeaconPanelEvents??=[]).push({
+          afterMs:Math.round(performance.now()-now*1000),
+          at:Math.round(performance.now()),
+        })
+      }
+      if(!omitPanelForDiagnosis)openPanel('beacon')
+    }, 1600)
   }
 
+  // Use the identical production signal pathway in GPU A/B automation.
+  useEffect(()=>{
+    if(!benchmark)return
+    const w=window as unknown as {__orbitaBeaconTestTrigger?:()=>void}
+    // Publish backend BEFORE exposing the automation trigger: a thrown GL
+    // diagnostic may otherwise leave a callable trigger and no trustworthy
+    // GPU identity, producing invalid comparisons.
+    const stats=w as typeof w & {__orbitaBeaconBackend?:string}
+    try{
+      const context=gl.getContext()
+      const debug=context.getExtension('WEBGL_debug_renderer_info')
+      stats.__orbitaBeaconBackend=String(context.getParameter(
+        debug?.UNMASKED_RENDERER_WEBGL??context.RENDERER)??'unknown')
+    }catch(error){
+      stats.__orbitaBeaconBackend='unavailable: '+String(error)
+    }
+    w.__orbitaBeaconTestTrigger=send
+    return ()=>{delete w.__orbitaBeaconTestTrigger;delete stats.__orbitaBeaconBackend}
+  },[])
   useFrame((state) => {
     const t = state.clock.elapsedTime
     const now = performance.now() / 1000
@@ -173,7 +319,7 @@ export function Beacon() {
         </mesh>
       ))}
 
-      <SocialDrops signal={st} />
+      {!omitSocialForDiagnosis && <SocialDrops signal={st} />}
       <Hit id="beacon" label="Signal Beacon" hint="Phát tín hiệu liên hệ" panel="beacon" maxDist={55} shape="cylinder" size={[1.6, 11, 0]} position={[0, 5.5, 0]} onClick={send} />
       <Hit id="beacon-dish" label="Signal Beacon" hint="Phát tín hiệu liên hệ" panel="beacon" maxDist={55} shape="sphere" size={[2.4, 0, 0]} position={[0, MAST_H + 1.5, 0]} onClick={send} />
     </group>
