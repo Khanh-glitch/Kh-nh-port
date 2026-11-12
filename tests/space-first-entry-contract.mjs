@@ -49,8 +49,12 @@ test('the only 100% progress gate is real island-ready AND ship first paint',()=
   assert.match(island,/IslandFirstPaintGate/)
   assert.match(island,/gl\.info\.render\.frame/)
   assert.match(island,/setReady/)
-  assert.match(overlay,/THỬ TẢI LẠI PHI THUYỀN/)
-  assert.match(overlay,/TẢI LẠI TRẢI NGHIỆM/)
+  // TypeScript's emitted JS may Unicode-escape Vietnamese string content.
+  // Verify the user-facing copy in reviewed TSX and the retry path in HTML.
+  const originalOverlay=readFileSync('source/src/ui/Overlay.tsx','utf8')
+  assert.match(originalOverlay,/THỬ TẢI LẠI PHI THUYỀN/)
+  assert.match(originalOverlay,/TẢI LẠI TRẢI NGHIỆM/)
+  assert.match(overlay,/onSpaceUnavailable/)
 })
 test('all unrelated original shaders, artworks, gameplay modules stay identical',()=>{
   for(const [key,hash] of Object.entries(frozen)){
