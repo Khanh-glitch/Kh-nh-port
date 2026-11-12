@@ -35,9 +35,9 @@ jobs:
       matrix:
         include:
           - order: source-first
-            modes: batch-control,cinema-range-control,cinema-range-parallel4
+            modes: cinema-range-control,cinema-range-no-logs,cinema-range-parallel4-no-logs
           - order: candidate-first
-            modes: cinema-range-parallel4,cinema-range-control,batch-control
+            modes: cinema-range-parallel4-no-logs,cinema-range-no-logs,cinema-range-control
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -68,6 +68,7 @@ jobs:
           done
           sed 's/4173/4174/g' scripts/hex-exact-batch-pixel-parity.mjs > scripts/hex-pixel-ci-temporary.mjs
           node scripts/hex-pixel-ci-temporary.mjs
+          HEX_PARITY_EXTRA_QUERY=skip-driver-logs node scripts/hex-pixel-ci-temporary.mjs
       - name: Reversed-order actual cold HEX open, 4s idle and true GPU/CPU trace
         env:
           HEX_CPU_MODES: ${{ matrix.modes }}
