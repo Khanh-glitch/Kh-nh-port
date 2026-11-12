@@ -89,7 +89,31 @@ try{
     const {useStore}=await import('orbita/store')
     return useStore.getState().phase==='playing'
   },null,{timeout:40000,polling:300})
+  // Store phase changes before React unmounts the spaceship iframe. A
+  // screenshot taken immediately here would falsely certify an island that
+  // is not yet visibly presented. Await the ACTUAL DOM handoff and one
+  // compositor paint, then capture the authentic island.
+  await page.waitForSelector('[data-orbita-space-entry="true"]',{
+    state:'detached',timeout:60000,
+  })
+  await page.waitForFunction(()=>{
+    const canvas=document.querySelector('#root canvas')
+    if(!canvas)return false
+    const rect=canvas.getBoundingClientRect()
+    return rect.width>200 && rect.height>200 &&
+      getComputedStyle(canvas).display!=='none'
+  },null,{timeout:30000,polling:300})
+  await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(
+    ()=>requestAnimationFrame(resolve))))
   results.entered=true
+  results.visibleIsland=await page.evaluate(()=>({
+    shipIframeCount:document.querySelectorAll('iframe[title*="spaceship cockpit"]').length,
+    rootCanvasCount:document.querySelectorAll('#root canvas').length,
+    phase:'playing',
+  }))
+  if(results.visibleIsland.shipIframeCount!==0 ||
+      results.visibleIsland.rootCanvasCount<1)
+    throw Error('Ship did not visually hand off to authentic island')
   await page.screenshot({path:'browser-evidence/entry/03-original-island-after-ship-warp.png',timeout:120000})
   console.log('SPACE_FIRST_REAL_LOADER_PASS '+JSON.stringify(results))
   if(results.jsErrors.length)process.exitCode=2
