@@ -46,6 +46,8 @@ jobs:
             sleep 1
           done
           node scripts/space-first-browser-test.mjs
+      - name: Mobile recovery if spacecraft WebGL/HTML request initially fails
+        run: node scripts/space-first-recovery-browser-test.mjs
       - name: Commit only TESTED public HTML into the same draft PR branch
         if: success() && github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'fix/space-first-real-readiness-entry-20261112'
         run: |
@@ -72,5 +74,7 @@ jobs:
         if: always()
         with:
           name: ship-first-no-visual-loss-screenshots-and-gate
-          path: browser-evidence/entry/
+          path: |
+            browser-evidence/entry/
+            browser-evidence/entry-recovery/
           if-no-files-found: warn
