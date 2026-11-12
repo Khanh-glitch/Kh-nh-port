@@ -3,6 +3,7 @@ import {mkdirSync,writeFileSync} from 'node:fs'
 const require=createRequire(import.meta.url)
 const {chromium}=require('../source/node_modules/playwright')
 const backend=process.env.HEX_PARITY_BACKEND==='metal'?'metal':'software'
+const batchProbe=process.env.HEX_BATCH_PROBE_MODE==='manual-overlap'?'manual-overlap':'manual'
 const args=backend==='software'
   ? ['--enable-webgl','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']
   : ['--enable-webgl','--enable-gpu','--ignore-gpu-blocklist','--use-angle=metal','--disable-software-rasterizer']
@@ -13,7 +14,7 @@ page.setDefaultTimeout(240000)
 const errors=[]
 page.on('pageerror',error=>errors.push(error.message))
 try{
-  await page.goto('http://127.0.0.1:4173/?hexBatchProbe=manual#at=-26,20,0,0&autostart&skip',
+  await page.goto('http://127.0.0.1:4173/?hexBatchProbe='+batchProbe+'#at=-26,20,0,0&autostart&skip',
     {waitUntil:'domcontentloaded',timeout:120000})
   await page.waitForFunction(()=>!!window.__orbitaHexManualBatch,null,{timeout:120000})
   // This compares one exact synchronous WebGL frame with only the geometry
@@ -28,9 +29,9 @@ try{
   if(backend==='software'&&!/SwiftShader|Software/i.test(String(meta.renderer)))
     throw new Error('Expected software GL, got '+meta.renderer)
   const result=await page.evaluate(()=>window.__orbitaHexManualBatch.runVisualParity())
-  const report={commit:process.env.GITHUB_SHA,backend,...meta,errors,result,
+  const report={commit:process.env.GITHUB_SHA,backend,batchProbe,...meta,errors,result,
     caveat:'Same-frame geometry/lighting/scan visual parity only; does not establish first-click frame pacing'}
-  writeFileSync('hex-batch-evidence/18-stage-color-shadow-parity.json',JSON.stringify(report,null,2))
+  writeFileSync('hex-batch-evidence/18-stage-color-shadow-parity-'+batchProbe+'.json',JSON.stringify(report,null,2))
   console.log('HEX_EXACT_BATCH_PARITY '+JSON.stringify(report))
   // This test proves image equivalence and nonzero EXACT source batching,
   // not a speculative 70-draw target from a far less safe inventory. Native
