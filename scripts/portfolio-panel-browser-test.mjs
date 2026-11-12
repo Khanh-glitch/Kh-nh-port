@@ -464,7 +464,10 @@ async function closeDossier(page,id){
   },{timeout:8000})
   if(!button.hit||button.w<16||button.h<16)
     throw Error('Close button not directly hit-testable: '+JSON.stringify(button))
-  await page.mouse.click(button.x,button.y,{delay:45})
+  const urlBefore=page.url()
+  await root.getByRole('button',{name:'Đóng hồ sơ dự án'}).click({timeout:30000})
+  if(page.url()!==urlBefore)
+    throw Error('Closing a dossier navigated the page to '+page.url())
   // The dossier leaves the DOM on the next React commit; under the software
   // rasteriser a commit can wait for a slow frame, so allow real time.
   await root.waitFor({state:'detached',timeout:30000})
@@ -509,7 +512,13 @@ async function auditPanel(page,suite,id){
     })
     if(!hit.hit||hit.w<8||hit.h<8)
       throw Error('Pointer target occluded tab '+id+': '+JSON.stringify(hit))
-    await page.mouse.click(hit.x,hit.y,{delay:35})
+    const urlBefore=page.url()
+    // Click the element itself, not a cached pixel: a scroll between measuring
+    // and clicking otherwise lands on an in-panel link and navigates away,
+    // which destroys the page context and looks like a product failure.
+    await tab.click({timeout:30000})
+    if(page.url()!==urlBefore)
+      throw Error('Clicking a dossier tab navigated the page to '+page.url())
     let second=''
     const deadline=Date.now()+25000
     while(Date.now()<deadline){

@@ -333,3 +333,13 @@ test('the Metal world gate runs the native walking path', () => {
   assert.match(metal, /PORTFOLIO_ENTRY: native/,
     'the Metal gate must walk the visitor with real keys, not only stand them still')
 })
+
+test('dossier controls are clicked as elements, never at cached pixels', () => {
+  const src = readFileSync('scripts/portfolio-panel-browser-test.mjs', 'utf8')
+  // A cached pixel click once landed on an in-panel link, navigated the page and
+  // destroyed the execution context; that was reported as 10 product defects.
+  assert.match(src, /await tab\.click\(\{timeout:30000\}\)/, 'tabs must be clicked through the locator')
+  assert.match(src, /await root\.getByRole\('button',\{name:'Đóng hồ sơ dự án'\}\)\.click\(/,
+    'the close control must be clicked through the locator')
+  assert.ok(src.includes("navigated the page to"), 'an accidental navigation must be reported')
+})
