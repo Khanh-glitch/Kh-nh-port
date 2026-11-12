@@ -45,6 +45,22 @@ const GRADE_RAIN = { sun: '#c9d7ea', sunI: 0.82, sky: '#8fa6c4', gnd: '#484c54',
 
 export function RealityHost() {
   const { scene, camera, gl } = useThree()
+  // Authoritative GPU backend for HEX cold-open A/B. Reading the DOM canvas
+  // using a different contextType can return null for a valid R3F renderer.
+  useEffect(()=>{
+    if(typeof window==='undefined'||
+       new URLSearchParams(window.location.search).get('hexProfile')!=='1')return
+    const ctx=gl.getContext()
+    let backend='unavailable'
+    try{
+      const ext=ctx.getExtension('WEBGL_debug_renderer_info')
+      backend=String(ctx.getParameter(ext?.UNMASKED_RENDERER_WEBGL??ctx.RENDERER))
+    }catch(error){backend='failed: '+String(error)}
+    ;(window as unknown as {__orbitaHexRenderer?:string}).__orbitaHexRenderer=backend
+    return ()=>{
+      delete (window as unknown as {__orbitaHexRenderer?:string}).__orbitaHexRenderer
+    }
+  },[gl])
   const ueh = useRef<THREE.Group>(null)
   const hostRoot = useRef<THREE.Group>(null)
   // Diagnostic only: the default page has no opt-in flags or visual changes.
