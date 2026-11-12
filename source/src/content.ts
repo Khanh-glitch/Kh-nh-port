@@ -237,6 +237,7 @@ export const PANELS: Record<PanelId, PanelContent> = {
       {name:'MathPath',meta:'LEARNING PLATFORM',desc:'Không gian học Toán cho Kinh tế và Quản trị, Living Board, bài luyện tập và tiến trình học.',url:'https://github.com/Khanh-glitch/MathPath',evidence:'source',kind:'web'},
       {name:'ORBITA Portfolio',meta:'3D EXPERIENCE',desc:'Portfolio WebGL có phi thuyền mở đầu và thế giới 3D tương tác, là chính trải nghiệm đang xem.',url:'https://github.com/Khanh-glitch/Kh-nh-port',evidence:'source',kind:'web'},
       {name:'Alphabet Engine',meta:'SYSTEMIC GAME ENGINE',desc:'Prototype trò chơi chữ trở thành vũ khí và tạo hệ thống chiến đấu phản ứng dây chuyền.',url:'https://github.com/Khanh-glitch/alphabet-engine',evidence:'source',kind:'game'},
+      {name:'APEX CHAOS',meta:'BROWSER GAME',desc:'Game đấu trường trình duyệt; màn hình hologram là cổng dẫn tới hồ sơ và mã nguồn game, không phải ảnh chụp ứng dụng giả.',url:'https://github.com/Khanh-glitch/APEX-CHAOS',evidence:'source',kind:'game'},
     ],
     tags:['EventFlow','Next.js','React','WebGL','Systems'],accent:'#5dffb0',
   },
