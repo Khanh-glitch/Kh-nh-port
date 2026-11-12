@@ -40,7 +40,7 @@ const suites=(MODE==='fast'?[[1280,720,'desktop']]:[[1280,720,'desktop'],[390,84
   .map(([width,height,tag])=>({width,height,tag,
     // A software GPU may walk slower; it may never be treated as correct
     // without a real arrival. Timeouts are generous for SwiftShader only.
-    budget:native?150000:300000}))
+    budget:native?120000:180000}))
 const ids=['about','orb','piano','rubik','robot','apex','ragnarok',
   'cinema','stage','products','beacon','vng']
 // Exhibits reachable from spawn by walking + turning. Street-distance checks
@@ -155,10 +155,13 @@ async function faceExhibit(page,suite,exhibit){
     const want=Math.atan2(-(target.x-aim.me.x),-(target.z-aim.me.z))
     const err=wrap(want-aim.me.yaw)
     last={err,yaw:aim.me.yaw,me:aim.me,dist:aim.dist}
-    // 0.35 degrees of tolerance is inside the smallest exhibit hit volume at
-    // the standing distances the harness uses.
-    if(Math.abs(err)<0.006)return aim
-    const px=Math.max(-260,Math.min(260,-err/0.0022))
+    // Turn until the exhibit is inside the smallest hit volume's half-width at
+    // the standing distance (>= 4.5 degrees everywhere the harness stands).
+    if(Math.abs(err)<0.05)return aim
+    // Player.look(): player.yaw -= dx * 0.0022 * -1.15  =>  a rightward drag
+    // ADDS 0.00253 rad per pixel. Dragging the wrong way made the harness spin
+    // for its whole budget, which is how a real hang reached the CI timeout.
+    const px=Math.max(-300,Math.min(300,err/0.00253))
     await page.mouse.move(cx,cy);await page.mouse.down()
     for(let i=1;i<=8;i++)await page.mouse.move(cx+Math.round(px*i/8),cy)
     await page.mouse.up()
@@ -180,12 +183,12 @@ async function walkAndOpen(page,suite,entry){
       return {me,d,panel:p.panel(),paused:p.paused(),phase:p.phase()}
     },{approach:entry.approach})
     if(state.panel)throw Error('Unexpected dossier before click: '+state.panel)
-    if(state.d<2.5)break
+    if(state.d<2.2)break
     await page.keyboard.down('KeyW')
-    await sleep(180)
+    await sleep(120)
     await page.keyboard.up('KeyW')
   }
-  if(!state||state.d>=2.5)
+  if(!state||state.d>=2.2)
     throw Error('Visitor could not walk to '+entry.id+' approach: '+JSON.stringify(state))
   const aim=await faceExhibit(page,suite,entry.id)
   if(aim.along<=0||Math.abs(aim.lateral)>0.45*aim.dist)
@@ -285,8 +288,11 @@ async function runSuite(suite){
     out.errors=await boot(page,suite)
     await waitForFrames(page,suite,'boot')
     for(const entry of WORLD_ENTRY){
+      const entryStarted=Date.now()
       try{
         await walkAndOpen(page,suite,entry)
+        console.log('PORTFOLIO_WORLD_ENTRY_TIME '+JSON.stringify({suite:suite.tag,
+          exhibit:entry.id,ms:Date.now()-entryStarted}))
         const info=await auditPanel(page,suite,entry.id)
         out.panels.push(entry.id)
         evidence.panels.push({suite:suite.tag,backend,id:entry.id,
@@ -388,14 +394,28 @@ async function runSuite(suite){
   evidence.suites=(evidence.suites??[]).concat(out)
   return out
 }
+const started=Date.now()
+/** Hard per-suite watchdog. The point is that a genuine hang is REPORTED with
+ * its cause and the remaining viewports still run, instead of the CI job being
+ * cancelled at its timeout with no diagnosis (which is what happened before). */
+const SUITE_CAP=Number(process.env.PORTFOLIO_SUITE_CAP_MS||
+  (native?9*60*1000:7*60*1000))
+const withCap=(promise,suite)=>Promise.race([
+  promise,
+  sleep(SUITE_CAP).then(()=>{
+    fail('suite-timeout',{suite:suite.tag,error:'exceeded '+SUITE_CAP+'ms'})
+    return {viewport:suite.tag,timedOut:true}
+  }),
+])
 try{
-  for(const suite of suites)await runSuite(suite)
+  for(const suite of suites)await withCap(runSuite(suite),suite)
 }catch(err){
   fail('browser',{error:String(err)})
 }finally{
   evidence.failures=failures
   evidence.passed=failures.length===0
   evidence.finishedAt=new Date().toISOString()
+  evidence.totalMs=Date.now()-started
   writeFileSync(OUT+'/report.json',JSON.stringify(evidence,null,2))
   writeFileSync(OUT+'/report.txt',JSON.stringify(evidence))
   console.log('PORTFOLIO_PANEL_REPORT '+JSON.stringify({backend,
