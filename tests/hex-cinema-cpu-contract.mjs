@@ -15,10 +15,17 @@ test('unchanged original 1024×450 cinema and CPU-backed context option are real
     assert.match(text,/hexCinemaCpuCanvas/)
     assert.match(text,/willReadFrequently/)
     assert.match(text,/hexCinemaFarLightGate/)
+    assert.match(text,/hexCinemaDistanceAwareLight/)
+    assert.match(text,/distanceToCinema > 24/)
     assert.match(text,/getImageData/)
     assert.match(text,/screenTex\.tex\.needsUpdate/)
   }
   assert.match(source,/const SW = 1024/)
   assert.match(source,/const SH = 450/)
+  assert.match(source,/get\('hexCinemaDistanceAwareLight'\) === '1'/)
+  assert.match(source,/const safelyBeyondLightRange = hexCinemaDistanceAwareLight/)
+  // The original 13m source light and camera-facing film must be preserved.
+  assert.match(source,/distance=\{13\}/)
+  assert.match(source,/film\(ctx, SW, SH, t, st\.reel, st\.reelT\)/)
 })
 console.log('HEX_CINEMA_ORIGINAL_PIXEL_SOURCE_PARITY_PASS')
