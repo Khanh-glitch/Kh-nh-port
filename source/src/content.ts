@@ -258,4 +258,3 @@ export const PANELS: Record<PanelId, PanelContent> = {
     action:{label:'LIÊN HỆ QUA EMAIL',url:'mailto:mencan308@gmail.com'},
   },
 }
-}
