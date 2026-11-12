@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import {readFileSync} from 'node:fs'
+import {readFileSync,existsSync} from 'node:fs'
 import {createHash} from 'node:crypto'
 import {test} from 'node:test'
 const root=readFileSync('index.html','utf8')
@@ -43,6 +43,23 @@ test('truthful public identity, sources, no invented agency/phone/impact statist
  assert.match(content,/quockhanh-le/)
  assert.match(overlay,/THÔNG TIN TRONG CV/)
  assert.ok(!content.includes('31231021361'),'Never publish student ID')
+})
+test('3 original public media files are correctly attributed without posing as playable songs, videos or awards',()=>{
+ const images=['01_ai_prompt_to_play.jpg','02_social_debate_poster.jpg','03_music_vibes.jpg']
+ for(const name of images){
+   assert.ok(existsSync(name),'Missing real media in published standalone: '+name)
+   const bytes=readFileSync(name)
+   assert.ok(bytes.length>20000,'Public portfolio image suspiciously small: '+name)
+   assert.equal(bytes[0],255,'Not JPEG: '+name)
+   assert.equal(bytes[1],216,'Not JPEG: '+name)
+   assert.ok(content.includes(name),'Image not attached to a project dossier: '+name)
+ }
+ assert.match(overlay,/orbita-dossier-hero-photo/)
+ assert.match(overlay,/XEM ẢNH GỐC/)
+ assert.match(root,/orbita-dossier-media-caption/)
+ assert.match(content,/không thay thế xác nhận thứ hạng từ BTC/)
+ assert.match(content,/chưa phải audio player/)
+ assert.match(content,/không phải video reel/)
 })
 test('actual 5 physical holograms correspond to verified source projects and correct selectable dossier',()=>{
  const expected=['EventFlow Pro','MathPath','ORBITA','Alphabet Engine','APEX CHAOS']
