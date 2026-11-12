@@ -32,7 +32,7 @@ const OUT='browser-evidence/portfolio'
 mkdirSync(OUT,{recursive:true})
 const native=process.env.PORTFOLIO_BACKEND==='metal'
 const backend=native?'Metal':'SwiftShader'
-const MODE=process.env.PORTFOLIO_VIEWPORTS||'all'
+const MODE=(process.env.PORTFOLIO_VIEWPORTS||'all').trim()||'all'
 // 'dom'    : SwiftShader-safe interaction proof (real E key + full DOM audit)
 // 'native' : Metal proof, adds a real walked approach to every exhibit
 const ENTRY=process.env.PORTFOLIO_ENTRY||(native?'native':'dom')
@@ -52,7 +52,12 @@ const browser=await chromium.launch({headless:true,args:LAUNCH})
 //    the DOM suites. This is an explicit allocation, not a silent skip.
 const suites=(()=>{
   const named={desktop:[1280,720,'desktop'],mobile:[390,844,'mobile'],wide:[1920,1080,'wide']}
-  const only=(MODE==='all'?null:MODE).split(',').filter(Boolean)
+  const raw=(process.env.PORTFOLIO_VIEWPORTS||'all').split(',').filter(Boolean)
+  const unknown=raw.filter(n=>n!=='all'&&!named[n])
+  if(unknown.length)
+    throw Error('Unknown PORTFOLIO_VIEWPORTS value(s): '+unknown.join(', ')+
+      ' (allowed: all, mobile, desktop, wide)')
+  const only=MODE==='all'?null:MODE.split(',').filter(Boolean)
   const domSet = only ?? ['mobile','desktop','wide']
   const worldSet = native ? (only ?? ['mobile','desktop','wide'])
     : (only ?? ['desktop'])
@@ -543,11 +548,14 @@ const withCap=(promise,suite)=>Promise.race([
 ])
 const plan=[...suites.dom.map(x=>makeSuite(x,'dom')),
   ...suites.world.map(x=>makeSuite(x,'world'))]
+evidence.plan=plan.map(x=>({viewport:x.tag,kind:x.kind}))
 try{
   for(const suite of plan)await withCap(runSuite(suite),suite)
 }catch(err){
   fail('browser',{error:String(err)})
 }finally{
+  // Record how far the plan got, so a report never looks like "nothing ran"
+  // for a reason the reader has to guess.
   evidence.failures=failures
   evidence.passed=failures.length===0
   evidence.finishedAt=new Date().toISOString()

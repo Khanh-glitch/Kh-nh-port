@@ -135,3 +135,24 @@ test('clicking a dossier control can never pass through to the 3D scene', () => 
   assert.match(player, /if \(dragging && moved < 8\) activate\('click', pick\(true\)\)/,
     'Drag-look clicks must raycast the pointer, so a real click reaches the exhibit')
 })
+
+test('the interaction harness cannot crash before it reports', () => {
+  // A harness that dies while parsing configuration writes no evidence at all,
+  // which is indistinguishable from "nothing ran". Guard the specific class of
+  // bug that did this (null.split on the default viewport mode) and require a
+  // report to be the last thing that always happens.
+  const src = readFileSync('scripts/portfolio-panel-browser-test.mjs', 'utf8')
+  assert.doesNotMatch(src, /\(MODE\s*===\s*'all'\s*\?\s*null\s*:\s*MODE\)\.split/,
+    'viewport mode parsing must not call split on null')
+  assert.match(src, /finally\s*\{[\s\S]*writeFileSync\(OUT\+'\/report\.json'/,
+    'the report must be written in a finally block so every failure is recorded')
+  assert.match(src, /Unknown PORTFOLIO_VIEWPORTS value/,
+    'an unknown viewport name must fail with a readable message')
+  for (const name of ['dom','world'])
+    assert.match(src, new RegExp(`'${name}'`), 'suite kind '+name+' must be planned')
+  // Every exhibit entry must name the real hit volume it is aimed at.
+  const entries = [...src.matchAll(/\{id:'(\w+)',hit:'([\w-]+)'/g)].map((m) => m[2])
+  assert.ok(entries.length >= 7, 'expected every exhibit to have a real hit volume target')
+  for (const hit of entries)
+    assert.match(hit, /^[\w-]+$/, 'hit volume id must be a literal, not an expression')
+})
