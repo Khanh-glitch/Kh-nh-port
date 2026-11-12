@@ -26,6 +26,7 @@ jobs:
           node --check scripts/sync-hex-beacon-standalone.mjs
           npx --prefix source tsc --noEmit --project source/tsconfig.hex-beacon.json
           node scripts/sync-hex-beacon-standalone.mjs
+          node --test tests/beacon-standalone-contract.mjs
           node tests/integration-regression.mjs
           node scripts/build-pages.mjs
           cmp index.html dist-pages/index.html
@@ -74,6 +75,7 @@ jobs:
       - run: cd source && npx playwright install chromium
       - run: |
           node scripts/sync-hex-beacon-standalone.mjs
+          node --test tests/beacon-standalone-contract.mjs
           node tests/integration-regression.mjs
           node scripts/build-pages.mjs
       - name: Opposite-order first and repeat Beacon signal on Metal
