@@ -46,15 +46,27 @@ jobs:
             sleep 1
           done
           node scripts/space-first-browser-test.mjs
-      - name: Publish tested standalone without touching public production main
-        if: github.event_name == 'push' && success()
+      - name: Commit only TESTED public HTML into the same draft PR branch
+        if: success() && github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'fix/space-first-real-readiness-entry-20261112'
         run: |
+          set -eu
+          TARGET=fix/space-first-real-readiness-entry-20261112
+          mkdir -p /tmp/orbita-tested/assets/immersive /tmp/orbita-tested/tests
+          cp index.html /tmp/orbita-tested/index.html
+          cp assets/immersive/index.html /tmp/orbita-tested/assets/immersive/index.html
+          cp tests/integration-original-modules.json /tmp/orbita-tested/tests/integration-original-modules.json
+          git reset --hard
+          git fetch origin "$TARGET"
+          git checkout -B "$TARGET" "origin/$TARGET"
+          cp /tmp/orbita-tested/index.html index.html
+          cp /tmp/orbita-tested/assets/immersive/index.html assets/immersive/index.html
+          cp /tmp/orbita-tested/tests/integration-original-modules.json tests/integration-original-modules.json
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add index.html assets/immersive/index.html tests/integration-original-modules.json
           if ! git diff --cached --quiet; then
-            git commit -m 'build(entry): verified ship-first first paint and true landing gate [skip ci]'
-            git push
+            git commit -m 'build(entry): pin browser-tested actual ship and island HTML'
+            git push origin "HEAD:$TARGET"
           fi
       - uses: actions/upload-artifact@v4
         if: always()
