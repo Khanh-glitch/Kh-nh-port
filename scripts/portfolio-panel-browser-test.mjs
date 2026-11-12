@@ -3,10 +3,11 @@ import {mkdirSync,writeFileSync} from 'node:fs'
 const require=createRequire(import.meta.url)
 const {chromium}=require('../source/node_modules/playwright')
 mkdirSync('browser-evidence/portfolio',{recursive:true})
-const browser=await chromium.launch({headless:true,args:[
-  '--enable-webgl','--use-gl=angle','--use-angle=swiftshader',
-  '--enable-unsafe-swiftshader','--ignore-gpu-blocklist',
-]})
+const native=process.env.PORTFOLIO_BACKEND==='metal'
+const browser=await chromium.launch({headless:true,args:native
+  ? ['--enable-webgl','--enable-gpu','--ignore-gpu-blocklist','--use-angle=metal','--disable-software-rasterizer']
+  : ['--enable-webgl','--use-gl=angle','--use-angle=swiftshader',
+    '--enable-unsafe-swiftshader','--ignore-gpu-blocklist']})
 const suites=[
  {width:1280,height:720,tag:'desktop'},
  {width:390,height:844,tag:'mobile'},
@@ -56,6 +57,7 @@ try{
     if(!info.insideViewport||info.horizontalOverflow||info.tabs<1||
        info.dialog!=='dialog'||!info.title)
       throw Error('Panel clipped or not truly interactive: '+JSON.stringify(info))
+    console.log('PORTFOLIO_PANEL_AUDIT '+JSON.stringify({suite:suite.tag,backend:native?'Metal':'SwiftShader',id,info}))
     const tabs=root.locator('[role="tab"]')
     if(info.tabs>=2){
       await tabs.nth(1).click()
@@ -66,7 +68,21 @@ try{
     if(['products','vng','robot','cinema','rubik','beacon'].includes(id)&&
        suite.tag!=='wide')
       await page.screenshot({path:'browser-evidence/portfolio/'+suite.tag+'-'+id+'.png',timeout:45000})
-    await root.getByRole('button',{name:'Đóng hồ sơ dự án'}).click()
+    try {
+      await root.getByRole('button',{name:'Đóng hồ sơ dự án'}).click({timeout:10000})
+    } catch(error) {
+      const state=await page.evaluate(id=>{
+        const modal=document.querySelector('[data-project-dossier="'+id+'"] aside')
+        const button=modal?.querySelector('header button')
+        const css=button?getComputedStyle(button):null
+        const box=button?.getBoundingClientRect()
+        return {id,box:box?.toJSON(),display:css?.display,visibility:css?.visibility,
+          opacity:css?.opacity,elementTop:box?document.elementFromPoint(box.x+box.width/2,box.y+box.height/2)?.tagName:null}
+      },id).catch(e=>({id,error:String(e)}))
+      console.error('PORTFOLIO_CLICK_FAILED '+JSON.stringify({suite:suite.tag,id,state,error:String(error)}))
+      await page.screenshot({path:'browser-evidence/portfolio/'+suite.tag+'-'+id+'-CLICK-FAILED.png',timeout:30000}).catch(()=>{})
+      throw error
+    }
     await root.waitFor({state:'detached',timeout:10000})
     out.panels.push(info)
   }
