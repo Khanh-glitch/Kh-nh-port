@@ -62,7 +62,8 @@ test('legacy root ORBITA word loader is never visible before React or ship loads
   assert.match(html,/id="orbita-loading"/,
     'Retain a real CDN failure/retry surface rather than hiding broken imports')
   assert.match(html,/window\.__orbitaImported = function/)
-  assert.match(html,/document\.querySelector\('\[data-orbita-space-entry=\\"true\\"\]'\)/)
+  assert.ok(html.includes("document.querySelector('[data-orbita-space-entry=\\\"true\\\"]')"),
+    'Boot watchdog must acknowledge the actual React ship entry, not a deferred island canvas')
   assert.match(html,/window\.__orbitaFailed = fail/,
     'Keep genuine module loading failure and backup CDN entry path')
 })
