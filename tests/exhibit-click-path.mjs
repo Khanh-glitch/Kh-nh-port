@@ -193,7 +193,12 @@ test('the evidence step captures harness output before failing', () => {
   const workflow = readFileSync('.github/workflows/portfolio-dossier-interaction-dev.yml', 'utf8')
   const step = workflow.slice(workflow.indexOf('Real 3D exhibit clicks and dossier interaction'))
   const body = step.slice(0, step.indexOf('- name: Commit the interaction evidence'))
-  assert.match(body, /set \+e/, 'the step must disable errexit before running the harness')
+  // Either errexit is disabled, or the step never enables it at all: what
+  // matters is that a failing harness still reaches the evidence code.
+  assert.ok(/set \+e/.test(body) || /set -u\n(?!.*set -e)/.test(body),
+    'the step must not abort before the harness status is captured')
+  assert.doesNotMatch(body, /^\s*set -eu$/m,
+    'the step must not run under errexit')
   assert.match(body, /> browser-evidence\/portfolio\/harness-out\.txt 2>&1/,
     'harness output must be written to a file, not discarded by a failing pipeline')
   assert.match(body, /cat browser-evidence\/portfolio\/harness-out\.txt/,
@@ -275,4 +280,17 @@ test('committed evidence is never a test fixture', () => {
   assert.match(testSrc, /PORTFOLIO_EVIDENCE_OUT/, 'reporter tests must redirect output to a temp dir')
   const reporter = readFileSync('scripts/portfolio-interaction-evidence.mjs', 'utf8')
   assert.match(reporter, /PORTFOLIO_EVIDENCE_OUT/, 'the reporter output dir must be overridable for tests')
+})
+
+test('the evidence trap runs inside the harness step', () => {
+  // Evidence used to be generated in a following step. When the job was torn
+  // down mid-step, that step was skipped and the repository kept an old report.
+  const workflow = readFileSync('.github/workflows/portfolio-dossier-interaction-dev.yml', 'utf8')
+  const step = workflow.slice(workflow.indexOf('Real 3D exhibit clicks and dossier interaction'),
+    workflow.indexOf('Fail the run when a real defect was recorded'))
+  assert.match(step, /trap commit_evidence EXIT/,
+    'evidence must be produced by an EXIT trap in the harness step')
+  assert.match(step, /node scripts\/portfolio-interaction-evidence\.mjs/,
+    'the trap must generate the report')
+  assert.doesNotMatch(step, /\| tee /, 'the harness output must not go through a pipeline')
 })
