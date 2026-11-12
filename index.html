@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="vi"><head><style id="orbita-first-paint-document">html,body,#root{min-height:100%;background:#02040a!important}body{margin:0}</style>
+<html lang="vi"><head><style id="orbita-no-legacy-loader">#orbita-loading:not(.is-error){display:none!important}#orbita-loading.is-error>.orbit,#orbita-loading.is-error>b,#orbita-loading.is-error>small{display:none!important}</style><style id="orbita-first-paint-document">html,body,#root{min-height:100%;background:#02040a!important}body{margin:0}</style>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 <meta name="theme-color" content="#020108" />
@@ -1772,7 +1772,7 @@ canvas {
     detail.textContent = 'Đã tải mã ứng dụng, đang chuẩn bị cảnh 3D.';
     const start = performance.now();
     const timer = setInterval(function () {
-      if (document.querySelector('#root canvas')) {
+      if (document.querySelector('[data-orbita-space-entry="true"]')) {
         clearInterval(timer);
         requestAnimationFrame(() => requestAnimationFrame(window.__orbitaReady));
       } else if (performance.now() - start > 16000) {
