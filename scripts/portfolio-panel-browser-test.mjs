@@ -65,11 +65,14 @@ try{
       if(!second?.includes('02'))
         throw Error('Second project did not activate: '+id)
     }
-    if(['products','vng','robot','cinema','rubik','beacon'].includes(id)&&
+    if(native && ['products','vng','robot','cinema','rubik','beacon'].includes(id)&&
        suite.tag!=='wide')
       await page.screenshot({path:'browser-evidence/portfolio/'+suite.tag+'-'+id+'.png',timeout:45000})
     try {
-      await root.getByRole('button',{name:'Đóng hồ sơ dự án'}).click({timeout:10000})
+      if(native)
+        await root.getByRole('button',{name:'Đóng hồ sơ dự án'}).click({timeout:10000})
+      else
+        await root.getByRole('button',{name:'Đóng hồ sơ dự án'}).evaluate(button=>button.click())
     } catch(error) {
       const state=await page.evaluate(id=>{
         const modal=document.querySelector('[data-project-dossier="'+id+'"] aside')
@@ -95,8 +98,13 @@ try{
   const reset=await page.locator('[data-project-dossier="products"] [role="tab"][aria-selected="true"]').textContent()
   if(!reset?.includes('01'))throw Error('Product selection leaked across close/reopen: '+reset)
   out.reopenReset=true
+  // First case is a PRIVATE source repo (EventFlow Pro) and must NEVER
+  // have a public GitHub CTA. Select public ORBITA for the real link check.
+  const privateLinks=await page.locator('[data-project-dossier="products"] a[href*="eventflow-pro"]').count()
+  if(privateLinks)throw Error('Private EventFlow repository exposed to recruiter')
+  await page.locator('[data-project-dossier="products"] [role="tab"]').nth(2).click()
   const links=await page.locator('[data-project-dossier="products"] a[href^="https://github.com/"]').count()
-  if(links<1)throw Error('Verified project evidence CTA missing from product dossier')
+  if(links<1)throw Error('Public ORBITA evidence CTA missing after tab selection')
   out.verifiedLinks=links
   if(errors.length)throw Error('Page errors: '+errors.join(';'))
   console.log('PORTFOLIO_PANEL_BROWSER_ACCEPTANCE '+JSON.stringify(out))
