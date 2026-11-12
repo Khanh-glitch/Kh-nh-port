@@ -39,8 +39,11 @@ function logoGeometry(path: string) {
 
 export function SocialDrops({ signal }: { signal: {send:number} }) {
   const {gl,scene}=useThree()
+  const shaderOnly = typeof window !== 'undefined' &&
+    new URLSearchParams(window.location.search).get('beaconShaderOnly') === '1'
   const gpuPrewarm = typeof window !== 'undefined' &&
-    new URLSearchParams(window.location.search).get('beaconGpuPrewarm') === '1'
+    (new URLSearchParams(window.location.search).get('beaconGpuPrewarm') === '1' ||
+      shaderOnly)
   // Query-only A/B: stabilize the number of *real* point lights, not their
   // brightness. Production/default retains the exact original light hierarchy.
   const stableLights = typeof window !== 'undefined' &&
@@ -148,6 +151,68 @@ export function SocialDrops({ signal }: { signal: {send:number} }) {
       const ring=rings.current.find((m):m is THREE.Mesh=>!!m)
       if(ring)queue.push(new THREE.Mesh(ring.geometry,ring.material))
       info.total=queue.length
+      if(shaderOnly){
+        // Low-disruption alternative: compile the exact source logos under
+        // the SIX unchanged signal lights, with no GPU draw, no readPixels,
+        // no geometry staging, and no public texture/shadow mutation.
+        // It is intentionally NOT equivalent to full GPU resource prewarm.
+        const oldTarget=gl.getRenderTarget()
+        const oldViewport=gl.getViewport(new THREE.Vector4()).clone()
+        const oldScissor=gl.getScissor(new THREE.Vector4()).clone()
+        const oldScissorTest=gl.getScissorTest()
+        const oldXR=gl.xr.enabled
+        target.texture.colorSpace=THREE.LinearSRGBColorSpace
+        try{
+          for(const mesh of queue)stage.add(mesh)
+          gl.xr.enabled=false
+          gl.setRenderTarget(target)
+          gl.setViewport(0,0,40,40)
+          gl.setScissorTest(false)
+          const begun=performance.now()
+          const task=gl.compileAsync(stage,warmCamera,scene)
+          // Renderer state must be restored synchronously, not after the
+          // asynchronous shader completion resolves.
+          gl.setRenderTarget(oldTarget)
+          gl.setViewport(oldViewport)
+          gl.setScissor(oldScissor)
+          gl.setScissorTest(oldScissorTest)
+          gl.xr.enabled=oldXR
+          info.maxSubmitMs=Math.round(performance.now()-begun)
+          if(info.maxSubmitMs>120){
+            info.status='rejected-idle-frame-stall'
+            return
+          }
+          info.status='compiling-shaders'
+          await task
+          await new Promise<void>(resolve=>requestAnimationFrame(()=>resolve()))
+          await new Promise<void>(resolve=>requestAnimationFrame(()=>resolve()))
+          if(cancelled()){info.status='cancelled';return}
+          if(info.maxIdleRafGapMs>120){
+            info.status='rejected-idle-frame-stall'
+            return
+          }
+          info.done=queue.length
+          info.gpuSynced=false
+          info.status='shader-ready-unfenced'
+        }catch(error){
+          info.errors++
+          info.status='failed'
+          console.warn('[Beacon] source exact shader-only prepare',error)
+        }finally{
+          gl.setRenderTarget(oldTarget)
+          gl.setViewport(oldViewport)
+          gl.setScissor(oldScissor)
+          gl.setScissorTest(oldScissorTest)
+          gl.xr.enabled=oldXR
+          cancelAnimationFrame(traceRaf)
+          stage.clear()
+          clonedLights.forEach(l=>(l as THREE.Light & {
+            shadow?:THREE.LightShadow
+          }).shadow?.dispose())
+          target.dispose()
+        }
+        return
+      }
       try{
         for(const mesh of queue){
           if(cancelled()){info.status='cancelled';return}
@@ -231,7 +296,7 @@ export function SocialDrops({ signal }: { signal: {send:number} }) {
       console.warn('[Beacon] original-resource idle prewarm',err)
     })
     return ()=>{stopped=true;cancelAnimationFrame(traceRaf);info.status='disposed'}
-  },[gpuPrewarm,gl,scene,icons,signal,stableLights])
+  },[gpuPrewarm,shaderOnly,gl,scene,icons,signal,stableLights])
 
   useFrame((state)=>{
     const age = signal.send < 0 ? -100 : performance.now()/1000 - signal.send
