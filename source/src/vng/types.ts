@@ -10,10 +10,10 @@ export interface ProjectorSlideInfo {
 }
 
 export const PROJECTOR_SLIDES: ProjectorSlideInfo[] = [
-  { id: 0, title: 'My Work at VNG', subtitle: 'Portfolio overview', accentHex: '#E65A26' },
-  { id: 1, title: 'Selected Projects', subtitle: 'Awaiting personal project media', accentHex: '#F18D55' },
-  { id: 2, title: 'Process & Craft', subtitle: 'Creative and technical contributions', accentHex: '#38BDF8' },
-  { id: 3, title: 'Outcomes & Impact', subtitle: 'Verified evidence only', accentHex: '#A78BFA' },
+  { id: 0, title: 'VNG Competition', subtitle: 'Bài dự thi · Không khẳng định công tác tại VNG', accentHex: '#E65A26' },
+  { id: 1, title: 'Competition Brief', subtitle: 'Tên cuộc thi & đề bài cần tư liệu xác minh', accentHex: '#F18D55' },
+  { id: 2, title: 'Process & Craft', subtitle: 'Ý tưởng · Vai trò · Quá trình thực hiện', accentHex: '#38BDF8' },
+  { id: 3, title: 'Evidence & Result', subtitle: 'Chỉ công bố chứng cứ và kết quả đã xác minh', accentHex: '#A78BFA' },
 ];
 
 export interface CameraPreset {
