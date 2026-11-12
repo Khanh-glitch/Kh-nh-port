@@ -54,6 +54,9 @@ test('the only 100% progress gate is real island-ready AND ship first paint',()=
   const originalOverlay=readFileSync('source/src/ui/Overlay.tsx','utf8')
   assert.match(originalOverlay,/THỬ TẢI LẠI PHI THUYỀN/)
   assert.match(originalOverlay,/TẢI LẠI TRẢI NGHIỆM/)
+  assert.match(originalOverlay,/TẢI ĐẢO DỰ PHÒNG/)
+  assert.match(originalOverlay,/setFallbackRequested/)
+  assert.match(originalOverlay,/requestAnimationFrame\(onSpaceUnavailable\)/)
   assert.match(overlay,/onSpaceUnavailable/)
 })
 test('legacy root ORBITA word loader is never visible before React or ship loads',()=>{
