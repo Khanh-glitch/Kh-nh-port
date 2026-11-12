@@ -37,7 +37,8 @@ jobs:
             if curl -fsS -o /dev/null http://127.0.0.1:4173/; then break; fi
             sleep 1
           done
-          node scripts/hex-exact-batch-pixel-parity.mjs
+          HEX_BATCH_PROBE_MODE=manual node scripts/hex-exact-batch-pixel-parity.mjs
+          HEX_BATCH_PROBE_MODE=manual-overlap node scripts/hex-exact-batch-pixel-parity.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
