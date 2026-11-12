@@ -11,3 +11,4 @@ dist-pages/
 # tracked (as *-out.txt) because it is the diagnosis for a failing run.
 browser-evidence/
 docs/evidence/portfolio-interaction-latest.json
+docs/evidence-metal/portfolio-interaction-latest.json

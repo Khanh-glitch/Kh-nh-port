@@ -6,7 +6,7 @@ on:
     branches: [feat/portfolio-source-truth-20261112]
   workflow_dispatch:
 permissions:
-  contents: read
+  contents: write
 jobs:
   metal-source-visual:
     runs-on: macos-15
@@ -41,11 +41,28 @@ jobs:
             sleep 1
           done
           node scripts/portfolio-panel-browser-test.mjs
-      - name: Dossier interaction evidence (survives a failed upload)
+      - name: Dossier interaction evidence, committed for reading
         if: always()
         run: |
+          set -u
           echo '--- dossier report (Metal) ---'
           cat browser-evidence/portfolio/report.txt 2>/dev/null || echo 'NO_REPORT'
+          # Artifacts are not always retrievable from outside the runner, so the
+          # distilled report is committed too. It is a real observation from
+          # this run, never a fixture, and must never overwrite the SwiftShader
+          # report that the other workflow commits.
+          PORTFOLIO_EVIDENCE_OUT=docs/evidence-metal \
+            node scripts/portfolio-interaction-evidence.mjs || echo 'EVIDENCE_SCRIPT_FAILED'
+          cat docs/evidence-metal/portfolio-interaction-latest.md || true
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add docs/evidence-metal
+          if git diff --cached --quiet; then
+            echo 'METAL_EVIDENCE_UNCHANGED'
+          else
+            git commit -m 'evidence(dossier): Metal interaction report [skip ci]' || echo 'COMMIT_FAILED'
+            git push origin "HEAD:${{ github.ref_name }}" || echo 'PUSH_FAILED'
+          fi
       - uses: actions/upload-artifact@v4
         if: always()
         with:

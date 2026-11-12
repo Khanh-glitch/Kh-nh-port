@@ -516,7 +516,19 @@ async function auditPanel(page,suite,id){
     // Click the element itself, not a cached pixel: a scroll between measuring
     // and clicking otherwise lands on an in-panel link and navigates away,
     // which destroys the page context and looks like a product failure.
-    await tab.click({timeout:30000})
+    // If another element covers the tab, the hit test above already named it —
+    // that is a real occlusion defect, not something to click through.
+    let interception=''
+    try{
+      await tab.click({timeout:30000})
+    }catch(error){
+      const message=String(error)
+      const covered=/intercepts pointer events/i.test(message)
+      interception=covered?'a covering element blocks the tab'
+        :/not stable/i.test(message)?'the layout never settles'
+        :'the tab did not accept a click'
+      throw Object.assign(Error(interception+' on '+id),{verdict:'REAL_DEFECT'})
+    }
     if(page.url()!==urlBefore)
       throw Error('Clicking a dossier tab navigated the page to '+page.url())
     let second=''
