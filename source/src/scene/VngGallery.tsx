@@ -129,7 +129,7 @@ export function VngGallery() {
     slide.current = ((slide.current + step + count) % count) as ProjectorSlideId
     assets.projection.setPowered(true)
     assets.projection.setSlide(slide.current)
-    toast(`VNG Work Gallery · ${PROJECTOR_SLIDES[slide.current].title}`)
+    toast(`VNG Competition Gallery · ${PROJECTOR_SLIDES[slide.current].title}`)
   }
   useFrame(({ clock }) => {
     const t = clock.elapsedTime
@@ -157,7 +157,7 @@ export function VngGallery() {
     <primitive object={assets.collection.group} />
     <pointLight position={[0, 3.8, 2.4]} color="#ff9655" intensity={12} distance={12} decay={2} />
     <pointLight position={[3.5, 4.1, -2]} color="#8fb8ff" intensity={8} distance={11} decay={2} />
-    <Label title="VNG Work Gallery" sub="Dự án & thành quả · Điều khiển slide" color="#e65a26"
+    <Label title="VNG Competition" sub="Bài dự thi · Bấm hồ sơ để xem chứng cứ" color="#e65a26"
       position={[0, 6.0, 0]} scale={0.9} fadeNear={4} fadeFar={60} />
     <MiniConsoleButton x={-0.78} color="#e65a26" text="PREV" onClick={() => changeSlide(-1)} />
     <MiniConsoleButton x={0.78} color="#38bdf8" text="NEXT" onClick={() => changeSlide(1)} />
