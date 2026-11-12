@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useStore } from '../store'
 import { PANELS, STUDIO } from '../content'
 import { EXHIBIT_LIST, DISC_R } from '../layout'
@@ -15,82 +15,161 @@ function Kbd({ children }: { children: React.ReactNode }) {
   )
 }
 
-function Intro() {
-  const ready = useStore((s) => s.ready)
+type SpaceEntryCallbacks = {
+  onSpacePresented: () => void
+  onSpaceUnavailable: () => void
+}
+
+function Intro({ onSpacePresented, onSpaceUnavailable }: SpaceEntryCallbacks) {
+  const islandReady = useStore((s) => s.ready)
   const frame = useRef<HTMLIFrameElement>(null)
   const warpStarted = useRef(false)
-  const entry = useRef({ assetsReadyAt: 0, ready: false })
-  const [fallback, setFallback] = useState(false)
+  const engaged = useRef(false)
+  const spacePainted = useRef(false)
+  const fallbackReported = useRef(false)
+  const entry = useRef({ ready: false })
+  const [failure, setFailure] = useState<string | null>(null)
+  const [fallbackRequested, setFallbackRequested] = useState(false)
+  const failureRef = useRef<string | null>(null)
+  const failSpace = useCallback((reason: string) => {
+    if (fallbackReported.current) return
+    fallbackReported.current = true
+    failureRef.current = reason
+    entry.current.ready = false
+    setFailure(reason)
+    // Do NOT automatically mount the enormous island renderer while the
+    // spacecraft has failed. On slow/mobile GPU this can starve the event
+    // loop and hide the recovery controls for many seconds. Let the visitor
+    // choose retry (fast) OR the real 3D island fallback (on demand).
+  }, [])
+  const [islandTrouble, setIslandTrouble] = useState(false)
+  const [attempt, setAttempt] = useState(0)
 
   useEffect(() => {
     const origin = window.location.origin
+    const started = performance.now()
     const onMessage = (event: MessageEvent) => {
-      if (event.origin !== origin || event.source !== frame.current?.contentWindow) return
+      if (event.origin !== origin ||
+          event.source !== frame.current?.contentWindow) return
       const data = event.data as { type?: string }
+      if (data?.type === 'ORBITA_SPACE_FRAME_READY') {
+        if (spacePainted.current || fallbackReported.current) return
+        spacePainted.current = true
+        setFailure(null)
+        onSpacePresented()
+      }
+      if (data?.type === 'ORBITA_SPACE_RENDERER_FAILED')
+        failSpace('Không khởi tạo được WebGL của phi thuyền.')
       if (data?.type === 'ORBITA_SPACE_ENGAGE' && entry.current.ready) {
+        engaged.current = true
         void audio.start()
       }
       if (data?.type === 'ORBITA_SPACE_WARP_COMPLETE' &&
-          entry.current.ready && !warpStarted.current) {
+          engaged.current && entry.current.ready && !warpStarted.current) {
         warpStarted.current = true
-        // The original from-orbit-to-island descent stays completely intact.
         startGame()
       }
     }
     window.addEventListener('message', onMessage)
 
-    // The energy ring represents the resources needed to ENTER the island.
-    // The old implementation waited for 90 "healthy" rAF ticks plus every
-    // unrelated HEX shader program; on real WebGL drivers that could hold
-    // the CTA at precisely 70% forever, even with the island fully loaded.
-    // HEX preflight continues independently and must never lock navigation.
-    // Timer-based handoff is robust even when the two WebGL compositors
-    // temporarily starve requestAnimationFrame.
+    // No percent is inferred from elapsed time, rAF ticks, or an unrelated
+    // HEX/Colossus warmup. The island must actually render after Suspense
+    // resolves and the spacecraft must have painted real WebGL content.
     const update = () => {
-      const current = useStore.getState()
       const now = performance.now()
-      if (current.ready && entry.current.assetsReadyAt === 0)
-        entry.current.assetsReadyAt = now
-      const since = entry.current.assetsReadyAt
-        ? now - entry.current.assetsReadyAt : 0
-      const navigable = current.ready && since >= 1100
-      entry.current.ready = navigable
-      const progress = current.ready
-        ? Math.min(100, 86 + Math.floor(14 * Math.min(1, since / 1100)))
-        : Math.min(85, Math.round(current.loading * 85))
-      ;(window as any).__orbitaEntryGate = {
-        ready: navigable,
-        progress,
-        assetsReady: current.ready,
-        shader: (window as any).__orbitaHexShaderPrep?.status ?? 'not-started',
+      const current = useStore.getState()
+      const shipRendered = spacePainted.current
+      const ready = current.ready && shipRendered && !failureRef.current
+      entry.current.ready = ready
+      const status = failureRef.current ? 'ship-failed'
+        : ready ? 'ready'
+        : !shipRendered ? 'rendering-space' : 'rendering-island'
+      const progress = ready ? 100 : 0
+      ;(window as unknown as { __orbitaEntryGate?: unknown }).__orbitaEntryGate = {
+        ready, progress, status,
+        shipRendered, islandReady: current.ready,
+        loadingIsMeasured: true,
+        shader: (window as unknown as {__orbitaHexShaderPrep?:{status?:string}})
+          .__orbitaHexShaderPrep?.status ?? 'not-started',
         gpuPreparationIsNonBlocking: true,
       }
       frame.current?.contentWindow?.postMessage({
         type: 'ORBITA_SPACE_READY',
-        progress,
-        ready: navigable,
+        ready, progress, status,
       }, origin)
+
+      if (!shipRendered && !fallbackReported.current && now-started>18000)
+        failSpace('Phi thuyền chưa dựng được khung hình đầu.')
+      // If island loading fails, offer an actual retry, never a false 100%
+      // or silently bypass the readiness gate.
+      if ((shipRendered || fallbackReported.current) && !current.ready &&
+          now-started>35000) setIslandTrouble(true)
+      if (current.ready) setIslandTrouble(false)
     }
-    const heartbeat = window.setInterval(update, 120)
+    const heartbeat = window.setInterval(update, 150)
     update()
     return () => {
       window.clearInterval(heartbeat)
       window.removeEventListener('message', onMessage)
     }
-  }, [])
+  }, [attempt, onSpacePresented, failSpace])
 
-  return <div className="absolute inset-0 z-30 overflow-hidden bg-[#030611] text-white">
-    <iframe ref={frame} src="assets/immersive/index.html"
-      title="Immersive Space Shift · ORBITA Entry"
+  const requestFallback = () => {
+    if (!fallbackRequested) {
+      setFallbackRequested(true)
+      // Give the error/retry UI two actual paints before allocating the
+      // secondary island GPU context. This is scheduling, not fake progress.
+      requestAnimationFrame(() => requestAnimationFrame(onSpaceUnavailable))
+      return
+    }
+    if (islandReady && useStore.getState().ready) startGame()
+  }
+
+  const retryShip = () => {
+    failureRef.current = null
+    setFailure(null)
+    setIslandTrouble(false)
+    setFallbackRequested(false)
+    fallbackReported.current = false
+    spacePainted.current = false
+    entry.current.ready = false
+    engaged.current = false
+    warpStarted.current = false
+    setAttempt((n) => n + 1)
+  }
+
+  return <div data-orbita-space-entry="true"
+    className="absolute inset-0 z-30 overflow-hidden bg-[#02040a] text-white">
+    <iframe key={attempt} ref={frame}
+      src="assets/immersive/index.html"
+      title="Immersive Space Shift · spaceship cockpit"
       className="absolute inset-0 h-full w-full border-0"
-      allow="autoplay" onError={() => setFallback(true)} />
-    {fallback && <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-[#050916]">
-      <p className="text-lg">Không tải được buồng lái không gian.</p>
-      <button disabled={!ready} onClick={startGame}
-        className="rounded-full border border-cyan-300 px-8 py-4 disabled:opacity-40">
-        {ready ? 'BƯỚC VÀO' : 'ĐANG CHUẨN BỊ'}
-      </button>
-    </div>}
+      allow="autoplay"
+      onError={() => failSpace('Không tải được buồng lái không gian.')} />
+    {failure && (
+      <div className="absolute inset-0 z-40 flex flex-col items-center justify-center gap-5 bg-[#02040a] px-6 text-center">
+        <p className="text-base text-white/85">{failure}</p>
+        <div className="flex flex-wrap items-center justify-center gap-3">
+          <button onClick={retryShip}
+            className="rounded-full border border-cyan-300 px-6 py-3">
+            THỬ TẢI LẠI PHI THUYỀN
+          </button>
+          <button onClick={requestFallback}
+            disabled={fallbackRequested && !islandReady}
+            className="rounded-full border border-white/40 px-6 py-3 disabled:opacity-35">
+            {!fallbackRequested ? 'TẢI ĐẢO DỰ PHÒNG'
+              : islandReady ? 'VÀO ĐẢO 3D' : 'ĐẢO ĐANG KHỞI TẠO'}
+          </button>
+        </div>
+      </div>
+    )}
+    {islandTrouble && !failure && (
+      <div className="absolute bottom-6 left-1/2 z-40 w-[min(90vw,28rem)] -translate-x-1/2 rounded-xl border border-white/20 bg-[#050916]/95 p-4 text-center">
+        <p className="text-sm">Đảo 3D chưa khởi tạo xong. Không thể vào khi chưa sẵn sàng.</p>
+        <button className="mt-3 rounded-full border border-cyan-300 px-5 py-2 text-sm"
+          onClick={() => window.location.reload()}>TẢI LẠI TRẢI NGHIỆM</button>
+      </div>
+    )}
   </div>
 }
 
@@ -412,7 +491,7 @@ function TouchControls() {
   )
 }
 
-export function Overlay() {
+export function Overlay({ onSpacePresented, onSpaceUnavailable }: SpaceEntryCallbacks) {
   const phase = useStore((s) => s.phase)
   useEffect(() => {
     audio.prepare()
@@ -420,7 +499,9 @@ export function Overlay() {
   return (
     <>
       <div className="pointer-events-none absolute inset-0 z-10 bg-[radial-gradient(ellipse_at_center,transparent_55%,rgba(0,0,8,0.55)_100%)]" />
-      {phase === 'intro' ? <Intro /> : <Hud />}
+      {phase === 'intro'
+        ? <Intro onSpacePresented={onSpacePresented} onSpaceUnavailable={onSpaceUnavailable} />
+        : <Hud />}
       <PanelView />
       <Paused />
       <TouchControls />

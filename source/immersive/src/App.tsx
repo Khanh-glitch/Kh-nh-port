@@ -14,12 +14,23 @@ export default function App() {
   const [live] = useState(true);
   const [jump, setJump] = useState<Jump>('idle');
   const [gate, setGate] = useState({ready:false,progress:0});
+  const [spacePainted, setSpacePainted] = useState(false);
   const timers = useRef<number[]>([]);
 
   useEffect(() => {
     document.documentElement.lang = lang;
     document.title = lang === 'vi' ? `${profile.name} — Buồng lái Portfolio` : `${profile.name} — Portfolio Cockpit`;
   }, [lang]);
+
+  // Fade the original full-quality HUD ON TOP of the real first space frame,
+  // not a timer or a fake boot screen. This leaves the finished HUD identical.
+  useEffect(() => {
+    const ready=()=>setSpacePainted(true);
+    if ((window as Window & {__orbitaSpacePainted?:boolean}).__orbitaSpacePainted)
+      ready();
+    window.addEventListener('ORBITA_SPACE_LOCAL_PAINTED',ready);
+    return ()=>window.removeEventListener('ORBITA_SPACE_LOCAL_PAINTED',ready);
+  },[]);
 
   // The cockpit is the FIRST visible screen. Do not stack a second
   // text-heavy boot/loading overlay above the spaceship or energy ring.
@@ -89,7 +100,8 @@ export default function App() {
   const jumping = jump === 'charging' || jump === 'flash';
 
   return (
-    <div className="app" data-live={live} data-jump={jump}>
+    <div className="app" data-live={live} data-jump={jump}
+      data-space-painted={spacePainted}>
       <SpaceScene />
       <div className="vignette" aria-hidden="true" />
 

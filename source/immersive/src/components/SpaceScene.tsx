@@ -374,11 +374,18 @@ export default function SpaceScene() {
     const host = hostRef.current;
     if (!host) return;
 
+    const reportFailure = (reason: string) => {
+      host.dataset.fallback = 'true';
+      window.parent.postMessage({
+        type: 'ORBITA_SPACE_RENDERER_FAILED', reason,
+      }, window.location.origin);
+      window.dispatchEvent(new Event('ORBITA_SPACE_LOCAL_FAILED'));
+    };
     let renderer: THREE.WebGLRenderer;
     try {
       renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, powerPreference: 'high-performance' });
-    } catch {
-      host.dataset.fallback = 'true';
+    } catch (error) {
+      reportFailure('webgl-create: ' + String(error));
       return;
     }
     renderer.setClearColor(0x02040a, 1);
@@ -720,7 +727,17 @@ export default function SpaceScene() {
     const p3 = new THREE.Vector3();
     const tmp = new THREE.Vector3();
 
+    let realRenderedFrames = 0;
+    let firstPaintAcknowledged = false;
+    let rendererFailed = false;
+    const onContextLost = (e: Event) => {
+      e.preventDefault();
+      rendererFailed = true;
+      reportFailure('webgl-context-lost');
+    };
+    renderer.domElement.addEventListener('webglcontextlost', onContextLost);
     const off = onFrame((f, dt) => {
+      if (rendererFailed) return;
       const t = f.time;
       const rush = smooth(1.3, 9, f.speed);
 
@@ -764,7 +781,31 @@ export default function SpaceScene() {
       camObj.copy(camera.position);
       pivot.worldToLocal(camObj);
 
-      renderer.render(scene, camera);
+      try {
+        renderer.render(scene, camera);
+      } catch (error) {
+        rendererFailed = true;
+        reportFailure('first-space-render: ' + String(error));
+        return;
+      }
+      // This acknowledgement is emitted only after the REAL nebula,
+      // starfield, planet, rings, atmosphere, dust and asteroid scene has
+      // submitted two actual WebGL frames. The second browser paint allows
+      // the ship to appear before mounting the island's competing renderer.
+      realRenderedFrames++;
+      if (!firstPaintAcknowledged && realRenderedFrames >= 2) {
+        firstPaintAcknowledged = true;
+        requestAnimationFrame(() => {
+          (window as Window & {__orbitaSpacePainted?:boolean})
+            .__orbitaSpacePainted = true;
+          window.dispatchEvent(new Event('ORBITA_SPACE_LOCAL_PAINTED'));
+          window.parent.postMessage({
+            type: 'ORBITA_SPACE_FRAME_READY',
+            renderedFrames: realRenderedFrames,
+            programCount: renderer.info.programs?.length ?? 0,
+          }, window.location.origin);
+        });
+      }
 
       // project the destination for the HUD marker
       pivot.getWorldPosition(tmp);
@@ -778,6 +819,7 @@ export default function SpaceScene() {
 
     return () => {
       off();
+      renderer.domElement.removeEventListener('webglcontextlost', onContextLost);
       window.removeEventListener('resize', resize);
       disposables.forEach((d) => d.dispose());
       rocks.dispose();

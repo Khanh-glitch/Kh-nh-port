@@ -273,7 +273,7 @@ export function Cta({ lang, onEngage, jumping,entryReady,entryProgress }: { lang
         <span className="energy-ring" aria-hidden="true" />
         <span className="energy-particles" aria-hidden="true" />
         <button type="button" className="btn btn-primary" onClick={onEngage} disabled={!entryReady||jumping} aria-busy={!entryReady}>
-          {jumping ? ui.jumping[lang] : entryReady ? ui.enter[lang] : `NẠP NĂNG LƯỢNG ${entryProgress}%`}
+          {jumping ? ui.jumping[lang] : entryReady ? ui.enter[lang] : (lang === 'vi' ? 'ĐANG CHUẨN BỊ CẢNH 3D' : 'PREPARING 3D WORLD')}
           <Chevrons className="chev" />
         </button>
       </div>

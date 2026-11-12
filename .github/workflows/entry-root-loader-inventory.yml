@@ -1,0 +1,15 @@
+name: Inspect actual root ORBITA legacy loader markup
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  inventory:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Print only real HTML loader markup near first-paint strings
+        run: node scripts/entry-root-loader-inventory.mjs

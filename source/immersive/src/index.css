@@ -1158,6 +1158,11 @@ a.comms-row:hover .go { opacity: 1; transform: translate(1px, -1px); color: var(
   .boot, .flash, [data-jump="flash"] .flash { transition-duration: 0.01s; }
 }
 
+/* First content is actual space WebGL. The original cockpit components
+   fade on once the first two space frames are genuinely submitted. */
+.app[data-space-painted="false"] > :not(.space-host):not(.vignette) { opacity: 0; pointer-events: none; }
+.app[data-space-painted="true"] > :not(.space-host):not(.vignette) { transition: opacity .7s ease-out; }
+
 /* Immersive space-entry energy gate: charge is tied to real ORBITA readiness. */
 .energy-gate{position:relative;display:inline-flex;isolation:isolate;padding:6px;border-radius:999px;filter:drop-shadow(0 0 10px rgba(86,206,255,.25));}
 .energy-ring{position:absolute;inset:0;border-radius:999px;padding:2px;background:conic-gradient(from -80deg,#57e3ff var(--charge),rgba(90,160,245,.12) var(--charge));-webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none;box-shadow:0 0 22px rgba(26,190,255,.3);}

@@ -1,0 +1,80 @@
+name: Ship first, actual 3D readiness, no map flash or fake progress
+on:
+  push:
+    branches: [fix/space-first-real-readiness-entry-20261112]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  original-visual-and-entry:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 28
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: source/package-lock.json
+      - name: Install actual island and ship compilers
+        run: |
+          npm ci --prefix source
+          npm ci --prefix source/immersive
+          npm install --prefix source --no-save --package-lock=false playwright@1.56.1
+      - name: Original 3D source compiles with no API/visual downgrades
+        run: |
+          node scripts/check-space-entry-types.mjs
+          npx --prefix source/immersive tsc --noEmit --project source/immersive/tsconfig.entry.json
+      - name: Publish ONLY reviewed entry source to actual integrated and ship HTML
+        run: |
+          node --check scripts/sync-space-first-standalone.mjs
+          node scripts/sync-space-first-standalone.mjs
+          node --test tests/space-first-entry-contract.mjs
+          node tests/integration-regression.mjs
+          node scripts/build-pages.mjs
+          cmp -s index.html dist-pages/index.html
+          cmp -s assets/immersive/index.html dist-pages/assets/immersive/index.html
+      - name: Install Playwright GPU browser
+        run: cd source && npx playwright install --with-deps chromium
+      - name: Actual cold Galaxy before island, 2 live renderers, real transition
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 --directory dist-pages >/tmp/space-first.log 2>&1 &
+          for n in {1..90}; do
+            if curl -fsS -o /dev/null http://127.0.0.1:4173/; then break; fi
+            sleep 1
+          done
+          node scripts/space-first-browser-test.mjs
+      - name: Mobile recovery if spacecraft WebGL/HTML request initially fails
+        run: node scripts/space-first-recovery-browser-test.mjs
+      - name: Commit only TESTED public HTML into the same draft PR branch
+        if: success() && github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'fix/space-first-real-readiness-entry-20261112'
+        run: |
+          set -eu
+          TARGET=fix/space-first-real-readiness-entry-20261112
+          mkdir -p /tmp/orbita-tested/assets/immersive /tmp/orbita-tested/tests
+          cp index.html /tmp/orbita-tested/index.html
+          cp assets/immersive/index.html /tmp/orbita-tested/assets/immersive/index.html
+          cp tests/integration-original-modules.json /tmp/orbita-tested/tests/integration-original-modules.json
+          git reset --hard
+          git fetch origin "$TARGET"
+          git checkout -B "$TARGET" "origin/$TARGET"
+          cp /tmp/orbita-tested/index.html index.html
+          cp /tmp/orbita-tested/assets/immersive/index.html assets/immersive/index.html
+          cp /tmp/orbita-tested/tests/integration-original-modules.json tests/integration-original-modules.json
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html assets/immersive/index.html tests/integration-original-modules.json
+          if ! git diff --cached --quiet; then
+            git commit -m 'build(entry): pin browser-tested actual ship and island HTML'
+            git push origin "HEAD:$TARGET"
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ship-first-no-visual-loss-screenshots-and-gate
+          path: |
+            browser-evidence/entry/
+            browser-evidence/entry-recovery/
+          if-no-files-found: warn
