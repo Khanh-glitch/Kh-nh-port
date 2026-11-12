@@ -18,6 +18,7 @@ const content=js(island,'orbita/content')
 const overlay=js(island,'orbita/ui/Overlay')
 const products=js(island,'orbita/scene/Products')
 const vng=js(island,'orbita/scene/VngGallery')
+const vngSlides=js(island,'orbita/vng/types')
 const profile=js(ship,'ship/data/profile')
 test('truthful public identity, sources, no invented agency/phone/impact statistics',()=>{
  for(const token of ['LÊ QUỐC KHÁNH','EventFlow Pro','MathPath','APEX CHAOS','Soul of Hero','Quê Quá Quao','VNG Project Gallery'])
@@ -47,6 +48,8 @@ test('actual 5 physical holograms correspond to verified source projects and cor
 test('source VNG booth has genuine contest dossier entrance, original Main Stage untouched',()=>{
  assert.match(vng,/vng-project-dossier/)
  assert.match(vng,/panel: "vng"|panel="vng"/)
+ assert.match(vngSlides,/VNG Competition/)
+ assert.ok(!vngSlides.includes('My Work at VNG'),'No unverifiable employer implication')
  for(const id of ['orbita/scene/Stage','orbita/stage/ShowSystem',
    'orbita/stage/shows','orbita/scene/Experience']){
    assert.ok(island[id]?.startsWith('data:text/javascript;base64,'),'Original visual not found '+id)
