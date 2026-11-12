@@ -1,0 +1,57 @@
+name: Real Metal GPU warmup contention AB with unchanged original visuals
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [perf/portfolio-prewarm-contention-ab-20261112]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  isolate:
+    runs-on: macos-15
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - order: baseline-first
+            modes: baseline,no-colossus,no-hex,no-both
+          - order: candidate-first
+            modes: no-both,no-hex,no-colossus,baseline
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: source/package-lock.json
+      - run: npm ci --prefix source
+      - run: npm ci --prefix source/immersive
+      - run: npm install --prefix source --no-save --package-lock=false playwright@1.56.1
+      - run: cd source && npx playwright install chromium
+      - name: Compile only query-flag ablation into original 3D without graphic regressions
+        run: |
+          node scripts/check-space-entry-types.mjs
+          node scripts/sync-portfolio-standalone.mjs
+          node scripts/sync-hex-prewarm-isolation.mjs
+          node tests/integration-regression.mjs
+          node scripts/build-pages.mjs
+          cmp -s index.html dist-pages/index.html
+          cmp -s assets/immersive/index.html dist-pages/assets/immersive/index.html
+      - name: Real Metal center idle FPS A-B (two inverse order lanes)
+        env:
+          PREWARM_ISOLATION_ORDER: ${{ matrix.modes }}
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 --directory dist-pages >/tmp/warmup-isolation.log 2>&1 &
+          for n in {1..80}; do
+            if curl -fsS -o /dev/null http://127.0.0.1:4173/; then break; fi
+            sleep 1
+          done
+          node scripts/portfolio-prewarm-contention-ab.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: portfolio-warmup-isolation-${{ matrix.order }}
+          path: browser-evidence/prewarm-isolation/
+          if-no-files-found: warn
