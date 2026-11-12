@@ -30,12 +30,14 @@ test('published Beacon callback and GPU identity equal reviewed source',()=>{
 test('original six logos/materials and zero-intensity light branch are opt-in',()=>{
   const out=unembed('scene/SocialDrops')
   for(const token of ['beaconStableLights','beaconGpuPrewarm',
-    '__orbitaBeaconGpuPrewarm','waiting-for-idle','MeshPhysicalMaterial']){
+    '__orbitaBeaconGpuPrewarm','waiting-for-idle','MeshPhysicalMaterial',
+    'beaconShaderOnly','shader-ready-unfenced']){
     assert.ok(sourceS.includes(token),'Source missing '+token)
     assert.ok(out.includes(token),'HTML missing '+token)
   }
   assert.match(sourceS,/get\('beaconStableLights'\) === '1'/)
   assert.match(sourceS,/get\('beaconGpuPrewarm'\) === '1'/)
+  assert.match(sourceS,/get\('beaconShaderOnly'\) === '1'/)
 })
 test('every other frozen module retains byte-identical visual baseline',()=>{
   for(const [key,hash] of Object.entries(frozen))
