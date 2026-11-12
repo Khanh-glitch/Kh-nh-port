@@ -14,7 +14,7 @@ export interface PanelItem {
   meta: string
   desc: string
   url?: string
-  evidence?: 'source' | 'brief' | 'pending'
+  evidence?: 'source' | 'private' | 'brief' | 'pending'
   kind?: 'game' | 'web' | 'music' | 'video' | 'social' | 'competition' | 'skill' | 'contact'
 }
 export interface PanelContent {
@@ -57,7 +57,7 @@ export const PANELS: Record<PanelId, PanelContent> = {
     ],
     items: [
       { name:'ORBITA · 3D Portfolio',meta:'EXPERIENCE',desc:'Không gian 3D có buồng lái vũ trụ, đảo và các khu trưng bày dự án.',url:'https://github.com/Khanh-glitch/Kh-nh-port',evidence:'source',kind:'web' },
-      { name:'EventFlow Pro',meta:'EVENT TOOLING',desc:'Workspace demo cho brief, cấu hình sản xuất, BOQ và đề xuất thương mại; chưa production-ready.',url:'https://github.com/Khanh-glitch/eventflow-pro',evidence:'source',kind:'web' },
+      { name:'EventFlow Pro',meta:'EVENT TOOLING',desc:'Workspace demo cho brief, cấu hình sản xuất, BOQ và đề xuất thương mại; chưa production-ready. Source repository hiện là riêng tư.',evidence:'private',kind:'web' },
       { name:'APEX CHAOS',meta:'BROWSER GAME',desc:'Game đấu trường trình duyệt, bộ engine và tài sản game riêng.',url:'https://github.com/Khanh-glitch/APEX-CHAOS',evidence:'source',kind:'game' },
     ],
     tags:['Vibecoding','AI-assisted','Interactive 3D','Creative systems'], accent:'#8fb4ff',
@@ -74,7 +74,7 @@ export const PANELS: Record<PanelId, PanelContent> = {
     stats:[{k:'Tiếp cận',v:'Prototype'},{k:'Phương pháp',v:'Iterative'},{k:'Chứng cứ',v:'Source'}],
     items:[
       {name:'ORBITA',meta:'INTERACTIVE PORTFOLIO',desc:'Không gian trình diễn WebGL, điều hướng 3D và tương tác GPU.',url:'https://github.com/Khanh-glitch/Kh-nh-port',evidence:'source',kind:'web'},
-      {name:'EventFlow Pro',meta:'WORKFLOW SYSTEM',desc:'Hệ thống demo có các luồng brief → nhu cầu sản xuất → BOQ → báo giá → đề xuất.',url:'https://github.com/Khanh-glitch/eventflow-pro',evidence:'source',kind:'web'},
+      {name:'EventFlow Pro',meta:'WORKFLOW SYSTEM',desc:'Hệ thống demo có các luồng brief → nhu cầu sản xuất → BOQ → báo giá → đề xuất.',evidence:'private',kind:'web'},
       {name:'Alphabet Engine',meta:'SYSTEMIC GAME',desc:'Roguelite autobattler nơi ký tự hợp thành từ và tạo vũ khí.',url:'https://github.com/Khanh-glitch/alphabet-engine',evidence:'source',kind:'game'},
     ],
     tags:['Concept','AI prompting','Source audit','Iteration'],accent:'#b66bff',
@@ -229,8 +229,8 @@ export const PANELS: Record<PanelId, PanelContent> = {
     ],
     stats:[{k:'Dự án',v:'EventFlow'},{k:'Ứng dụng',v:'MathPath'},{k:'Trải nghiệm',v:'ORBITA'}],
     items:[
-      {name:'EventFlow Pro',meta:'EVENT AGENCY WORKSPACE',desc:'Demo workflow brief → nhu cầu sản xuất → BOQ → quote → proposal PDF, cần tích hợp để vận hành production.',url:'https://github.com/Khanh-glitch/eventflow-pro',evidence:'source',kind:'web'},
-      {name:'MathPath',meta:'LEARNING PLATFORM',desc:'Không gian học Toán cho Kinh tế và Quản trị, Living Board, bài luyện tập và tiến trình học.',url:'https://github.com/Khanh-glitch/MathPath',evidence:'source',kind:'web'},
+      {name:'EventFlow Pro',meta:'EVENT AGENCY WORKSPACE',desc:'Demo workflow brief → nhu cầu sản xuất → BOQ → quote → proposal PDF, cần tích hợp để vận hành production.',evidence:'private',kind:'web'},
+      {name:'MathPath',meta:'LEARNING PLATFORM',desc:'Không gian học Toán cho Kinh tế và Quản trị, Living Board, bài luyện tập và tiến trình học.',evidence:'private',kind:'web'},
       {name:'ORBITA Portfolio',meta:'3D EXPERIENCE',desc:'Portfolio WebGL có phi thuyền mở đầu và thế giới 3D tương tác, là chính trải nghiệm đang xem.',url:'https://github.com/Khanh-glitch/Kh-nh-port',evidence:'source',kind:'web'},
       {name:'Alphabet Engine',meta:'SYSTEMIC GAME ENGINE',desc:'Prototype trò chơi chữ trở thành vũ khí và tạo hệ thống chiến đấu phản ứng dây chuyền.',url:'https://github.com/Khanh-glitch/alphabet-engine',evidence:'source',kind:'game'},
       {name:'APEX CHAOS',meta:'BROWSER GAME',desc:'Game đấu trường trình duyệt; màn hình hologram là cổng dẫn tới hồ sơ và mã nguồn game, không phải ảnh chụp ứng dụng giả.',url:'https://github.com/Khanh-glitch/APEX-CHAOS',evidence:'source',kind:'game'},
