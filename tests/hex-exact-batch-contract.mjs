@@ -36,6 +36,15 @@ test('hex exact opaque-only sibling batching is opt-in, never default',()=>{
   assert.match(src,/if \(o\.userData\.hexMergedAway===true\) return/)
 })
 
+test('bounded async shader concurrency is opt-in and cannot affect source GLSL',()=>{
+  assert.match(src,/hexAsyncShaderFlights/)
+  assert.match(src,/get\('hexAsyncShaderFlights'\)===\'4\'/)
+  assert.match(src,/S\.warmAsyncInFlight<4/)
+  assert.match(src,/S\.warmAsyncPeak/)
+  assert.match(src,/gl\.compileAsync\(obj,camera,scene\)/)
+  assert.match(src,/hexCooperativeLinear &&/)
+  assert.match(src,/const originalMaterial = group\[0\]\.material as THREE\.Material/)
+})
 test('full original PBR, shadow, foliage and HEX sweep are intact',()=>{
   assert.match(src,/<UEHWorld \/>/)
   assert.match(src,/<HexLattice \/>/)
