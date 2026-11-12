@@ -69,12 +69,13 @@ jobs:
             lines.push('# Dossier interaction evidence — ' + r.backend);
             lines.push('');
             lines.push('- viewports: ' + r.viewports.join(', '));
-            lines.push('- world entries (real 3D click): ' + r.worldEntry.length);
-            r.worldEntry.forEach(w => lines.push('  - ' + w.suite + ' · ' + w.exhibit + ' -> ' + w.opened));
+            lines.push('- world entries (real visitor input): ' + r.worldEntry.length);
+            r.worldEntry.forEach(w => lines.push('  - ' + w.suite + ' · ' + w.exhibit + ' -> ' + w.opened + ' [' + w.via + ']'));
+            lines.push('- walk skipped: ' + JSON.stringify(r.suites ? r.suites.flatMap(x => x.walkSkipped || []) : []));
             lines.push('- dossier audits: ' + r.panels.length + '/' + (r.viewports.length * 12));
             lines.push('- independent input paths (E / ESC / scrim / reopen): ' + r.inputPaths.length);
             lines.push('- failures: ' + r.failures.length);
-            r.failures.forEach(f => lines.push('  - [' + f.stage + '] ' + f.suite + ': ' + f.error));
+            r.failures.forEach(f => lines.push('  - [' + (f.verdict || '?') + '][' + f.stage + '] ' + f.suite + ': ' + f.error));
             lines.push('- total ms: ' + (r.totalMs ?? 'n/a'));
             require('fs').writeFileSync('docs/evidence/portfolio-interaction-latest.md', lines.join('\n') + '\n');
           "

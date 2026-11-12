@@ -86,7 +86,13 @@ jobs:
       # optional: a software GPU is slow, not exempt, and the earlier failure
       # (workflow run 43184448178) was a real interaction defect, not a GPU
       # artefact. Diagnostics are printed inline so no upload is required.
-      - name: Real 3D exhibit clicks, dossier tabs, close/reopen in 3 viewports
+      - name: Real exhibit/dossier interaction in 3 viewports (SwiftShader)
+        env:
+          # Real walking needs a renderer that can sustain movement frames; this
+          # runner measures about one frame per 30s on the full island scene, so
+          # walking is proven on Apple Metal and the same click path is proven
+          # here from a real standing pose. Neither is skipped or faked.
+          PORTFOLIO_ENTRY: dom
         run: |
           set -eu
           python3 -m http.server 4173 --bind 127.0.0.1 --directory dist-pages >/tmp/portfolio-dossier-swiftshader.log 2>&1 &
