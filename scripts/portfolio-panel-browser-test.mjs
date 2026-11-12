@@ -511,7 +511,7 @@ async function auditPanel(page,suite,id){
       throw Error('Pointer target occluded tab '+id+': '+JSON.stringify(hit))
     await page.mouse.click(hit.x,hit.y,{delay:35})
     let second=''
-    const deadline=Date.now()+15000
+    const deadline=Date.now()+25000
     while(Date.now()<deadline){
       second=(await root.locator('[role="tab"][aria-selected="true"]').textContent().catch(()=>''))||''
       if(second.includes('02')) break

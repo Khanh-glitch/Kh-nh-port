@@ -258,6 +258,7 @@ function HighGateMeter() {
 export function Experience() {
   const quality = useStore((s) => s.quality)
   const phase = useStore((s) => s.phase)
+  const panelOpen = useStore((s) => Boolean(s.panel))
   const low = quality === 'low'
   // DIAGNOSTIC ONLY: compare first-laser GPU scheduling with/without the
   // composer. Normal portfolio path always retains Bloom/AA/tonemapping.
@@ -294,7 +295,14 @@ export function Experience() {
       // Restore the EXACT original visible DPR on 'playing' before descent.
       // This cuts concurrent WebGL pressure without simplifying a single
       // UEH/HEX mesh or reducing the game's 2048px shadow map.
-      dpr={phase === 'intro' ? 0.5 : low ? 1 : [1, 1.6]}
+      // While a dossier is open the island is fully covered by the dossier
+      // itself, so its pixels are invisible. Render the covered surface at a
+      // quarter resolution — the real exhibit behind it keeps every mesh,
+      // shader, light and its full 2048px shadow map, and the exact visible
+      // resolution returns the moment the dossier closes. This is the same
+      // "invisible pixels cost less" rule already used under the spacecraft,
+      // not a reduction of the world a visitor actually sees.
+      dpr={phase === 'intro' || panelOpen ? 0.5 : low ? 1 : [1, 1.6]}
       shadows="percentage"
       camera={{ fov: 72, near: 0.1, far: 9000, position: [0, 17, 88] }}
       gl={{ antialias: false, powerPreference: 'high-performance', toneMapping: THREE.NoToneMapping, stencil: false }}
