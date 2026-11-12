@@ -221,6 +221,12 @@ export function Cinema() {
   // room light during HEX. The full 1024x450 film keeps drawing, unchanged.
   const hexCinemaFarLightGate = typeof window !== 'undefined' &&
     new URLSearchParams(window.location.search).get('hexCinemaFarLightGate') === '1'
+  // Query-only physical-range culling for the AUDIO-VISUALLY IDENTICAL film:
+  // the source Cinema room point light attenuates to zero at 13m. A visitor
+  // >24m from the building cannot see its color, even during idle HEX.
+  // The 1024x450 film and its original CanvasTexture update every frame.
+  const hexCinemaDistanceAwareLight = typeof window !== 'undefined' &&
+    new URLSearchParams(window.location.search).get('hexCinemaDistanceAwareLight') === '1'
   // A/B ONLY: keep the real 1024×450 cinema pixels and exact CanvasTexture,
   // but opt into a CPU-backed 2D canvas to avoid a native readback fence when
   // the 4×2 room-light sampler calls getImageData(). No display changes allowed.
@@ -315,11 +321,15 @@ export function Cinema() {
       // away and the HEX transition is running, reading 4x2 pixels cannot
       // affect the local piano/UEH scene but can trigger a multi-second
       // Canvas2D GPU readback fence. Keep every cinema film frame intact.
+      const distanceToCinema = Math.hypot(
+        state.camera.position.x-ex.x,state.camera.position.z-ex.z)
       const distantDuringHex = hexCinemaFarLightGate &&
         useReality.getState().phase !== 'idle' &&
-        Math.hypot(state.camera.position.x - ex.x,
-          state.camera.position.z - ex.z) > 24
-      if (t - st.lastAvg > 0.2 && !distantDuringHex) {
+        distanceToCinema > 24
+      const safelyBeyondLightRange = hexCinemaDistanceAwareLight &&
+        distanceToCinema > 24
+      if (t - st.lastAvg > 0.2 &&
+          !distantDuringHex && !safelyBeyondLightRange) {
         st.lastAvg = t
         tiny.drawImage(screenTex.canvas, 0, 34, SW, SH - 68, 0, 0, 4, 2)
         const d = tiny.getImageData(0, 0, 4, 2).data
