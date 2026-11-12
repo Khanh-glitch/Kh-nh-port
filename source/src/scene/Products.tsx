@@ -5,6 +5,7 @@ import * as THREE from 'three'
 import { EXHIBITS } from '../layout'
 import { audio, type Bus } from '../audio'
 import { toast } from '../store'
+import { openPanel } from './Player'
 import { FONT, beamGeometry, beamMaterial, canvasTex, rbox, roundRect } from '../gfx'
 import { Hit } from './Hit'
 import { Label } from './Label'
@@ -15,300 +16,124 @@ const TW = 360
 const TH = 740
 const R = 4.7
 const APPS = [
-  { name: 'TicketFlow', sub: 'Vé & check-in', color: '#ff4fd8' },
-  { name: 'LiveSync', sub: 'Dashboard thời gian thực', color: '#38d9ff' },
-  { name: 'Wayfinder AR', sub: 'Dẫn đường bằng AR', color: '#5dffb0' },
-  { name: 'Pulse Poll', sub: 'Bình chọn trực tiếp', color: '#ffc23d' },
-  { name: 'CueDeck', sub: 'Điều khiển show', color: '#9a6bff' },
+  { name:'EventFlow Pro',sub:'Event agency workspace',color:'#ff4fd8',tag:'TESTED DEMO',
+    headline:'EVENT PRODUCTION',
+    facts:['Client brief → scope','Production needs → BOQ','Quotation → PDF proposal'] },
+  { name:'MathPath',sub:'Learning platform',color:'#38d9ff',tag:'WEB PROJECT',
+    headline:'LEARNING SYSTEMS',
+    facts:['Living Board','Skill maps & practice','Progress tracking'] },
+  { name:'ORBITA',sub:'Interactive 3D portfolio',color:'#5dffb0',tag:'LIVE EXPERIENCE',
+    headline:'CREATIVE WEBGL',
+    facts:['Ship-first onboarding','3D exhibition & HUD','Interactive dossiers'] },
+  { name:'Alphabet Engine',sub:'Systemic word combat',color:'#ffc23d',tag:'GAME PROTOTYPE',
+    headline:'GAME SYSTEMS',
+    facts:['Letters → words','Words → weapons','Systemic roguelite'] },
+  { name:'APEX CHAOS',sub:'Browser arena game',color:'#9a6bff',tag:'GAME PROJECT',
+    headline:'BROWSER GAME',
+    facts:['Game engine','Characters & combat','Play and source evidence'] },
 ]
 
-const hash = (n: number) => {
-  const s = Math.sin(n * 78.233) * 43758.5453
-  return s - Math.floor(s)
-}
-
+// The five existing physical holographic screens display VERIFIED project
+// identity cards. These are explicitly NOT fake screenshots or fake metrics.
+// Geometry, placement, illumination and on-scene motion remain unchanged.
 function drawApp(ctx: CanvasRenderingContext2D, i: number, t: number) {
-  const W = TW
-  const H = TH
+  const app = APPS[i]
+  const W = TW, H = TH
   ctx.globalCompositeOperation = 'source-over'
   ctx.shadowBlur = 0
-  ctx.textAlign = 'left'
-  const status = () => {
-    ctx.fillStyle = 'rgba(255,255,255,0.85)'
-    ctx.font = `600 15px ${FONT}`
-    ctx.fillText('9:41', 28, 32)
-    ctx.textAlign = 'right'
-    ctx.fillText('5G  ▮▮▮', W - 28, 32)
-    ctx.textAlign = 'left'
+  const bg = ctx.createLinearGradient(0,0,W,H)
+  bg.addColorStop(0,'#0e1831')
+  bg.addColorStop(0.52,'#070d19')
+  bg.addColorStop(1,'#03070e')
+  ctx.fillStyle=bg
+  ctx.fillRect(0,0,W,H)
+  // Precise but inexpensive hologram grid; no synthetic business numbers.
+  ctx.lineWidth=1
+  for(let x=0;x<W;x+=30){
+    ctx.strokeStyle='rgba(255,255,255,0.045)'
+    ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke()
   }
-  if (i === 0) {
-    const g = ctx.createLinearGradient(0, 0, 0, H)
-    g.addColorStop(0, '#2a0f45')
-    g.addColorStop(1, '#0a0614')
-    ctx.fillStyle = g
-    ctx.fillRect(0, 0, W, H)
-    status()
-    ctx.fillStyle = '#fff'
-    ctx.font = `700 26px ${FONT}`
-    ctx.fillText('TicketFlow', 28, 82)
-    const cg = ctx.createLinearGradient(0, 120, W, 600)
-    cg.addColorStop(0, '#ff4fd8')
-    cg.addColorStop(1, '#6a3bff')
-    ctx.fillStyle = cg
-    roundRect(ctx, 24, 112, W - 48, 480, 28)
-    ctx.fill()
-    ctx.fillStyle = '#fff'
-    ctx.font = `800 26px ${FONT}`
-    ctx.fillText('AURORA FEST 2025', 46, 164)
-    ctx.font = `500 15px ${FONT}`
-    ctx.fillText('GA · GATE B · 20:00 · 14.11', 46, 190)
-    ctx.fillStyle = '#fff'
-    roundRect(ctx, 58, 214, 244, 244, 18)
-    ctx.fill()
-    const seed = Math.floor(t / 3) * 101
-    ctx.fillStyle = '#12061f'
-    const n = 21
-    const cs = 10.4
-    for (let y = 0; y < n; y++)
-      for (let x = 0; x < n; x++) {
-        const finder = (x < 7 && y < 7) || (x > 13 && y < 7) || (x < 7 && y > 13)
-        let on = hash(x * 31 + y * 17 + seed) > 0.5
-        if (finder) {
-          const fx = x < 7 ? x : x - 14
-          const fy = y < 7 ? y : y - 14
-          on = fx === 0 || fx === 6 || fy === 0 || fy === 6 || (fx >= 2 && fx <= 4 && fy >= 2 && fy <= 4)
-        }
-        if (on) ctx.fillRect(70 + x * cs, 226 + y * cs, cs - 0.8, cs - 0.8)
-      }
-    ctx.fillStyle = 'rgba(255,255,255,0.9)'
-    ctx.font = `500 15px ${FONT}`
-    ctx.textAlign = 'center'
-    ctx.fillText(`Mã tự đổi sau ${3 - Math.floor(t % 3)}s · chống chụp ảnh`, W / 2, 492)
-    ctx.fillStyle = 'rgba(255,255,255,0.25)'
-    roundRect(ctx, 58, 510, 244, 8, 4)
-    ctx.fill()
-    ctx.fillStyle = '#fff'
-    roundRect(ctx, 58, 510, 244 * ((t % 3) / 3), 8, 4)
-    ctx.fill()
-    ctx.fillStyle = '#fff'
-    roundRect(ctx, 50, 640, W - 100, 58, 29)
-    ctx.fill()
-    ctx.fillStyle = '#2a0f45'
-    ctx.font = `700 18px ${FONT}`
-    ctx.fillText('Thêm vào Ví', W / 2, 676)
-  } else if (i === 1) {
-    ctx.fillStyle = '#06111d'
-    ctx.fillRect(0, 0, W, H)
-    status()
-    ctx.fillStyle = '#fff'
-    ctx.font = `700 26px ${FONT}`
-    ctx.fillText('LiveSync', 28, 82)
-    ctx.fillStyle = '#ff3b5c'
-    ctx.beginPath()
-    ctx.arc(W - 70, 74, 5 + Math.sin(t * 5) * 1.5, 0, Math.PI * 2)
-    ctx.fill()
-    ctx.fillStyle = '#ff7a8a'
-    ctx.font = `600 14px ${FONT}`
-    ctx.fillText('LIVE', W - 58, 79)
-    ctx.fillStyle = '#7fb8d8'
-    ctx.font = `500 13px ${FONT}`
-    ctx.fillText('KHÁN GIẢ TRONG KHUÔN VIÊN', 28, 128)
-    ctx.fillStyle = '#fff'
-    ctx.font = `800 54px ${FONT}`
-    ctx.fillText((38000 + Math.round(Math.sin(t * 0.8) * 420 + t * 8) % 5000).toLocaleString('en-US'), 28, 184)
-    const cg = ctx.createLinearGradient(0, 220, 0, 400)
-    cg.addColorStop(0, 'rgba(56,217,255,0.45)')
-    cg.addColorStop(1, 'rgba(56,217,255,0)')
-    ctx.beginPath()
-    ctx.moveTo(28, 400)
-    for (let x = 0; x <= 304; x += 8) {
-      const y = 330 - Math.sin(x * 0.03 + t * 0.9) * 40 - Math.sin(x * 0.011 - t * 0.4) * 30 - x * 0.1
-      ctx.lineTo(28 + x, y)
-    }
-    ctx.lineTo(332, 400)
-    ctx.fillStyle = cg
-    ctx.fill()
-    ctx.strokeStyle = '#38d9ff'
-    ctx.lineWidth = 3
-    ctx.beginPath()
-    for (let x = 0; x <= 304; x += 8) {
-      const y = 330 - Math.sin(x * 0.03 + t * 0.9) * 40 - Math.sin(x * 0.011 - t * 0.4) * 30 - x * 0.1
-      if (x === 0) ctx.moveTo(28 + x, y)
-      else ctx.lineTo(28 + x, y)
-    }
-    ctx.stroke()
-    ctx.fillStyle = '#7fb8d8'
-    ctx.font = `500 13px ${FONT}`
-    ctx.fillText('MẬT ĐỘ ĐÁM ĐÔNG', 28, 436)
-    for (let y = 0; y < 6; y++)
-      for (let x = 0; x < 8; x++) {
-        const v = 0.5 + 0.5 * Math.sin(t * 0.8 + hash(x + y * 8) * 6.28 + x * 0.4)
-        ctx.fillStyle = `hsl(${200 - v * 200},90%,${30 + v * 30}%)`
-        roundRect(ctx, 28 + x * 39, 450 + y * 33, 35, 29, 6)
-        ctx.fill()
-      }
-    ctx.fillStyle = '#fff'
-    ctx.font = `600 16px ${FONT}`
-    ctx.fillText('Hàng chờ Gate A', 28, 690)
-    ctx.textAlign = 'right'
-    ctx.fillStyle = '#5dffb0'
-    ctx.fillText(`${1 + Math.floor((Math.sin(t * 0.5) + 1) * 1.2)}:${String(10 + Math.floor(t * 3) % 50).padStart(2, '0')} phút`, W - 28, 690)
-  } else if (i === 2) {
-    const g = ctx.createLinearGradient(0, 0, 0, H)
-    g.addColorStop(0, '#2c4a86')
-    g.addColorStop(0.45, '#b36a8a')
-    g.addColorStop(0.46, '#101828')
-    g.addColorStop(1, '#05080f')
-    ctx.fillStyle = g
-    ctx.fillRect(0, 0, W, H)
-    status()
-    ctx.strokeStyle = 'rgba(93,255,176,0.35)'
-    ctx.lineWidth = 2
-    for (let k = -6; k <= 6; k++) {
-      ctx.beginPath()
-      ctx.moveTo(W / 2 + k * 8, 340)
-      ctx.lineTo(W / 2 + k * 90, H)
-      ctx.stroke()
-    }
-    ctx.globalCompositeOperation = 'lighter'
-    for (let k = 0; k < 6; k++) {
-      const z = (k + ((t * 0.8) % 1)) / 6
-      const y = 340 + (H - 340) * z * z
-      const w = 20 + z * 120
-      ctx.strokeStyle = `rgba(93,255,176,${0.2 + z * 0.8})`
-      ctx.lineWidth = 3 + z * 8
-      ctx.beginPath()
-      ctx.moveTo(W / 2 - w, y + w * 0.5)
-      ctx.lineTo(W / 2, y)
-      ctx.lineTo(W / 2 + w, y + w * 0.5)
-      ctx.stroke()
-    }
-    ctx.globalCompositeOperation = 'source-over'
-    const tag = (x: number, y: number, a: string, b: string, c: string) => {
-      ctx.fillStyle = 'rgba(8,12,24,0.78)'
-      roundRect(ctx, x, y, 170, 58, 16)
-      ctx.fill()
-      ctx.strokeStyle = c
-      ctx.lineWidth = 2
-      ctx.stroke()
-      ctx.fillStyle = '#fff'
-      ctx.font = `700 16px ${FONT}`
-      ctx.textAlign = 'left'
-      ctx.fillText(a, x + 14, y + 25)
-      ctx.fillStyle = c
-      ctx.font = `600 14px ${FONT}`
-      ctx.fillText(b, x + 14, y + 46)
-    }
-    tag(30, 150 + Math.sin(t * 1.5) * 4, 'Main Stage', '120 m ▸', '#ff4fd8')
-    tag(160, 240 + Math.sin(t * 1.5 + 1) * 4, 'Food Court', '80 m ▸', '#ffc23d')
-    ctx.strokeStyle = 'rgba(255,255,255,0.85)'
-    ctx.lineWidth = 2
-    ctx.beginPath()
-    ctx.arc(W / 2, 74, 26, 0, Math.PI * 2)
-    ctx.stroke()
-    ctx.fillStyle = '#ff5a5a'
-    ctx.save()
-    ctx.translate(W / 2, 74)
-    ctx.rotate(Math.sin(t * 0.5) * 0.6)
-    ctx.beginPath()
-    ctx.moveTo(0, -18)
-    ctx.lineTo(7, 8)
-    ctx.lineTo(-7, 8)
-    ctx.fill()
-    ctx.restore()
-    ctx.fillStyle = 'rgba(8,12,24,0.8)'
-    roundRect(ctx, 40, 660, W - 80, 54, 27)
-    ctx.fill()
-    ctx.fillStyle = '#fff'
-    ctx.textAlign = 'center'
-    ctx.font = `700 17px ${FONT}`
-    ctx.fillText(`Đi thẳng ${Math.max(5, 40 - Math.floor((t * 2) % 36))} m`, W / 2, 693)
-  } else if (i === 3) {
-    ctx.fillStyle = '#17110a'
-    ctx.fillRect(0, 0, W, H)
-    status()
-    ctx.fillStyle = '#ffc23d'
-    ctx.font = `700 14px ${FONT}`
-    ctx.fillText('PULSE POLL · LIVE', 28, 82)
-    ctx.fillStyle = '#fff'
-    ctx.font = `800 34px ${FONT}`
-    ctx.fillText('Bài tiếp theo', 28, 136)
-    ctx.fillText('là gì?', 28, 176)
-    const p0 = 0.4 + 0.15 * Math.sin(t * 0.5)
-    const p1 = 0.3 + 0.1 * Math.sin(t * 0.7 + 1)
-    const p2 = Math.max(0.05, 1 - p0 - p1)
-    const sum = p0 + p1 + p2
-    const opts: [string, number, string][] = [
-      ['Neon Drive', p0 / sum, '#ff4fd8'],
-      ['Golden Hour', p1 / sum, '#ffc23d'],
-      ['Aurora', p2 / sum, '#38d9ff'],
-    ]
-    opts.forEach(([n, v, c], k) => {
-      const y = 220 + k * 130
-      ctx.fillStyle = 'rgba(255,255,255,0.07)'
-      roundRect(ctx, 28, y, W - 56, 106, 22)
-      ctx.fill()
-      ctx.fillStyle = c + '55'
-      roundRect(ctx, 28, y, Math.max(40, (W - 56) * v), 106, 22)
-      ctx.fill()
-      ctx.fillStyle = '#fff'
-      ctx.font = `700 22px ${FONT}`
-      ctx.textAlign = 'left'
-      ctx.fillText(n, 48, y + 48)
-      ctx.textAlign = 'right'
-      ctx.font = `800 30px ${FONT}`
-      ctx.fillStyle = c
-      ctx.fillText(`${Math.round(v * 100)}%`, W - 46, y + 66)
-    })
-    ctx.textAlign = 'center'
-    ctx.fillStyle = 'rgba(255,255,255,0.65)'
-    ctx.font = `500 15px ${FONT}`
-    ctx.fillText(`${(12400 + Math.floor(t * 9)).toLocaleString('en-US')} phiếu · ánh sáng đổi theo kết quả`, W / 2, 650)
-  } else {
-    ctx.fillStyle = '#0a0a16'
-    ctx.fillRect(0, 0, W, H)
-    status()
-    ctx.fillStyle = '#fff'
-    ctx.textAlign = 'left'
-    ctx.font = `700 26px ${FONT}`
-    ctx.fillText('CueDeck', 28, 82)
-    ctx.fillStyle = '#9a6bff'
-    ctx.font = `600 17px ${FONT}`
-    ctx.textAlign = 'right'
-    const s = Math.floor(t)
-    ctx.fillText(`01:${String(Math.floor(s / 60) % 60).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}:${String(Math.floor((t % 1) * 24)).padStart(2, '0')}`, W - 28, 80)
-    const labels = ['LX 14', 'LX 15', 'VID 7', 'VID 8', 'SFX 2', 'SFX 3', 'PYRO', 'LASER', 'HAZE', 'FOG', 'CAM 1', 'CAM 2', 'FOLLOW', 'MUSIC', 'HOUSE']
-    const cols = ['#ff4fd8', '#ff4fd8', '#38d9ff', '#38d9ff', '#ffc23d', '#ffc23d', '#ff3b3b', '#7aff8a', '#bfe6ff', '#bfe6ff', '#9a6bff', '#9a6bff', '#ff7a1f', '#5dffb0', '#fff']
-    const act = Math.floor(t * 2.2) % 15
-    for (let k = 0; k < 15; k++) {
-      const x = 28 + (k % 3) * 104
-      const y = 120 + Math.floor(k / 3) * 92
-      ctx.fillStyle = k === act ? cols[k] : cols[k] + '33'
-      roundRect(ctx, x, y, 96, 82, 16)
-      ctx.fill()
-      ctx.strokeStyle = cols[k]
-      ctx.lineWidth = 2
-      ctx.stroke()
-      ctx.fillStyle = k === act ? '#000' : '#fff'
-      ctx.font = `700 17px ${FONT}`
-      ctx.textAlign = 'center'
-      ctx.fillText(labels[k], x + 48, y + 50)
-    }
-    ctx.fillStyle = 'rgba(255,255,255,0.12)'
-    roundRect(ctx, 28, 600, W - 56, 10, 5)
-    ctx.fill()
-    ctx.fillStyle = '#9a6bff'
-    roundRect(ctx, 28, 600, (W - 56) * ((t * 0.04) % 1), 10, 5)
-    ctx.fill()
-    const pulse = 0.6 + 0.4 * Math.sin(t * 4)
-    ctx.fillStyle = `rgba(93,255,176,${0.6 + pulse * 0.4})`
-    roundRect(ctx, 28, 630, W - 56, 80, 24)
-    ctx.fill()
-    ctx.fillStyle = '#04120b'
-    ctx.font = `800 34px ${FONT}`
-    ctx.textAlign = 'center'
-    ctx.fillText('GO', W / 2, 683)
+  for(let y=0;y<H;y+=30){
+    ctx.strokeStyle='rgba(255,255,255,0.045)'
+    ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke()
   }
+  const cx=W*0.5
+  const pulse=0.65+0.35*Math.sin(t*1.3+i*0.85)
+  const glow=ctx.createRadialGradient(cx,260,10,cx,260,230)
+  glow.addColorStop(0,app.color+'58')
+  glow.addColorStop(1,'rgba(0,0,0,0)')
+  ctx.fillStyle=glow
+  ctx.fillRect(0,0,W,H)
+  ctx.fillStyle=app.color
+  ctx.fillRect(25,23,4,31)
+  ctx.textAlign='left'
+  ctx.font='700 12px '+FONT
+  ctx.fillText('LÊ QUỐC KHÁNH  /  PROJECT FILE',39,35)
+  ctx.fillStyle='rgba(255,255,255,0.38)'
+  ctx.fillText(String(i+1).padStart(2,'0')+'/05',305,35)
+  ctx.fillStyle='rgba(255,255,255,0.68)'
+  ctx.font='600 12px '+FONT
+  ctx.fillText(app.tag,27,99)
+  ctx.fillStyle='#fff'
+  const names=app.name.split(' ')
+  const titleSize=app.name.length>12?31:38
+  ctx.font='800 '+titleSize+'px '+FONT
+  if(app.name.length>14&&names.length>1){
+    const mid=Math.ceil(names.length/2)
+    ctx.fillText(names.slice(0,mid).join(' '),26,149)
+    ctx.fillText(names.slice(mid).join(' '),26,187)
+  }else ctx.fillText(app.name,26,159)
+  ctx.fillStyle='rgba(255,255,255,0.63)'
+  ctx.font='500 15px '+FONT
+  ctx.fillText(app.sub,27,216)
+  // Signature animated core with original phone palette; no business KPI.
+  ctx.save()
+  ctx.translate(cx,330)
+  for(let n=0;n<4;n++){
+    const radius=75+n*22
+    ctx.strokeStyle=app.color+['aa','75','50','35'][n]
+    ctx.lineWidth=n?1.5:3
+    ctx.beginPath()
+    ctx.ellipse(0,0,radius,radius*.61,Math.sin(t*.2+n)*.15,0,Math.PI*2)
+    ctx.stroke()
+  }
+  for(let n=0;n<12;n++){
+    const ang=n*Math.PI/6+t*.12
+    const radius=102+Math.sin(t*.8+n)*3
+    ctx.fillStyle=n%3===0?'#fff':app.color
+    ctx.globalAlpha=.4+.6*pulse
+    ctx.beginPath();ctx.arc(Math.cos(ang)*radius,Math.sin(ang)*radius*.62,2.4,0,Math.PI*2);ctx.fill()
+  }
+  ctx.globalAlpha=1
+  ctx.fillStyle=app.color
+  ctx.font='800 14px '+FONT
+  ctx.textAlign='center'
+  ctx.fillText(app.headline,cx,335)
+  ctx.restore()
+  ctx.fillStyle='rgba(255,255,255,0.18)'
+  ctx.fillRect(27,467,W-54,1)
+  ctx.textAlign='left'
+  ctx.fillStyle='rgba(255,255,255,0.5)'
+  ctx.font='700 13px '+FONT
+  ctx.fillText('VERIFIED SOURCE · KEY FEATURES',28,493)
+  app.facts.forEach((line,k)=>{
+    const y=513+k*51
+    ctx.fillStyle='rgba(255,255,255,0.055)'
+    roundRect(ctx,25,y,W-50,42,10);ctx.fill()
+    ctx.fillStyle=app.color
+    ctx.fillRect(38,y+11,3,20)
+    ctx.fillStyle='rgba(255,255,255,0.87)'
+    ctx.font='600 14px '+FONT
+    ctx.fillText(line,51,y+26)
+  })
+  ctx.fillStyle=app.color
+  ctx.globalAlpha=.75+.25*pulse
+  roundRect(ctx,26,686,W-52,32,16);ctx.fill()
+  ctx.globalAlpha=1
+  ctx.textAlign='center'
+  ctx.fillStyle='#06101c'
+  ctx.font='800 12px '+FONT
+  ctx.fillText('CLICK  /  OPEN PROJECT DOSSIER',cx,707)
 }
 
 export function Products() {
@@ -336,6 +161,9 @@ export function Products() {
   const select = (i: number) => {
     st.sel = i
     st.lastClick = performance.now() / 1000
+    ;(window as unknown as {__orbitaPanelSelection?:{panel:string;index:number}})
+      .__orbitaPanelSelection={panel:'products',index:i}
+    openPanel('products')
     toast(`Product Lab · ${APPS[i].name}`)
     if (busRef.current) audio.cubeClick(busRef.current, 1.9)
   }
