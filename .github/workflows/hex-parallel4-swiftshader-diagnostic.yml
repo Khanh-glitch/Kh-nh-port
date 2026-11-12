@@ -1,0 +1,55 @@
+name: HEX nonblocking four-flight shader prep software diagnostic
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [fix/hex-first-real-open-after-space-20261112]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  swiftshader-check:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 19
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - order: original-first
+            modes: cinema-range-control,cinema-range-parallel4
+          - order: concurrent-first
+            modes: cinema-range-parallel4,cinema-range-control
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: source/package-lock.json
+      - run: npm ci --prefix source
+      - run: npm install --prefix source --no-save --package-lock=false playwright@1.56.1
+      - run: cd source && npx playwright install --with-deps chromium
+      - name: All source graphics, physics, GLSL and production entry still immutable
+        run: |
+          node scripts/sync-hex-exact-batching-standalone.mjs
+          node --test tests/hex-exact-batch-contract.mjs
+          node --test tests/hex-cinema-cpu-contract.mjs
+          node tests/integration-regression.mjs
+          node scripts/build-pages.mjs
+      - name: Software-GPU test (diagnostic, NOT native Metal acceptance)
+        env:
+          HEX_CPU_BACKEND: software
+          HEX_CPU_MODES: ${{ matrix.modes }}
+        run: |
+          python3 -m http.server 4174 --bind 127.0.0.1 --directory dist-pages >/tmp/hex-sw.log 2>&1 &
+          for n in {1..80}; do
+            if curl -fsS -o /dev/null http://127.0.0.1:4174/; then break; fi
+            sleep 1
+          done
+          node scripts/hex-cpu-first-trigger-trace.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: hex-4flight-swiftshader-${{ matrix.order }}
+          path: hex-cpu-trace/
+          if-no-files-found: warn
