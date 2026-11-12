@@ -42,7 +42,7 @@ jobs:
           fi
       - name: Trace original Beacon on software GPU with real panel handoff
         env:
-          BEACON_AB_MODES: baseline,stable-shader,stable-warm
+          BEACON_AB_MODES: baseline,shader,stable-shader
         run: |
           python3 -m http.server 4173 --bind 127.0.0.1 --directory dist-pages >/tmp/beacon-signal.log 2>&1 &
           for n in {1..80}; do
@@ -81,7 +81,7 @@ jobs:
       - name: Opposite-order first and repeat Beacon signal on Metal
         env:
           BEACON_BACKEND: metal
-          BEACON_AB_MODES: ${{ matrix.order == 'baseline-first' && 'baseline,stable-shader' || 'stable-shader,baseline' }}
+          BEACON_AB_MODES: ${{ matrix.order == 'baseline-first' && 'baseline,shader' || 'shader,baseline' }}
         run: |
           python3 -m http.server 4173 --bind 127.0.0.1 --directory dist-pages >/tmp/beacon-metal.log 2>&1 &
           for n in {1..80}; do
