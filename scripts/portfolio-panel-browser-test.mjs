@@ -27,9 +27,30 @@ import {createRequire} from 'node:module'
 import {mkdirSync,writeFileSync} from 'node:fs'
 import {setTimeout as sleep} from 'node:timers/promises'
 const require=createRequire(import.meta.url)
-const {chromium}=require('../source/node_modules/playwright')
 const OUT='browser-evidence/portfolio'
 mkdirSync(OUT,{recursive:true})
+/** Never let a missing dependency or a launch failure end the process without
+ * an explanation on disk: that is exactly how two CI runs produced no
+ * diagnosis at all. */
+function fatal(stage,error){
+  const detail=String(error&&error.stack||error)
+  const report={backend:process.env.PORTFOLIO_BACKEND==='metal'?'Metal':'SwiftShader',
+    stage,passed:false,fatal:detail,
+    failures:[{stage,verdict:'HARNESS_ERROR',error:detail}]}
+  try{
+    writeFileSync(OUT+'/report.json',JSON.stringify(report,null,2))
+    writeFileSync(OUT+'/report.txt',JSON.stringify(report))
+    writeFileSync(OUT+'/harness.log','HARNESS_FATAL '+stage+': '+detail+'\n')
+  }catch{}
+  console.error('PORTFOLIO_HARNESS_FATAL '+stage+': '+detail)
+  process.exit(3)
+}
+let chromium
+try{
+  ;({chromium}=require('../source/node_modules/playwright'))
+}catch(error){
+  fatal('load-playwright',error)
+}
 const native=process.env.PORTFOLIO_BACKEND==='metal'
 const backend=native?'Metal':'SwiftShader'
 const MODE=(process.env.PORTFOLIO_VIEWPORTS||'all').trim()||'all'
@@ -41,7 +62,12 @@ const LAUNCH=native
     '--disable-software-rasterizer','--disable-dev-shm-usage']
   : ['--enable-webgl','--use-gl=angle','--use-angle=swiftshader',
     '--enable-unsafe-swiftshader','--ignore-gpu-blocklist','--disable-dev-shm-usage']
-const browser=await chromium.launch({headless:true,args:LAUNCH})
+let browser
+try{
+  browser=await chromium.launch({headless:true,args:LAUNCH})
+}catch(error){
+  fatal('launch-chromium',error)
+}
 // Which viewports run which proof:
 //  - A DOM suite exercises the dossier UI (tabs, close, scrim, keyboard) and is
 //    cheap, so SwiftShader runs it at 390x844, 1280x720 and 1920x1080.

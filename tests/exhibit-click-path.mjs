@@ -156,3 +156,33 @@ test('the interaction harness cannot crash before it reports', () => {
   for (const hit of entries)
     assert.match(hit, /^[\w-]+$/, 'hit volume id must be a literal, not an expression')
 })
+
+test('harness output is committed under a name git does not ignore', () => {
+  // The evidence workflow copies the harness output into docs/evidence. It was
+  // named *.log, which the repository's .gitignore drops, so the terminal error
+  // never reached the repository and a crash looked like an empty run.
+  const workflow = readFileSync('.github/workflows/portfolio-dossier-interaction-dev.yml', 'utf8')
+  const ignored = readFileSync('.gitignore', 'utf8').split('\n')
+    .map((l) => l.trim()).filter((l) => l && !l.startsWith('#') && !l.startsWith('!'))
+  const copied = [...workflow.matchAll(/f:?\s*([\w./-]*harness[\w./-]*)/g)].map((m) => m[1])
+  const names = copied.length ? copied
+    : [...workflow.matchAll(/harness-[a-z.]*\.(\w+)/g)].map((m) => 'x.' + m[1])
+  assert.ok(names.length > 0, 'evidence workflow must capture harness output')
+  for (const name of names) {
+    for (const rule of ignored) {
+      const pattern = rule.replace(/^\//, '')
+      if (pattern.startsWith('*.')) {
+        assert.ok(!name.endsWith(pattern.slice(1)),
+          'harness output "' + name + '" would be dropped by .gitignore rule ' + rule)
+      }
+    }
+  }
+})
+
+test('the harness reports its own load and launch failures', () => {
+  const src = readFileSync('scripts/portfolio-panel-browser-test.mjs', 'utf8')
+  assert.match(src, /HARNESS_FATAL/, 'a fatal harness error must be printed explicitly')
+  assert.match(src, /load-playwright/, 'a missing Playwright dependency must be reported')
+  assert.match(src, /launch-chromium/, 'a browser launch failure must be reported')
+  assert.match(src, /writeFileSync\(OUT\+'\/report\.txt'/, 'the report must also be plain text')
+})
