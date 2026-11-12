@@ -34,6 +34,10 @@ for(const [idx,mode] of modes.entries()){
    ? '?hexCooperativeLinear=1&hexShadowProgramWarm=1&hexPrimeFirstUse=1&hexCinemaDistanceAwareLight=1'
    : mode==='cinema-range-parallel4'
    ? '?hexCooperativeLinear=1&hexShadowProgramWarm=1&hexPrimeFirstUse=1&hexCinemaDistanceAwareLight=1&hexAsyncShaderFlights=4'
+   : mode==='cinema-range-no-logs'
+   ? '?hexCooperativeLinear=1&hexShadowProgramWarm=1&hexPrimeFirstUse=1&hexCinemaDistanceAwareLight=1&hexSkipDriverShaderLogs=1'
+   : mode==='cinema-range-parallel4-no-logs'
+   ? '?hexCooperativeLinear=1&hexShadowProgramWarm=1&hexPrimeFirstUse=1&hexCinemaDistanceAwareLight=1&hexAsyncShaderFlights=4&hexSkipDriverShaderLogs=1'
    : mode==='cinema-range-overlap-parallel4'
    ? '?hexCooperativeLinear=1&hexShadowProgramWarm=1&hexPrimeFirstUse=1&hexCinemaDistanceAwareLight=1&hexBatchProbe=extended-overlap&hexAsyncShaderFlights=4'
    : mode==='cinema-range-overlap'
@@ -196,6 +200,7 @@ for(const [idx,mode] of modes.entries()){
     exactBatch:window.__orbitaHexBatchStats??null,
     vertexGate:window.__orbitaHexVertexGate??null,
     shaderPrep:window.__orbitaHexShaderPrep,
+    shaderLogPolicy:window.__orbitaHexShaderLogPolicy??null,
     source:window.__orbitaHexTimings??null}
   })
   writeFileSync('hex-cpu-trace/'+mode+'-'+idx+'.cpuprofile',JSON.stringify(profile))
