@@ -46,11 +46,20 @@ export function Beacon() {
     if (!benchmark) return
     const id = ++traceIndex.current
     const shaderCount = gl.info.programs?.length ?? 0
+    const renderer=gl.getContext()
+    const debug=renderer.getExtension('WEBGL_debug_renderer_info')
+    const rendererName=String(renderer.getParameter(
+      debug?.UNMASKED_RENDERER_WEBGL??renderer.RENDERER))
+    const w=window as unknown as {
+      __orbitaBeaconBackend?:string
+    }
+    w.__orbitaBeaconBackend=rendererName
     const warmAtClick=(window as unknown as {
       __orbitaBeaconGpuPrewarm?: {status:string;done:number;total:number;maxSubmitMs:number;gpuSynced:boolean}
     }).__orbitaBeaconGpuPrewarm
     const warmStatusAtClick=warmAtClick ? {...warmAtClick} : null
     const gaps:number[]=[]
+    let prePanelMaxGap=0, postPanelMaxGap=0
     let last=0, firstFrameMs:number|null=null
     let lastFrame=clickedAt
     let frames=0
@@ -58,7 +67,14 @@ export function Beacon() {
       if (traceIndex.current!==id) return
       const clock=performance.now()
       if (firstFrameMs===null) firstFrameMs=clock-clickedAt
-      if (last) gaps.push(clock-last)
+      if (last) {
+        const gap=clock-last
+        gaps.push(gap)
+        // Separate materialization from the intentionally scheduled
+        // 1600 ms contact-panel transition. This cannot move or omit it.
+        if(clock-clickedAt<=1600) prePanelMaxGap=Math.max(prePanelMaxGap,gap)
+        else postPanelMaxGap=Math.max(postPanelMaxGap,gap)
+      }
       last=clock
       lastFrame=clock
       frames++
@@ -71,6 +87,10 @@ export function Beacon() {
       const maxGap=Math.max(tail,firstFrameMs??0,...gaps)
       const result={id, firstFrameMs:Math.round(firstFrameMs??-1),
         maxGapMs:Math.round(maxGap),frames,
+        prePanelMaxGapMs:Math.round(Math.max(prePanelMaxGap,
+          firstFrameMs??0)),
+        postPanelMaxGapMs:Math.round(postPanelMaxGap),
+        rendererName,
         gapsOver120Ms:gaps.filter(x=>x>120).length,
         warmStatusAtClick,shaderProgramsBefore:shaderCount,
         shaderProgramsAfter:gl.info.programs?.length??0,
