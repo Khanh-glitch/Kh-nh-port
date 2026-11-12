@@ -110,7 +110,9 @@ export function RealityHost() {
             const a = geometry.getAttribute(name)
             return [name,a.itemSize,a.normalized,a.array.constructor.name].join(':')
           }).join(',')
-          const key = [mesh.material.uuid,mesh.castShadow,mesh.receiveShadow,
+          // Candidate filter rejects Material[]; this is a type-only narrowing.
+          const sourceMaterial = mesh.material as THREE.Material
+          const key = [sourceMaterial.uuid,mesh.castShadow,mesh.receiveShadow,
             mesh.renderOrder,mesh.frustumCulled,mesh.layers.mask,signature].join('|')
           const group = buckets.get(key) ?? []
           group.push(mesh)
@@ -243,9 +245,9 @@ export function RealityHost() {
               if (!shader.vertexShader.includes(originalExpr))
                 throw new Error('UEH_PATCHED_GROWTH_SHADER_MISSING: refusing unsafe batching')
               const growExpr='transformed.y *= rwGrow(vRWg, uRWGrowLen);'
-              const grown=shader.vertexShader.replaceAll(originalExpr,
+              const grown=shader.vertexShader.split(originalExpr).join(
                 'rwX((rwM * vec4(aRWOrigin,1.0)).xyz, rwEd0)')
-                .replaceAll(growExpr,
+                .split(growExpr).join(
                   'transformed += aRWGrowDelta * (rwGrow(vRWg, uRWGrowLen) - 1.0);')
               if (originalMaterial.customProgramCacheKey().includes('-g-') &&
                   !shader.vertexShader.includes(growExpr))
