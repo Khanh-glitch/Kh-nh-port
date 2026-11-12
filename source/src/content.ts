@@ -201,26 +201,22 @@ export const PANELS: Record<PanelId, PanelContent> = {
     tags:['VNG','Competition','Project evidence'],accent:'#e65a26',
   },
   stage: {
-    id: 'stage',
-    kicker: 'LIVE PRODUCTION · STAGE · LED',
-    title: 'Main Stage',
-    subtitle: 'Sân khấu thật, bàn điều khiển thật — bạn là người bấm cue.',
-    body: [
-      'Đến bàn FOH phía trước sân khấu và bấm các pad cue: đổi cảnh ánh sáng, bật nhạc, bắn pháo giấy. Đèn moving head, màn LED và đèn strobe sẽ phản hồi ngay.',
-      'Orbita tự thiết kế và vận hành cả hệ thống: truss, LED, âm thanh line-array, ánh sáng, laser, pyro, đến đội kỹ thuật 40 người.',
+    id:'stage',
+    kicker:'LIVE SHOW · INTERACTIVE CASE STUDY',
+    title:'Main Stage',
+    subtitle:'Khám phá các chương trình đã được đối chiếu tư liệu qua bàn FOH 3D.',
+    body:[
+      'Main Stage là khu vực case study đã hoàn thiện. Chọn chương trình, chuyển scene và xem các bằng chứng hình ảnh/video được ghi rõ nguồn trong hệ thống FOH.',
+      'Các con số gắn với một chương trình do bên tổ chức/báo chí công bố không được diễn giải thành thành tích cá nhân hoặc số show do tôi sản xuất.',
     ],
-    stats: [
-      { k: 'LED lớn nhất', v: '1.200 m²' },
-      { k: 'Công suất âm thanh', v: '480 kW' },
-      { k: 'Thời gian dựng', v: '36 giờ' },
+    stats:[{k:'Trình diễn',v:'3D FOH'},{k:'Tư liệu',v:'Verified'},{k:'Nguồn',v:'Show cases'}],
+    items:[
+      {name:'GET DOWNTOWN 2023: |SI:N|',meta:'CASE STUDY',desc:'Hồ sơ tại FOH gồm footage và ảnh tư liệu chính thức về chương trình tại UEH.',evidence:'source'},
+      {name:'MỘT CHÚT YÊU THƯƠNG 3',meta:'CASE STUDY',desc:'Tư liệu chương trình và phần hỗ trợ cộng đồng, có nguồn độc lập trong kho case study.',evidence:'source'},
+      {name:'BẢN GIAO HƯỞNG XANH',meta:'CASE STUDY',desc:'Tư liệu chương trình nghệ thuật với nguồn và quyền sử dụng được chú thích trong khu FOH.',evidence:'source'},
     ],
-    items: [
-      { name: 'Aurora Main Stage', meta: 'Festival', desc: 'Sân khấu 48 m, 3 ngày đêm, 40.000 khán giả mỗi đêm.' },
-      { name: 'Neon Harbour', meta: 'Club tour', desc: 'Bộ stage-kit gọn gàng đi qua 12 thành phố trong 21 ngày.' },
-      { name: 'Skyline Countdown', meta: 'Countdown', desc: 'Pháo hoa, laser và LED trên đỉnh tòa nhà 81 tầng.' },
-    ],
-    tags: ['Stage Design', 'LED', 'Sound', 'Pyro', 'Festival'],
-    accent: '#ff3dcb',
+    tags:['Show case studies','Stage production','Video evidence','FOH'],
+    accent:'#ff3dcb',
   },
   products: {
     id:'products',
