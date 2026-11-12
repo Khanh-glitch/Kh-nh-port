@@ -59,6 +59,18 @@ export function Beacon() {
     }).__orbitaBeaconGpuPrewarm
     const warmStatusAtClick=warmAtClick ? {...warmAtClick} : null
     const gaps:number[]=[]
+    // Timers and LongTasks distinguish CPU/JS blocking from rAF-only GPU
+    // compositor starvation without synchronizing the renderer.
+    const timers:number[]=[]
+    const longTasks:number[]=[]
+    const tick=window.setInterval(()=>timers.push(performance.now()),25)
+    let observer:PerformanceObserver|null=null
+    try{
+      observer=new PerformanceObserver(entries=>{
+        for(const entry of entries.getEntries())longTasks.push(entry.duration)
+      })
+      observer.observe({entryTypes:['longtask']})
+    }catch{ /* Safari and older browsers may lack LongTaskObserver */ }
     let prePanelMaxGap=0, postPanelMaxGap=0
     let last=0, firstFrameMs:number|null=null
     let lastFrame=clickedAt
@@ -83,10 +95,18 @@ export function Beacon() {
     requestAnimationFrame(follow)
     window.setTimeout(()=>{
       const elapsed=performance.now()-clickedAt
+      window.clearInterval(tick)
+      observer?.disconnect()
+      const timerIntervals=timers.slice(1).map((v,i)=>v-timers[i])
+      const timerLongest=Math.max(0,...timerIntervals)
       const tail=elapsed-(lastFrame-clickedAt)
       const maxGap=Math.max(tail,firstFrameMs??0,...gaps)
       const result={id, firstFrameMs:Math.round(firstFrameMs??-1),
         maxGapMs:Math.round(maxGap),frames,
+        maxTimerGapMs:Math.round(timerLongest),
+        longTaskMaxMs:Math.round(Math.max(0,...longTasks)),
+        rafMinusTimerGapMs:Math.round(maxGap-timerLongest),
+        timerSamples:timers.length,
         prePanelMaxGapMs:Math.round(Math.max(prePanelMaxGap,
           firstFrameMs??0)),
         postPanelMaxGapMs:Math.round(postPanelMaxGap),
@@ -110,7 +130,18 @@ export function Beacon() {
     if (busRef.current) audio.ping(busRef.current)
     toast('Tín hiệu đã phát vào vũ trụ…')
     window.clearTimeout(st.pendingOpen)
-    st.pendingOpen = window.setTimeout(() => openPanel('beacon'), 1600)
+    st.pendingOpen = window.setTimeout(() => {
+      if(benchmark){
+        const w=window as unknown as {
+          __orbitaBeaconPanelEvents?:Array<{afterMs:number;at:number}>
+        }
+        ;(w.__orbitaBeaconPanelEvents??=[]).push({
+          afterMs:Math.round(performance.now()/1000-now)*1000,
+          at:Math.round(performance.now()),
+        })
+      }
+      openPanel('beacon')
+    }, 1600)
   }
 
   // Use the identical production signal pathway in GPU A/B automation.
