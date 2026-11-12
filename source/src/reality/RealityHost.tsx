@@ -45,6 +45,28 @@ const GRADE_RAIN = { sun: '#c9d7ea', sunI: 0.82, sky: '#8fa6c4', gnd: '#484c54',
 
 export function RealityHost() {
   const { scene, camera, gl } = useThree()
+  // DIAGNOSTIC A/B ONLY: WebGLProgram.onFirstUse calls
+  // getProgramInfoLog/getShaderInfoLog synchronously if shader-error checks
+  // are enabled. Mac Metal traces attribute 6–10 seconds to those reads.
+  // Three.js explicitly supports disabling these diagnostics in release
+  // builds. Do NOT enable by default: verify all 18 scene pixels, GL link
+  // validity, GPU frame pacing and error cases before promotion.
+  const hexSkipDriverShaderLogs = typeof window !== 'undefined' &&
+    new URLSearchParams(window.location.search).get('hexSkipDriverShaderLogs') === '1'
+  useLayoutEffect(()=>{
+    if(!hexSkipDriverShaderLogs)return
+    const previous=gl.debug.checkShaderErrors
+    gl.debug.checkShaderErrors=false
+    ;(window as unknown as {__orbitaHexShaderLogPolicy?:unknown}).__orbitaHexShaderLogPolicy={
+      mode:'diagnostic-skip-driver-logs',original:previous,
+      current:gl.debug.checkShaderErrors,sourceShaderUnchanged:true,
+    }
+    return ()=>{
+      gl.debug.checkShaderErrors=previous
+      delete (window as unknown as {__orbitaHexShaderLogPolicy?:unknown})
+        .__orbitaHexShaderLogPolicy
+    }
+  },[gl,hexSkipDriverShaderLogs])
   // Authoritative GPU backend for HEX cold-open A/B. Reading the DOM canvas
   // using a different contextType can return null for a valid R3F renderer.
   useEffect(()=>{
