@@ -16,7 +16,7 @@ export const profile = {
   timezone: 'Asia/Ho_Chi_Minh',
 
   title: { vi: 'AI creative builder · Thiết kế trải nghiệm', en: 'AI creative builder · Experience design' } as L10n,
-  focus: ['Vibe coding', 'Interactive 3D', 'Creative AI'],
+  focus: ['Vibe coding', 'Interactive 3D', 'Game Design', 'Event Production'],
   availability: { vi: 'Sẵn sàng nhận việc', en: 'Open to work' } as L10n,
 
   headline: {
@@ -32,7 +32,7 @@ export const profile = {
     { value: '3D', label: { vi: 'Không gian tương tác', en: 'Interactive worlds' } },
     { value: 'AI', label: { vi: 'Công cụ sáng tạo', en: 'Creative tools' } },
     { value: 'GAME', label: { vi: 'Prototype game', en: 'Game prototyping' } },
-    { value: 'EVENT', label: { vi: 'Trải nghiệm sự kiện', en: 'Event experiences' } },
+    { value: 'UEH', label: { vi: 'Quản trị sự kiện', en: 'Event management' } },
   ] as { value: string; label: L10n }[],
 
   facts: [
@@ -45,8 +45,8 @@ export const profile = {
       value: { vi: 'Remote · Hybrid · Onsite', en: 'Remote · Hybrid · Onsite' },
     },
     {
-      label: { vi: 'Phương pháp', en: 'Approach' },
-      value: { vi: 'Vibecoding · kiểm thử theo bằng chứng', en: 'AI-assisted · evidence-driven testing' },
+      label: { vi: 'Học vấn / CV', en: 'Education / CV' },
+      value: { vi: 'UEH · Quản trị sự kiện · 2023–2026 (dự kiến)', en: 'UEH · Event Management · 2023–2026 expected' },
     },
     {
       label: { vi: 'Ngôn ngữ', en: 'Languages' },
@@ -56,6 +56,7 @@ export const profile = {
 
   // Project work, not unverified employment history.
   experience: [
+    {period:{vi:'THỰC TẬP',en:'INTERNSHIP'},role:'Event Production Intern',org:'Sen Viet Communication Investment Company Limited',note:{vi:'Theo CV: hỗ trợ lập kế hoạch và thực hiện sự kiện, phối hợp các nhóm sản xuất, thiết kế và truyền thông.',en:'Per résumé: supporting event planning, on-site production and cross-functional coordination.'}},
     {period:{vi:'DỰ ÁN',en:'PROJECT'},role:'ORBITA',org:'Interactive portfolio',note:{vi:'Thiết kế hệ thống dẫn đường trong không gian 3D và khởi động bằng phi thuyền.',en:'A 3D navigable experience with a spaceship-first entry.'}},
     {period:{vi:'DỰ ÁN',en:'PROJECT'},role:'EventFlow Pro',org:'Event operations tooling',note:{vi:'Demo quy trình brief, nhu cầu sản xuất, BOQ, báo giá và proposal; chưa triển khai production.',en:'Brief-to-production demo, BOQ, quotes and proposal workflow; not production-ready.'}},
     {period:{vi:'DỰ ÁN',en:'PROJECT'},role:'APEX CHAOS',org:'Browser game',note:{vi:'Game đấu trường trình duyệt với engine và tài sản game riêng.',en:'A browser arena game with dedicated gameplay runtime and assets.'}},
@@ -68,6 +69,7 @@ export const profile = {
     {name:'APEX CHAOS',tag:'BROWSER GAME',metric:'GAME',note:{vi:'Game đấu trường có mã nguồn và engine riêng.',en:'Arena game with published source and runtime.'}},
     {name:'MathPath',tag:'LEARNING WEB',metric:'PROJECT',note:{vi:'Ứng dụng học Toán với Living Board và tiến trình học.',en:'Math learning workspace with Living Board and progress.'}},
     {name:'Soul of Hero',tag:'SURVIVAL GAME',metric:'DEVELOPMENT',note:{vi:'Game pixel survival RPG đang phát triển.',en:'In-development pixel survival RPG.'}},
+    {name:'VNGGames Prompt To Play 2026',tag:'AI GAME JAM',metric:'TOP 26 / CV',note:{vi:'Theo CV cá nhân: Top 26, prototype puzzle-RPG trong 24 giờ. Kết quả chưa đối chiếu độc lập với BTC.',en:'Per personal résumé: Top 26 and a 24-hour puzzle-RPG prototype. Official event confirmation pending.'}},
   ] as { name: string; tag: string; metric: string; note: L10n }[],
 
   stack: [
@@ -79,16 +81,16 @@ export const profile = {
   ],
 
   contact: {
-    email: '',
-    phone: '',
-    linkedin: { label: '', url: '' },
+    email: 'mencan308@gmail.com',
+    phone: '+84 328 494 207',
+    linkedin: { label: 'linkedin.com/in/quockhanh-le', url: 'https://www.linkedin.com/in/quockhanh-le/' },
     github: { label: 'github.com/Khanh-glitch', url: 'https://github.com/Khanh-glitch' },
   },
 
   links: {
     /** The in-page CTA jumps into the embedded 3D island; no external link needed. */
     portfolio: '',
-    /** Đường dẫn file CV (PDF). Để trống thì nút thứ hai sẽ là "Liên hệ" (mailto). */
+    /** Resume PDF is in the owner's Library only, not public hosting; do not invent a URL. */
     cv: '',
   },
 };
@@ -123,13 +125,13 @@ export const ui = {
   language: { vi: 'Ngôn ngữ', en: 'Language' },
   velocity: { vi: 'Vận tốc', en: 'Velocity' },
   radar: { vi: 'Radar', en: 'Radar' },
-  noticeTitle: { vi: 'Chưa thiết lập đích đến', en: 'Destination not set' },
+  noticeTitle: { vi: 'Không kết nối được trạm 3D', en: '3D destination unavailable' },
   noticeBody: {
-    vi: 'Thêm đường dẫn portfolio vào links.portfolio trong src/data/profile.ts để hoàn tất bước nhảy.',
-    en: 'Add your portfolio URL to links.portfolio in src/data/profile.ts to complete the jump.',
+    vi: 'Trạm 3D chưa trả lời tín hiệu. Thử tải lại trang để kết nối.',
+    en: 'The 3D station did not acknowledge the flight. Reload to reconnect.',
   },
   dismiss: { vi: 'Đóng', en: 'Dismiss' },
-  responds: { vi: 'Liên hệ đang cập nhật', en: 'Contact details pending' },
+  responds: { vi: 'Kênh liên hệ lấy từ CV của chủ sở hữu', en: 'Contact details provided in the owner’s résumé' },
   bootTitle: { vi: 'Khởi động hệ thống', en: 'System start-up' },
   bootEngines: { vi: 'Động cơ', en: 'Engines' },
   bootNav: { vi: 'Định vị', en: 'Navigation' },
