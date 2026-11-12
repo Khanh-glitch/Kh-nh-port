@@ -1057,6 +1057,9 @@ export function RealityHost() {
     const programs:THREE.Object3D[]=[]
     const owned:THREE.Material[]=[]
     ueh.current?.traverse(node=>{
+      // The exact batch already owns this original mesh's shadow caster.
+      // Prewarming the permanently hidden duplicate would waste GPU time.
+      if(node.userData.hexMergedAway===true)return
       const mesh=node as THREE.Mesh
       if(!mesh.isMesh||!mesh.castShadow||
           !mesh.geometry||Array.isArray(mesh.material)||!mesh.material)return
@@ -1121,6 +1124,10 @@ export function RealityHost() {
     const scan = (root: THREE.Object3D | null) => {
       if (!root) return
       root.traverse((o) => {
+        // Do not dispatch shader/texture prep for invisible source duplicates
+        // after geometry-exact batching. The new combined PBR object is
+        // traversed separately; default HEX with no batching is unchanged.
+        if (o.userData.hexMergedAway===true) return
         const m = (o as THREE.Mesh).material as THREE.Material | THREE.Material[] | undefined
         if (!m) return
         const list = Array.isArray(m) ? m : [m]
