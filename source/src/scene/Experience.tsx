@@ -212,6 +212,42 @@ function LandingGpuPreflight() {
   return null
 }
 
+/**
+ * Real island readiness: only after Suspense resolved and the renderer has
+ * submitted actual scene frames, not after a timer or a synthetic percentage.
+ * This is intentionally independent of optional HEX/robot shader prewarm.
+ */
+function IslandFirstPaintGate() {
+  const { gl } = useThree()
+  const done = useRef(false)
+  const goodFrames = useRef(0)
+  useFrame(() => {
+    if (done.current) return
+    const ctx=gl.getContext()
+    const rendered=gl.info.render.frame
+    const connected=gl.domElement.isConnected
+    const valid=connected && gl.domElement.width>0 &&
+      gl.domElement.height>0 && !ctx.isContextLost() && rendered>=2 &&
+      (gl.info.programs?.length??0)>0
+    goodFrames.current=valid?goodFrames.current+1:0
+    const diag=window as unknown as {__orbitaIslandFirstPaint?:unknown}
+    diag.__orbitaIslandFirstPaint={
+      status:valid?'confirming-render':'rendering',
+      frames:rendered,
+      goodFrames:goodFrames.current,
+      shaderPrograms:gl.info.programs?.length??0,
+    }
+    if(goodFrames.current<2)return
+    done.current=true
+    diag.__orbitaIslandFirstPaint={
+      status:'ready',frames:rendered,
+      shaderPrograms:gl.info.programs?.length??0,
+    }
+    useStore.getState().setReady()
+  })
+  return null
+}
+
 function HighGateMeter() {
   useFrame((state, delta) => {
     highGuard.record(delta, useStore.getState().quality, state.gl)
@@ -274,6 +310,7 @@ export function Experience() {
         <Player />
         <RealityHost />
         {!postProbeOff && <Post low={low} />}
+        <IslandFirstPaintGate />
       </Suspense>
     </Canvas>
   )
