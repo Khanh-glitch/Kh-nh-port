@@ -29,7 +29,9 @@ test('hex exact opaque-only sibling batching is opt-in, never default',()=>{
     assert.match(text,/m\.material\.transparent/)
     assert.match(text,/m\.material\.alphaTest/)
   }
-  assert.match(src,/hexBatchProbe !== 'extended' && hexBatchProbe !== 'manual'/)
+  assert.match(src,/hexBatchProbe === 'manual-overlap'/)
+  assert.match(src,/sourceExactOverlapProbe/)
+  assert.match(src,/batchKeyByMesh/)
 })
 
 test('full original PBR, shadow, foliage and HEX sweep are intact',()=>{
