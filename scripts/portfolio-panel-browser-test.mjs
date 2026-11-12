@@ -13,6 +13,22 @@ const suites=[
  {width:390,height:844,tag:'mobile'},
  {width:1920,height:1080,tag:'wide'}
 ]
+// A real pointer click through the browser input pipeline. Unlike
+// locator.click(), it does not depend on Playwright's actionability/layout
+// heuristics during three.js background shader compilation. This still
+// requires the target to be under the pointer and its onClick to run.
+async function pointerClick(page,locator,label){
+  const hit=await locator.evaluate(el=>{
+    const r=el.getBoundingClientRect()
+    const x=r.x+r.width/2,y=r.y+r.height/2
+    const top=document.elementFromPoint(x,y)
+    return {x,y,w:r.width,h:r.height,hit:top===el||el.contains(top),
+      html:top?.outerHTML?.slice(0,140)}
+  },{timeout:10000})
+  if(!hit.hit||hit.w<8||hit.h<8)
+    throw Error('Pointer target occluded '+label+': '+JSON.stringify(hit))
+  await page.mouse.click(hit.x,hit.y,{delay:35})
+}
 const all=[]
 const ids=['about','orb','piano','rubik','robot','apex','ragnarok',
   'cinema','stage','products','beacon','vng']
@@ -60,7 +76,7 @@ try{
     console.log('PORTFOLIO_PANEL_AUDIT '+JSON.stringify({suite:suite.tag,backend:native?'Metal':'SwiftShader',id,info}))
     const tabs=root.locator('[role="tab"]')
     if(info.tabs>=2){
-      await tabs.nth(1).click()
+      await pointerClick(page,tabs.nth(1),id+' tab 2')
       const second=await root.locator('[role="tab"][aria-selected="true"]').textContent()
       if(!second?.includes('02'))
         throw Error('Second project did not activate: '+id)
@@ -110,7 +126,7 @@ try{
   // have a public GitHub CTA. Select public ORBITA for the real link check.
   const privateLinks=await page.locator('[data-project-dossier="products"] a[href*="eventflow-pro"]').count()
   if(privateLinks)throw Error('Private EventFlow repository exposed to recruiter')
-  await page.locator('[data-project-dossier="products"] [role="tab"]').nth(2).click()
+  await pointerClick(page,page.locator('[data-project-dossier="products"] [role="tab"]').nth(2),'products public-source tab')
   const links=await page.locator('[data-project-dossier="products"] a[href^="https://github.com/"]').count()
   if(links<1)throw Error('Public ORBITA evidence CTA missing after tab selection')
   out.verifiedLinks=links
