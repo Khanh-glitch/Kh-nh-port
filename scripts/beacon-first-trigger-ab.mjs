@@ -26,23 +26,29 @@ try{
       return !!window.__orbitaBeaconTestTrigger&&useStore.getState().ready&&
         useStore.getState().phase==='playing'
     },null,{timeout:100000})
-    const gpu=await page.evaluate(()=>{
-      const gl=Array.from(document.querySelectorAll('canvas')).map(canvas=>
-        canvas.getContext('webgl2')).find(Boolean)
-      const dbg=gl?.getExtension('WEBGL_debug_renderer_info')
-      return String(gl?.getParameter(dbg?.UNMASKED_RENDERER_WEBGL??gl.RENDERER))
-    })
+    // WebGL contexts cannot be recovered with a different contextType
+    // (canvas.getContext('webgl2') is null if R3F created 'webgl'). Read the
+    // ACTUAL renderer context, published by the instrumented Beacon.
+    const gpu=await page.evaluate(()=>window.__orbitaBeaconBackend)
+    if(!gpu||gpu==='undefined'||gpu==='null')
+      throw Error('Beacon scene did not expose real WebGL backend')
     if(native&&!/Metal/i.test(gpu))throw Error('Wrong Metal GPU: '+gpu)
     // The warm trial is only valid when the original geometry has actually
     // reached the GPU. Refuse to mislabel a mid-warm click as a prewarmed one.
     let beforeIdle=null
     if(warm){
-      await page.waitForFunction(()=>{
+      // A busy virtual GPU is an experimental *outcome*, not a reason to
+      // stall the whole benchmark until GitHub Actions times out.
+      const ended=await page.waitForFunction(()=>{
         const w=window.__orbitaBeaconGpuPrewarm
         return ['ready','submitted-no-gpu-fence','rejected-idle-frame-stall',
           'skipped-busy-renderer','failed','failed-fence','cancelled'].includes(w?.status)
-      },null,{timeout:90000,polling:300})
-      beforeIdle=await page.evaluate(()=>({...window.__orbitaBeaconGpuPrewarm}))
+      },null,{timeout:30000,polling:300}).then(()=>true,()=>false)
+      beforeIdle=await page.evaluate(()=>{
+        const w=window.__orbitaBeaconGpuPrewarm
+        return w?{...w}:{status:'not-started'}
+      })
+      if(!ended)beforeIdle.status='incomplete-after-30s'
     }
     // Identical first and repeat signal with the EXACT production callback.
     const trials=[]
