@@ -235,3 +235,27 @@ test('the evidence script survives a partial or missing harness report', async (
     rmSync(dir, {recursive: true, force: true})
   }
 })
+
+test('every viewport value a workflow passes is accepted by the harness', () => {
+  // A regression here already cost three runs: the harness started rejecting
+  // PORTFOLIO_VIEWPORTS=fast while the workflows still passed it, and every
+  // suite failed at startup. The workflows and the parser must agree.
+  const src = readFileSync('scripts/portfolio-panel-browser-test.mjs', 'utf8')
+  const modes = new Set()
+  for (const file of ['.github/workflows/portfolio-dossier-interaction-dev.yml',
+    '.github/workflows/space-first-real-entry.yml',
+    '.github/workflows/portfolio-panels-native-metal.yml']) {
+    const w = readFileSync(file, 'utf8')
+    for (const m of w.matchAll(/PORTFOLIO_VIEWPORTS:\s*([^\n]+)/g)) {
+      const value = m[1].replace(/\$\{\{[^}]*\|\|\s*'([^']*)'\s*\}\}/g, '$1').trim()
+      if (value && !value.includes('${{')) modes.add(value)
+    }
+  }
+  assert.ok(modes.size > 0, 'at least one workflow must set viewports')
+  for (const mode of modes) {
+    for (const part of mode.split(',')) {
+      assert.match(src, new RegExp('\\b' + part + ':'), 'harness must accept viewport value ' + part)
+    }
+  }
+  assert.match(src, /aliases=\{fast:\[/, "'fast' must stay a supported alias")
+})

@@ -76,14 +76,23 @@ try{
 //    software rasteriser one island frame costs about 30s, so there it runs at
 //    1280x720 only and the smaller/larger layouts are covered on Metal plus by
 //    the DOM suites. This is an explicit allocation, not a silent skip.
+const rawMode=(process.env.PORTFOLIO_VIEWPORTS||'all').trim()||'all'
 const suites=(()=>{
   const named={desktop:[1280,720,'desktop'],mobile:[390,844,'mobile'],wide:[1920,1080,'wide']}
-  const raw=(process.env.PORTFOLIO_VIEWPORTS||'all').split(',').filter(Boolean)
-  const unknown=raw.filter(n=>n!=='all'&&!named[n])
+  // Aliases are part of the public contract of this harness: the workflows pass
+  // PORTFOLIO_VIEWPORTS=fast, so 'fast' must keep meaning "one desktop suite".
+  const aliases={fast:['desktop'],all:['mobile','desktop','wide']}
+  if(aliases[rawMode])return{
+    dom:aliases[rawMode].map(n=>named[n]),
+    world:native?aliases[rawMode].map(n=>named[n])
+      :aliases[rawMode].filter(n=>n==='desktop').map(n=>named[n]),
+  }
+  const raw=rawMode.split(',').filter(Boolean)
+  const unknown=raw.filter(n=>!named[n])
   if(unknown.length)
     throw Error('Unknown PORTFOLIO_VIEWPORTS value(s): '+unknown.join(', ')+
-      ' (allowed: all, mobile, desktop, wide)')
-  const only=MODE==='all'?null:MODE.split(',').filter(Boolean)
+      ' (allowed: fast, all, or a comma list of mobile, desktop, wide)')
+  const only=rawMode==='all'?null:rawMode.split(',').filter(Boolean)
   const domSet = only ?? ['mobile','desktop','wide']
   const worldSet = native ? (only ?? ['mobile','desktop','wide'])
     : (only ?? ['desktop'])
