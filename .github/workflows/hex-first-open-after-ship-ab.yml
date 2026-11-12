@@ -1,0 +1,89 @@
+name: HEX real first-open after ship-first entry, preserve 18-stage source pixel parity
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [fix/hex-first-real-open-after-space-20261112]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  standalone-integrity:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 14
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: source/package-lock.json
+      - run: npm ci --prefix source
+      - name: Freeze all other original visuals and scripts in production HTML
+        run: |
+          node scripts/sync-hex-exact-batching-standalone.mjs
+          node --test tests/hex-exact-batch-contract.mjs
+          node --test tests/hex-cinema-cpu-contract.mjs
+          node tests/integration-regression.mjs
+          node scripts/build-pages.mjs
+          cmp -s index.html dist-pages/index.html
+  native-metal:
+    runs-on: macos-15
+    timeout-minutes: 32
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - order: source-first
+            modes: cinema-range-control,cinema-range-no-logs,cinema-range-parallel4-no-logs
+          - order: candidate-first
+            modes: cinema-range-parallel4-no-logs,cinema-range-no-logs,cinema-range-control
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: source/package-lock.json
+      - run: npm ci --prefix source
+      - run: npm install --prefix source --no-save --package-lock=false playwright@1.56.1
+      - run: cd source && npx playwright install chromium
+      - name: Compile original HEX and cinema only, preserve production boot
+        run: |
+          node scripts/sync-hex-exact-batching-standalone.mjs
+          node --test tests/hex-exact-batch-contract.mjs
+          node --test tests/hex-cinema-cpu-contract.mjs
+          node tests/integration-regression.mjs
+          node scripts/build-pages.mjs
+      - name: Real 18-stage pixel parity in original source environment
+        if: matrix.order == 'candidate-first'
+        env:
+          HEX_PARITY_BACKEND: metal
+          HEX_BATCH_PROBE_MODE: manual-overlap
+        run: |
+          python3 -m http.server 4174 --bind 127.0.0.1 --directory dist-pages >/tmp/hex-native.log 2>&1 &
+          for n in {1..80}; do
+            if curl -fsS -o /dev/null http://127.0.0.1:4174/; then break; fi
+            sleep 1
+          done
+          sed 's/4173/4174/g' scripts/hex-exact-batch-pixel-parity.mjs > scripts/hex-pixel-ci-temporary.mjs
+          node scripts/hex-pixel-ci-temporary.mjs
+          HEX_PARITY_EXTRA_QUERY=skip-driver-logs node scripts/hex-pixel-ci-temporary.mjs
+      - name: Reversed-order actual cold HEX open, 4s idle and true GPU/CPU trace
+        env:
+          HEX_CPU_MODES: ${{ matrix.modes }}
+        run: |
+          python3 -m http.server 4174 --bind 127.0.0.1 --directory dist-pages >/tmp/hex-native.log 2>&1 &
+          for n in {1..80}; do
+            if curl -fsS -o /dev/null http://127.0.0.1:4174/; then break; fi
+            sleep 1
+          done
+          node scripts/hex-cpu-first-trigger-trace.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: hex-first-open-after-ship-original-${{ matrix.order }}
+          path: |
+            hex-cpu-trace/
+            hex-batch-evidence/
+          if-no-files-found: warn

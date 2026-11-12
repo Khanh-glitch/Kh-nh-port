@@ -4,10 +4,12 @@ const require=createRequire(import.meta.url)
 const {chromium}=require('../source/node_modules/playwright')
 mkdirSync('hex-cpu-trace',{recursive:true})
 const modes=(process.env.HEX_CPU_MODES??'normal,prime-first-use').split(',')
-const browser=await chromium.launch({headless:true,args:[
- '--enable-webgl','--enable-gpu','--ignore-gpu-blocklist',
- '--use-angle=metal','--disable-software-rasterizer'
-]})
+const software=process.env.HEX_CPU_BACKEND==='software'
+const browser=await chromium.launch({headless:true,args:software
+  ? ['--enable-webgl','--use-gl=angle','--use-angle=swiftshader',
+     '--enable-unsafe-swiftshader']
+  : ['--enable-webgl','--enable-gpu','--ignore-gpu-blocklist',
+     '--use-angle=metal','--disable-software-rasterizer']})
 const results=[]
 for(const [idx,mode] of modes.entries()){
  const context=await browser.newContext({viewport:{width:960,height:540},deviceScaleFactor:1})
@@ -18,7 +20,31 @@ for(const [idx,mode] of modes.entries()){
  page.on('requestfailed',e=>r.requests.push(e.url().slice(0,140)))
  results.push(r)
  try{
-  const flags=mode==='prime-first-use'
+  const flags=mode==='batch-control'
+   ? '?hexCooperativeLinear=1&hexShadowProgramWarm=1&hexPrimeFirstUse=1&hexCinemaFarLightGate=1'
+   : mode==='batch-exact'
+   ? '?hexCooperativeLinear=1&hexShadowProgramWarm=1&hexPrimeFirstUse=1&hexCinemaFarLightGate=1&hexBatchProbe=extended'
+   : mode==='batch-overlap'
+   ? '?hexCooperativeLinear=1&hexShadowProgramWarm=1&hexPrimeFirstUse=1&hexCinemaFarLightGate=1&hexBatchProbe=extended-overlap'
+   : mode==='cinema-cpu-control'
+   ? '?hexCooperativeLinear=1&hexShadowProgramWarm=1&hexPrimeFirstUse=1&hexCinemaFarLightGate=1&hexCinemaCpuCanvas=1'
+   : mode==='cinema-cpu-overlap'
+   ? '?hexCooperativeLinear=1&hexShadowProgramWarm=1&hexPrimeFirstUse=1&hexCinemaFarLightGate=1&hexCinemaCpuCanvas=1&hexBatchProbe=extended-overlap'
+   : mode==='cinema-range-control'
+   ? '?hexCooperativeLinear=1&hexShadowProgramWarm=1&hexPrimeFirstUse=1&hexCinemaDistanceAwareLight=1'
+   : mode==='cinema-range-parallel4'
+   ? '?hexCooperativeLinear=1&hexShadowProgramWarm=1&hexPrimeFirstUse=1&hexCinemaDistanceAwareLight=1&hexAsyncShaderFlights=4'
+   : mode==='cinema-range-no-logs'
+   ? '?hexCooperativeLinear=1&hexShadowProgramWarm=1&hexPrimeFirstUse=1&hexCinemaDistanceAwareLight=1&hexSkipDriverShaderLogs=1'
+   : mode==='cinema-range-parallel4-no-logs'
+   ? '?hexCooperativeLinear=1&hexShadowProgramWarm=1&hexPrimeFirstUse=1&hexCinemaDistanceAwareLight=1&hexAsyncShaderFlights=4&hexSkipDriverShaderLogs=1'
+   : mode==='cinema-range-overlap-parallel4'
+   ? '?hexCooperativeLinear=1&hexShadowProgramWarm=1&hexPrimeFirstUse=1&hexCinemaDistanceAwareLight=1&hexBatchProbe=extended-overlap&hexAsyncShaderFlights=4'
+   : mode==='cinema-range-overlap'
+   ? '?hexCooperativeLinear=1&hexShadowProgramWarm=1&hexPrimeFirstUse=1&hexCinemaDistanceAwareLight=1&hexBatchProbe=extended-overlap'
+   : mode==='cinema-range-cpu'
+   ? '?hexCooperativeLinear=1&hexShadowProgramWarm=1&hexPrimeFirstUse=1&hexCinemaDistanceAwareLight=1&hexCinemaCpuCanvas=1'
+   : mode==='prime-first-use'
    ? '?hexCooperativeLinear=1&hexShadowProgramWarm=1&hexPrimeFirstUse=1'
    : mode==='prime-checked-fast'
    ? '?hexCooperativeLinear=1&hexShadowProgramWarm=1&hexPrimeFirstUse=1&hexPrimeSkipLogs=1'
@@ -57,13 +83,24 @@ for(const [idx,mode] of modes.entries()){
    const {useStore}=await import('orbita/store')
    return useStore.getState().ready&&useStore.getState().phase==='playing'
   },null,{timeout:120000})
-  await page.waitForFunction(()=>{
+  // A real visitor can open HEX before 83/83 shaders complete. Waiting
+  // three minutes creates an artificial test that never reaches the click on
+  // a busy GPU. Bound prep and record its true completeness at activation.
+  const fullPrewarm=await page.waitForFunction(()=>{
    const p=window.__orbitaHexShaderPrep
    return p?.status==='complete-or-interrupted'&&
      p.compiledShaders===p.totalShaders&&
      p.uploadedTextures===p.totalTextures
-  },null,{timeout:180000,polling:500})
-  r.prep=await page.evaluate(()=>({...window.__orbitaHexShaderPrep}))
+  },null,{timeout:12000,polling:350}).then(()=>true,()=>false)
+  r.prep=await page.evaluate(()=>({
+    ...(window.__orbitaHexShaderPrep??{status:'not-started'})
+  }))
+  r.fullPrewarmBeforeClick=fullPrewarm
+  r.backend=await page.evaluate(()=>window.__orbitaHexRenderer??'unavailable')
+  if(software&&!/SwiftShader|Software|llvmpipe/i.test(r.backend))
+    throw Error('Expected actual software GPU, got '+r.backend)
+  if(!software&&!/Metal/i.test(r.backend))
+    throw Error('Expected actual Metal GPU, got '+r.backend)
   if(mode==='gpu-attribute-warm'){
    await page.waitForFunction(()=>{
     const p=window.__orbitaHexInstanceBufferWarm
@@ -93,7 +130,19 @@ for(const [idx,mode] of modes.entries()){
     requestAnimationFrame(raf)
    })
   })
-  await page.waitForTimeout(600)
+  // Measure the no-click idle route separately. A successful fix must not
+  // simply move a multi-second stall from clicking into visiting the area.
+  r.noClickIdle=await page.evaluate(()=>new Promise(resolve=>{
+    let first=0,last=0,max=0,over120=0,samples=0
+    const tick=(t)=>{
+      if(!first)first=t
+      if(last){const dt=t-last;max=Math.max(max,dt);if(dt>120)over120++}
+      last=t;samples++
+      if(t-first<2500)requestAnimationFrame(tick)
+      else resolve({maxGapMs:Math.round(max),over120,samples})
+    }
+    requestAnimationFrame(tick)
+  }))
   const cdp=await context.newCDPSession(page)
   await cdp.send('Profiler.enable')
   await cdp.send('Profiler.setSamplingInterval',{interval:500})
@@ -148,13 +197,17 @@ for(const [idx,mode] of modes.entries()){
     phase:window.__orbitaReality.useReality.getState().phase,
     front:window.__orbitaReality.rt.front,
     gpuDiag:window.__orbitaHexGpuDiagStats??null,
+    exactBatch:window.__orbitaHexBatchStats??null,
     vertexGate:window.__orbitaHexVertexGate??null,
     shaderPrep:window.__orbitaHexShaderPrep,
+    shaderLogPolicy:window.__orbitaHexShaderLogPolicy??null,
     source:window.__orbitaHexTimings??null}
   })
   writeFileSync('hex-cpu-trace/'+mode+'-'+idx+'.cpuprofile',JSON.stringify(profile))
   await page.screenshot({path:'hex-cpu-trace/'+mode+'-'+idx+'.png',timeout:120000})
-  console.log('HEX_CPU_TRACE '+JSON.stringify({mode,prep:r.prep,cpu:r.cpu.top.slice(0,15),
+  console.log('HEX_CPU_TRACE '+JSON.stringify({mode,backend:r.backend,
+   noClickIdle:r.noClickIdle,fullPrewarmBeforeClick:r.fullPrewarmBeforeClick,
+   prep:r.prep,cpu:r.cpu.top.slice(0,15),
    render:r.render,instanceBufferWarm:r.instanceBufferWarm,error:r.error}).slice(0,12000))
  }catch(e){r.error=String(e);console.error('HEX_CPU_TRACE_ERROR '+mode+' '+r.error)}
  writeFileSync('hex-cpu-trace/results.json',JSON.stringify(results,null,2))
