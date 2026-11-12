@@ -16,6 +16,7 @@ export interface PanelItem {
   url?: string
   evidence?: 'source' | 'private' | 'cv' | 'brief' | 'pending'
   kind?: 'game' | 'web' | 'music' | 'video' | 'social' | 'competition' | 'skill' | 'contact'
+  visual?: { src: string; alt: string; caption: string }
 }
 export interface PanelContent {
   id: PanelId
@@ -90,7 +91,7 @@ export const PANELS: Record<PanelId, PanelContent> = {
     ],
     stats:[{k:'Trải nghiệm',v:'Audio'},{k:'Bản phối',v:'Full track'},{k:'Trạng thái media',v:'Chờ xác minh'}],
     items:[
-      {name:'AI Music Production',meta:'MUSIC WORKFLOW',desc:'Quy trình tạo, chọn, chỉnh và kiểm duyệt các bản phối có hỗ trợ AI. Danh sách tác phẩm công khai cần xác minh.',evidence:'brief',kind:'music'},
+      {name:'AI Music Production',meta:'MUSIC WORKFLOW',desc:'Quy trình tạo, chọn, chỉnh và kiểm duyệt các bản phối có hỗ trợ AI. Danh sách tác phẩm công khai cần xác minh.',evidence:'brief',kind:'music',visual:{src:'/03_music_vibes.jpg',alt:'Poster âm nhạc Music Led My Life trong kho media của portfolio',caption:'Poster âm nhạc trong kho tư liệu · chưa phải audio player hoặc bằng chứng phát hành'}},
       {name:'Audio-reactive Visualization',meta:'VISUALIZER',desc:'Khung trưng bày chuyển động dựa trên năng lượng và cấu trúc bản nhạc, không giả lập một cây đàn đang chơi cả bản phối.',evidence:'brief',kind:'music'},
     ],
     tags:['Music','AI-assisted','Arrangement','Audio reactive'],accent:'#ffd27a',
@@ -179,7 +180,7 @@ export const PANELS: Record<PanelId, PanelContent> = {
     stats:[{k:'Định dạng',v:'Short form'},{k:'Kênh',v:'TikTok'},{k:'Nội dung',v:'Video'}],
     items:[
       {name:'Quê Quá Quao',meta:'TIKTOK / SOCIAL',desc:'Dự án kênh nội dung đã có ý tưởng; cần xác minh URL kênh, clip mẫu và vai trò để hiển thị preview đúng sản phẩm.',evidence:'brief',kind:'social'},
-      {name:'Reel / Video Production',meta:'EDITING',desc:'Video ngắn, dựng và kiểm soát nhịp cho nền tảng social; chỉ công bố clip có quyền sử dụng.',evidence:'brief',kind:'video'},
+      {name:'Reel / Video Production',meta:'EDITING',desc:'Video ngắn, dựng và kiểm soát nhịp cho nền tảng social; chỉ công bố clip có quyền sử dụng.',evidence:'brief',kind:'video',visual:{src:'/02_social_debate_poster.jpg',alt:'Khung hình tư liệu social ngoài trời trong kho portfolio',caption:'Ảnh tư liệu social có trong bundle · không phải video reel hoặc chỉ số tăng trưởng'}},
       {name:'CapCut automation research',meta:'CREATIVE TOOLS',desc:'Thử nghiệm workflow sản xuất hàng loạt video ngắn; chưa công bố dưới dạng sản phẩm hoàn thiện.',evidence:'brief',kind:'video'},
     ],
     tags:['CapCut','TikTok','Editing','Motion','Reels'],accent:'#ff4d4d',
@@ -196,7 +197,7 @@ export const PANELS: Record<PanelId, PanelContent> = {
     ],
     stats:[{k:'Cuộc thi',v:'VNGGames'},{k:'Thời gian / CV',v:'24 giờ'},{k:'Kết quả / CV',v:'Top 26'}],
     items:[
-      {name:'Prompt To Play 2026',meta:'AI GAME JAM / CV',desc:'Ứng viên ghi nhận Top 26. Kết quả cần chứng cứ BTC hoặc hình ảnh xác nhận trước khi gọi là độc lập xác minh.',evidence:'cv',kind:'competition'},
+      {name:'Prompt To Play 2026',meta:'AI GAME JAM / CV',desc:'Ứng viên ghi nhận Top 26. Kết quả cần chứng cứ BTC hoặc hình ảnh xác nhận trước khi gọi là độc lập xác minh.',evidence:'cv',kind:'competition',visual:{src:'/01_ai_prompt_to_play.jpg',alt:'Ảnh nhóm thảo luận quanh bàn máy tính trong kho tư liệu Prompt to Play',caption:'Ảnh tư liệu đã có trong portfolio · không thay thế xác nhận thứ hạng từ BTC'}},
       {name:'Puzzle-RPG prototype',meta:'24-HOUR GAME',desc:'Bài dự thi kết hợp tìm đường (pathfinding) và các cơ chế giải đố; mã nguồn/video gameplay của bài nộp cần được bổ sung đúng bản.',evidence:'cv',kind:'game'},
       {name:'Quy trình & tư liệu dự thi',meta:'CASE STUDY / GALLERY',desc:'Bố cục bốn slide giữ nguyên trên máy chiếu VNG: brief, thực hiện, prototype, kết quả. Không dựng bằng chứng giả hoặc lấy footage không liên quan.',evidence:'brief',kind:'competition'},
     ],
