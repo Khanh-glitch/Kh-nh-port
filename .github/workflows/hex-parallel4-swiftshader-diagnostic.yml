@@ -16,9 +16,9 @@ jobs:
       matrix:
         include:
           - order: original-first
-            modes: cinema-range-control,cinema-range-parallel4
+            modes: cinema-range-control,cinema-range-no-logs,cinema-range-parallel4-no-logs
           - order: concurrent-first
-            modes: cinema-range-parallel4,cinema-range-control
+            modes: cinema-range-parallel4-no-logs,cinema-range-no-logs,cinema-range-control
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
