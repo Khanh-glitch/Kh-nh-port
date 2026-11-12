@@ -164,6 +164,26 @@ const uiStyle=String.raw`<style id="orbita-project-dossier-css">
  border:1px solid #ffffff2c;border-radius:8px;
  padding:8px 12px;background:transparent;color:#fff
 }
+[data-project-dossier] .orbita-dossier-hero{position:relative;isolation:isolate}
+[data-project-dossier] .orbita-dossier-hero-photo{
+ position:absolute;inset:0;width:100%;height:100%;display:block;
+ object-fit:cover;object-position:center;opacity:.88;pointer-events:none
+}
+[data-project-dossier] .orbita-dossier-hero-photo[src$="03_music_vibes.jpg"]{
+ object-fit:contain;object-position:right center;opacity:.83
+}
+[data-project-dossier] .orbita-dossier-hero-shade{
+ position:absolute;inset:0;pointer-events:none;
+ background:linear-gradient(90deg,rgba(4,9,20,.96) 0%,rgba(4,9,20,.63) 44%,rgba(4,9,20,.25) 100%);
+}
+[data-project-dossier] .orbita-dossier-media-caption{
+ display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;
+ margin-top:8px;font-size:10px;color:rgba(255,255,255,.56);line-height:1.5;
+}
+[data-project-dossier] .orbita-dossier-media-caption a[href]{
+ min-height:32px;padding:3px 8px;color:#fff;border:1px solid #ffffff38;
+ background:#ffffff12;border-radius:7px;white-space:nowrap;font-size:10px;
+}
 @media(min-width:1024px){
  [data-project-dossier]{padding:24px}
  [data-project-dossier] aside{height:min(90vh,850px);border-radius:30px}
