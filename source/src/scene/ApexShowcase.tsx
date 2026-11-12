@@ -3,6 +3,7 @@ import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { audio, type Bus } from '../audio'
 import { toast } from '../store'
+import { openPanel } from './Player'
 import { FONT, beamGeometry, beamMaterial, canvasTex, glowTexture, rand, rbox, roundRect } from '../gfx'
 import { Hit } from './Hit'
 import { Label } from './Label'
@@ -435,6 +436,13 @@ function ApexShowcaseImpl({ position, worldPosition, rotationY, summoned, scanPr
     if (sp.instanceColor) sp.instanceColor.needsUpdate = true
   }
 
+  // A click must reach the dossier like "E" does; the ability effect stays.
+  const abilityAndOpen = () => {
+    const wasActive = activeRef.current
+    triggerAbility()
+    if (wasActive) openPanel('apex')
+  }
+
   const triggerAbility = () => {
     if (!activeRef.current) {
       onRequestSummon()
@@ -863,13 +871,13 @@ function ApexShowcaseImpl({ position, worldPosition, rotationY, summoned, scanPr
       <Hit
         id="apex-newbot"
         label={summoned ? 'APEX CHAOS · NEWBOT' : 'Bệ phóng APEX CHAOS'}
-        hint={summoned ? 'Kích hoạt kỹ năng NEWBOT' : 'Triệu hồi NEWBOT bằng laser'}
+        hint={summoned ? 'Mở hồ sơ · kích hoạt kỹ năng NEWBOT' : 'Triệu hồi NEWBOT bằng laser'}
         panel="apex"
         maxDist={40}
         shape="cylinder"
         size={[2.6, 4.6, 0]}
         position={[0, 2.3, 0]}
-        onClick={triggerAbility}
+        onClick={abilityAndOpen}
       />
     </group>
   )

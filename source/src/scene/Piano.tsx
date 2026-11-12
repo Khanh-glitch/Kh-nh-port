@@ -4,6 +4,7 @@ import * as THREE from 'three'
 import { EXHIBITS } from '../layout'
 import { audio, type Bus } from '../audio'
 import { toast } from '../store'
+import { openPanel } from './Player'
 import { rand, rbox } from '../gfx'
 import { Hit } from './Hit'
 import { Label } from './Label'
@@ -314,6 +315,12 @@ export function Piano() {
     }
     if (midi > 0) playUser(midi)
   }
+  // Playing a key is the visible effect; a click on the keyboard must also
+  // reach the Music Lab dossier, exactly like "E" and like the piano body.
+  const keyboardAndOpen = (hit: THREE.Intersection) => {
+    onKeyboardClick(hit)
+    openPanel('piano')
+  }
 
   const target = useMemo(() => new Float32Array(120), [])
   useFrame((state, dt) => {
@@ -548,19 +555,20 @@ export function Piano() {
             hint="Nhấn phím để chơi"
             maxDist={9}
             panel="piano"
-            onClick={onKeyboardClick}
+            onClick={keyboardAndOpen}
             size={[1.3, 0.08, 0.22]}
             position={[0, 0.77, -0.43]}
           />
           <Hit
             id="piano-body"
             label="Grand Piano"
-            hint="Dừng / tiếp tục tự chơi"
+            hint="Mở hồ sơ · dừng / tiếp tục tự chơi"
             maxDist={30}
             panel="piano"
             onClick={() => {
               sim.manualPause = !sim.manualPause
               toast(sim.manualPause ? 'Piano: tạm dừng' : 'Piano: tiếp tục tự chơi')
+              openPanel('piano')
             }}
             size={[1.5, 1.8, 2.3]}
             position={[0, 1.0, -1.65]}

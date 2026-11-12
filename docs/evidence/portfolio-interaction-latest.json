@@ -1,0 +1,37 @@
+{
+  "backend": "SwiftShader",
+  "launchArgs": [
+    "--enable-webgl",
+    "--use-gl=angle",
+    "--use-angle=swiftshader",
+    "--enable-unsafe-swiftshader",
+    "--ignore-gpu-blocklist",
+    "--disable-dev-shm-usage"
+  ],
+  "startedAt": "2026-11-12T10:38:17.975Z",
+  "viewports": [
+    "desktop"
+  ],
+  "worldEntry": [],
+  "panels": [],
+  "inputPaths": [],
+  "failures": [
+    {
+      "stage": "world-entry:products",
+      "backend": "SwiftShader",
+      "suite": "desktop",
+      "error": "Error: WALK_BUDGET: the visitor walked 14.7m short of Product Lab pedestal in 189665ms (SwiftShader renders a few frames per second); this is a test-budget limit, not a closed source check. Walked to {\"x\":0,\"z\":37.41}",
+      "verdict": "UNPROVEN_TIME_BUDGET"
+    },
+    {
+      "stage": "suite-timeout",
+      "backend": "SwiftShader",
+      "suite": "desktop",
+      "error": "exceeded 300000ms",
+      "verdict": "REAL_DEFECT"
+    }
+  ],
+  "passed": false,
+  "finishedAt": "2026-11-12T10:43:17.976Z",
+  "totalMs": 300001
+}

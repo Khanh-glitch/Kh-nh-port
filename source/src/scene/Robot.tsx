@@ -142,6 +142,9 @@ export function Robot() {
     [],
   )
   const btnPress = useRef([0, 0, 0]).current
+  // After Colossus shows its showcase, a click must open the case file
+  // instead of re-summoning and immediately hiding it again.
+  const resumeAfterSummon = useRef(false)
   const btnRefs = useRef<(THREE.Mesh | null)[]>([])
 
   const coldProbe = useRef({
@@ -489,7 +492,6 @@ export function Robot() {
     const now = performance.now() / 1000
     if (st.mode === 'dormant') {
       st.wave = now
-      startSummonAll()
       return
     }
     if (now - st.wave < 4.4) return
@@ -502,6 +504,19 @@ export function Robot() {
     audio.speak('Xin chào! Tôi là Colossus. Hãy khám phá hai thế giới game phía trước.')
     toast('Colossus: "Xin chào!"')
   }
+
+  const colossusClickAndOpen = () => {
+    // The summon itself is what "E" does too; the difference is that a real
+    // click must always finish on the dossier instead of a transient animation.
+    const wasDormant = st.mode === 'dormant'
+    onColossusClick()
+    if (wasDormant) {
+      resumeAfterSummon.current = true
+      return
+    }
+    openPanel('robot')
+  }
+
 
   // Stable child inputs keep the (large) showcase subtrees out of unrelated
   // React reconciliations when Colossus changes its own interaction state.
@@ -684,6 +699,13 @@ export function Robot() {
         st.modeT = 0
         setArenaModeUi('active')
         toast('Triển lãm Game hoàn tất — hãy đi quanh để tương tác!')
+        // The visitor clicked Colossus to summon the showcase. When the summon
+        // completes, continue into the dossier instead of stopping at an
+        // animation (previously the click never reached any case file).
+        if (resumeAfterSummon.current) {
+          resumeAfterSummon.current = false
+          openPanel('robot')
+        }
       }
     } else if (st.mode === 'retracting') {
       const p = THREE.MathUtils.clamp(1 - st.modeT / 1.15, 0, 1)
@@ -1026,7 +1048,7 @@ export function Robot() {
         maxDist={75}
         size={[9, 12.8, 5.4]}
         position={[0, 6.6, 0]}
-        onClick={onColossusClick}
+        onClick={colossusClickAndOpen}
       />
     </group>
   )

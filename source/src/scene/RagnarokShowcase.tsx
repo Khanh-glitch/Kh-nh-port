@@ -3,6 +3,7 @@ import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { audio, type Bus } from '../audio'
 import { toast } from '../store'
+import { openPanel } from './Player'
 import { FONT, beamGeometry, beamMaterial, canvasTex, rand, roundRect } from '../gfx'
 import { Hit } from './Hit'
 import { Label } from './Label'
@@ -326,6 +327,13 @@ function RagnarokShowcaseImpl({ position, worldPosition, rotationY, summoned, sc
       sp.setColorAt(idx, tmpColor.set(colorHex).multiplyScalar(2.4))
     }
     if (sp.instanceColor) sp.instanceColor.needsUpdate = true
+  }
+
+  // A click must reach the dossier like "E" does; the boss surge stays.
+  const surgeAndOpen = () => {
+    const wasActive = activeRef.current
+    triggerBossSurge()
+    if (wasActive) openPanel('ragnarok')
   }
 
   const triggerBossSurge = () => {
@@ -803,13 +811,13 @@ function RagnarokShowcaseImpl({ position, worldPosition, rotationY, summoned, sc
       <Hit
         id="ragnarok-island"
         label={summoned ? 'Ragnarok: The Last Island' : 'Bệ phóng Ragnarok'}
-        hint={summoned ? 'Triệu hồi Boss Surge & đổi thời tiết' : 'Triệu hồi đảo sinh tồn bằng laser'}
+        hint={summoned ? 'Mở hồ sơ · Boss Surge & đổi thời tiết' : 'Triệu hồi đảo sinh tồn bằng laser'}
         panel="ragnarok"
         maxDist={40}
         shape="cylinder"
         size={[2.65, 4.6, 0]}
         position={[0, 2.3, 0]}
-        onClick={triggerBossSurge}
+        onClick={surgeAndOpen}
       />
     </group>
   )
