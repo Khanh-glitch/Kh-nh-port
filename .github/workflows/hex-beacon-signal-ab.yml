@@ -1,0 +1,97 @@
+name: HEX and Beacon no-visual-change cold trigger
+on:
+  push:
+    branches: [fix/beacon-real-light-cold-trigger-20261112]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  source-and-standalone:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: source/package-lock.json
+      - run: npm ci --prefix source
+      - run: npm install --prefix source --no-save --package-lock=false playwright@1.56.1
+      - run: cd source && npx playwright install --with-deps chromium
+      - name: Enforce source typing and exact original standalone visual hash
+        run: |
+          node --check scripts/sync-hex-beacon-standalone.mjs
+          npx --prefix source tsc --noEmit --project source/tsconfig.hex-beacon.json
+          node scripts/sync-hex-beacon-standalone.mjs
+          node --test tests/beacon-standalone-contract.mjs
+          node tests/integration-regression.mjs
+          node scripts/build-pages.mjs
+          cmp index.html dist-pages/index.html
+      - name: Publish the exact vetted two-module standalone to this experiment branch
+        if: github.event_name == 'push'
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html tests/integration-original-modules.json
+          if ! git diff --cached --quiet; then
+            git commit -m 'build(beacon): embed source GPU experiments in branch standalone [skip ci]'
+            git push
+          fi
+      - name: Trace original Beacon on software GPU with real panel handoff
+        env:
+          BEACON_AB_MODES: baseline,shader,stable-shader
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 --directory dist-pages >/tmp/beacon-signal.log 2>&1 &
+          for n in {1..80}; do
+            if curl -fsS -o /dev/null http://127.0.0.1:4173/; then break; fi
+            sleep 1
+          done
+          node scripts/beacon-first-trigger-ab.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: beacon-cold-repeat-visual-and-profile
+          path: browser-evidence/
+          if-no-files-found: warn
+  native-metal:
+    runs-on: macos-15
+    timeout-minutes: 22
+    strategy:
+      fail-fast: false
+      matrix:
+        order: [baseline-first,stable-first]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: source/package-lock.json
+      - run: npm ci --prefix source
+      - run: npm install --prefix source --no-save --package-lock=false playwright@1.56.1
+      - run: cd source && npx playwright install chromium
+      - run: |
+          node scripts/sync-hex-beacon-standalone.mjs
+          node --test tests/beacon-standalone-contract.mjs
+          node tests/integration-regression.mjs
+          node scripts/build-pages.mjs
+      - name: Opposite-order first and repeat Beacon signal on Metal
+        env:
+          BEACON_BACKEND: metal
+          BEACON_AB_MODES: ${{ matrix.order == 'baseline-first' && 'baseline,shader' || 'shader,baseline' }}
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 --directory dist-pages >/tmp/beacon-metal.log 2>&1 &
+          for n in {1..80}; do
+            if curl -fsS -o /dev/null http://127.0.0.1:4173/; then break; fi
+            sleep 1
+          done
+          node scripts/beacon-first-trigger-ab.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: beacon-metal-${{ matrix.order }}
+          path: browser-evidence/
+          if-no-files-found: warn

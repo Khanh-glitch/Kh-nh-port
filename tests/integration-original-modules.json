@@ -50,5 +50,7 @@
   "orbita/vng/models/stuffCollection": "f33eaebf8c514aafe6e3a2c1bfd954cffba931114d63105f7dd306595efe4ef3",
   "orbita/vng/models/vngLogo": "b9ff485389791704fb697d07494e1bd83fd51f0d5b33cffb818a2afccbed771c",
   "orbita/vng/textures": "3491ae433de9169b44ad20edb2d2e5eaecc5cb36af3f4cb7fc1a87d5916edff4",
-  "orbita/vng/types": "c5a076aac6fd0e504fdb083e4a7b5c1098c392cbbb4e41287c6b074533438ee1"
+  "orbita/vng/types": "c5a076aac6fd0e504fdb083e4a7b5c1098c392cbbb4e41287c6b074533438ee1",
+  "orbita/scene/Beacon": "75ceec8bc64fc57a431be60b93496693718cf35250c70fa6380f9c96846f0611",
+  "orbita/scene/SocialDrops": "36bd62f0bfcc706870306dac39f5339a295905e7f1758d8f0a993c0bbb3c1a12"
 }
