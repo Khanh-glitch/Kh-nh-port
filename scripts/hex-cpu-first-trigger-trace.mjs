@@ -4,10 +4,12 @@ const require=createRequire(import.meta.url)
 const {chromium}=require('../source/node_modules/playwright')
 mkdirSync('hex-cpu-trace',{recursive:true})
 const modes=(process.env.HEX_CPU_MODES??'normal,prime-first-use').split(',')
-const browser=await chromium.launch({headless:true,args:[
- '--enable-webgl','--enable-gpu','--ignore-gpu-blocklist',
- '--use-angle=metal','--disable-software-rasterizer'
-]})
+const software=process.env.HEX_CPU_BACKEND==='software'
+const browser=await chromium.launch({headless:true,args:software
+  ? ['--enable-webgl','--use-gl=angle','--use-angle=swiftshader',
+     '--enable-unsafe-swiftshader']
+  : ['--enable-webgl','--enable-gpu','--ignore-gpu-blocklist',
+     '--use-angle=metal','--disable-software-rasterizer']})
 const results=[]
 for(const [idx,mode] of modes.entries()){
  const context=await browser.newContext({viewport:{width:960,height:540},deviceScaleFactor:1})
@@ -22,6 +24,8 @@ for(const [idx,mode] of modes.entries()){
    ? '?hexCooperativeLinear=1&hexShadowProgramWarm=1&hexPrimeFirstUse=1&hexCinemaFarLightGate=1'
    : mode==='batch-exact'
    ? '?hexCooperativeLinear=1&hexShadowProgramWarm=1&hexPrimeFirstUse=1&hexCinemaFarLightGate=1&hexBatchProbe=extended'
+   : mode==='batch-overlap'
+   ? '?hexCooperativeLinear=1&hexShadowProgramWarm=1&hexPrimeFirstUse=1&hexCinemaFarLightGate=1&hexBatchProbe=extended-overlap'
    : mode==='prime-first-use'
    ? '?hexCooperativeLinear=1&hexShadowProgramWarm=1&hexPrimeFirstUse=1'
    : mode==='prime-checked-fast'
@@ -68,6 +72,11 @@ for(const [idx,mode] of modes.entries()){
      p.uploadedTextures===p.totalTextures
   },null,{timeout:180000,polling:500})
   r.prep=await page.evaluate(()=>({...window.__orbitaHexShaderPrep}))
+  r.backend=await page.evaluate(()=>window.__orbitaHexRenderer??'unavailable')
+  if(software&&!/SwiftShader|Software|llvmpipe/i.test(r.backend))
+    throw Error('Expected actual software GPU, got '+r.backend)
+  if(!software&&!/Metal/i.test(r.backend))
+    throw Error('Expected actual Metal GPU, got '+r.backend)
   if(mode==='gpu-attribute-warm'){
    await page.waitForFunction(()=>{
     const p=window.__orbitaHexInstanceBufferWarm
@@ -97,7 +106,19 @@ for(const [idx,mode] of modes.entries()){
     requestAnimationFrame(raf)
    })
   })
-  await page.waitForTimeout(600)
+  // Measure the no-click idle route separately. A successful fix must not
+  // simply move a multi-second stall from clicking into visiting the area.
+  r.noClickIdle=await page.evaluate(()=>new Promise(resolve=>{
+    let first=0,last=0,max=0,over120=0,samples=0
+    const tick=(t)=>{
+      if(!first)first=t
+      if(last){const dt=t-last;max=Math.max(max,dt);if(dt>120)over120++}
+      last=t;samples++
+      if(t-first<2500)requestAnimationFrame(tick)
+      else resolve({maxGapMs:Math.round(max),over120,samples})
+    }
+    requestAnimationFrame(tick)
+  }))
   const cdp=await context.newCDPSession(page)
   await cdp.send('Profiler.enable')
   await cdp.send('Profiler.setSamplingInterval',{interval:500})
@@ -159,7 +180,8 @@ for(const [idx,mode] of modes.entries()){
   })
   writeFileSync('hex-cpu-trace/'+mode+'-'+idx+'.cpuprofile',JSON.stringify(profile))
   await page.screenshot({path:'hex-cpu-trace/'+mode+'-'+idx+'.png',timeout:120000})
-  console.log('HEX_CPU_TRACE '+JSON.stringify({mode,prep:r.prep,cpu:r.cpu.top.slice(0,15),
+  console.log('HEX_CPU_TRACE '+JSON.stringify({mode,backend:r.backend,
+   noClickIdle:r.noClickIdle,prep:r.prep,cpu:r.cpu.top.slice(0,15),
    render:r.render,instanceBufferWarm:r.instanceBufferWarm,error:r.error}).slice(0,12000))
  }catch(e){r.error=String(e);console.error('HEX_CPU_TRACE_ERROR '+mode+' '+r.error)}
  writeFileSync('hex-cpu-trace/results.json',JSON.stringify(results,null,2))
