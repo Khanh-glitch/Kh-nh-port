@@ -3,7 +3,7 @@ import { useFrame, useThree } from '@react-three/fiber'
 import * as THREE from 'three'
 import { EXHIBITS } from '../layout'
 import { audio, type Bus } from '../audio'
-import { toast } from '../store'
+import { toast, useStore } from '../store'
 import { beamGeometry, beamMaterial, glowTexture, rand } from '../gfx'
 import { Hit } from './Hit'
 import { Label } from './Label'
@@ -123,6 +123,9 @@ export function Beacon() {
         warmStatusAtClick,shaderProgramsBefore:shaderCount,
         shaderProgramsAfter:gl.info.programs?.length??0,
         panelPhaseAfterMs:Math.round(elapsed),
+        panelOpenAtEnd:useStore.getState().panel==='beacon',
+        diagnosticPanelOmitted:omitPanelForDiagnosis,
+        diagnosticSocialOmitted:omitSocialForDiagnosis,
         browserVisible:document.visibilityState==='visible'}
       const w=window as unknown as {__orbitaBeaconProfiles?:typeof result[]}
       ;(w.__orbitaBeaconProfiles??=[]).push(result)
