@@ -29,6 +29,7 @@ function Intro({ onSpacePresented, onSpaceUnavailable }: SpaceEntryCallbacks) {
   const fallbackReported = useRef(false)
   const entry = useRef({ ready: false })
   const [failure, setFailure] = useState<string | null>(null)
+  const [fallbackRequested, setFallbackRequested] = useState(false)
   const failureRef = useRef<string | null>(null)
   const failSpace = useCallback((reason: string) => {
     if (fallbackReported.current) return
@@ -36,10 +37,11 @@ function Intro({ onSpacePresented, onSpaceUnavailable }: SpaceEntryCallbacks) {
     failureRef.current = reason
     entry.current.ready = false
     setFailure(reason)
-    // Even a late WebGL context loss must offer actual recovery. The island
-    // fallback still unlocks only if ITS real renderer has painted.
-    onSpaceUnavailable()
-  }, [onSpaceUnavailable])
+    // Do NOT automatically mount the enormous island renderer while the
+    // spacecraft has failed. On slow/mobile GPU this can starve the event
+    // loop and hide the recovery controls for many seconds. Let the visitor
+    // choose retry (fast) OR the real 3D island fallback (on demand).
+  }, [])
   const [islandTrouble, setIslandTrouble] = useState(false)
   const [attempt, setAttempt] = useState(0)
 
@@ -112,10 +114,22 @@ function Intro({ onSpacePresented, onSpaceUnavailable }: SpaceEntryCallbacks) {
     }
   }, [attempt, onSpacePresented, failSpace])
 
+  const requestFallback = () => {
+    if (!fallbackRequested) {
+      setFallbackRequested(true)
+      // Give the error/retry UI two actual paints before allocating the
+      // secondary island GPU context. This is scheduling, not fake progress.
+      requestAnimationFrame(() => requestAnimationFrame(onSpaceUnavailable))
+      return
+    }
+    if (islandReady && useStore.getState().ready) startGame()
+  }
+
   const retryShip = () => {
     failureRef.current = null
     setFailure(null)
     setIslandTrouble(false)
+    setFallbackRequested(false)
     fallbackReported.current = false
     spacePainted.current = false
     entry.current.ready = false
@@ -140,10 +154,11 @@ function Intro({ onSpacePresented, onSpaceUnavailable }: SpaceEntryCallbacks) {
             className="rounded-full border border-cyan-300 px-6 py-3">
             THỬ TẢI LẠI PHI THUYỀN
           </button>
-          <button disabled={!islandReady} onClick={() => {
-            if (useStore.getState().ready) startGame()
-          }} className="rounded-full border border-white/40 px-6 py-3 disabled:opacity-35">
-            {islandReady ? 'VÀO ĐẢO 3D' : 'ĐẢO ĐANG KHỞI TẠO'}
+          <button onClick={requestFallback}
+            disabled={fallbackRequested && !islandReady}
+            className="rounded-full border border-white/40 px-6 py-3 disabled:opacity-35">
+            {!fallbackRequested ? 'TẢI ĐẢO DỰ PHÒNG'
+              : islandReady ? 'VÀO ĐẢO 3D' : 'ĐẢO ĐANG KHỞI TẠO'}
           </button>
         </div>
       </div>
