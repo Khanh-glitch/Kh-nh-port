@@ -85,7 +85,7 @@ for(const [key,value] of Object.entries(old))
 assert.deepEqual(Object.keys(original.map),Object.keys(old),'Island module map keys changed')
 html=html.slice(0,original.start+islandTag.length)+
   JSON.stringify(original.whole)+html.slice(original.end)
-const uiStyle=String.raw\`<style id="orbita-project-dossier-css">
+const uiStyle=String.raw`<style id="orbita-project-dossier-css">
 [data-project-dossier]{
  position:absolute;inset:0;z-index:40;display:flex;align-items:center;
  justify-content:center;padding:8px;color:#fff;background:rgba(0,0,0,.55);
@@ -189,7 +189,7 @@ const uiStyle=String.raw\`<style id="orbita-project-dossier-css">
 @media(prefers-reduced-motion:reduce){
  [data-project-dossier] *{transition:none!important;animation:none!important}
 }
-</style>\`
+</style>`
 if(!html.includes('id="orbita-project-dossier-css"')){
  const h=html.match(/<head[^>]*>/i)
  assert(h,'Root HTML head missing')
