@@ -35,7 +35,7 @@ jobs:
       matrix:
         include:
           - order: baseline-first
-            modes: baseline,stable-lights
+            modes: baseline,no-logs,stable-no-logs
           - order: stable-first
             modes: stable-lights,baseline
     steps:
