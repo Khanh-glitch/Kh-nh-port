@@ -21,7 +21,9 @@ try{
     const stable=mode.includes('stable')
     const warm=mode.includes('warm')
     const query='?beaconProfile=1'+(stable?'&beaconStableLights=1':'')+
-      (warm?'&beaconGpuPrewarm=1':'')
+      (warm?'&beaconGpuPrewarm=1':'')+
+      (mode.includes('no-panel')?'&beaconDiagNoPanel=1':'')+
+      (mode.includes('no-social')?'&beaconDiagNoSocial=1':'')
     await page.goto('http://127.0.0.1:4173/'+query+'#at=-22,40,180,0&autostart&skip',
       {waitUntil:'domcontentloaded',timeout:120000})
     await page.waitForFunction(async()=>{
