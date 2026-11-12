@@ -2,7 +2,7 @@
 // Bảo toàn nguyên vẹn Grand Piano (tách clone vật liệu dùng chung trước khi vá thế giới gốc),
 // chuẩn bị tài nguyên GPU phân bổ đều theo từng khung hình (không khựng khi lại gần đàn lần đầu),
 // và chuyển bài mượt mà ngay bên trong không gian UEH (Mưa Mùa Hạ <-> Hoa Phượng Trong Gió).
-import { useEffect, useMemo, useRef } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
 import * as THREE from 'three'
 import { audio } from '../audio'
@@ -45,11 +45,334 @@ const GRADE_RAIN = { sun: '#c9d7ea', sunI: 0.82, sky: '#8fa6c4', gnd: '#484c54',
 
 export function RealityHost() {
   const { scene, camera, gl } = useThree()
+  // Authoritative GPU backend for HEX cold-open A/B. Reading the DOM canvas
+  // using a different contextType can return null for a valid R3F renderer.
+  useEffect(()=>{
+    if(typeof window==='undefined'||
+       new URLSearchParams(window.location.search).get('hexProfile')!=='1')return
+    const ctx=gl.getContext()
+    let backend='unavailable'
+    try{
+      const ext=ctx.getExtension('WEBGL_debug_renderer_info')
+      backend=String(ctx.getParameter(ext?.UNMASKED_RENDERER_WEBGL??ctx.RENDERER))
+    }catch(error){backend='failed: '+String(error)}
+    ;(window as unknown as {__orbitaHexRenderer?:string}).__orbitaHexRenderer=backend
+    return ()=>{
+      delete (window as unknown as {__orbitaHexRenderer?:string}).__orbitaHexRenderer
+    }
+  },[gl])
   const ueh = useRef<THREE.Group>(null)
   const hostRoot = useRef<THREE.Group>(null)
   // Diagnostic only: the default page has no opt-in flags or visual changes.
   const hexGpuDiag = typeof window !== 'undefined'
     ? new URLSearchParams(window.location.search).get('hexGpuDiag') : null
+  // Query-only GPU experiment: geometry-only sibling consolidation.
+  // No tree/flower/instance, shader, light, shadow, motion or material changes.
+  const hexBatchProbe = typeof window !== 'undefined'
+    ? new URLSearchParams(window.location.search).get('hexBatchProbe') : null
+  useLayoutEffect(() => {
+    if (!['extended','manual','extended-overlap','manual-overlap'].includes(hexBatchProbe??'')) return
+    // Query-only: preserve the original conservative mode while evaluating
+    // same-material and same-sort opaque siblings separately. NEVER default.
+    const sourceExactOverlapProbe =
+      hexBatchProbe === 'manual-overlap' || hexBatchProbe === 'extended-overlap'
+    const root = ueh.current
+    if (!root) return
+    const merge = () => {
+      const undo: Array<() => void> = []
+      const parents: THREE.Object3D[] = []
+      root.traverse(parent => parents.push(parent))
+      let sourceMeshes = 0, savedCalls = 0, batches = 0
+      for (const parent of parents) {
+        // Never cross an animation hierarchy boundary or move individual actors.
+        const candidates = parent.children.filter(o => {
+          const m = o as THREE.Mesh
+          if (!m.isMesh || (m as THREE.InstancedMesh).isInstancedMesh ||
+              o.children.length !== 0 || !o.visible ||
+              Array.isArray(m.material) || !m.material ||
+              m.material.transparent || m.material.alphaTest > 0 ||
+              m.material.userData?.__rwPatchMode !== 'new' ||
+              (m.material as THREE.ShaderMaterial).isShaderMaterial ||
+              // Source wind is a LOCAL-space vector offset; preserve it by
+              // leaving those meshes original until a separately validated
+              // axis-preserving batch shader exists.
+              !m.material.customProgramCacheKey().includes('-still-') ||
+              !m.geometry || Object.keys(m.geometry.morphAttributes).length ||
+              m.userData.hexMergedAway || m.userData.rwKeep) return false
+          return true
+        }) as THREE.Mesh[]
+        const buckets = new Map<string, THREE.Mesh[]>()
+        const batchKeyByMesh = new Map<THREE.Mesh,string>()
+        for (const mesh of candidates) {
+          const geometry = mesh.geometry
+          const names = Object.keys(geometry.attributes).sort()
+          const signature = names.map(name => {
+            const a = geometry.getAttribute(name)
+            return [name,a.itemSize,a.normalized,a.array.constructor.name].join(':')
+          }).join(',')
+          const key = [mesh.material.uuid,mesh.castShadow,mesh.receiveShadow,
+            mesh.renderOrder,mesh.frustumCulled,mesh.layers.mask,signature].join('|')
+          const group = buckets.get(key) ?? []
+          group.push(mesh)
+          buckets.set(key,group)
+          batchKeyByMesh.set(mesh,key)
+        }
+        // A merged drawable has one renderer-sort slot instead of many.
+        // Any overlapping sibling may depend on the ORIGINAL front/back
+        // ordering, including surfaces of a different material. Decline
+        // that optimization, rather than risking even one visible z-fight.
+        const siblingBounds = new Map<THREE.Mesh,THREE.Box3>()
+        for (const child of parent.children) {
+          const m = child as THREE.Mesh
+          if (!m.isMesh || !m.visible || !m.geometry) continue
+          if (!m.geometry.boundingBox) m.geometry.computeBoundingBox()
+          if (!m.geometry.boundingBox) continue
+          m.updateMatrix()
+          siblingBounds.set(m,m.geometry.boundingBox.clone().applyMatrix4(m.matrix))
+        }
+        for (const members of buckets.values()) {
+          const group=members.filter(mesh=>{
+            const bounds=siblingBounds.get(mesh)
+            if(!bounds)return false
+            for(const [other,box] of siblingBounds){
+              if(other!==mesh && bounds.intersectsBox(box)){
+                 // Allow only EXACT same opaque material/shadow/sort/attribute
+                 // pipeline in the experimental overlap branch. Visibility
+                 // is verified for 18 genuine scan/view samples before any
+                 // promotion; cross-material overlap remains disallowed.
+                 if(!sourceExactOverlapProbe ||
+                    batchKeyByMesh.get(other)!==batchKeyByMesh.get(mesh))
+                   return false
+               }
+            }
+            return true
+          })
+          if (group.length < 2) continue
+          // Preserve source Float32 position, normals, UV and unchanged
+          // triangle topology, baking only each sibling's LOCAL transform.
+          const copies = group.map(mesh => {
+            mesh.updateMatrix()
+            return mesh.geometry.clone().applyMatrix4(mesh.matrix)
+          })
+          try {
+            const names = Object.keys(copies[0].attributes).sort()
+            if (!names.includes('position') || !names.includes('normal') ||
+                !copies.every(g => Object.keys(g.attributes).sort().join('|') === names.join('|') &&
+                  names.every(name => {
+                    const a = g.getAttribute(name), first = copies[0].getAttribute(name)
+                    return a.itemSize === first.itemSize &&
+                      a.normalized === first.normalized &&
+                      a.array instanceof Float32Array &&
+                      first.array instanceof Float32Array &&
+                      // Indexed and non-indexed are both legal, but all
+                      // per-attribute vertex arrays must be self-consistent.
+                      a.array.length === a.count * a.itemSize
+                  }))) continue
+            const vertexCount = copies.reduce((n,g) => n+g.getAttribute('position').count, 0)
+            const indexCount = copies.reduce((n,g) => n+(g.index?.count ??
+              g.getAttribute('position').count), 0)
+            const geometry = new THREE.BufferGeometry()
+            for (const name of names) {
+              const first = copies[0].getAttribute(name)
+              const data = new Float32Array(vertexCount * first.itemSize)
+              let offset = 0
+              for (const g of copies) {
+                const from = g.getAttribute(name).array as Float32Array
+                data.set(from,offset)
+                offset += from.length
+              }
+              geometry.setAttribute(name,new THREE.BufferAttribute(data,first.itemSize,first.normalized))
+            }
+            const indices = vertexCount > 65535 ? new Uint32Array(indexCount) : new Uint16Array(indexCount)
+            let indexOffset = 0,vertexOffset = 0
+            for (const g of copies) {
+              const ix = g.index, count = g.getAttribute('position').count
+              if (ix) for (let i=0;i<ix.count;i++) indices[indexOffset++] = ix.getX(i)+vertexOffset
+              else for (let i=0;i<count;i++) indices[indexOffset++] = i+vertexOffset
+              vertexOffset += count
+            }
+            geometry.setIndex(new THREE.BufferAttribute(indices,1))
+            // HEX's ORIGINAL 'new' vertex GLSL computes vRWg from each
+            // mesh's LOCAL ORIGIN (modelMatrix * vec4(0,0,0,1)), not from
+            // its visible vertices. A merged mesh otherwise uses its
+            // parent's shared origin, breaking per-object growth timing.
+            // Preserve each exact old origin alongside its unmodified UVs
+            // and geometry, with no loss of individual reveal behavior.
+            const origins = new Float32Array(vertexCount * 3)
+            const growDeltas = new Float32Array(vertexCount * 3)
+            let baseVertex = 0
+            const origin = new THREE.Vector3()
+            for (let k=0;k<group.length;k++) {
+              origin.setFromMatrixPosition(group[k].matrix)
+              const count = copies[k].getAttribute('position').count
+              const originalPositions = group[k].geometry.getAttribute('position')
+              // A source mesh grows by scaling its own local vertex Y
+              // BEFORE its local translation/rotation/scale are applied.
+              // The baked combined mesh must add back that exact displaced
+              // local-Y direction rather than scaling its parent-space Y.
+              const m=group[k].matrix.elements
+              for(let v=0;v<count;v++) {
+                const n=(baseVertex+v)*3
+                origins[n]=origin.x
+                origins[n+1]=origin.y
+                origins[n+2]=origin.z
+                const y=originalPositions.getY(v)
+                growDeltas[n]=m[4]*y
+                growDeltas[n+1]=m[5]*y
+                growDeltas[n+2]=m[6]*y
+              }
+              baseVertex+=count
+            }
+            geometry.setAttribute('aRWOrigin',new THREE.BufferAttribute(origins,3))
+            geometry.setAttribute('aRWGrowDelta',new THREE.BufferAttribute(growDeltas,3))
+            geometry.computeBoundingSphere()
+            geometry.computeBoundingBox()
+            const originalMaterial = group[0].material
+            const combinedMaterial = originalMaterial.clone()
+            const originalKey = originalMaterial.customProgramCacheKey.bind(originalMaterial)
+            combinedMaterial.customProgramCacheKey = () =>
+              originalKey() + '|hex-static-source-origin-v1'
+            combinedMaterial.onBeforeCompile = (shader,renderer) => {
+              // Keep ORIGINAL PBR/Wet/Growth/Wind/Lighting and all uniforms.
+              // Alter only the per-mesh reveal ORIGIN for batched triangles.
+              originalMaterial.onBeforeCompile(shader,renderer)
+              const originalExpr = 'rwX((rwM * vec4(0.0,0.0,0.0,1.0)).xyz, rwEd0)'
+              if (!shader.vertexShader.includes(originalExpr))
+                throw new Error('UEH_PATCHED_GROWTH_SHADER_MISSING: refusing unsafe batching')
+              const growExpr='transformed.y *= rwGrow(vRWg, uRWGrowLen);'
+              const grown=shader.vertexShader.replaceAll(originalExpr,
+                'rwX((rwM * vec4(aRWOrigin,1.0)).xyz, rwEd0)')
+                .replaceAll(growExpr,
+                  'transformed += aRWGrowDelta * (rwGrow(vRWg, uRWGrowLen) - 1.0);')
+              if (originalMaterial.customProgramCacheKey().includes('-g-') &&
+                  !shader.vertexShader.includes(growExpr))
+                throw new Error('UEH_LOCAL_GROWTH_SHADER_MISSING: refuse unsafe batching')
+              shader.vertexShader =
+                'attribute vec3 aRWOrigin;\nattribute vec3 aRWGrowDelta;\n' + grown
+            }
+            const combined = new THREE.Mesh(geometry,combinedMaterial)
+            combined.name = 'ueh-exact-opaque-batch'
+            combined.castShadow = group[0].castShadow
+            combined.receiveShadow = group[0].receiveShadow
+            combined.frustumCulled = group[0].frustumCulled
+            combined.renderOrder = group[0].renderOrder
+            combined.layers.mask = group[0].layers.mask
+            for (const mesh of group) {
+              mesh.visible = false
+              mesh.userData.hexMergedAway = true
+            }
+            parent.add(combined)
+            batches++
+            sourceMeshes += group.length
+            savedCalls += group.length-1
+            undo.push(() => {
+              parent.remove(combined)
+              geometry.dispose()
+              combinedMaterial.dispose()
+              for (const mesh of group) {
+                mesh.visible = true
+                delete mesh.userData.hexMergedAway
+              }
+            })
+          } finally { for (const g of copies) g.dispose() }
+        }
+      }
+      ;(window as unknown as {__orbitaHexBatchStats?:unknown}).__orbitaHexBatchStats = {
+        mode:hexBatchProbe,sourceMeshes,batches,drawsSavedPerPass:savedCalls,
+         overlapExperiment:sourceExactOverlapProbe,
+        sourceGeometryAndMaterialsPreserved:true,
+      }
+      return () => { for (let i=undo.length-1;i>=0;i--)undo[i]() }
+    }
+    if (hexBatchProbe === 'extended' || hexBatchProbe === 'extended-overlap') {
+      const undo=merge()
+      return () => {undo();delete (window as unknown as {__orbitaHexBatchStats?:unknown}).__orbitaHexBatchStats}
+    }
+    // Manual means no mutation until the synchronous screenshot test asks.
+    const runVisualParity = () => {
+      const width=320,height=180
+      const target=new THREE.WebGLRenderTarget(width,height,{depthBuffer:true,stencilBuffer:false})
+      target.texture.colorSpace=gl.outputColorSpace
+      const oldTarget=gl.getRenderTarget(), viewport=gl.getViewport(new THREE.Vector4()).clone(),
+        scissor=gl.getScissor(new THREE.Vector4()).clone(),scissorTest=gl.getScissorTest(),
+        xr=gl.xr.enabled
+      const oldVisible=root.visible, front=RW.uRW.value.x, on=RW.uRW.value.z
+      const oldCameraPos=camera.position.clone(), oldCameraQ=camera.quaternion.clone()
+      const stages=[
+        {name:'ignition',front:0},{name:'early',front:32},
+        {name:'middle',front:82},{name:'city',front:145},
+        {name:'near-complete',front:250},{name:'complete',front:FRONT_MAX},
+      ]
+      const viewpoints=[
+        {name:'front',offset:[0,25,55]},
+        {name:'left',offset:[-45,27,30]},
+        {name:'right',offset:[45,27,30]},
+      ]
+      const cases=viewpoints.flatMap(v=>stages.map(stage=>({...stage,view:v.name,offset:v.offset})))
+      const setCase=(stage:typeof cases[number])=>{
+        root.visible=true
+        RW.uRW.value.x=stage.front
+        RW.uRW.value.z=1
+        camera.position.set(CENTER.x+stage.offset[0],CENTER.y+stage.offset[1],CENTER.z+stage.offset[2])
+        camera.lookAt(CENTER.x,6,CENTER.z)
+        camera.updateMatrixWorld(true)
+      }
+      const capture=()=>{
+        const bytes=new Uint8Array(width*height*4)
+        gl.setRenderTarget(target)
+        gl.setViewport(0,0,width,height)
+        gl.setScissorTest(false)
+        gl.clear(true,true,true)
+        gl.render(scene,camera)
+        gl.readRenderTargetPixels(target,0,0,width,height,bytes)
+        return bytes
+      }
+      let undo: (()=>void)|undefined
+      try {
+        const baseline=cases.map(stage=>{setCase(stage);return capture()})
+        undo=merge()
+        const rows=cases.map((stage,i)=>{
+          setCase(stage)
+          const actual=capture()
+          let pixelDifferences=0,maxDelta=0
+          for(let p=0;p<actual.length;p+=4){
+            let different=false
+            for(let channel=0;channel<4;channel++){
+              const d=Math.abs(actual[p+channel]-baseline[i][p+channel])
+              if(d>maxDelta)maxDelta=d
+              if(d)different=true
+            }
+            if(different)pixelDifferences++
+          }
+          return {view:stage.view,stage:stage.name,pixelDifferences,maxDelta}
+        })
+        const stats=(window as unknown as {__orbitaHexBatchStats?: {
+          sourceMeshes:number;batches:number;drawsSavedPerPass:number
+        }}).__orbitaHexBatchStats
+        return {width,height,viewCount:viewpoints.length,stages:rows,
+          ...stats,pixelPerfect:rows.every(x=>x.pixelDifferences===0),
+          visuallyEquivalent:rows.every(x=>x.pixelDifferences<=2&&x.maxDelta<=1)}
+      } finally {
+        undo?.()
+        root.visible=oldVisible
+        RW.uRW.value.x=front
+        RW.uRW.value.z=on
+        camera.position.copy(oldCameraPos)
+        camera.quaternion.copy(oldCameraQ)
+        camera.updateMatrixWorld(true)
+        gl.setRenderTarget(oldTarget)
+        gl.setViewport(viewport)
+        gl.setScissor(scissor)
+        gl.setScissorTest(scissorTest)
+        gl.xr.enabled=xr
+        target.dispose()
+      }
+    }
+    ;(window as unknown as {__orbitaHexManualBatch?:{runVisualParity:typeof runVisualParity}})
+      .__orbitaHexManualBatch={runVisualParity}
+    return ()=>{delete (window as unknown as {__orbitaHexManualBatch?:unknown}).__orbitaHexManualBatch}
+  },[scene,camera,gl,hexBatchProbe])
+
   // DIAGNOSTIC ONLY: Three.js documents this as a release-build option.
   // Checking link diagnostic logs can synchronize the driver for >1s
   // per WebGLProgram even when shader compilation is otherwise successful.
@@ -734,6 +1057,9 @@ export function RealityHost() {
     const programs:THREE.Object3D[]=[]
     const owned:THREE.Material[]=[]
     ueh.current?.traverse(node=>{
+      // The exact batch already owns this original mesh's shadow caster.
+      // Prewarming the permanently hidden duplicate would waste GPU time.
+      if(node.userData.hexMergedAway===true)return
       const mesh=node as THREE.Mesh
       if(!mesh.isMesh||!mesh.castShadow||
           !mesh.geometry||Array.isArray(mesh.material)||!mesh.material)return
@@ -798,6 +1124,10 @@ export function RealityHost() {
     const scan = (root: THREE.Object3D | null) => {
       if (!root) return
       root.traverse((o) => {
+        // Do not dispatch shader/texture prep for invisible source duplicates
+        // after geometry-exact batching. The new combined PBR object is
+        // traversed separately; default HEX with no batching is unchanged.
+        if (o.userData.hexMergedAway===true) return
         const m = (o as THREE.Mesh).material as THREE.Material | THREE.Material[] | undefined
         if (!m) return
         const list = Array.isArray(m) ? m : [m]
