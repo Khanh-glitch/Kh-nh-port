@@ -19,9 +19,11 @@ try{
       console.error('BEACON_PAGE_ERROR',e.message)
     })
     const stable=mode.includes('stable')
+    const skipLogs=mode.includes('no-logs')
     const warm=mode.includes('warm')
     const shaderOnly=mode.includes('shader')
     const query='?beaconProfile=1'+(stable?'&beaconStableLights=1':'')+
+      (skipLogs?'&beaconSkipDriverShaderLogs=1':'')+
       (warm?'&beaconGpuPrewarm=1':'')+
       (shaderOnly?'&beaconShaderOnly=1':'')+
       (mode.includes('no-panel')?'&beaconDiagNoPanel=1':'')+
@@ -72,7 +74,7 @@ try{
     const nativeVerified=/Metal/i.test(gpu)
     const softwareVerified=/SwiftShader|Software|llvmpipe/i.test(gpu)
     console.log('BEACON_GPU_AUDIT '+JSON.stringify({
-      mode,audit,cdpGpu,gpu,nativeVerified,softwareVerified,errors
+      mode,skipDriverLogs:skipLogs,audit,cdpGpu,gpu,nativeVerified,softwareVerified,errors
     }).slice(0,2600))
     // Continue gathering actual real-trigger evidence even when Chromium
     // hides the debug extension. Never label a GPU run as Metal unless
