@@ -75,6 +75,42 @@ if(!html.includes('id="orbita-first-paint-document"')){
   assert(m,'Root HTML head is missing')
   html=html.replace(m[0],m[0]+firstPaintStyle)
 }
+// The original single-file root contains an old pre-React, full-screen
+// ORBITA text loader. It appears BEFORE the spaceship and obscures its first
+// real WebGL frame, violating the user-facing ship-first experience. Keep
+// its CDN import-map bootstrapping and error/retry logic, but NEVER render
+// its spinner/ORBITA title or loading text during a normal launch.
+const legacyBootStyle='<style id="orbita-no-legacy-loader">'+
+  '#orbita-loading:not(.is-error){display:none!important}'+
+  '#orbita-loading.is-error>.orbit,'+
+  '#orbita-loading.is-error>b,'+
+  '#orbita-loading.is-error>small{display:none!important}'+
+  '</style>'
+if(!html.includes('id="orbita-no-legacy-loader"')){
+  const m=html.match(/<head[^>]*>/i)
+  assert(m,'Original HTML head missing; cannot suppress old visual loader')
+  html=html.replace(m[0],m[0]+legacyBootStyle)
+}
+// The old loader also waited for #root canvas to mount before allowing its
+// CDN watchdog to stop. Now the island Canvas is intentionally NOT mounted
+// until AFTER actual ship-first paint. Recognize the new React ship root,
+// not a hidden island Canvas, while retaining existing real module-failure
+// recovery and the separate IslandFirstPaintGate for entry authorization.
+const bootstrapAnchor='window.__orbitaImported = function () {'
+const at=html.indexOf(bootstrapAnchor)
+assert(at>=0,'Original CDN error/retry module bootstrap missing')
+const tail=html.slice(at)
+const legacyCheck="document.querySelector('#root canvas')) {"
+const nextCheck="document.querySelector('[data-orbita-space-entry=\"true\"]')) {"
+assert(tail.includes(legacyCheck)||tail.includes(nextCheck),
+  'Unexpected legacy boot condition; refuse to replace startup blindly')
+if(tail.includes(legacyCheck)){
+  const newTail=tail.replace(legacyCheck,nextCheck)
+  assert(newTail!==tail,'Failed to redirect legacy boot watchdog')
+  html=html.slice(0,at)+newTail
+}
+assert(html.includes('id="orbita-no-legacy-loader"') &&
+  html.includes(nextCheck),'Legacy spinner must remain hidden and bootstrap ship-aware')
 const shipPath=resolve(root,'assets/immersive/index.html')
 let ship=readFileSync(shipPath,'utf8')
 const match=ship.match(/<script type="importmap">([\s\S]*?)<\/script>/i)
@@ -111,4 +147,6 @@ console.log('SPACE_FIRST_PUBLISHED_STANDALONE_OK '+JSON.stringify({
   unchangedIslandModules:Object.keys(original).length-rootModules.length,
   rootBytes:Buffer.byteLength(html),shipBytes:Buffer.byteLength(ship),
   bootTextRemovedFromReviewedOverlay:true,
+  legacyRootSpinnerHiddenBeforeFirstPaint:true,
+  legacyRootBootstrapWaitsForShipMount:true,
 }))
