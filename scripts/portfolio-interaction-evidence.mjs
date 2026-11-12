@@ -13,7 +13,8 @@
 import {existsSync, mkdirSync, readFileSync, writeFileSync, copyFileSync} from 'node:fs'
 
 const DIR = process.env.PORTFOLIO_EVIDENCE_DIR || 'browser-evidence/portfolio'
-const OUT_DIR = 'docs/evidence'
+// Overridable so a test can never write over the committed evidence.
+const OUT_DIR = process.env.PORTFOLIO_EVIDENCE_OUT || 'docs/evidence'
 const MD = OUT_DIR + '/portfolio-interaction-latest.md'
 const JSON_OUT = OUT_DIR + '/portfolio-interaction-latest.json'
 const LOG_OUT = OUT_DIR + '/portfolio-interaction-latest-out.txt'

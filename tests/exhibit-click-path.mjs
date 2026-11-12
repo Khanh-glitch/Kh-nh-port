@@ -212,13 +212,17 @@ test('the evidence script survives a partial or missing harness report', async (
   const {tmpdir} = await import('node:os')
   const {join} = await import('node:path')
   const dir = mkdtempSync(join(tmpdir(), 'dossier-evidence-'))
+  // The reporter must never be pointed at the repository while testing: doing
+  // that once overwrote the committed evidence with a test fixture.
+  const out = mkdtempSync(join(tmpdir(), 'dossier-evidence-out-'))
   const run = (report) => {
     if (report === null) { try { rmSync(join(dir, 'report.json')) } catch {} }
     else write(join(dir, 'report.json'), JSON.stringify(report))
     write(join(dir, 'harness-out.txt'), 'HARNESS_FATAL demo\n')
     execFileSync('node', ['scripts/portfolio-interaction-evidence.mjs'],
-      {env: {...process.env, PORTFOLIO_EVIDENCE_DIR: dir}, stdio: 'pipe'})
-    return read('docs/evidence/portfolio-interaction-latest.md', 'utf8')
+      {env: {...process.env, PORTFOLIO_EVIDENCE_DIR: dir,
+        PORTFOLIO_EVIDENCE_OUT: out}, stdio: 'pipe'})
+    return read(join(out, 'portfolio-interaction-latest.md'), 'utf8')
   }
   try {
     const full = run({backend: 'SwiftShader', viewports: ['desktop'], worldViewports: ['desktop'],
@@ -233,6 +237,7 @@ test('the evidence script survives a partial or missing harness report', async (
     assert.match(none, /HARNESS_FATAL demo/)
   } finally {
     rmSync(dir, {recursive: true, force: true})
+    rmSync(out, {recursive: true, force: true})
   }
 })
 
@@ -258,4 +263,16 @@ test('every viewport value a workflow passes is accepted by the harness', () => 
     }
   }
   assert.match(src, /aliases=\{fast:\[/, "'fast' must stay a supported alias")
+})
+
+test('committed evidence is never a test fixture', () => {
+  // A test once ran the reporter without redirecting its output directory and
+  // wrote a fixture over the real committed report. Evidence must always be a
+  // real observation, and tests must redirect both input and output.
+  const md = readFileSync('docs/evidence/portfolio-interaction-latest.md', 'utf8')
+  assert.doesNotMatch(md, /HARNESS_FATAL demo/, 'fixture text must never reach committed evidence')
+  const testSrc = readFileSync('tests/exhibit-click-path.mjs', 'utf8')
+  assert.match(testSrc, /PORTFOLIO_EVIDENCE_OUT/, 'reporter tests must redirect output to a temp dir')
+  const reporter = readFileSync('scripts/portfolio-interaction-evidence.mjs', 'utf8')
+  assert.match(reporter, /PORTFOLIO_EVIDENCE_OUT/, 'the reporter output dir must be overridable for tests')
 })
