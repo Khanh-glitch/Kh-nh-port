@@ -53,7 +53,10 @@ try{
       }
       await client.detach()
     }catch(e){cdpGpu={error:String(e)}}
-    const gpu=String(audit.backend??cdpGpu?.glRenderer??'unverified')
+    const reported=String(audit.backend??'')
+    const gpu=/^(|undefined|null|unavailable|unknown)/i.test(reported)
+      ? String(cdpGpu?.glRenderer??cdpGpu?.glVersion??'unverified')
+      : reported
     const nativeVerified=/Metal/i.test(gpu)
     const softwareVerified=/SwiftShader|Software|llvmpipe/i.test(gpu)
     console.log('BEACON_GPU_AUDIT '+JSON.stringify({
