@@ -1,0 +1,73 @@
+name: Beacon original six-light stable shader A-B after real ship startup
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [fix/beacon-stable-six-light-programs-no-visual-loss-20261112]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  source-parity:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: source/package-lock.json
+      - run: npm ci --prefix source
+      - name: All original appearance modules verified unchanged
+        run: |
+          node scripts/sync-beacon-stable-standalone.mjs
+          node --test tests/beacon-stable-six-contract.mjs
+          node tests/integration-regression.mjs
+          node scripts/build-pages.mjs
+          cmp -s dist-pages/index.html index.html
+          cmp -s dist-pages/assets/immersive/index.html assets/immersive/index.html
+  native-metal:
+    runs-on: macos-15
+    timeout-minutes: 28
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - order: baseline-first
+            modes: baseline,stable-lights
+          - order: stable-first
+            modes: stable-lights,baseline
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: source/package-lock.json
+      - run: npm ci --prefix source
+      - run: npm install --prefix source --no-save --package-lock=false playwright@1.56.1
+      - run: cd source && npx playwright install chromium
+      - name: Build only opt-in six-light experiment into actual public HTML
+        run: |
+          node scripts/sync-beacon-stable-standalone.mjs
+          node --test tests/beacon-stable-six-contract.mjs
+          node tests/integration-regression.mjs
+          node scripts/build-pages.mjs
+      - name: Reversed-order real original signal and 4s no-click idle
+        env:
+          BEACON_BACKEND: metal
+          BEACON_AB_MODES: ${{ matrix.modes }}
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 --directory dist-pages >/tmp/beacon-stable-native.log 2>&1 &
+          for n in {1..80}; do
+            if curl -fsS -o /dev/null http://127.0.0.1:4173/; then break; fi
+            sleep 1
+          done
+          node scripts/beacon-stable-six-lights-ab.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: beacon-after-ship-first-original-${{ matrix.order }}
+          path: browser-evidence/beacon/
+          if-no-files-found: warn
