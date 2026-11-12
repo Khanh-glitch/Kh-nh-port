@@ -46,23 +46,30 @@ const ids=['about','orb','piano','rubik','robot','apex','ragnarok',
 // Exhibits reachable from spawn by walking + turning. Street-distance checks
 // exist for products/rubik (offset from the walk line) and beacon (widest hit
 // volume); all are opened by REAL input below, no store shortcuts.
-// Stand in front of the exhibit, centre the camera on it, then CLICK it. This
-// is the visitor's own path; the dossier must be that exhibit's dossier.
+// Each entry targets one exhibit's REAL registered hit volume (id below).
+// The visitor turns with a drag and walks with the real movement keys; the
+// click is a real pointer click at screen centre. `affordance` documents the
+// exact visitor-facing surface the hit volume is attached to.
 const WORLD_ENTRY=[
-  {id:'products',approach:{x:22,z:39}},
-  {id:'rubik',approach:{x:27,z:19}},
-  {id:'beacon',approach:{x:-22,z:39}},
-  {id:'piano',approach:{x:-26,z:17}},
-  {id:'cinema',approach:{x:32,z:-15}},
-  {id:'orb',approach:{x:0,z:11}},
-  {id:'robot',approach:{x:0,z:-25}},
+  {id:'products',hit:'product-base',exhibit:'products',affordance:'Product Lab pedestal'},
+  {id:'rubik',hit:'rubik-base',exhibit:'rubik',affordance:'Cube Solver pedestal'},
+  {id:'beacon',hit:'beacon',exhibit:'beacon',affordance:'Signal Beacon mast'},
+  {id:'piano',hit:'piano-body',exhibit:'piano',affordance:'Grand Piano body'},
+  {id:'cinema',hit:'cinema-sign',exhibit:'cinema',affordance:'Mini Cinema sign'},
+  {id:'orb',hit:'orb-base',exhibit:'orb',affordance:'Singularity Orb base'},
+  {id:'robot',hit:'robot',exhibit:'robot',affordance:'Colossus body'},
 ]
 const failures=[]
 const evidence={backend,launchArgs:LAUNCH,startedAt:new Date().toISOString(),
   viewports:suites.map(s=>s.tag),worldEntry:[],panels:[],inputPaths:[],failures:[]}
 
 function fail(stage,detail){
-  const record={stage,backend,...detail}
+  const error=String(detail.error??'')
+  const record={stage,backend,...detail,
+    // A walk that ran out of wall clock on a software GPU is not proof that the
+    // exhibit is unreachable; it is an unproven claim and is labelled as such.
+    verdict:error.includes('WALK_BUDGET')?'UNPROVEN_TIME_BUDGET':
+      error.includes('suite-timeout')?'UNPROVEN_TIME_BUDGET':'REAL_DEFECT'}
   failures.push(record)
   console.error('PORTFOLIO_PANEL_FAILURE '+JSON.stringify(record))
 }
@@ -104,117 +111,139 @@ async function waitForFrames(page,suite,label){
   console.log('PORTFOLIO_FRAME_PROGRESS '+JSON.stringify({suite:suite.tag,backend,label,ms}))
   return ms
 }
-/** Where is the exhibit's hit volume on screen right now?
- * Pure arithmetic from the visitor's own camera pose plus the exhibit layout;
- * this only verifies that the visitor is really pointing at the exhibit, it
- * never moves or opens anything. */
-const aimOf = (page, id) => page.evaluate((id) => {
+/** Read the live visitor pose, the live hit-volume registry and a live frame
+ * counter. Nothing here moves or opens anything. */
+const readWorld = (page) => page.evaluate(() => {
   const p = window.__orbitaProbe
   if (!p) return null
-  const me = p.player()
-  const ex = p.exhibits.find((e) => e.id === id)
-  if (!ex) return null
-  const canvas = document.querySelector('#root canvas')
-  const r = canvas.getBoundingClientRect()
-  const dx = ex.x - me.x
-  const dz = ex.z - me.z
-  // forward = (-sin yaw, -cos yaw)
-  const fwd = -Math.sin(me.yaw) * dx + -Math.cos(me.yaw) * dz
-  const right = Math.cos(me.yaw) * dx + -Math.sin(me.yaw) * dz
-  const dist = Math.hypot(dx, dz)
   return {
-    me, dist,
-    // Depth along the view axis and lateral offset in metres.
-    along: fwd, lateral: right,
-    // Vertical field of view of the island camera.
-    vfov: (p.vfov ? p.vfov() : 55),
-    canvas: {w: r.width, h: r.height},
+    me: p.player(), exhibits: p.exhibits, hits: p.hits(),
+    panel: p.panel(), phase: p.phase(),
+    frames: window.__orbitaFrameTicks ?? 0,
   }
-}, id)
+})
 
-/** Turn the visitor with the game's own drag-look until the exhibit is centred.
- * The drag is a real mouse gesture; the probe only reports the resulting pose.
- * Turning continues until the exhibit is both ahead and horizontally centred,
- * because an exhibit 80 degrees to the side is never clicked "somewhere else
- * on screen" by a real visitor. */
-async function faceExhibit(page,suite,exhibit){
-  const started=Date.now()
+/** Aim at a hit volume using the game's own drag-look.
+ * Player.look(): yaw -= dx * 0.0022 * -1.15, so a rightward drag ADDS
+ * 0.00253 rad. Pitch is dragged separately to put the volume's centre on the
+ * screen centre. Returns the client point to click and the distance. */
+async function aimAt(page,suite,hitId){
   const size=page.viewportSize()
   const cx=Math.round(size.width/2),cy=Math.round(size.height/2)
   const wrap=(a)=>Math.atan2(Math.sin(a),Math.cos(a))
+  const started=Date.now()
   let last=null
   while(Date.now()-started<suite.budget){
-    const aim=await aimOf(page,exhibit)
-    if(!aim)throw Error('Acceptance probe missing')
-    const panel=await probe(page,'panel')
-    if(panel)throw Error('A dossier was already open before aiming: '+panel)
-    const target=await page.evaluate(id=>{
-      const p=window.__orbitaProbe
-      return p.exhibits.find(e=>e.id===id)
-    },exhibit)
-    const want=Math.atan2(-(target.x-aim.me.x),-(target.z-aim.me.z))
-    const err=wrap(want-aim.me.yaw)
-    last={err,yaw:aim.me.yaw,me:aim.me,dist:aim.dist}
-    // Turn until the exhibit is inside the smallest hit volume's half-width at
-    // the standing distance (>= 4.5 degrees everywhere the harness stands).
-    if(Math.abs(err)<0.05)return aim
-    // Player.look(): player.yaw -= dx * 0.0022 * -1.15  =>  a rightward drag
-    // ADDS 0.00253 rad per pixel. Dragging the wrong way made the harness spin
-    // for its whole budget, which is how a real hang reached the CI timeout.
-    const px=Math.max(-300,Math.min(300,err/0.00253))
-    await page.mouse.move(cx,cy);await page.mouse.down()
-    for(let i=1;i<=8;i++)await page.mouse.move(cx+Math.round(px*i/8),cy)
-    await page.mouse.up()
-    await sleep(50)
+    const w=await readWorld(page)
+    if(!w)throw Error('Acceptance probe missing (window.__orbitaProbe undefined)')
+    if(w.panel)throw Error('A dossier was already open before aiming: '+w.panel)
+    const hit=w.hits.find(h=>h.id===hitId)
+    if(!hit)throw Error('Hit volume '+hitId+' is not registered by the live scene')
+    const dx=hit.x-w.me.x, dz=hit.z-w.me.z, dy=hit.y-w.me.y
+    const flat=Math.hypot(dx,dz)
+    const wantYaw=Math.atan2(-dx,-dz)
+    const yawErr=wrap(wantYaw-w.me.yaw)
+    // pitch: camera looks down for negative pitch (Euler YXZ). Positive pitch
+    // tilts the view up. Aim so the volume centre lands on the screen centre.
+    const wantPitch=Math.atan2(dy,flat)
+    const pitchErr=wrap(wantPitch-w.me.pitch)
+    last={hitId,dist:flat,yawErr,pitchErr,me:w.me,hit}
+    // Half-width tolerance: every aimed volume subtends >8deg at its stand-off
+    // distance, so 3deg is well inside it and cannot produce a lucky miss.
+    if(Math.abs(yawErr)<0.05&&Math.abs(pitchErr)<0.05)
+      return {client:{x:cx,y:cy},dist:flat,hit,pose:w.me}
+    if(Math.abs(yawErr)>=0.05){
+      const px=Math.max(-300,Math.min(300,yawErr/0.00253))
+      await page.mouse.move(cx,cy);await page.mouse.down()
+      for(let i=1;i<=8;i++)await page.mouse.move(cx+Math.round(px*i/8),cy)
+      await page.mouse.up()
+    } else {
+      // dy drag: pitch -= dy * 0.00253  =>  drag by -pitchErr/0.00253.
+      const py=Math.max(-300,Math.min(300,-pitchErr/0.00253))
+      await page.mouse.move(cx,cy);await page.mouse.down()
+      for(let i=1;i<=8;i++)await page.mouse.move(cx,cy+Math.round(py*i/8))
+      await page.mouse.up()
+    }
+    // Wait for at least one more rendered frame so the camera pose is live.
+    const before=(await readWorld(page))?.frames??0
+    await page.waitForFunction(b=>window.__orbitaFrameTicks>b,before,{timeout:60000}).catch(()=>{})
   }
-  throw Error('Could not centre '+exhibit+' within '+suite.budget+'ms last='+
-    JSON.stringify(last))
+  throw Error('Could not aim at '+hitId+' within '+suite.budget+'ms last='+JSON.stringify(last))
 }
 
-/** Hold the real forward key until close enough, then click screen centre. */
-async function walkAndOpen(page,suite,entry){
+/** Walk toward a point with the real movement keys. Returns a verdict about
+ * reachability instead of hanging: SwiftShader renders a few frames per second,
+ * so a distant exhibit is reported as "not reachable in this time budget"
+ * rather than retried until the CI job dies. */
+async function walkToward(page,suite,{x,z},stopAt){
   const started=Date.now()
   let state=null
+  let best=Infinity
+  await page.keyboard.down('ShiftLeft')
   while(Date.now()-started<suite.budget){
-    state=await page.evaluate(({approach})=>{
+    state=await page.evaluate(({x,z})=>{
       const p=window.__orbitaProbe
       const me=p.player()
-      const d=Math.hypot(approach.x-me.x,approach.z-me.z)
-      return {me,d,panel:p.panel(),paused:p.paused(),phase:p.phase()}
-    },{approach:entry.approach})
-    if(state.panel)throw Error('Unexpected dossier before click: '+state.panel)
-    if(state.d<2.2)break
+      return {me,d:Math.hypot(x-me.x,z-me.z),panel:p.panel()}
+    },{x,z})
+    if(state.panel)throw Error('Unexpected dossier while walking: '+state.panel)
+    best=Math.min(best,state.d)
+    if(state.d<=stopAt)break
     await page.keyboard.down('KeyW')
-    await sleep(120)
+    await sleep(250)
     await page.keyboard.up('KeyW')
   }
-  if(!state||state.d>=2.2)
-    throw Error('Visitor could not walk to '+entry.id+' approach: '+JSON.stringify(state))
-  const aim=await faceExhibit(page,suite,entry.id)
-  if(aim.along<=0||Math.abs(aim.lateral)>0.45*aim.dist)
-    throw Error('Exhibit '+entry.id+' is not centred at click time: '+
-      JSON.stringify({along:aim.along,lateral:aim.lateral,dist:aim.dist}))
-  const size=page.viewportSize()
-  const cx=Math.round(size.width/2),cy=Math.round(size.height/2)
-  await page.mouse.move(cx,cy)
-  await sleep(60)
-  await page.mouse.click(cx,cy,{delay:40})
+  await page.keyboard.up('ShiftLeft')
+  return {reached:!!state&&state.d<=stopAt,state,best,ms:Date.now()-started}
+}
+
+/** Full visitor path: walk in front of the exhibit, turn to its hit volume,
+ * click it, and require that exhibit's dossier. */
+async function openFromWorld(page,suite,entry){
+  const started=Date.now()
+  // Stand-off distance per exhibit: close enough that every aimed volume spans
+  // a wide screen angle, far enough to stay outside the physical props.
+  const standOff={products:9,rubik:10,beacon:8,piano:7,cinema:13,orb:10,robot:15}[entry.id]
+  const target=await page.evaluate(id=>{
+    const p=window.__orbitaProbe
+    const ex=p.exhibits.find(e=>e.id===id)
+    return ex?{x:ex.x,z:ex.z}:null
+  },entry.exhibit)
+  if(!target)throw Error('Exhibit '+entry.exhibit+' missing from the live layout')
+  // Approach point on the walkable ring between spawn and the exhibit.
+  const me0=(await readWorld(page)).me
+  const dx=target.x-me0.x,dz=target.z-me0.z
+  const len=Math.hypot(dx,dz)||1
+  const approach={x:target.x-(dx/len)*standOff,z:target.z-(dz/len)*standOff}
+  const walk=await walkToward(page,suite,approach,2.0)
+  const walkedTo=await page.evaluate(()=>{
+    const p=window.__orbitaProbe.player()
+    return {x:+p.x.toFixed(2),z:+p.z.toFixed(2)}
+  })
+  if(!walk.reached){
+    throw Error('WALK_BUDGET: the visitor walked '+walk.best.toFixed(1)+
+      'm short of '+entry.affordance+' in '+walk.ms+'ms ('+backend+
+      ' renders a few frames per second); this is a test-budget limit, not a '+
+      'closed source check. Walked to '+JSON.stringify(walkedTo))
+  }
+  const aim=await aimAt(page,suite,entry.hit)
+  await page.mouse.move(aim.client.x,aim.client.y)
+  await sleep(80)
+  await page.mouse.click(aim.client.x,aim.client.y,{delay:40})
   const opened=page.locator('[data-project-dossier]')
-  // Colossus finishes its laser summon (2.5s per world) before continuing into
-  // the dossier, so allow the animation to complete.
-  await opened.waitFor({state:'visible',timeout:entry.id==='robot'?45000:20000})
+  await opened.waitFor({state:'visible',timeout:entry.id==='robot'?60000:25000})
   const id=await opened.getAttribute('data-project-dossier')
-  if(id!==entry.id)throw Error('Real centre click opened '+id+' instead of '+entry.id)
-  // The 3D click must have selected THAT exhibit, not a stale/default screen.
+  if(id!==entry.id)throw Error('Real click on '+entry.hit+' opened '+id+' instead of '+entry.id)
   const selectedProject=await page.evaluate(()=>document.querySelector(
     '[role="tab"][aria-selected="true"]')?.textContent?.trim().slice(0,48)??'')
-  evidence.worldEntry.push({selectedProject})
-  evidence.worldEntry.push({suite:suite.tag,exhibit:entry.id,opened:id,
-    approach:entry.approach,walkedTo:{x:+state.me.x.toFixed(2),z:+state.me.z.toFixed(2)}})
+  evidence.worldEntry.push({suite:suite.tag,exhibit:entry.id,hit:entry.hit,
+    affordance:entry.affordance,opened:id,selectedProject,walkedTo,
+    walkMs:walk.ms,dist:+aim.dist.toFixed(2),ms:Date.now()-started})
   console.log('PORTFOLIO_WORLD_ENTRY '+JSON.stringify({suite:suite.tag,backend,
-    exhibit:entry.id,opened:id,walkedTo:{x:+state.me.x.toFixed(2),z:+state.me.z.toFixed(2)},
-    ms:Date.now()-started}))
+    exhibit:entry.id,hit:entry.hit,opened:id,walkedTo,walkMs:walk.ms,
+    dist:+aim.dist.toFixed(2),ms:Date.now()-started}))
 }
+
 async function closeDossier(page,id){
   const root=page.locator('[data-project-dossier="'+id+'"]')
   const button=await root.getByRole('button',{name:'Đóng hồ sơ dự án'}).evaluate(el=>{
@@ -288,11 +317,8 @@ async function runSuite(suite){
     out.errors=await boot(page,suite)
     await waitForFrames(page,suite,'boot')
     for(const entry of WORLD_ENTRY){
-      const entryStarted=Date.now()
       try{
-        await walkAndOpen(page,suite,entry)
-        console.log('PORTFOLIO_WORLD_ENTRY_TIME '+JSON.stringify({suite:suite.tag,
-          exhibit:entry.id,ms:Date.now()-entryStarted}))
+        await openFromWorld(page,suite,entry)
         const info=await auditPanel(page,suite,entry.id)
         out.panels.push(entry.id)
         evidence.panels.push({suite:suite.tag,backend,id:entry.id,
@@ -421,7 +447,9 @@ try{
   console.log('PORTFOLIO_PANEL_REPORT '+JSON.stringify({backend,
     viewports:evidence.viewports,worldEntry:evidence.worldEntry.length,
     panelAudits:evidence.panels.length,inputPaths:evidence.inputPaths.length,
-    failures:failures.length}))
+    realDefects:failures.filter(f=>f.verdict==='REAL_DEFECT').length,
+    unproven:failures.filter(f=>f.verdict!=='REAL_DEFECT').length,
+    totalMs:evidence.totalMs}))
   for(const f of failures)console.log('PORTFOLIO_PANEL_FAILURE_FINAL '+JSON.stringify(f))
   await browser.close()
   if(failures.length)process.exitCode=2

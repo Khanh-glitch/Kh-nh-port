@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useStore } from '../store'
 import { PANELS, STUDIO } from '../content'
 import { EXHIBIT_LIST, DISC_R } from '../layout'
-import { player, input } from '../world'
+import { player, input, getTargets, getInteractive } from '../world'
 import { audio } from '../audio'
 import { closePanel, resumeGame, startGame } from '../scene/Player'
 import { useShow } from '../stage/showState'
@@ -309,9 +309,24 @@ function useAcceptanceProbe() {
       },
       dossiers: () => [...document.querySelectorAll('[data-project-dossier]')]
         .map((n) => n.getAttribute('data-project-dossier')),
+      // Every hit volume a visitor can actually aim at, with its live world
+      // position and the dossier it opens. Read from the real interaction
+      // registry, so this can never disagree with what clicking does.
+      hits: () => getTargets().map((o) => {
+        const it = getInteractive(o)
+        if (!it) return null
+        const e = o.matrixWorld.elements
+        return {
+          id: it.id, label: it.label, panel: it.panel ?? null,
+          maxDist: it.maxDist, x: e[12], y: e[13], z: e[14],
+        }
+      }).filter((h) => h !== null),
     }
-    ;(window as unknown as { __orbitaProbe?: typeof probe }).__orbitaProbe = probe
-    return () => { delete (window as unknown as { __orbitaProbe?: typeof probe }).__orbitaProbe }
+    const w = window as unknown as { __orbitaProbe?: typeof probe }
+    // Install once and keep it. Deleting it on effect teardown made harnesses
+    // read an undefined probe between React commits.
+    if (!w.__orbitaProbe) w.__orbitaProbe = probe
+    return undefined
   }, [])
 }
 
