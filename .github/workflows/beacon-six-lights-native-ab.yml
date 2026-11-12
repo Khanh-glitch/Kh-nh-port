@@ -1,0 +1,52 @@
+name: Beacon six original stable point lights versus cold trigger (no GPU prewarm)
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  original-lights:
+    runs-on: macos-15
+    timeout-minutes: 24
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - order: original-first
+            modes: baseline,stable-lights
+          - order: six-lights-first
+            modes: stable-lights,baseline
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: source/package-lock.json
+      - run: npm ci --prefix source
+      - run: npm install --prefix source --no-save --package-lock=false playwright@1.56.1
+      - run: cd source && npx playwright install chromium
+      - name: Verify source exactness and only two opt-in embedded modules
+        run: |
+          node scripts/sync-hex-beacon-standalone.mjs
+          node --test tests/beacon-standalone-contract.mjs
+          node tests/integration-regression.mjs
+          node scripts/build-pages.mjs
+      - name: Opposite-order Metal with four-second no-click idle + original first/repeat
+        env:
+          BEACON_BACKEND: metal
+          BEACON_AB_MODES: ${{ matrix.modes }}
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 --directory dist-pages >/tmp/beacon-stable.log 2>&1 &
+          for n in {1..60}; do
+            if curl -fsS -o /dev/null http://127.0.0.1:4173/; then break; fi
+            sleep 1
+          done
+          node scripts/beacon-first-trigger-ab.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: beacon-original-six-lights-${{ matrix.order }}
+          path: browser-evidence/
+          if-no-files-found: warn
