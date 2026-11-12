@@ -6,3 +6,8 @@ dist/
 .DS_Store
 *.log
 dist-pages/
+# Browser harness scratch: intermediate captures live in CI artifacts, while the
+# distilled evidence in docs/evidence stays tracked. The run log is deliberately
+# tracked (as *-out.txt) because it is the diagnosis for a failing run.
+browser-evidence/
+docs/evidence/portfolio-interaction-latest.json
