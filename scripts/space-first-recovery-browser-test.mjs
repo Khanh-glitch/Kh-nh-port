@@ -14,6 +14,14 @@ try{
     deviceScaleFactor:1,isMobile:true,hasTouch:true})
   page.setDefaultTimeout(85000)
   page.on('pageerror',e=>report.jsErrors.push(String(e)))
+  page.on('request',q=>{
+    if(q.url().includes('immersive'))
+      (report.requests??=[]).push(q.url().slice(0,160))
+  })
+  page.on('requestfailed',q=>{
+    if(q.url().includes('immersive'))
+      (report.failedRequests??=[]).push(q.url().slice(0,160))
+  })
   let blocked=false
   await page.route('**/assets/immersive/index.html',async route=>{
     if(!blocked){blocked=true;await route.abort('failed')}
@@ -33,8 +41,27 @@ try{
     throw Error('Legacy ORBITA loading text appears during ship failure')
   if(first.gate?.ready)throw Error('False ready before any real spaceship render')
   report.checks.push('no-legacy-spinner-or-false-ready')
-  await page.waitForFunction(()=>window.__orbitaEntryGate?.status==='ship-failed',
-    null,{timeout:35000,polling:300})
+  const recognized=await page.waitForFunction(
+    ()=>window.__orbitaEntryGate?.status==='ship-failed',
+    null,{timeout:45000,polling:300}).then(()=>true,()=>false)
+  if(!recognized){
+    report.debug=await page.evaluate(()=>({
+      gate:window.__orbitaEntryGate??null,
+      rootText:document.body?.innerText.slice(0,900),
+      iframe:document.querySelector('iframe')?.src,
+      legacyDisplay:document.getElementById('orbita-loading')
+        ?getComputedStyle(document.getElementById('orbita-loading')).display:'none',
+      entryCount:document.querySelectorAll('[data-orbita-space-entry]').length,
+      canvasCount:document.querySelectorAll('#root canvas').length,
+    })).catch(e=>({evaluateError:String(e)}))
+    report.blocked=blocked
+    console.error('ENTRY_FAILURE_TIMEOUT_DIAGNOSTIC '+JSON.stringify(report).slice(0,7000))
+    await page.screenshot({
+      path:'browser-evidence/entry-recovery/mobile-failed-first-request.png',
+      timeout:25000,
+    }).catch(e=>report.jsErrors.push('screenshot: '+String(e)))
+    throw Error('No recoverable ship failure state after first request aborted')
+  }
   report.checks.push('ship-loading-error-is-explicit')
   const retry=page.getByRole('button',{name:'THỬ TẢI LẠI PHI THUYỀN'})
   await retry.waitFor({state:'visible',timeout:7000})
