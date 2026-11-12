@@ -280,124 +280,151 @@ function Hud() {
   )
 }
 
+
+/** Source-verified project dossiers, not the old universal 540px text drawer.
+ * Main Stage 3D ShowSystem.tsx / case study is intentionally untouched.
+ */
 function PanelView() {
-  const id = useStore((s) => s.panel)
+  const id = useStore((state) => state.panel)
+  const [selected, setSelected] = useState(0)
   const [form, setForm] = useState({ name: '', msg: '' })
+  useEffect(() => {
+    const w=window as unknown as {__orbitaPanelSelection?:{panel:string;index:number}}
+    const requested=w.__orbitaPanelSelection
+    const matched=requested && requested.panel===id
+    setSelected(matched ? Math.max(0,Math.floor(requested.index)) : 0)
+    if(matched)delete w.__orbitaPanelSelection
+  }, [id])
+  useEffect(() => {
+    if (!id) return
+    const handle = (event: KeyboardEvent) => {
+      if (event.code === 'Escape') { event.preventDefault(); closePanel(true) }
+    }
+    window.addEventListener('keydown', handle)
+    return () => window.removeEventListener('keydown', handle)
+  }, [id])
   if (!id) return null
   const p = PANELS[id]
+  const active = p.items[Math.min(selected, p.items.length - 1)]
+  const hasEmail = Boolean(STUDIO.email && STUDIO.email.includes('@'))
   const send = () => {
-    const sub = encodeURIComponent(`[Orbita] Liên hệ từ ${form.name || 'khách tham quan'}`)
-    const body = encodeURIComponent(form.msg)
-    window.location.href = `mailto:${STUDIO.email}?subject=${sub}&body=${body}`
+    if (!hasEmail || !form.msg.trim()) return
+    const subject = encodeURIComponent('[Portfolio] Liên hệ từ ' + (form.name || 'khách tham quan'))
+    const body = encodeURIComponent(form.msg.trim())
+    window.location.href = 'mailto:' + STUDIO.email + '?subject=' + subject + '&body=' + body
   }
+  const proofLabel = active?.evidence === 'source'
+    ? 'SOURCE CÔNG KHAI'
+    : active?.evidence === 'private' ? 'DỰ ÁN ĐÃ ĐỐI CHIẾU · SOURCE RIÊNG TƯ'
+    : active?.evidence === 'cv' ? 'THÔNG TIN TRONG CV · CHƯA XÁC MINH ĐỘC LẬP'
+    : active?.evidence === 'brief' ? 'DỰ ÁN DO CHỦ SỞ HỮU CUNG CẤP'
+    : 'CHỜ ĐỐI CHIẾU TƯ LIỆU'
   return (
-    <div className="absolute inset-0 z-40 flex items-stretch justify-end bg-gradient-to-l from-black/70 via-black/20 to-transparent text-white">
-      <div className="absolute inset-0" onClick={() => closePanel(true)} />
-      <aside
-        className="relative m-3 flex w-full max-w-[540px] flex-col overflow-hidden rounded-3xl border border-white/15 bg-[rgba(8,10,22,0.72)] shadow-[0_30px_120px_rgba(0,0,0,0.8)] backdrop-blur-2xl animate-[slideIn_0.45s_cubic-bezier(.2,.8,.2,1)_both] sm:m-6"
-        style={{ boxShadow: `0 0 0 1px ${p.accent}22, 0 30px 120px rgba(0,0,0,0.8), 0 0 80px ${p.accent}22` }}
-      >
-        <div className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full opacity-40 blur-3xl" style={{ background: p.accent }} />
-        <div className="relative flex-1 overflow-y-auto p-7 sm:p-9">
-          <div className="flex items-center justify-between">
-            <div className="text-[11px] font-semibold tracking-[0.4em]" style={{ color: p.accent }}>
-              {p.kicker}
+    <div className="absolute inset-0 z-40 flex items-center justify-center bg-black/55 px-2 py-2 text-white sm:px-6 sm:py-6"
+      data-project-dossier={id}>
+      <div className="absolute inset-0" onClick={() => closePanel(true)} aria-hidden="true" />
+      <aside role="dialog" aria-modal="true" aria-labelledby="dossier-title"
+        className="relative flex h-full w-full max-w-[1180px] flex-col overflow-hidden rounded-[24px] border border-white/15 bg-[#080e1c]/95 shadow-[0_24px_96px_rgba(0,0,0,0.8)] sm:h-[min(90vh,850px)] sm:rounded-[30px]"
+        style={{ boxShadow: '0 0 0 1px ' + p.accent + '35, 0 26px 100px #000d' }}>
+        <div className="pointer-events-none absolute -right-16 -top-36 h-80 w-80 rounded-full opacity-10 blur-[90px]"
+          style={{ background: p.accent }} />
+        <header className="relative z-10 flex shrink-0 items-center gap-3 border-b border-white/10 bg-black/20 px-5 py-4 sm:px-8">
+          <div className="h-8 w-1 rounded-full" style={{ background: p.accent }} />
+          <div className="min-w-0 flex-1">
+            <div className="truncate text-[10px] font-bold tracking-[0.25em] text-white/40">PROJECT DOSSIER / {id.toUpperCase()}</div>
+            <div className="truncate text-xs font-semibold tracking-wider" style={{ color: p.accent }}>{p.kicker}</div>
+          </div>
+          <div className="hidden shrink-0 items-center gap-2 text-[10px] tracking-widest text-white/45 sm:flex">
+            <span>{String(p.items.length).padStart(2,'0')} HỒ SƠ</span><span className="text-white/20">/</span>
+            <span>LÊ QUỐC KHÁNH</span>
+          </div>
+          <button type="button" onClick={() => closePanel(true)}
+            className="shrink-0 rounded-full border border-white/20 px-4 py-2 text-[11px] tracking-[0.2em] transition-colors hover:border-white/60 hover:bg-white/10"
+            aria-label="Đóng hồ sơ dự án">ESC ✕</button>
+        </header>
+        <div className="relative grid min-h-0 flex-1 grid-cols-1 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
+          <div className="min-h-0 overflow-y-auto border-b border-white/10 px-6 py-6 lg:border-b-0 lg:border-r lg:px-9 lg:py-9">
+            <div className="mb-6 flex items-center justify-between text-[10px] font-bold tracking-[0.25em] text-white/40">
+              <span>OVERVIEW</span><span>CASE FILES / {String(p.items.length).padStart(2,'0')}</span>
             </div>
-            <button onClick={() => closePanel(true)} className="rounded-full border border-white/20 px-3 py-1 text-[11px] tracking-widest text-white/80 transition hover:bg-white/15">
-              ESC ✕
-            </button>
+            <h2 id="dossier-title" className="max-w-[16ch] font-display text-[clamp(2.4rem,4vw,4.3rem)] font-bold leading-[0.98] tracking-tight">{p.title}</h2>
+            <p className="mt-5 max-w-xl text-lg leading-snug text-white/80">{p.subtitle}</p>
+            <div className="mt-6 space-y-3 text-[13px] leading-[1.75] text-white/60">
+              {p.body.map((paragraph,i) => <p key={i}>{paragraph}</p>)}
+            </div>
+            <div className="mt-7 grid grid-cols-3 gap-2 sm:gap-3">
+              {p.stats.map(stat => <div key={stat.k} className="rounded-xl border border-white/10 bg-white/[0.035] px-3 py-4">
+                <div className="font-display text-[clamp(0.92rem,2vw,1.5rem)] font-bold leading-tight" style={{color:p.accent}}>{stat.v}</div>
+                <div className="mt-2 text-[9px] uppercase leading-tight tracking-[0.14em] text-white/45">{stat.k}</div>
+              </div>)}
+            </div>
+            <div className="mt-6 flex flex-wrap gap-2">
+              {p.tags.map(t => <span key={t} className="rounded-full border border-white/15 px-3 py-1.5 text-[10px] tracking-[0.07em] text-white/60">{t}</span>)}
+            </div>
           </div>
-          <h2 className="font-display mt-5 text-5xl font-bold leading-none tracking-tight sm:text-6xl">{p.title}</h2>
-          <p className="mt-4 text-lg leading-snug text-white/85">{p.subtitle}</p>
-          <div className="mt-6 space-y-3 text-[14.5px] leading-relaxed text-white/65">
-            {p.body.map((b, i) => (
-              <p key={i}>{b}</p>
-            ))}
-          </div>
-
-          <div className="mt-7 grid grid-cols-3 gap-3">
-            {p.stats.map((s) => (
-              <div key={s.k} className="rounded-2xl border border-white/10 bg-white/5 p-3.5">
-                <div className="font-display text-2xl font-bold" style={{ color: p.accent }}>
-                  {s.v}
-                </div>
-                <div className="mt-1 text-[10px] uppercase leading-tight tracking-[0.18em] text-white/50">{s.k}</div>
+          <div className="flex min-h-0 flex-col overflow-hidden">
+            <div className="shrink-0 border-b border-white/10 px-5 py-5 sm:px-8">
+              <div className="flex items-center justify-between gap-3">
+                <h3 className="text-xs font-bold tracking-[0.24em] text-white/65">CHỌN DỰ ÁN / BẰNG CHỨNG</h3>
+                <span className="text-[10px] tabular-nums text-white/45">{String(selected+1).padStart(2,'0')} / {String(p.items.length).padStart(2,'0')}</span>
               </div>
-            ))}
-          </div>
-
-          <div className="mt-8 text-[10px] font-semibold tracking-[0.4em] text-white/40">{id === 'beacon' ? 'KÊNH LIÊN HỆ' : 'DỰ ÁN & NĂNG LỰC'}</div>
-          <div className="mt-3 divide-y divide-white/10 rounded-2xl border border-white/10 bg-white/[0.03]">
-            {p.items.map((it, i) => (
-              <div key={it.name} className="flex gap-4 p-4">
-                <div className="font-display w-6 pt-0.5 text-sm font-bold text-white/30">{String(i + 1).padStart(2, '0')}</div>
-                <div className="min-w-0">
-                  <div className="flex flex-wrap items-baseline gap-x-3">
-                    <span className="break-all text-[15px] font-semibold">{it.name}</span>
-                    <span className="text-[10px] uppercase tracking-[0.2em]" style={{ color: p.accent }}>
-                      {it.meta}
-                    </span>
+              <div className="mt-4 flex gap-2 overflow-x-auto pb-2" role="tablist" aria-label="Danh sách dự án">
+                {p.items.map((item,i) => <button key={item.name} type="button" role="tab"
+                    aria-selected={selected === i} onClick={() => setSelected(i)}
+                    className="max-w-[220px] shrink-0 rounded-lg border px-3 py-2.5 text-left text-[11px] font-semibold leading-tight transition-colors"
+                    style={selected === i ? {borderColor:p.accent,backgroundColor:p.accent + '22',color:'#fff'} : {borderColor:'#ffffff24',color:'#ffffff99'}}>
+                    <span className="mr-2 text-[9px] opacity-55">{String(i+1).padStart(2,'0')}</span>{item.name}
+                  </button>)}
+              </div>
+            </div>
+            <div className="min-h-0 flex-1 overflow-y-auto px-5 py-6 sm:px-8 sm:py-8" role="tabpanel">
+              {active && <>
+                <div className="relative flex min-h-[168px] flex-col justify-between overflow-hidden rounded-[20px] border border-white/15 bg-[#0e1529] p-5 sm:min-h-[208px] sm:p-7"
+                  style={{backgroundImage:'linear-gradient(120deg, ' + p.accent + '20 0%, transparent 62%)'}}>
+                  <div className="pointer-events-none absolute -right-6 -bottom-20 h-56 w-56 rounded-full border-[32px] opacity-10" style={{borderColor:p.accent}} />
+                  <div className="relative flex items-center justify-between gap-2 text-[10px] font-bold tracking-[0.25em]">
+                    <span style={{color:p.accent}}>{active.meta}</span><span className="text-white/35">CASE / {String(selected+1).padStart(2,'0')}</span>
                   </div>
-                  <div className="mt-1 text-[13px] leading-snug text-white/55">{it.desc}</div>
+                  <h4 className="relative mt-8 max-w-[20ch] font-display text-[clamp(1.75rem,3vw,3rem)] font-bold leading-tight">{active.name}</h4>
                 </div>
-              </div>
-            ))}
-          </div>
-
-          {id === 'beacon' && (
-            <div className="mt-6 space-y-3">
-              <input
-                value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
-                placeholder="Tên của bạn"
-                className="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-sm outline-none placeholder:text-white/35 focus:border-white/50"
-              />
-              <textarea
-                value={form.msg}
-                onChange={(e) => setForm({ ...form, msg: e.target.value })}
-                placeholder="Bạn đang nghĩ đến sự kiện / sản phẩm gì?"
-                rows={4}
-                className="w-full resize-none rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-sm outline-none placeholder:text-white/35 focus:border-white/50"
-              />
-              <button onClick={send} className="w-full rounded-xl px-5 py-3.5 text-sm font-bold tracking-[0.25em] text-black transition hover:brightness-110" style={{ background: p.accent }}>
-                PHÁT TÍN HIỆU ➜
-              </button>
+                <div className="mt-5 flex flex-wrap items-center gap-3">
+                  <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/[0.04] px-3 py-1.5 text-[10px] font-semibold tracking-wider text-white/70">
+                    <span className="h-1.5 w-1.5 rounded-full" style={{background:p.accent}} />{proofLabel}
+                  </span>
+                  {active.kind && <span className="text-[10px] uppercase tracking-[0.2em] text-white/40">{active.kind}</span>}
+                </div>
+                <p className="mt-5 text-[14px] leading-[1.85] text-white/70">{active.desc}</p>
+                {active.url ? (
+                  <a href={active.url} target="_blank" rel="noopener noreferrer"
+                    className="mt-7 inline-flex min-h-12 w-full items-center justify-center rounded-xl px-5 py-3 text-center text-xs font-bold tracking-[0.16em] text-black transition-opacity hover:opacity-85"
+                    style={{background:p.accent}}>{active.kind === 'contact' ? 'MỞ KÊNH LIÊN HỆ ↗' : 'MỞ BẰNG CHỨNG / SOURCE ↗'}</a>
+                ) : <div className="mt-7 rounded-xl border border-dashed border-white/20 bg-white/[0.025] px-4 py-3 text-xs leading-relaxed text-white/50">
+                  {active.evidence === 'private'
+                    ? 'Mã nguồn hiện chưa được công bố công khai. Cần bản demo hoặc case study được phép chia sẻ.'
+                    : 'Không hiển thị liên kết hoặc media chưa được xác minh là của dự án này.'}
+                </div>}
+              </>}
+              {id === 'beacon' && hasEmail && <div className="mt-7 space-y-3">
+                <input aria-label="Tên người liên hệ" value={form.name} onChange={ev => setForm({...form,name:ev.target.value})}
+                  placeholder="Tên của bạn" className="w-full rounded-xl border border-white/20 bg-white/5 px-4 py-3 text-sm outline-none focus:border-white/50" />
+                <textarea aria-label="Nội dung liên hệ" value={form.msg} onChange={ev => setForm({...form,msg:ev.target.value})}
+                  placeholder="Lời nhắn của bạn" rows={3} className="w-full resize-y rounded-xl border border-white/20 bg-white/5 px-4 py-3 text-sm outline-none focus:border-white/50" />
+                <button type="button" onClick={send} disabled={!form.msg.trim()}
+                  className="w-full rounded-xl px-4 py-3 text-xs font-bold text-black disabled:opacity-40"
+                  style={{background:p.accent}}>SOẠN EMAIL LIÊN HỆ</button>
+              </div>}
+              {p.slotNote && <div className="mt-6 rounded-xl border-l-2 bg-white/[0.025] px-4 py-3 text-[11px] leading-relaxed text-white/55"
+                style={{borderLeftColor:p.accent}}>{p.slotNote}</div>}
+              {p.action && <a href={p.action.url} target="_blank" rel="noopener noreferrer"
+                className="mt-5 inline-block text-xs font-bold tracking-[0.12em] hover:underline" style={{color:p.accent}}>{p.action.label} ↗</a>}
             </div>
-          )}
-
-          {p.slotNote && (
-            <div className="mt-6 rounded-2xl border border-dashed border-white/20 bg-white/[0.03] px-4 py-3 text-[12px] leading-relaxed text-white/65">
-              <span className="mr-2 font-semibold uppercase tracking-[0.2em]" style={{ color: p.accent }}>
-                NEXT PHASE ·
+            <footer className="shrink-0 border-t border-white/10 bg-black/20 px-5 py-3 text-[10px] tracking-[0.12em] text-white/40 sm:px-8">
+              <span className="flex items-center justify-between gap-3">
+                <span>ĐÓNG ĐỂ TIẾP TỤC KHÁM PHÁ</span>
+                <button className="rounded-md border border-white/15 px-3 py-2 text-white/75 hover:bg-white/10" onClick={() => closePanel(true)}>TIẾP TỤC ✕</button>
               </span>
-              {p.slotNote}
-            </div>
-          )}
-
-          {p.action && (
-            <a
-              href={p.action.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-5 flex w-full items-center justify-center rounded-xl px-5 py-3.5 text-xs font-bold tracking-[0.25em] text-black transition hover:brightness-110"
-              style={{ background: p.accent }}
-            >
-              {p.action.label}
-            </a>
-          )}
-
-          <div className="mt-6 flex flex-wrap gap-2">
-            {p.tags.map((t) => (
-              <span key={t} className="rounded-full border border-white/15 px-3 py-1 text-[11px] tracking-wider text-white/70">
-                {t}
-              </span>
-            ))}
+            </footer>
           </div>
-        </div>
-        <div className="relative border-t border-white/10 p-4 sm:p-5">
-          <button onClick={() => closePanel(true)} className="w-full rounded-xl border border-white/20 bg-white/10 py-3 text-xs font-semibold tracking-[0.3em] transition hover:bg-white/20">
-            TIẾP TỤC KHÁM PHÁ
-          </button>
         </div>
       </aside>
     </div>

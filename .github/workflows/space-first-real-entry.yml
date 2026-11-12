@@ -13,6 +13,8 @@ jobs:
     timeout-minutes: 28
     steps:
       - uses: actions/checkout@v4
+      - name: Source/standalone embedded map inventory for portfolio PR
+        run: node scripts/portfolio-module-inventory.mjs
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -31,6 +33,8 @@ jobs:
         run: |
           node --check scripts/sync-space-first-standalone.mjs
           node scripts/sync-space-first-standalone.mjs
+          node scripts/sync-portfolio-standalone.mjs
+          node --test tests/portfolio-source-acceptance.mjs
           node --test tests/space-first-entry-contract.mjs
           node tests/integration-regression.mjs
           node scripts/build-pages.mjs
@@ -48,6 +52,36 @@ jobs:
           node scripts/space-first-browser-test.mjs
       - name: Mobile recovery if spacecraft WebGL/HTML request initially fails
         run: node scripts/space-first-recovery-browser-test.mjs
+      - name: Actual 11 project dossier tabs, close/reopen and no clipping in 3 viewports
+        run: node scripts/portfolio-panel-browser-test.mjs
+      - name: Pin validated portfolio modules in real root and ship standalone PR
+        if: success() && github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'feat/portfolio-source-truth-20261112'
+        run: |
+          set -eu
+          TARGET=feat/portfolio-source-truth-20261112
+          mkdir -p /tmp/portfolio-tested/assets/immersive /tmp/portfolio-tested/tests
+          cp index.html /tmp/portfolio-tested/index.html
+          cp assets/immersive/index.html /tmp/portfolio-tested/assets/immersive/index.html
+          cp tests/integration-original-modules.json /tmp/portfolio-tested/tests/integration-original-modules.json
+          git reset --hard
+          git fetch origin "$TARGET"
+          git checkout -B "$TARGET" "origin/$TARGET"
+          EXPECTED=${{ github.event.pull_request.head.sha }}
+          ACTUAL=$(git rev-parse HEAD)
+          if [ "$ACTUAL" != "$EXPECTED" ]; then
+            echo "SOURCE_HEAD_MOVED: refuse to publish stale standalone against a newer source revision"
+            exit 0
+          fi
+          cp /tmp/portfolio-tested/index.html index.html
+          cp /tmp/portfolio-tested/assets/immersive/index.html assets/immersive/index.html
+          cp /tmp/portfolio-tested/tests/integration-original-modules.json tests/integration-original-modules.json
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html assets/immersive/index.html tests/integration-original-modules.json
+          if ! git diff --cached --quiet; then
+            git commit -m 'build(portfolio): pin source-verified dossier and ship profile HTML [skip ci]'
+            git push origin "HEAD:$TARGET"
+          fi
       - name: Commit only TESTED public HTML into the same draft PR branch
         if: success() && github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'fix/space-first-real-readiness-entry-20261112'
         run: |
@@ -77,4 +111,5 @@ jobs:
           path: |
             browser-evidence/entry/
             browser-evidence/entry-recovery/
+            browser-evidence/portfolio/
           if-no-files-found: warn
