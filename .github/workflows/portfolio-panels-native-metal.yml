@@ -1,0 +1,46 @@
+name: Portfolio 3 viewport visual acceptance on real Metal after source-truth sync
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [feat/portfolio-source-truth-20261112]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  metal-source-visual:
+    runs-on: macos-15
+    timeout-minutes: 32
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: source/package-lock.json
+      - run: npm ci --prefix source
+      - run: npm install --prefix source --no-save --package-lock=false playwright@1.56.1
+      - run: cd source && npx playwright install chromium
+      - name: Verify current source and actual original 3D visuals
+        run: |
+          node scripts/sync-portfolio-standalone.mjs
+          node --test tests/portfolio-source-acceptance.mjs
+          node tests/integration-regression.mjs
+          node scripts/build-pages.mjs
+          cmp -s index.html dist-pages/index.html
+      - name: Visual screenshots, 12 dossier sections and real taps
+        env:
+          PORTFOLIO_BACKEND: metal
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 --directory dist-pages >/tmp/portfolio-dossier-metal.log 2>&1 &
+          for n in {1..80}; do
+            if curl -fsS -o /dev/null http://127.0.0.1:4173/; then break; fi
+            sleep 1
+          done
+          node scripts/portfolio-panel-browser-test.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: portfolio-actual-metal-3viewport-panel-captures
+          path: browser-evidence/portfolio/
+          if-no-files-found: warn

@@ -1,0 +1,16 @@
+name: Portfolio real-source and embedded-map audit
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [feat/portfolio-source-truth-20261112]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  inventory:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - run: node scripts/portfolio-module-inventory.mjs

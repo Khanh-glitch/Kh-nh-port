@@ -56,6 +56,11 @@ export function RealityHost() {
   // No shaders, lights, geometry, postprocessing or rendering state change.
   const hexSkipShaderLogs = typeof window !== 'undefined' &&
     new URLSearchParams(window.location.search).get('hexSkipShaderLogs') === '1'
+  // DIAGNOSTIC ONLY: isolate background shader/texture preparation cost.
+  // Default remains exact source. Never ship this ablation as a product fix:
+  // first real HEX activation needs the original precompiled resources.
+  const hexPrewarmIsolatedOff = typeof window !== 'undefined' &&
+    new URLSearchParams(window.location.search).get('hexPrewarmIsolation') === 'off'
   useEffect(()=>{
     if(!hexSkipShaderLogs)return
     const original=gl.debug.checkShaderErrors
@@ -925,7 +930,8 @@ export function RealityHost() {
     S.warmHealthyPaints = shaderHealthy ? S.warmHealthyPaints + 1 : 0
     const warmOpportunity = S.warmHealthyPaints >= 2
     if (warmOpportunity) S.warmHealthyPaints = 0
-    if (S.warmPass < 2 && (st.phase === 'idle' || st.phase === 'ignite') && warmOpportunity) {
+    if (!hexPrewarmIsolatedOff && S.warmPass < 2 &&
+        (st.phase === 'idle' || st.phase === 'ignite') && warmOpportunity) {
       // Interleave critical program compilation and texture uploads. An
       // all-shader-first queue can leave every large UEH texture cold when a
       // visitor activates the piano after only a few seconds.
@@ -1032,7 +1038,8 @@ export function RealityHost() {
       }
     }
         ;(window as unknown as {__orbitaHexShaderPrep?: unknown}).__orbitaHexShaderPrep = {
-      status: S.warmPass === 2 ? 'complete-or-interrupted' : S.warmCompilePending ? 'compiling' : 'warming',
+      status: hexPrewarmIsolatedOff ? 'diagnostic-prewarm-disabled' :
+        S.warmPass === 2 ? 'complete-or-interrupted' : S.warmCompilePending ? 'compiling' : 'warming',
       totalShaders: S.warmShaderTotal,
       totalTextures: S.warmTextureTotal,
       compiledShaders: S.warmShaderDone,
