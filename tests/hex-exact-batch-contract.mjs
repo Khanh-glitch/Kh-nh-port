@@ -45,6 +45,14 @@ test('bounded async shader concurrency is opt-in and cannot affect source GLSL',
   assert.match(src,/hexCooperativeLinear &&/)
   assert.match(src,/const originalMaterial = group\[0\]\.material as THREE\.Material/)
 })
+test('skip GL diagnostics changes no GLSL and is experimental only',()=>{
+  assert.match(src,/hexSkipDriverShaderLogs/)
+  assert.match(src,/get\('hexSkipDriverShaderLogs'\) === '1'/)
+  assert.match(src,/if\(!hexSkipDriverShaderLogs\)return/)
+  assert.match(src,/gl\.debug\.checkShaderErrors=false/)
+  assert.match(src,/gl\.debug\.checkShaderErrors=previous/)
+  assert.match(src,/sourceShaderUnchanged:true/)
+})
 test('full original PBR, shadow, foliage and HEX sweep are intact',()=>{
   assert.match(src,/<UEHWorld \/>/)
   assert.match(src,/<HexLattice \/>/)
