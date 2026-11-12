@@ -85,18 +85,111 @@ for(const [key,value] of Object.entries(old))
 assert.deepEqual(Object.keys(original.map),Object.keys(old),'Island module map keys changed')
 html=html.slice(0,original.start+islandTag.length)+
   JSON.stringify(original.whole)+html.slice(original.end)
-const uiStyle='<style id="orbita-project-dossier-css">'+
- '[data-project-dossier]{position:absolute;inset:0;z-index:40;display:flex;align-items:center;justify-content:center}'+
- '[data-project-dossier] aside{position:relative;display:flex;flex-direction:column;min-height:0;width:100%;max-width:1180px;overflow:hidden}'+
- '[data-project-dossier] [role=tablist]{display:flex;gap:8px;overflow-x:auto}'+
- '[data-project-dossier] [role=tab]{flex-shrink:0}'+
- '[data-project-dossier] [role=tabpanel]{min-height:0;overflow-y:auto}'+
- '@media(min-width:1024px){[data-project-dossier] aside>div:nth-child(3){display:grid;grid-template-columns:minmax(0,.95fr) minmax(0,1.05fr);min-height:0;flex:1}'+
- '[data-project-dossier] aside>div:nth-child(3)>div:first-child{border-right:1px solid #ffffff1a}}'+
- '@media(max-width:1023px){[data-project-dossier] aside>div:nth-child(3){display:flex;flex-direction:column;min-height:0;overflow-y:auto;flex:1}'+
- '[data-project-dossier] aside>div:nth-child(3)>div{min-height:auto;overflow-y:visible}'+
- '[data-project-dossier] [role=tabpanel]{overflow:visible}}'+
- '</style>'
+const uiStyle=String.raw\`<style id="orbita-project-dossier-css">
+[data-project-dossier]{
+ position:absolute;inset:0;z-index:40;display:flex;align-items:center;
+ justify-content:center;padding:8px;color:#fff;background:rgba(0,0,0,.55);
+ font-family:Inter,'Segoe UI',system-ui,sans-serif;box-sizing:border-box
+}
+[data-project-dossier] *,[data-project-dossier] *::before,
+[data-project-dossier] *::after{box-sizing:border-box}
+[data-project-dossier] aside{
+ position:relative;display:flex;flex-direction:column;min-height:0;
+ height:100%;width:100%;max-width:1180px;overflow:hidden;
+ border-radius:24px;border:1px solid #ffffff26;
+ background:rgba(8,14,28,.97);box-shadow:0 26px 100px #000d
+}
+[data-project-dossier] aside>header{
+ position:relative;z-index:1;display:flex;align-items:center;gap:12px;
+ flex-shrink:0;border-bottom:1px solid #ffffff1a;
+ background:rgba(0,0,0,.20);padding:16px 20px
+}
+[data-project-dossier] button,[data-project-dossier] a{
+ cursor:pointer;text-decoration:none
+}
+[data-project-dossier] aside>header button{
+ margin-left:auto;flex-shrink:0;border:1px solid #ffffff30;
+ border-radius:999px;background:transparent;color:#fff;
+ padding:8px 16px;font-size:11px;letter-spacing:.12em
+}
+[data-project-dossier] aside>div:nth-child(3){
+ min-height:0;flex:1;overflow:hidden
+}
+[data-project-dossier] aside>div:nth-child(3)>div{
+ min-width:0;min-height:0;padding:28px 32px;overflow-y:auto
+}
+[data-project-dossier] aside h2{
+ font-family:'Space Grotesk','Segoe UI',system-ui,sans-serif;
+ font-weight:800;font-size:clamp(36px,4.1vw,68px);
+ letter-spacing:-.035em;line-height:1.03;margin:24px 0 0
+}
+[data-project-dossier] aside h2+p{font-size:18px;line-height:1.4;color:#ffffffd5;margin:20px 0}
+[data-project-dossier] aside h3{
+ font-size:12px;font-weight:800;letter-spacing:.18em
+}
+[data-project-dossier] aside h4{
+ font-family:'Space Grotesk','Segoe UI',system-ui,sans-serif;
+ font-weight:800;font-size:clamp(25px,3vw,48px);
+ line-height:1.12;letter-spacing:-.02em
+}
+[data-project-dossier] aside p{margin:0}
+[data-project-dossier] [role=tablist]{
+ display:flex;gap:8px;overflow-x:auto;max-width:100%;padding-bottom:8px
+}
+[data-project-dossier] [role=tab]{
+ flex-shrink:0;max-width:220px;border:1px solid #ffffff24;
+ border-radius:9px;background:rgba(255,255,255,.025);
+ padding:10px 12px;text-align:left;color:#ffffffac;
+ font-weight:600;white-space:normal;transition:background .16s,border .16s
+}
+[data-project-dossier] [role=tab][aria-selected=true]{
+ background:rgba(255,255,255,.07);color:#fff
+}
+[data-project-dossier] [role=tabpanel]{
+ min-height:0;overflow-y:auto;min-width:0
+}
+[data-project-dossier] a[href]{
+ display:inline-flex;align-items:center;justify-content:center;
+ border-radius:12px;min-height:44px;padding:12px 18px;
+}
+[data-project-dossier] a[href]:focus-visible,
+[data-project-dossier] button:focus-visible{
+ outline:2px solid white;outline-offset:2px
+}
+[data-project-dossier] aside footer{
+ flex-shrink:0;border-top:1px solid #ffffff1c;
+ background:rgba(0,0,0,.20);padding:14px 24px
+}
+[data-project-dossier] aside footer button{
+ border:1px solid #ffffff2c;border-radius:8px;
+ padding:8px 12px;background:transparent;color:#fff
+}
+@media(min-width:1024px){
+ [data-project-dossier]{padding:24px}
+ [data-project-dossier] aside{height:min(90vh,850px);border-radius:30px}
+ [data-project-dossier] aside>div:nth-child(3){
+  display:grid;grid-template-columns:minmax(0,.95fr) minmax(0,1.05fr)
+ }
+ [data-project-dossier] aside>div:nth-child(3)>div:first-child{
+  border-right:1px solid #ffffff1a
+ }
+}
+@media(max-width:1023px){
+ [data-project-dossier] aside>div:nth-child(3){
+  display:flex;flex-direction:column;overflow-y:auto;overscroll-behavior:contain
+ }
+ [data-project-dossier] aside>div:nth-child(3)>div{
+  min-height:auto;flex-shrink:0;overflow-y:visible;padding:22px
+ }
+ [data-project-dossier] aside>div:nth-child(3)>div:first-child{
+  border-bottom:1px solid #ffffff1a
+ }
+ [data-project-dossier] [role=tabpanel]{overflow:visible}
+}
+@media(prefers-reduced-motion:reduce){
+ [data-project-dossier] *{transition:none!important;animation:none!important}
+}
+</style>\`
 if(!html.includes('id="orbita-project-dossier-css"')){
  const h=html.match(/<head[^>]*>/i)
  assert(h,'Root HTML head missing')
