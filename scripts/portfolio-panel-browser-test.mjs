@@ -68,22 +68,30 @@ try{
     if(native && ['products','vng','robot','cinema','rubik','beacon'].includes(id)&&
        suite.tag!=='wide')
       await page.screenshot({path:'browser-evidence/portfolio/'+suite.tag+'-'+id+'.png',timeout:45000})
+    // Native CDP pointer click rather than Playwright's actionability wait:
+    // the 3D scene can keep the browser busy even when the button is visible.
+    // This still tests the real DOM pointer/click path, NOT a state mutation.
     try {
-      if(native)
-        await root.getByRole('button',{name:'Đóng hồ sơ dự án'}).click({timeout:10000})
-      else
-        await root.getByRole('button',{name:'Đóng hồ sơ dự án'}).evaluate(button=>button.click())
+      const button=await root.getByRole('button',{name:'Đóng hồ sơ dự án'}).evaluate(el=>{
+        const rect=el.getBoundingClientRect()
+        const x=rect.x+rect.width/2, y=rect.y+rect.height/2
+        const hit=document.elementFromPoint(x,y)
+        return {x,y,hitIsButton:hit===el||el.contains(hit),w:rect.width,h:rect.height}
+      },{timeout:7000})
+      if(!button.hitIsButton||button.w<16||button.h<16)
+        throw Error('Close button not directly hit-testable: '+JSON.stringify(button))
+      await page.mouse.click(button.x,button.y,{delay:45})
     } catch(error) {
       const state=await page.evaluate(id=>{
         const modal=document.querySelector('[data-project-dossier="'+id+'"] aside')
         const button=modal?.querySelector('header button')
-        const css=button?getComputedStyle(button):null
         const box=button?.getBoundingClientRect()
-        return {id,box:box?.toJSON(),display:css?.display,visibility:css?.visibility,
-          opacity:css?.opacity,elementTop:box?document.elementFromPoint(box.x+box.width/2,box.y+box.height/2)?.tagName:null}
+        return {id,box:box?.toJSON(),
+          hit:box?document.elementFromPoint(box.x+box.width/2,box.y+box.height/2)?.outerHTML?.slice(0,200):null,
+          panel:document.querySelector('[data-project-dossier]')?.getAttribute('data-project-dossier')??null}
       },id).catch(e=>({id,error:String(e)}))
-      console.error('PORTFOLIO_CLICK_FAILED '+JSON.stringify({suite:suite.tag,id,state,error:String(error)}))
-      await page.screenshot({path:'browser-evidence/portfolio/'+suite.tag+'-'+id+'-CLICK-FAILED.png',timeout:30000}).catch(()=>{})
+      console.error('PORTFOLIO_POINTER_CLOSE_FAILED '+JSON.stringify({suite:suite.tag,id,state,error:String(error)}))
+      await page.screenshot({path:'browser-evidence/portfolio/'+suite.tag+'-'+id+'-POINTER-FAILED.png',timeout:30000}).catch(()=>{})
       throw error
     }
     await root.waitFor({state:'detached',timeout:10000})
