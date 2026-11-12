@@ -227,7 +227,10 @@ export function RealityHost() {
             geometry.setAttribute('aRWGrowDelta',new THREE.BufferAttribute(growDeltas,3))
             geometry.computeBoundingSphere()
             geometry.computeBoundingBox()
-            const originalMaterial = group[0].material
+            // All candidate meshes were explicitly rejected above if their
+            // material is an array. Narrow the TypeScript union only; runtime
+            // material, shader callbacks and rendered pixels stay untouched.
+            const originalMaterial = group[0].material as THREE.Material
             const combinedMaterial = originalMaterial.clone()
             const originalKey = originalMaterial.customProgramCacheKey.bind(originalMaterial)
             combinedMaterial.customProgramCacheKey = () =>
