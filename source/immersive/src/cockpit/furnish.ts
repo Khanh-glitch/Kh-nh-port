@@ -54,20 +54,46 @@ interface PropSpec {
  * the sides, small props on the shelves. Nothing overlaps a screen.
  */
 const PROPS: Record<PropId, PropSpec> = {
-  // BEHIND the primary glass (z = -2.02), never in front of it. The shell is
-  // the mounting for the portfolio screen, so it must not occlude it.
-  display: { path: 'core/display.glb', height: 0.45, position: [0, 0.02, -2.30], tint: 0x2a3a4e },
-  'work-console': { path: 'core/work-console.glb', height: 0.38, position: [-0.62, -1.02, -1.72], rotation: [0, 0.42, 0], tint: 0x2e3d52 },
+  /* ── behind the glass: the screen shell ───────────────────────────────────
+     z = -2.30 puts it behind the primary glass at z = -2.02. It is EXPECTED to
+     overlap the primary screen on screen: it is the bezel/mount for it, and the
+     glass is drawn in front. Every other prop is kept clear of the screens —
+     see the projection check in docs/immersive/COCKPIT_3D_20261112.md. */
+  display: { path: 'core/display.glb', height: 0.54, position: [0, 0.04, -2.30], tint: 0x2a3a4e },
+
+  /* ── on the dash, left of the selector keys ───────────────────────────────
+     The keys occupy x 696..904 px and the primary display starts at y 524 px.
+     This console lands at x 252..500 px, below 560 px, so it is fully visible
+     and clear of both. It was previously tucked under the dash at y ~820 px,
+     i.e. off the bottom of the frame.
+
+     NOTE ON HEIGHT: the cockpit floor is at y = -1.36 and, at the camera's 58°
+     fov, a floor-standing object's base projects below the bottom of the frame.
+     So nothing here stands on the floor. Everything is bolted to the dash /
+     side walls at eye level, which is what makes it read as a cockpit instead
+     of as furniture floating in a void. */
+  'work-console': { path: 'core/work-console.glb', height: 0.24, position: [-1.03, -0.60, -1.40], rotation: [0, 0.62, 0], tint: 0x2e3d52 },
+
+  /* ── right-hand equipment bay ─────────────────────────────────────────────
+     Projected with the real camera maths: the region x > 1140 px at
+     z ~ 1.3..1.9 m is empty, so a low shelf with the speaker on it reads from
+     the pilot's seat without touching a screen. */
+  'bookcase-low': { path: 'core/bookcase-low.glb', height: 0.40, position: [0.92, -0.20, -1.75], rotation: [0, -1.15, 0], tint: 0x2b3849 },
+  'speaker-small': { path: 'music/speaker-small.glb', height: 0.22, position: [0.92, 0.20, -1.75], rotation: [0, -1.15, 0], tint: 0x2d3a4a },
+  'plant-small': { path: 'core/plant-small.glb', height: 0.22, position: [1.20, -0.76, -1.50], tint: 0x2f4a45 },
+
+  /* ── up on the canopy rail, right of frame ────────────────────────────────
+     Kept because its measured box lands at x 1137..1309, y 403..531: it is
+     actually in shot, unlike the old position which crossed the dash. */
+  spotlight: { path: 'event/spotlight.glb', height: 0.30, position: [1.10, 0.48, -1.55], rotation: [0, -1.0, 0], tint: 0x3a4658 },
+
+  /* ── the seat. Directly below the camera, which is why it belongs to the
+     "you are sitting in this" read even though it is not in frame. ───────── */
   chair: { path: 'core/chair.glb', height: 0.46, position: [0, -1.34, -0.92], rotation: [0, Math.PI, 0], tint: 0x25313f },
-  'bookcase-low': { path: 'core/bookcase-low.glb', height: 0.40, position: [-1.28, -1.32, -1.30], rotation: [0, 0.9, 0], tint: 0x2b3849 },
-  'speaker-small': { path: 'music/speaker-small.glb', height: 0.30, position: [0.92, -1.04, -1.80], rotation: [0, -0.5, 0], tint: 0x2d3a4a },
-  // On TOP of the low bookcase (its deck is y = -0.92, x -1.48..-1.08,
-  // z -1.42..-1.18) and clear of the shelf body itself.
-  books: { path: 'research/books.glb', height: 0.10, position: [-1.26, -0.92, -1.30], rotation: [0, 0.7, 0], tint: 0x3a4a63 },
-  'plant-small': { path: 'core/plant-small.glb', height: 0.28, position: [1.20, -1.32, -1.36], tint: 0x2f4a45 },
-  // Up on the canopy rail at x ~ 1.05 and aimed inward. It used to sit at
-  // x 0.72 in front of the selector keys; the measured box crossed the dash.
-  spotlight: { path: 'event/spotlight.glb', height: 0.30, position: [0.98, -0.20, -1.86], rotation: [0, -1.0, 0], tint: 0x3a4658 },
+
+  /* On the bookcase deck. The deck top lands at y = +0.20 m once the shelf is
+     wall-mounted, so the books sit there, not on the old floor-height value. */
+  books: { path: 'research/books.glb', height: 0.09, position: [1.10, 0.24, -1.25], rotation: [0, 0.4, 0], tint: 0x3a4a63 },
 };
 
 export const PROP_BASE = 'assets/3d/room-showcase/';
