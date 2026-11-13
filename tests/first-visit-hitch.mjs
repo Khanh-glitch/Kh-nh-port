@@ -176,6 +176,6 @@ assert.ok(readyTest.includes('uploadedProxies >= readiness.totalProxies') && rea
 const experienceProbe = read('source/src/scene/Experience.tsx')
 const integratedRoot = JSON.parse(read('index.html').split('<script id="orbita-embedded-map" type="application/json">')[1].split('</script>')[0])
 assert.ok(experienceProbe.includes("get('colossusPostProbe') === 'off'") &&
-  experienceProbe.includes('{!postProbeOff && <Post low={low} filmPasses={!concessions.dropFilmPasses}'), 'postprocessing A/B only changes opt-in diagnostic, original production Post remains')
+  experienceProbe.includes('<Post low={low} portalOnly={postProbeOff} filmPasses={!concessions.dropFilmPasses}'), 'postprocessing A/B only changes opt-in diagnostic, original production Post remains')
 assert.ok(integratedRoot['orbita/scene/Experience'], 'full quality Experience module remains embedded in standalone runtime')
 assert.ok(read('scripts/sync-colossus-standalone.mjs').includes("'scene/Experience'"), 'diagnostic Experience source synchronized into ACTUAL deployed standalone HTML')

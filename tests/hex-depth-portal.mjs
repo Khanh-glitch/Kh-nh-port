@@ -9,6 +9,8 @@ const embedded = Buffer.from(map['orbita/scene/Experience'].split(',')[1], 'base
 for (const text of [source, embedded]) {
   assert.match(text, /class HexDepthPortalEffect extends Effect/)
   assert.match(text, /EffectAttribute\.DEPTH/)
+  assert.match(text, /portalOnly(?:=\{|: )postProbeOff/)
+  assert.doesNotMatch(text, /occlusion\.update\(w, camera, scene/)
   assert.match(text, /BlendFunction\.SRC/)
   assert.match(text, /portalProjectionInverse/)
   assert.match(text, /portalCameraWorld/)

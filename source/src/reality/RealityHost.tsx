@@ -1122,7 +1122,7 @@ export function RealityHost() {
         rt.suppressAutoPlay = true
         music.start(st.track!, 0.35, 0.08)
         S.musicOn = true
-        useReality.getState().set({ demo: true })
+        useReality.getState().set({ demo: music.demo })
       }
       if (st.phase === 'retract') {
         S.u = Math.max(0.0001, Math.pow(rt.front / FRONT_MAX, 1 / 1.5))
@@ -1141,7 +1141,7 @@ export function RealityHost() {
       reel.use(st.track)
       music.start(st.track, 0.25, 0.85)
       S.musicOn = true
-      useReality.getState().set({ demo: true })
+      useReality.getState().set({ demo: music.demo })
       toast(`Chuyển sang · ${TRACKS[st.track].title}`, 2400)
     }
 

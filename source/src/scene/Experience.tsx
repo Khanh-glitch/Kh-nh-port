@@ -13,7 +13,6 @@ import { player } from '../world'
 import { SPAWN, EYE } from '../layout'
 import { highGuard } from '../highGuard'
 import { perfLadder, RUNG_CONCESSIONS, type PerfRung } from '../perfLadder'
-import { DomOcclusion } from './domOcclusion'
 import { RealityHost } from '../reality/RealityHost'
 import { PANELS, type PanelContent, type PanelId } from '../content'
 import { closePanel } from './Player'
@@ -105,7 +104,7 @@ class HexDepthPortalEffect extends Effect {
   }
 }
 
-function Post({ low, filmPasses = true, bloomLevels }: { low: boolean; filmPasses?: boolean; bloomLevels?: number }) {
+function Post({ low, filmPasses = true, bloomLevels, portalOnly = false }: { low: boolean; filmPasses?: boolean; bloomLevels?: number; portalOnly?: boolean }) {
   const { camera } = useThree()
   const phase = useReality(s => s.phase)
   const track = useReality(s => s.track)
@@ -113,13 +112,14 @@ function Post({ low, filmPasses = true, bloomLevels }: { low: boolean; filmPasse
   useEffect(() => () => portal.dispose(), [portal])
   const showPortal = track === 'ngay-mai' && (phase === 'sweep' || phase === 'active')
   const ca = useMemo(() => new THREE.Vector2(0.0007, 0.0009), [])
+  if (portalOnly && !showPortal) return null
   return (
-    <EffectComposer multisampling={low ? 0 : 4} enableNormalPass={false}>
-      <Bloom intensity={low ? 0.9 : 1.25} luminanceThreshold={0.82} luminanceSmoothing={0.25} mipmapBlur radius={0.78} levels={bloomLevels ?? (low ? 5 : 8)} />
-      <ChromaticAberration offset={ca} radialModulation modulationOffset={0.35} blendFunction={low ? BlendFunction.SKIP : BlendFunction.NORMAL} />
-      {filmPasses && <Noise opacity={0.035} blendFunction={BlendFunction.SOFT_LIGHT} />}
-      {filmPasses && <Vignette offset={0.25} darkness={0.55} />}
-      <ToneMapping mode={ToneMappingMode.ACES_FILMIC} />
+    <EffectComposer multisampling={portalOnly || low ? 0 : 4} enableNormalPass={false}>
+      {!portalOnly && <Bloom intensity={low ? 0.9 : 1.25} luminanceThreshold={0.82} luminanceSmoothing={0.25} mipmapBlur radius={0.78} levels={bloomLevels ?? (low ? 5 : 8)} />}
+      {!portalOnly && <ChromaticAberration offset={ca} radialModulation modulationOffset={0.35} blendFunction={low ? BlendFunction.SKIP : BlendFunction.NORMAL} />}
+      {!portalOnly && filmPasses && <Noise opacity={0.035} blendFunction={BlendFunction.SOFT_LIGHT} />}
+      {!portalOnly && filmPasses && <Vignette offset={0.25} darkness={0.55} />}
+      {!portalOnly && <ToneMapping mode={ToneMappingMode.ACES_FILMIC} />}
       {showPortal && <primitive object={portal} />}
     </EffectComposer>
   )
@@ -927,9 +927,7 @@ function HexLocalVideo() {
 export function HexVideoLayer() {
   const phase = useReality((s) => s.phase)
   const track = useReality((s) => s.track)
-  const { gl, camera, scene } = useThree()
-  const occlusion = useMemo(() => new DomOcclusion(), [])
-  const worldCorners = useMemo(() => Array.from({ length: 4 }, () => new THREE.Vector3()), [])
+  const { gl, camera } = useThree()
   const dom = useMemo(() => {
     const d = document.createElement('div')
     Object.assign(d.style, {
@@ -959,16 +957,13 @@ export function HexVideoLayer() {
     const parent = gl.domElement.parentElement
     if (!parent || !wanted) return
     // Controls remain clickable if the browser blocks unmuted autoplay.
-    const fallback = new URLSearchParams(window.location.search).get('colossusPostProbe') === 'off'
     const canvas = gl.domElement
     const previous = { position: canvas.style.position, zIndex: canvas.style.zIndex }
     dom.d.style.pointerEvents = 'auto'
     dom.h.style.pointerEvents = 'auto'
-    if (!fallback) {
-      dom.d.style.zIndex = '0'
-      canvas.style.position = 'relative'
-      canvas.style.zIndex = '1'
-    }
+    dom.d.style.zIndex = '0'
+    canvas.style.position = 'relative'
+    canvas.style.zIndex = '1'
     parent.appendChild(dom.d)
     return () => {
       dom.d.remove()
@@ -1019,7 +1014,6 @@ export function HexVideoLayer() {
       const v = corners[i].set(local[i][0], local[i][1], local[i][2])
       const cam = v.clone().applyMatrix4(camera.matrixWorldInverse).z
       if (cam > -0.2) behind = true
-      worldCorners[i].copy(v)
       v.project(camera)
       pts.push(((v.x + 1) / 2) * cw, ((1 - v.y) / 2) * ch)
     }
@@ -1056,8 +1050,6 @@ export function HexVideoLayer() {
     w.style.visibility = 'visible'
     w.style.opacity = '1'
     w.style.transform = `matrix3d(${m.join(',')})`
-    if (new URLSearchParams(window.location.search).get('colossusPostProbe') === 'off')
-      occlusion.update(w, camera, scene, worldCorners, performance.now() / 1000)
   })
   return null
 }
@@ -1194,7 +1186,7 @@ export function Experience() {
         <HexVideoLayer />
         <HexStageVideoLink />
         <HexPlayerControls />
-        {!postProbeOff && <Post low={low} filmPasses={!concessions.dropFilmPasses} bloomLevels={performanceMode ? concessions.bloomLevels : undefined} />}
+        <Post low={low} portalOnly={postProbeOff} filmPasses={!concessions.dropFilmPasses} bloomLevels={performanceMode ? concessions.bloomLevels : undefined} />
         <IslandFirstPaintGate />
       </Suspense>
     </Canvas>

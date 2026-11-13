@@ -31,7 +31,7 @@ After edits, run `node scripts/sync-portfolio-standalone.mjs` followed by
   `a017fba112566609d36145ea95eaa77f6f0fb846ff8f962597dc447b4432458e`).
   Playback seeks to 114 seconds and ends with the file; it is served from the
   same origin instead of the Drive viewer. The original Drive link is retained.
-  A browser can still block autoplay; the labelled demo is the fallback.
+  A browser can still block autoplay; a later gesture retries the supplied audio, without replacing it with a synthesized track.
   No sharing permissions were modified.
 * The official YouTube player for Nếu Ngày Mai starts at 82 seconds and owns
   its audio; autoplay and embedding are subject to browser/YouTube policy. The
@@ -169,9 +169,9 @@ postprocessing effect reconstructs each pixel's world position from the scene's
 actual depth buffer and cuts the canvas alpha only where that pixel belongs to
 the campus display plane. Opaque geometry and alpha-tested holes therefore
 occlude the iframe at framebuffer resolution without sampling the cross-origin
-video or using the 6x4 raycast mask. The old approximation is retained only
-for the explicit `colossusPostProbe=off` diagnostic, where postprocessing is
-deliberately absent. The fallback play/open button sits above the canvas, and
+video or using the 6x4 raycast mask. The `colossusPostProbe=off` diagnostic
+omits the cosmetic passes but retains a minimal depth portal while the video is
+active, rather than falling back to an approximate raycast mask. The fallback play/open button sits above the canvas, and
 "Điều khiển video" temporarily allows pointer input to the iframe; Escape
 restores the game canvas.
 
