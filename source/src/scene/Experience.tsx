@@ -1,4 +1,4 @@
-import { Suspense, useEffect, useLayoutEffect, useMemo, useRef, useSyncExternalStore } from 'react'
+import { Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { Bloom, ChromaticAberration, EffectComposer, Noise, ToneMapping, Vignette } from '@react-three/postprocessing'
 import { BlendFunction, ToneMappingMode } from 'postprocessing'
@@ -14,6 +14,15 @@ import { player } from '../world'
 import { SPAWN, EYE } from '../layout'
 import { highGuard } from '../highGuard'
 import { RealityHost } from '../reality/RealityHost'
+import { PANELS, type PanelContent, type PanelId } from '../content'
+import { closePanel } from './Player'
+import { Hit } from './Hit'
+import { openExternal, NGAY_MAI_CUE, NGAY_MAI_VIDEO_ID, HEX_MAIN_STAGE_VIDEO_SRC } from '../layout'
+import { loadYouTubeAPI, type YTPlayer } from '../stage/showState'
+import { useReality } from '../reality/state'
+import { CanvasTexture } from 'three'
+import { FONT } from '../gfx'
+import { EXHIBITS } from '../layout'
 
 // The shadow map edge is 2048 for `high` and `low`. Only the `performance` tier
 // can lower it, and only after the ladder proved the machine cannot hold the
@@ -297,8 +306,684 @@ function HighGateMeter() {
   return null
 }
 
+
+// ===========================================================================
+// Nội dung gộp từ scene/FloatingPanel.tsx và stage/VideoSurface.tsx.
+//
+// Cả hai nằm trong module này thay vì file riêng vì một lý do hạ tầng, không
+// phải thẩm mỹ: bản standalone ở gốc repo chạy bằng import map nhúng với BỘ
+// MODULE CỐ ĐỊNH (64 slot). Một file mới không có slot thì vite build được mà
+// publish thì không — `sync-standalone-from-source.mjs` ném
+// "missing embedded module". Thêm slot là thay đổi hạ tầng publish; gộp vào
+// module đã có slot là thay đổi cục bộ.
+// ===========================================================================
+/**
+ * A panel that floats in the world instead of covering it.
+ *
+ * The island already had one of these — the Main Stage's `InfoVeil` — and it is
+ * the reference for this file: a plane a few metres in front of the visitor,
+ * revealed by a shader wipe, no backdrop, the scene still visible behind and
+ * around it. What it did NOT have was the rest: every exhibit's panel was a
+ * full-height DOM card at `z-40` that took the whole viewport, dimmed nothing,
+ * but blocked the canvas underneath and stopped the visitor moving.
+ *
+ * WHY A CANVAS TEXTURE AND NOT A DOM CARD MOVED INTO 3D
+ *
+ * The island is a walk-around scene: the thing that makes a panel feel present
+ * is that it lives at a point in space, gets occluded, is readable from an
+ * angle, and does not follow the camera. A DOM element can only do that if it is
+ * reprojected every frame through a CSS homography, and then it inherits the
+ * compositing cost the stage's video already pays for — plus it cannot be
+ * occluded by a 3D object.
+ *
+ * The text is drawn once per open into a 1024-px canvas and uploaded once. That
+ * is one draw call and one texture for the whole card, and because it is a real
+ * mesh it sits in the scene graph like everything else.
+ *
+ * Layout is deliberately conservative: the shipped build carries a pre-built
+ * Tailwind subset and the DOM fallback is still there, so nothing here depends
+ * on a utility class existing.
+ */
+
+const PANEL_W = 1024
+const PANEL_H = 1280
+/** world size: 1.55 m wide reads comfortably at 2.4 m from the eye */
+const WORLD_W = 1.55
+const WORLD_H = (WORLD_W * PANEL_H) / PANEL_W
+const DISTANCE = 2.4
+
+function drawPanel(ctx: CanvasRenderingContext2D, p: PanelContent, w: number, h: number) {
+  ctx.clearRect(0, 0, w, h)
+  // Glass, not a card: the fill fades out at every edge so the panel has no
+  // hard rectangle against the sky. This is why the stage's veil reads as
+  // "floating" and a bordered div never does.
+  const edge = ctx.createLinearGradient(0, 0, w, 0)
+  edge.addColorStop(0, 'rgba(6,9,20,0)')
+  edge.addColorStop(0.07, 'rgba(6,9,20,0.78)')
+  edge.addColorStop(0.93, 'rgba(6,9,20,0.78)')
+  edge.addColorStop(1, 'rgba(6,9,20,0)')
+  // Alpha mask built as its own gradient. The stops must go from transparent to
+  // OPAQUE to transparent: `destination-in` multiplies the canvas alpha by the
+  // source alpha, so an alpha-0 stop at the top erases the whole panel there.
+  // (An earlier version of this drew the vertical fade as a combined alpha+colour
+  // gradient with OPAQUE stops at 5% and 95%, which is why only the top of the
+  // card survived in the first render.)
+  ctx.fillStyle = edge
+  ctx.fillRect(0, 0, w, h)
+  const fade = ctx.createLinearGradient(0, 0, 0, h)
+  fade.addColorStop(0, 'rgba(0,0,0,0)')
+  fade.addColorStop(0.045, 'rgba(0,0,0,1)')
+  fade.addColorStop(0.955, 'rgba(0,0,0,1)')
+  fade.addColorStop(1, 'rgba(0,0,0,0)')
+  ctx.globalCompositeOperation = 'destination-in'
+  ctx.fillStyle = fade
+  ctx.fillRect(0, 0, w, h)
+  ctx.globalCompositeOperation = 'source-over'
+
+  const L = 78
+  const R = w - 78
+  const A = p.accent
+
+  // accent bar + kicker
+  ctx.fillStyle = A
+  ctx.fillRect(L - 26, 84, 4, 132)
+  ctx.font = `700 21px ${FONT}`
+  ctx.textAlign = 'left'
+  ctx.fillStyle = A
+  ctx.fillText(p.kicker, L, 104)
+
+  // title (wrapped, 2 lines max)
+  ctx.fillStyle = '#fff'
+  ctx.font = `800 70px ${FONT}`
+  ctx.shadowColor = A
+  ctx.shadowBlur = 26
+  const title = p.title
+  const words = title.split(' ')
+  let line = ''
+  const lines: string[] = []
+  for (const wd of words) {
+    const test = line ? line + ' ' + wd : wd
+    if (ctx.measureText(test).width > R - L && line) {
+      lines.push(line)
+      line = wd
+    } else line = test
+  }
+  if (line) lines.push(line)
+  lines.slice(0, 2).forEach((t, i) => ctx.fillText(t, L, 196 + i * 76))
+  ctx.shadowBlur = 0
+
+  // subtitle
+  ctx.font = `500 27px ${FONT}`
+  ctx.fillStyle = 'rgba(255,255,255,0.82)'
+  let y = 196 + lines.slice(0, 2).length * 76 + 34
+  y = wrap(ctx, p.subtitle, L, y, R - L, 36)
+
+  // body
+  ctx.font = `400 23px ${FONT}`
+  ctx.fillStyle = 'rgba(255,255,255,0.62)'
+  y += 12
+  for (const b of p.body) y = wrap(ctx, b, L, y, R - L, 31) + 10
+
+  // stats
+  y += 4
+  const colW = (R - L - 24) / 3
+  p.stats.forEach((s, i) => {
+    ctx.fillStyle = A
+    ctx.font = `800 46px ${FONT}`
+    ctx.fillText(s.v, L + i * (colW + 12), y + 44)
+    ctx.fillStyle = 'rgba(255,255,255,0.45)'
+    ctx.font = `600 16px ${FONT}`
+    wrap(ctx, s.k.toUpperCase(), L + i * (colW + 12), y + 74, colW, 20)
+  })
+  y += 116
+
+  // items
+  ctx.fillStyle = 'rgba(255,255,255,0.34)'
+  ctx.font = `700 16px ${FONT}`
+  ctx.fillText(p.id === 'beacon' ? 'KÊNH LIÊN HỆ' : 'DỰ ÁN & NĂNG LỰC', L, y)
+  y += 22
+  ctx.strokeStyle = 'rgba(255,255,255,0.12)'
+  ctx.lineWidth = 2
+  // Row height is MEASURED, not assumed. A fixed 96 px row overlapped the moment
+  // a name wrapped or a description ran to two lines, and the collision showed
+  // up on three of the four panels in the first render.
+  for (let i = 0; i < p.items.length; i++) {
+    const it = p.items[i]
+    ctx.beginPath()
+    ctx.moveTo(L, y)
+    ctx.lineTo(R, y)
+    ctx.stroke()
+    ctx.fillStyle = 'rgba(255,255,255,0.28)'
+    ctx.font = `700 18px ${FONT}`
+    ctx.fillText(String(i + 1).padStart(2, '0'), L, y + 34)
+    ctx.fillStyle = '#fff'
+    ctx.font = `600 25px ${FONT}`
+    const afterName = wrap(ctx, it.name, L + 48, y + 36, R - L - 48, 30)
+    ctx.fillStyle = A
+    ctx.font = `700 15px ${FONT}`
+    ctx.fillText(it.meta.toUpperCase(), L + 48, afterName + 12)
+    ctx.fillStyle = 'rgba(255,255,255,0.55)'
+    ctx.font = `400 20px ${FONT}`
+    const afterDesc = wrap(ctx, it.desc, L + 48, afterName + 40, R - L - 48, 26)
+    y = Math.max(y + 88, afterDesc + 12)
+  }
+  ctx.beginPath()
+  ctx.moveTo(L, y)
+  ctx.lineTo(R, y)
+  ctx.stroke()
+
+  // tags
+  y += 30
+  ctx.font = `600 17px ${FONT}`
+  let tx = L
+  for (const t of p.tags) {
+    const tw = ctx.measureText(t).width + 30
+    ctx.strokeStyle = 'rgba(255,255,255,0.22)'
+    ctx.beginPath()
+    ctx.roundRect(tx, y, tw, 34, 17)
+    ctx.stroke()
+    ctx.fillStyle = 'rgba(255,255,255,0.7)'
+    ctx.fillText(t, tx + 15, y + 23)
+    tx += tw + 10
+    if (tx > R - 80) {
+      tx = L
+      y += 44
+    }
+  }
+
+  // footer hint — drawn only when it cannot collide with the last row
+  if (h - 54 > y + 26) {
+    ctx.fillStyle = 'rgba(255,255,255,0.4)'
+    ctx.font = `600 18px ${FONT}`
+    ctx.textAlign = 'center'
+    ctx.fillText('ESC  ·  hoặc nhìn ra ngoài tấm bảng để đóng', w / 2, h - 40)
+    ctx.textAlign = 'left'
+  }
+}
+
+function wrap(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, maxW: number, lh: number) {
+  const words = text.split(' ')
+  let line = ''
+  for (const wd of words) {
+    const test = line ? line + ' ' + wd : wd
+    if (ctx.measureText(test).width > maxW && line) {
+      ctx.fillText(line, x, y)
+      y += lh
+      line = wd
+    } else line = test
+  }
+  if (line) {
+    ctx.fillText(line, x, y)
+    y += lh
+  }
+  return y
+}
+
+export function FloatingPanel({ canvas, tex }: { canvas: HTMLCanvasElement; tex: THREE.CanvasTexture }) {
+  const id = useStore((s) => s.panel)
+  const { camera } = useThree()
+  const group = useRef<THREE.Group>(null)
+  const reveal = useRef(0)
+  const anchor = useRef({ pos: new THREE.Vector3(), rotY: 0 })
+  const ctx = useMemo(() => canvas.getContext('2d')!, [canvas])
+
+  const panel: PanelContent | null = id ? PANELS[id as PanelId] : null
+  const url = panel?.action?.url
+
+  useEffect(() => {
+    if (!panel) return
+    drawPanel(ctx, panel, PANEL_W, PANEL_H)
+    tex.needsUpdate = true
+    // Anchor the card where the visitor is standing *now* and stop following
+    // them. A panel that tracks the camera never feels like an object.
+    const dir = new THREE.Vector3()
+    camera.getWorldDirection(dir)
+    dir.y = 0
+    if (dir.lengthSq() < 1e-6) dir.set(0, 0, -1)
+    dir.normalize()
+    const foot = new THREE.Vector3(camera.position.x, 0, camera.position.z)
+    const centre = foot.clone().addScaledVector(dir, DISTANCE)
+    anchor.current.pos.set(centre.x, camera.position.y + 0.12 - WORLD_H * 0.06, centre.z)
+    anchor.current.rotY = Math.atan2(dir.x, dir.z) + Math.PI
+    if (group.current) {
+      group.current.position.copy(anchor.current.pos)
+      group.current.rotation.set(0, anchor.current.rotY, 0)
+    }
+  }, [panel, camera, ctx, tex])
+
+  useFrame((state, dt) => {
+    const want = panel ? 1 : 0
+    reveal.current = THREE.MathUtils.damp(reveal.current, want, panel ? 9 : 14, dt)
+    const g = group.current
+    if (!g) return
+    const r = reveal.current
+    g.visible = r > 0.004
+    if (!g.visible) return
+    // scale-in + a slow breathing drift; both very small, so the card reads as
+    // hovering rather than as an animation
+    const s = 0.86 + r * 0.14
+    g.scale.setScalar(s)
+    g.position.y = anchor.current.pos.y + Math.sin(state.clock.elapsedTime * 0.7) * 0.012
+  })
+
+  if (!panel) return null
+  return (
+    <group ref={group} position={anchor.current.pos} rotation={[0, anchor.current.rotY, 0]} visible={false}>
+      <mesh renderOrder={18}>
+        <planeGeometry args={[WORLD_W, WORLD_H]} />
+        <meshBasicMaterial map={tex} transparent depthWrite={false} toneMapped={false} />
+      </mesh>
+      {url && (
+        <Hit
+          id={`panel-action-${panel.id}`}
+          label="MỞ LIÊN KẾT"
+          hint="Mở trong tab mới"
+          maxDist={4}
+          size={[WORLD_W * 0.8, 0.16, 0.06]}
+          position={[0, -WORLD_H * 0.36, 0.02]}
+          onClick={() => openExternal(url)}
+        />
+      )}
+      <Hit
+        id={`panel-close-${panel.id}`}
+        label="ĐÓNG"
+        hint="Đóng bảng"
+        maxDist={4}
+        size={[WORLD_W, WORLD_H * 0.12, 0.06]}
+        position={[0, -WORLD_H * 0.46, 0.02]}
+        onClick={() => closePanel(true)}
+      />
+      {/* The card body swallows clicks. Without this, a click anywhere on the
+          text would fall through to the dismiss target behind it and close the
+          panel the visitor was reading. */}
+      <Hit
+        id={`panel-body-${panel.id}`}
+        label={panel.title}
+        hint=""
+        maxDist={5}
+        size={[WORLD_W, WORLD_H, 0.04]}
+        position={[0, 0, 0.01]}
+        onClick={() => undefined}
+      />
+      {/* Clicking beside the card still closes it — the same recovery path the
+          DOM backdrop provided, now a real 3D target that sits behind the card. */}
+      <Hit
+        id={`panel-dismiss-${panel.id}`}
+        label="Đóng bảng"
+        hint="Nhìn ra ngoài tấm bảng để đóng"
+        maxDist={6}
+        size={[WORLD_W * 2.6, WORLD_H * 2.2, 0.05]}
+        position={[0, 0, -0.08]}
+        onClick={() => closePanel(true)}
+      />
+    </group>
+  )
+}
+
+/**
+ * One video surface, for the island stage and for the HEX campus stage.
+ *
+ * WHY THIS IS ONE COMPONENT AND NOT TWO
+ *
+ * The island stage already renders a YouTube IFrame Player onto its LED wall by
+ * projecting a DOM layer through a CSS homography — that is the only permitted
+ * way to show a YouTube stream (their terms and CORS both rule out sampling it
+ * into a texture). The HEX campus stage needs the owner's video on its backdrop
+ * screen, and it needs it to behave like the *song's* screen, not the island's.
+ *
+ * Building a second player would have been the bug the owner warned about: two
+ * YouTube players alive at once, one belonging to a stage that is no longer on
+ * screen. So there is exactly one mounted player at a time, chosen by a single
+ * source of truth, and its whole lifetime is owned by `useVideoSurface`:
+ *
+ *   · island stage  → show.clip.yt      (existing behaviour, unchanged)
+ *   · HEX reality   → NGAY_MAI_VIDEO_ID (only while the reality is open)
+ *   · nothing       → the player is destroyed and the iframe removed
+ *
+ * The last case is the important one. When HEX retracts, the campus screen must
+ * go back to being a procedural backdrop, and no iframe may be left floating
+ * over a stage the visitor has left. `active` is derived from the reality phase
+ * every frame, so a retract cannot be missed.
+ */
+
+/** Where the HEX campus stage screen is, in island world space. */
+const HEX_STAGE = EXHIBITS.stage
+const HEX_SCREEN_LOCAL: [number, number, number] = [0, 4.4, -3.52]
+const HEX_SCREEN_W = 9.6
+const HEX_SCREEN_H = 5.4
+
+export type VideoSurfaceHost = 'stage' | 'hex'
+
+export function useVideoSurface(host: VideoSurfaceHost, hostEl: HTMLElement | null) {
+  const phase = useReality((s) => s.phase)
+  const track = useReality((s) => s.track)
+  const [state, setState] = useState<'off' | 'loading' | 'playing' | 'blocked' | 'error'>('off')
+  const player = useRef<YTPlayer | null>(null)
+  const token = useRef(0)
+
+  // The id this surface should be showing right now, or null.
+  const videoId = useMemo(() => {
+    if (host === 'stage') return null // the island stage keeps its own clip logic
+    if (phase === 'idle') return null
+    return track === 'ngay-mai' ? NGAY_MAI_VIDEO_ID : null
+  }, [host, phase, track])
+
+  const startAt = host === 'hex' ? NGAY_MAI_CUE : 0
+
+  useEffect(() => {
+    if (!hostEl || !videoId) return
+    const mine = ++token.current
+    let cancelled = false
+    setState('loading')
+    const el = document.createElement('div')
+    hostEl.appendChild(el)
+    loadYouTubeAPI()
+      .then((YT) => {
+        if (cancelled || mine !== token.current) return
+        player.current = new YT.Player(el, {
+          width: 1280,
+          height: 720,
+          videoId,
+          host: 'https://www.youtube-nocookie.com',
+          playerVars: {
+            autoplay: 1,
+            controls: 0,
+            rel: 0,
+            playsinline: 1,
+            start: startAt,
+            iv_load_policy: 3,
+            disablekb: 1,
+            fs: 0,
+            modestbranding: 1,
+            origin: location.origin,
+          },
+          events: {
+            onReady: (e: { target: YTPlayer }) => {
+              if (cancelled || mine !== token.current) return
+              // The song owns its own audio; the video must not double it.
+              e.target.mute()
+              e.target.playVideo()
+            },
+            onStateChange: (e: { data: number }) => {
+              if (cancelled || mine !== token.current) return
+              if (e.data === 1) setState('playing')
+              else if (e.data === 2) setState('blocked')
+              else if (e.data === 0) {
+                // Loop the owner's cue rather than letting a stale end frame
+                // sit on the screen.
+                try {
+                  player.current?.seekTo?.(startAt, true)
+                  player.current?.playVideo()
+                } catch {
+                  /* noop */
+                }
+              }
+            },
+            onError: () => !cancelled && mine === token.current && setState('error'),
+          },
+        })
+      })
+      .catch(() => !cancelled && mine === token.current && setState('error'))
+    return () => {
+      cancelled = true
+      token.current++
+      try {
+        player.current?.destroy()
+      } catch {
+        /* noop */
+      }
+      player.current = null
+      el.remove()
+      setState('off')
+    }
+  }, [hostEl, videoId, startAt])
+
+  // Leaving HEX must stop the audio-less player immediately, not on the next
+  // rebuild of the effect.
+  useEffect(() => {
+    if (videoId) return
+    try {
+      player.current?.destroy()
+    } catch {
+      /* noop */
+    }
+    player.current = null
+  }, [videoId])
+
+  return { state, videoId }
+}
+
+/**
+ * The owner's HEX video link.
+ *
+ * A Drive URL is a viewer page, not a media file, so it cannot feed a
+ * VideoTexture. It is offered as an explicit link from the campus stage instead
+ * of being silently dropped — the visitor can always reach the real footage.
+ */
+export function HexStageVideoLink() {
+  const phase = useReality((s) => s.phase)
+  const track = useReality((s) => s.track)
+  const ref = useRef<THREE.Mesh>(null)
+  const tex = useMemo(
+    () =>
+      new CanvasTexture(
+        (() => {
+          const c = document.createElement('canvas')
+          c.width = 512
+          c.height = 128
+          const g = c.getContext('2d')!
+          g.fillStyle = 'rgba(6,10,20,0.82)'
+          g.fillRect(0, 0, 512, 128)
+          g.strokeStyle = 'rgba(255,255,255,0.35)'
+          g.lineWidth = 3
+          g.strokeRect(6, 6, 500, 116)
+          g.fillStyle = '#fff'
+          g.font = '600 30px sans-serif'
+          g.textAlign = 'center'
+          g.fillText('▶  MỞ VIDEO GỐC', 256, 58)
+          g.fillStyle = 'rgba(255,255,255,0.6)'
+          g.font = '400 20px sans-serif'
+          g.fillText('Drive · phát toàn màn hình', 256, 92)
+          return c
+        })(),
+      ),
+    [],
+  )
+  useEffect(() => () => tex.dispose(), [tex])
+  useFrame((s, dt) => {
+    const m = ref.current
+    if (!m) return
+    const want = phase !== 'idle' && track === 'mua-ha' ? 1 : 0
+    m.scale.setScalar(THREE.MathUtils.damp(m.scale.x, Math.max(0.001, want), 6, dt))
+    m.visible = m.scale.x > 0.01
+    if (m.visible) m.position.y = 1.55 + Math.sin(s.clock.elapsedTime * 0.8) * 0.03
+  })
+  return (
+    <mesh
+      ref={ref}
+      position={[HEX_STAGE.x, 1.55, HEX_STAGE.z]}
+      rotation={[0, HEX_STAGE.rotY, 0]}
+      onClick={() => openExternal(HEX_MAIN_STAGE_VIDEO_SRC)}
+      visible={false}
+    >
+      <planeGeometry args={[2.4, 0.6]} />
+      <meshBasicMaterial map={tex} transparent depthWrite={false} toneMapped={false} />
+    </mesh>
+  )
+}
+
+/** World-space rectangle of the HEX campus screen, for the DOM projection. */
+export function hexScreenCorners(): [number, number, number][] {
+  const hw = HEX_SCREEN_W / 2
+  const hh = HEX_SCREEN_H / 2
+  const [lx, ly, lz] = HEX_SCREEN_LOCAL
+  const c = Math.cos(HEX_STAGE.rotY)
+  const s = Math.sin(HEX_STAGE.rotY)
+  const toWorld = (x: number, y: number, z: number): [number, number, number] => [
+    HEX_STAGE.x + (lx + x) * c + (lz + z) * s,
+    y,
+    HEX_STAGE.z - (lx + x) * s + (lz + z) * c,
+  ]
+  return [
+    toWorld(-hw, ly + hh, 0),
+    toWorld(hw, ly + hh, 0),
+    toWorld(-hw, ly - hh, 0),
+    toWorld(hw, ly - hh, 0),
+  ]
+}
+
+export { HEX_SCREEN_LOCAL, HEX_SCREEN_H, HEX_SCREEN_W }
+
+/**
+ * Projects a YouTube player onto the HEX campus stage screen.
+ *
+ * The DOM layer is only appended while the reality is open. That single rule is
+ * what keeps the two worlds from leaking into each other: the island's LED wall
+ * is invisible during HEX, so its player is suspended by its own visibility
+ * check; and this layer cannot outlive `phase !== 'idle'`, so closing HEX can
+ * never leave a video floating over the campus.
+ */
+export function HexVideoLayer() {
+  const phase = useReality((s) => s.phase)
+  const track = useReality((s) => s.track)
+  const { gl, camera } = useThree()
+  const dom = useMemo(() => {
+    const d = document.createElement('div')
+    Object.assign(d.style, {
+      position: 'absolute',
+      left: '0',
+      top: '0',
+      width: '1280px',
+      height: '720px',
+      transformOrigin: '0 0',
+      pointerEvents: 'none',
+      mixBlendMode: 'screen',
+      opacity: '0',
+      visibility: 'hidden',
+      background: '#000',
+      overflow: 'hidden',
+    })
+    const h = document.createElement('div')
+    Object.assign(h.style, { width: '100%', height: '100%', pointerEvents: 'none', filter: 'saturate(1.08) contrast(1.04)' })
+    d.appendChild(h)
+    return { d, h }
+  }, [])
+  const wanted = phase !== 'idle' && track === 'ngay-mai'
+  useEffect(() => {
+    const parent = gl.domElement.parentElement
+    if (!parent || !wanted) return
+    parent.appendChild(dom.d)
+    return () => dom.d.remove()
+  }, [gl, dom, wanted])
+  useVideoSurface('hex', wanted ? dom.h : null)
+
+  const corners = useMemo(
+    () => [new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3()],
+    [],
+  )
+  const local = useMemo(() => hexScreenCorners(), [])
+  useFrame(() => {
+    const w = dom.d
+    if (!w.parentElement) return
+    const cw = gl.domElement.clientWidth
+    const ch = gl.domElement.clientHeight
+    const pts: number[] = []
+    let behind = false
+    for (let i = 0; i < 4; i++) {
+      const v = corners[i].set(local[i][0], local[i][1], local[i][2])
+      const cam = v.clone().applyMatrix4(camera.matrixWorldInverse).z
+      if (cam > -0.2) behind = true
+      v.project(camera)
+      pts.push(((v.x + 1) / 2) * cw, ((1 - v.y) / 2) * ch)
+    }
+    if (behind) {
+      w.style.visibility = 'hidden'
+      w.style.opacity = '0'
+      return
+    }
+    // Build the same homography the island LED uses: map the source 1280x720
+    // rectangle onto the four projected corners.
+    const [x0, y0, x1, y1, x2, y2, x3, y3] = pts
+    const W = 1280
+    const H = 720
+    const src = [
+      [0, 0],
+      [W, 0],
+      [0, H],
+      [W, H],
+    ]
+    const dst = [
+      [x0, y0],
+      [x1, y1],
+      [x2, y2],
+      [x3, y3],
+    ]
+    const m = homography(src, dst)
+    if (!m) {
+      w.style.visibility = 'hidden'
+      return
+    }
+    w.style.visibility = 'visible'
+    w.style.opacity = '1'
+    w.style.transform = `matrix3d(${m.join(',')})`
+  })
+  return null
+}
+
+/** 3x3 projective map from four src points to four dst points (row-major, 8 dof). */
+function homography(src: number[][], dst: number[][]): number[] | null {
+  const A: number[][] = []
+  const b: number[] = []
+  for (let i = 0; i < 4; i++) {
+    const [u, v] = src[i]
+    const [x, y] = dst[i]
+    A.push([u, v, 1, 0, 0, 0, -u * x, -v * x])
+    b.push(x)
+    A.push([0, 0, 0, u, v, 1, -u * y, -v * y])
+    b.push(y)
+  }
+  // Gaussian elimination with partial pivoting.
+  const n = 8
+  for (let col = 0; col < n; col++) {
+    let piv = col
+    for (let r = col + 1; r < n; r++) if (Math.abs(A[r][col]) > Math.abs(A[piv][col])) piv = r
+    if (Math.abs(A[piv][col]) < 1e-9) return null
+    ;[A[col], A[piv]] = [A[piv], A[col]]
+    ;[b[col], b[piv]] = [b[piv], b[col]]
+    const d = A[col][col]
+    for (let c = col; c < n; c++) A[col][c] /= d
+    b[col] /= d
+    for (let r = 0; r < n; r++) {
+      if (r === col) continue
+      const f = A[r][col]
+      if (!f) continue
+      for (let c = col; c < n; c++) A[r][c] -= f * A[col][c]
+      b[r] -= f * b[col]
+    }
+  }
+  const h = b
+  // CSS matrix3d is column-major: columns (h11 h21 h31 h41) ...
+  return [h[0], h[3], 0, h[6], h[1], h[4], 0, h[7], 0, 0, 1, 0, h[2], h[5], 0, 1]
+}
+
 export function Experience() {
   const quality = useStore((s) => s.quality)
+  // One panel canvas and one texture for the whole session. Allocating them per
+  // open would upload a fresh 1024x1280 texture and drop the old one while the
+  // card may still be fading out.
+  const panelCanvas = useMemo(() => {
+    const c = document.createElement('canvas')
+    c.width = PANEL_W
+    c.height = PANEL_H
+    return c
+  }, [])
+  const panelTex = useMemo(() => {
+    const t = new CanvasTexture(panelCanvas)
+    t.colorSpace = THREE.SRGBColorSpace
+    t.anisotropy = 8
+    return t
+  }, [panelCanvas])
+  useEffect(() => () => panelTex.dispose(), [panelTex])
   const phase = useStore((s) => s.phase)
   // `high` is the untouched full-fidelity path. `low` and `performance` share
   // the cheaper post/composer settings that already shipped; the extra work for
@@ -385,6 +1070,9 @@ export function Experience() {
         <Exhibits />
         <Player />
         <RealityHost />
+        <FloatingPanel canvas={panelCanvas} tex={panelTex} />
+        <HexVideoLayer />
+        <HexStageVideoLink />
         {!postProbeOff && <Post low={low} filmPasses={!concessions.dropFilmPasses} bloomLevels={perf ? concessions.bloomLevels : undefined} />}
         <IslandFirstPaintGate />
       </Suspense>

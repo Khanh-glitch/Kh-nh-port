@@ -69,35 +69,73 @@ assert.match(
   'unlocked click must keep the original drag threshold and re-cast on click',
 )
 
-// --- 4. Panel geometry: the card must stay on screen and closable ---------
+// --- 4. Panels float in the world; nothing covers the screen --------------
+//
+// These assertions replaced the ones that pinned the old DOM card. The card is
+// gone on purpose: every exhibit panel used to be a full-height sheet at z-40,
+// and the owner asked for the Main Stage's behaviour instead -- a panel that
+// floats beside the exhibit and leaves the scene visible. The properties worth
+// pinning did not disappear with the card, so they are asserted against the new
+// architecture rather than dropped:
+//
+//   a. the DOM layer must stay click-through, and must still carry a backdrop
+//      strip that closes the panel (the recovery path when pointer lock fails);
+//   b. an explicit close control must survive;
+//   c. the card itself must be a bounded plane in the scene, anchored once at
+//      open time and NOT tracking the camera every frame -- a card that follows
+//      the visitor is a HUD, not an object in the world.
 const overlay = read('source/src/ui/Overlay.tsx')
-assert.match(
+assert.doesNotMatch(
   overlay,
-  /alignItems: 'flex-start'/,
-  "the shipped Tailwind subset has no `items-start` utility, so alignment must " +
-    'be inline or the card stretches to full height',
+  /<aside[\s\S]{0,400}?backdrop-blur-2xl/,
+  'the full-height DOM card must not come back; panels are 3D now',
 )
 assert.match(
   overlay,
-  /maxHeight: 'calc\(100% - 12px\)'/,
-  'the card height must be bounded so its scroll body and close control stay ' +
-    'inside the viewport',
+  /className="absolute inset-0 z-40 flex"/,
+  'the walk-through layer that closes the panel must survive',
+)
+const panelLayer = overlay.slice(overlay.indexOf('className="absolute inset-0 z-40 flex"'))
+const panelHead = panelLayer.slice(0, 1600)
+assert.ok(
+  panelHead.includes("pointerEvents: 'none'"),
+  'the panel layer must stay click-through so the canvas keeps receiving input',
+)
+assert.ok(
+  panelHead.includes("pointerEvents: 'auto'"),
+  'the backdrop strip (and the close control) must accept input',
 )
 assert.match(
   overlay,
   /onClick=\{\(\) => closePanel\(true\)\}/,
   'clicking beside the card must still close it (recovery path, old behaviour)',
 )
-// The click-through wrapper plus the two input surfaces (backdrop, card).
-const panelLayer = overlay.slice(overlay.indexOf('className="absolute inset-0 z-40 flex"'))
-const panelHead = panelLayer.slice(0, 1600)
-assert.ok(
-  panelHead.includes("pointerEvents: 'none'"),
-  'the panel wrapper must stay click-through so the canvas keeps receiving input',
+
+// Panels live in scene/Experience.tsx: the standalone build runs on a fixed
+// embedded-module map, so a new file could not be published. The contract is
+// asserted on the real source either way.
+const floating = read('source/src/scene/Experience.tsx')
+assert.match(
+  floating,
+  /const DISTANCE = 2\.4/,
+  'the card must sit at a fixed distance in front of the visitor',
 )
+assert.match(
+  floating,
+  /Anchor the card where the visitor is standing \*now\* and stop following/,
+  'the anchor must be captured once at open time',
+)
+// The anchor is written in the open effect, never in useFrame.
+const frameBodies = [...floating.matchAll(/useFrame\(\([^)]*\)\s*=>\s*\{([\s\S]*?)\n {2}\}\)/g)].map((m) => m[1])
+assert.ok(frameBodies.length > 0, 'the floating card animates')
 assert.ok(
-  panelHead.includes("pointerEvents: 'auto'"),
-  'the card itself must accept input',
+  frameBodies.every((b) => !b.includes('anchor.current.pos.copy') && !b.includes('camera.position')),
+  'useFrame must not re-anchor the card onto the camera',
+)
+assert.match(
+  floating,
+  /<meshBasicMaterial map=\{tex\} transparent depthWrite=\{false\} toneMapped=\{false\}/,
+  'the card is a real transparent plane in the scene graph, not a DOM overlay',
 )
 
 // --- 5. The shipped standalone must carry the same fix --------------------
@@ -123,11 +161,11 @@ assert.ok(
   'published Player must refresh hover when the view or targets change',
 )
 assert.ok(
-  overlayJs.includes("maxHeight: 'calc(100% - 12px)'"),
-  'published Overlay must bound the card height',
+  !overlayJs.includes('backdrop-blur-2xl'),
+  'published Overlay must not still ship the full-screen card',
 )
 
 console.log(
   'INTERACTIVE_PICK_PASS: throttled hover keeps its target, view changes ' +
-    're-resolve, clicks act on the first press, card stays on screen',
+    're-resolve, clicks act on the first press, panels float in the world',
 )

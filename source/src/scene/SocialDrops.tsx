@@ -3,11 +3,27 @@ import { useFrame, useThree } from '@react-three/fiber'
 import * as THREE from 'three'
 import { SVGLoader } from 'three/examples/jsm/loaders/SVGLoader.js'
 import { SOCIAL_PATHS } from './socialLogoPaths'
+import { PROFILES, openExternal } from '../layout'
+import { Hit } from './Hit'
 
 /**
  * Original user-supplied social icon geometry, spatially linked to the existing
  * Beacon energy beam. No external API, extra renderer or secondary Canvas.
- * The icons are decorative until real per-platform profile URLs are supplied.
+ *
+ * ORIENTATION — measured, not guessed.
+ *
+ * The icons arrived upside down. Rasterising the raw SVG paths showed the paths
+ * themselves are correct (the TikTok note hangs low, the octocat's ears are on
+ * top), so the flip was happening in the pipeline, not in the artwork:
+ * `SVGLoader` hands back coordinates in SVG space, where y grows DOWN, and
+ * `ExtrudeGeometry` treats them as if y grew UP. Every silhouette therefore
+ * rendered mirrored about its own horizontal axis.
+ *
+ * Baked into the geometry with `rotateX(PI)` after centring, rather than onto
+ * the mesh's rotation, because the per-frame animation already writes
+ * `rotation.z` (a settling wobble) and would have to compose with a correction
+ * that must never be lost. After `center()` the extrusion is symmetric in z, so
+ * the extra z flip costs nothing.
  */
 const ease = (v: number) => 1 - Math.pow(1 - THREE.MathUtils.clamp(v, 0, 1), 3)
 const textureCache = new Map<string, THREE.BufferGeometry | null>()
@@ -29,6 +45,9 @@ function logoGeometry(path: string) {
       const size = new THREE.Vector3()
       geo.boundingBox!.getSize(size)
       geo.scale(2.3 / Math.max(size.x, size.y, .001), 2.3 / Math.max(size.x, size.y, .001), 2.3 / Math.max(size.x, size.y, .001))
+      // SVG y-down -> three y-up. See ORIENTATION above. Applied before the
+      // normals are rebuilt so the flipped faces still light correctly.
+      geo.rotateX(Math.PI)
       geo.computeVertexNormals()
     }
   } catch (error) { console.warn('[ORBITA SocialDrops] icon geometry', error) }
@@ -53,6 +72,9 @@ function logoGeometry(path: string) {
  */
 const DROP_LIGHT_INTENSITY = 2.6
 const DROP_LIGHT_DISTANCE = 5
+/** Descent: a short drop from just above the dish, landing on the pad. */
+const DROP_START_Y = 16
+const DROP_LAND_Y = 1.0
 
 export function SocialDrops({ signal }: { signal: {send:number} }) {
   const nodes=useRef<Array<THREE.Group|null>>([])
@@ -112,11 +134,16 @@ export function SocialDrops({ signal }: { signal: {send:number} }) {
       const angle = -Math.PI/2 + i*Math.PI*2/icons.length
       const radius = 3.6 + (i%2)*.6
       const bx=Math.cos(angle)*radius, bz=Math.sin(angle)*radius
-      const hover = .16*Math.sin(state.clock.elapsedTime*1.4+i*.9)
-      g.position.set(bx*(.15+.85*x), 34 - 28.5*x + hover*x, bz*(.15+.85*x))
+      // The icons used to settle at y = 5.5, hanging in mid-air beside a 9.5 m
+      // mast. They now land on the pad: the group is 2.3 * 0.82 tall, so a
+      // centre at ~1.0 m puts the lowest vertex on the ground.
+      const hover = .07*Math.sin(state.clock.elapsedTime*1.4+i*.9)
+      const y = DROP_START_Y - (DROP_START_Y - DROP_LAND_Y)*x + hover*x
+      g.position.set(bx*(.15+.85*x), y, bz*(.15+.85*x))
       g.scale.setScalar(Math.max(0.005, Math.min(1, x*1.3)) * .82)
       g.rotation.set(.03*Math.sin(state.clock.elapsedTime+i), state.clock.elapsedTime*.24+i*.17, -0.12*Math.sin(t*2)*Math.exp(-t*.9))
-      if(halo){halo.visible=t<2.8;halo.position.copy(g.position);halo.position.y-=.17;halo.scale.setScalar(1+.2*Math.sin(state.clock.elapsedTime*8+i))}
+      // The halo is the contact shadow: it must sit on the pad, not on the icon.
+      if(halo){halo.visible=t<3.4;halo.position.copy(g.position);halo.position.y=.03;halo.scale.setScalar(1+.2*Math.sin(state.clock.elapsedTime*8+i))}
       // Same position/intensity as the original per-icon light, but the light
       // itself stays mounted so the shader define never changes. The icon's
       // wrapper group is an identity transform, so `g.position` is already in
@@ -135,6 +162,17 @@ export function SocialDrops({ signal }: { signal: {send:number} }) {
     {icons.map((entry,i)=>entry.geometry&&<group key={entry.slug}>
       <group ref={(r)=>{nodes.current[i]=r}} visible={false}>
         <mesh geometry={entry.geometry} material={entry.material} />
+        {/* The icon is a real link now. The target lives in the icon's own
+            group so it inherits the descent, the settle and the hover scale;
+            `Hit` is invisible but raycastable from the crosshair. */}
+        <Hit
+          id={`social-${entry.slug}`}
+          label={entry.slug.toUpperCase()}
+          hint={PROFILES[entry.slug]?.confirmed ? 'Mở trang cá nhân' : 'Mở thư mục dự án'}
+          maxDist={34}
+          size={[1.6, 1.6, 1.2]}
+          onClick={() => openExternal(PROFILES[entry.slug]?.url ?? '')}
+        />
       </group>
       <mesh ref={(r)=>{rings.current[i]=r}} visible={false} rotation={[-Math.PI/2,0,0]}>
         <ringGeometry args={[.68,.75,32]}/>

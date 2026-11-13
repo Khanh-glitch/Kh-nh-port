@@ -12,6 +12,15 @@ const baseline=JSON.parse(readFileSync('tests/integration-original-modules.json'
 // for the reason of each). The hashes are refreshed, never skipped, so any
 // further unreviewed edit of these modules still fails.
 const REVIEWED_CHANGES=new Set([
+ // layout: owner-supplied media/profile URLs added as pure data. No visual or
+ // gameplay change; the island needs one place for real links, and a new module
+ // cannot be published because the standalone import map has a fixed key set.
+ 'orbita/layout',
+ // reality/kit + reality/music + reality/tracks: owner media. The element is
+ // now the test of whether a real file is playable (Drive answers text/html, so
+ // the old content-type probe rejected a working file), and a YouTube id is
+ // never sampled into a VideoTexture. Cue points are the owner's: 1:54 and 1:22.
+ 'orbita/reality/kit','orbita/reality/music','orbita/reality/tracks',
  'orbita/scene/Player','orbita/scene/Robot',
  'orbita/scene/Phenomena','orbita/ui/Overlay',
  'orbita/audio','orbita/ui/RealityHud',

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useStore } from '../store'
-import { PANELS, STUDIO } from '../content'
+import { STUDIO } from '../content'
 import { EXHIBIT_LIST, DISC_R } from '../layout'
 import { player, input } from '../world'
 import { audio } from '../audio'
@@ -346,45 +346,31 @@ function Hud() {
 }
 
 function PanelView() {
+  // The panel is 3D now: see `scene/FloatingPanel.tsx`. It floats in world space
+  // next to the exhibit that was clicked, rotates with the visitor, and leaves
+  // the scene fully visible — the same behaviour as the Main Stage's info veil,
+  // which was the one surface that never covered the screen.
+  //
+  // What is left here is only the part that cannot live in the scene graph:
+  //
+  //   · the invisible WALK-THROUGH LAYER. It is what makes clicking beside the
+  //     card feel like clicking beside a card: the wrapper stays click-through
+  //     so the canvas keeps receiving input, while the strip over the half of
+  //     the screen the card does not occupy swallows the click and closes it.
+  //     Without it, clicking "past" the card would pick whatever exhibit is
+  //     behind it and open a different panel.
+  //
+  // The card's own ink, type and hit areas are drawn in the 3D card, so there is
+  // no duplicated content and no way for the two to disagree.
   const id = useStore((s) => s.panel)
-  const [form, setForm] = useState({ name: '', msg: '' })
   if (!id) return null
-  const p = PANELS[id]
-  const send = () => {
-    const sub = encodeURIComponent(`[Orbita] Liên hệ từ ${form.name || 'khách tham quan'}`)
-    const body = encodeURIComponent(form.msg)
-    window.location.href = `mailto:${STUDIO.email}?subject=${sub}&body=${body}`
-  }
   return (
-    // The profile is a FLOATING CARD, not a full-screen sheet.
-    //
-    // Previously this layer was `inset-0` with a full-height gradient plus a div
-    // that swallowed every pointer event, so the whole viewport went dark. Now
-    // only the card is opaque; the canvas keeps rendering and the visitor still
-    // sees the stage.
-    //
-    // Clicking the area AROUND the card still closes it, which is the behaviour
-    // visitors (and the old build) expect, and it is also the recovery path when
-    // pointer lock is unavailable. That backdrop only covers the half of the
-    // screen the card does not occupy, so it cannot sit on top of the stage the
-    // card is describing.
-    //
-    // Layer geometry is inline on purpose: this file ships inside a single HTML
-    // with a PRE-BUILT Tailwind subset, so a new utility class (e.g.
-    // `items-start` or `pointer-events-auto`) may not exist in that CSS and
-    // would silently do nothing. Inline styles always apply.
     <div
       className="absolute inset-0 z-40 flex"
       style={{
         justifyContent: 'flex-end',
-        // `alignItems: 'flex-start'` is what actually keeps the card at the top;
-        // the shipped CSS subset has no `items-start` utility, so relying on the
-        // class alone left the default `stretch` in place, stretching the card
-        // to full viewport height behind its scroll body.
         alignItems: 'flex-start',
         padding: '12px 12px 0 0',
-        // This wrapper stays click-through; only the backdrop strip above the
-        // stage half and the card itself accept input.
         pointerEvents: 'none',
         overflow: 'hidden',
       }}
@@ -397,129 +383,29 @@ function PanelView() {
           width: 'min(62%, 720px)',
           pointerEvents: 'auto',
           cursor: 'pointer',
+          background: 'transparent',
         }}
       />
-      <aside
-        className="relative flex w-full max-w-[540px] flex-col overflow-hidden rounded-3xl border border-white/15 bg-[rgba(8,10,22,0.72)] text-white backdrop-blur-2xl animate-[slideIn_0.45s_cubic-bezier(.2,.8,.2,1)_both]"
+      {/* One small control that is genuinely easier to hit with a mouse than a
+          plane in the world, and doubles as the keyboard instruction. */}
+      <button
+        onClick={() => closePanel(true)}
         style={{
+          position: 'absolute',
+          right: 12,
+          top: 12,
           pointerEvents: 'auto',
-          // `maxHeight: '100%'` resolves against a definite parent height. With
-          // the card stretched by flex it could exceed the viewport and push its
-          // own scroll area and the close button out of reach. Subtracting the
-          // 12px top padding keeps the whole card, including the ESC control, on
-          // screen at every window size.
-          maxHeight: 'calc(100% - 12px)',
-          // Written inline because this page ships a PRE-BUILT Tailwind subset:
-          // an arbitrary value the build never saw would silently not exist.
-          // 0.9 over the existing 0.72 fallback keeps the card as readable as
-          // the original sheet while the blur now only covers the card itself.
-          backgroundColor: 'rgba(8, 10, 22, 0.9)',
-          boxShadow: `0 0 0 1px ${p.accent}22, 0 30px 120px rgba(0,0,0,0.8), 0 0 80px ${p.accent}22`,
+          borderRadius: 999,
+          border: '1px solid rgba(255,255,255,0.2)',
+          background: 'rgba(8,10,22,0.55)',
+          color: 'rgba(255,255,255,0.8)',
+          padding: '6px 12px',
+          fontSize: 11,
+          letterSpacing: '0.18em',
         }}
       >
-        <div className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full opacity-40 blur-3xl" style={{ background: p.accent }} />
-        <div className="relative flex-1 overflow-y-auto p-7 sm:p-9">
-          <div className="flex items-center justify-between">
-            <div className="text-[11px] font-semibold tracking-[0.4em]" style={{ color: p.accent }}>
-              {p.kicker}
-            </div>
-            <button onClick={() => closePanel(true)} className="rounded-full border border-white/20 px-3 py-1 text-[11px] tracking-widest text-white/80 transition hover:bg-white/15">
-              ESC ✕
-            </button>
-          </div>
-          <h2 className="font-display mt-5 text-5xl font-bold leading-none tracking-tight sm:text-6xl">{p.title}</h2>
-          <p className="mt-4 text-lg leading-snug text-white/85">{p.subtitle}</p>
-          <div className="mt-6 space-y-3 text-[14.5px] leading-relaxed text-white/65">
-            {p.body.map((b, i) => (
-              <p key={i}>{b}</p>
-            ))}
-          </div>
-
-          <div className="mt-7 grid grid-cols-3 gap-3">
-            {p.stats.map((s) => (
-              <div key={s.k} className="rounded-2xl border border-white/10 bg-white/5 p-3.5">
-                <div className="font-display text-2xl font-bold" style={{ color: p.accent }}>
-                  {s.v}
-                </div>
-                <div className="mt-1 text-[10px] uppercase leading-tight tracking-[0.18em] text-white/50">{s.k}</div>
-              </div>
-            ))}
-          </div>
-
-          <div className="mt-8 text-[10px] font-semibold tracking-[0.4em] text-white/40">{id === 'beacon' ? 'KÊNH LIÊN HỆ' : 'DỰ ÁN & NĂNG LỰC'}</div>
-          <div className="mt-3 divide-y divide-white/10 rounded-2xl border border-white/10 bg-white/[0.03]">
-            {p.items.map((it, i) => (
-              <div key={it.name} className="flex gap-4 p-4">
-                <div className="font-display w-6 pt-0.5 text-sm font-bold text-white/30">{String(i + 1).padStart(2, '0')}</div>
-                <div className="min-w-0">
-                  <div className="flex flex-wrap items-baseline gap-x-3">
-                    <span className="break-all text-[15px] font-semibold">{it.name}</span>
-                    <span className="text-[10px] uppercase tracking-[0.2em]" style={{ color: p.accent }}>
-                      {it.meta}
-                    </span>
-                  </div>
-                  <div className="mt-1 text-[13px] leading-snug text-white/55">{it.desc}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {id === 'beacon' && (
-            <div className="mt-6 space-y-3">
-              <input
-                value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
-                placeholder="Tên của bạn"
-                className="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-sm outline-none placeholder:text-white/35 focus:border-white/50"
-              />
-              <textarea
-                value={form.msg}
-                onChange={(e) => setForm({ ...form, msg: e.target.value })}
-                placeholder="Bạn đang nghĩ đến sự kiện / sản phẩm gì?"
-                rows={4}
-                className="w-full resize-none rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-sm outline-none placeholder:text-white/35 focus:border-white/50"
-              />
-              <button onClick={send} className="w-full rounded-xl px-5 py-3.5 text-sm font-bold tracking-[0.25em] text-black transition hover:brightness-110" style={{ background: p.accent }}>
-                PHÁT TÍN HIỆU ➜
-              </button>
-            </div>
-          )}
-
-          {p.slotNote && (
-            <div className="mt-6 rounded-2xl border border-dashed border-white/20 bg-white/[0.03] px-4 py-3 text-[12px] leading-relaxed text-white/65">
-              <span className="mr-2 font-semibold uppercase tracking-[0.2em]" style={{ color: p.accent }}>
-                NEXT PHASE ·
-              </span>
-              {p.slotNote}
-            </div>
-          )}
-
-          {p.action && (
-            <a
-              href={p.action.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-5 flex w-full items-center justify-center rounded-xl px-5 py-3.5 text-xs font-bold tracking-[0.25em] text-black transition hover:brightness-110"
-              style={{ background: p.accent }}
-            >
-              {p.action.label}
-            </a>
-          )}
-
-          <div className="mt-6 flex flex-wrap gap-2">
-            {p.tags.map((t) => (
-              <span key={t} className="rounded-full border border-white/15 px-3 py-1 text-[11px] tracking-wider text-white/70">
-                {t}
-              </span>
-            ))}
-          </div>
-        </div>
-        <div className="relative border-t border-white/10 p-4 sm:p-5">
-          <button onClick={() => closePanel(true)} className="w-full rounded-xl border border-white/20 bg-white/10 py-3 text-xs font-semibold tracking-[0.3em] transition hover:bg-white/20">
-            TIẾP TỤC KHÁM PHÁ
-          </button>
-        </div>
-      </aside>
+        ESC ✕
+      </button>
     </div>
   )
 }

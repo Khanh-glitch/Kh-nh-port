@@ -5,7 +5,7 @@
 // Mọi thế giới đọc cùng một giao diện: bass / mid / high / kick / energy / progress.
 import { audio } from '../audio'
 import { rt } from './state'
-import { TRACKS, probeMedia, type TrackId } from './tracks'
+import { TRACKS, probeMedia, probePlayable, type TrackId } from './tracks'
 
 const mtof = (m: number) => 440 * Math.pow(2, (m - 69) / 12)
 function mulberry(seed: number) {
@@ -134,13 +134,34 @@ class Music {
     this.out.connect(send).connect(audio.reverbSend)
     this.out.gain.setTargetAtTime(0.9, ctx.currentTime + delay, 0.6)
 
-    const real = tr.audioSrc && (await probeMedia(tr.audioSrc, 'audio'))
+    // Resolve the real file BEFORE anything is heard.
+    //
+    // Previously this only checked the URL's content-type and, on success, built
+    // a MediaElementAudioSourceNode straight away. For an owner-supplied Drive
+    // link that combination is a trap: the URL answers `text/html`, so a
+    // playable file was rejected as "not audio"; and if it had been accepted, a
+    // CORS-less response would have connected a silent, muted graph with no way
+    // back to the procedural arrangement.
+    //
+    // Now the element itself is the test (see probePlayable). The check runs
+    // before `t0` is fixed, so a rejection cannot leave a scheduled start
+    // dangling, and the DEMO path is taken unchanged.
+    let el: HTMLAudioElement | null = null
+    if (tr.audioSrc) {
+      const candidate = new Audio()
+      candidate.crossOrigin = 'anonymous'
+      candidate.preload = 'metadata'
+      candidate.src = tr.audioSrc
+      const playable = (await probeMedia(tr.audioSrc, 'audio')) || (await probePlayable(candidate))
+      if (tok !== this.token) return
+      if (playable) el = candidate
+    }
     if (tok !== this.token) return
     this.t0 = ctx.currentTime + delay
-    if (real) {
+    if (el) {
       this.demo = false
-      const el = new Audio(tr.audioSrc)
-      el.crossOrigin = 'anonymous'
+      // Only a same-origin/CORS-clean element may enter the WebAudio graph, and
+      // that is exactly what probePlayable confirmed above.
       el.currentTime = tr.highlight.start
       this.el = el
       this.src = ctx.createMediaElementSource(el)
