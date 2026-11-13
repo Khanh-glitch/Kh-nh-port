@@ -53,7 +53,7 @@ class AudioEngine {
     const ctx = this.ctx
 
     this.master = ctx.createGain()
-    this.master.gain.value = useStore.getState().muted ? 0 : 0.9
+    this.master.gain.value = 0.9
     const comp = ctx.createDynamicsCompressor()
     comp.threshold.value = -14
     comp.knee.value = 18
