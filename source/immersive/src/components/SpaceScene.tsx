@@ -715,6 +715,23 @@ export default function SpaceScene() {
     fill.position.set(0.7, -0.5, -0.3);
     scene.add(sunLight, fill, new THREE.AmbientLight(0x22344f, 1));
 
+    /* ── cabin fill ────────────────────────────────────────────────────────
+       The hull and the CC0 props both use MeshStandardMaterial. The exterior
+       lights sweep and swing with the sky group, so without a fixed light the
+       cabin would go dark whenever the ship banks. This one is small in
+       intensity, has no shadow map, and is aimed at nothing but the dash — it
+       cannot brighten the nebula, because the nebula is an unlit ShaderMaterial
+       drawn on the sky mesh with renderOrder -100. */
+    const cabinLight = new THREE.PointLight(0x9fd4ff, 1.1, 4.2, 2);
+    cabinLight.position.set(0, 0.15, -1.2);
+    cabinLight.castShadow = false;
+    scene.add(cabinLight);
+
+    const cabinWarm = new THREE.PointLight(0xffc27a, 0.5, 3.0, 2);
+    cabinWarm.position.set(0, -0.95, -1.55);
+    cabinWarm.castShadow = false;
+    scene.add(cabinWarm);
+
     /* ── adaptive resolution ──────────────────────────────────────────────
        The cockpit uses its own renderer and every screen is a texture, so the
        fill cost is dominated by the exterior scene. Rather than dropping any
@@ -868,9 +885,44 @@ export default function SpaceScene() {
         return;
       }
       // This acknowledgement is emitted only after the REAL nebula,
-      // starfield, planet, rings, atmosphere, dust and asteroid scene has
-      // submitted two actual WebGL frames. The second browser paint allows
-      // the ship to appear before mounting the island's competing renderer.
+      // starfield, planet, rings, atmosphere, dust, asteroid scene AND the
+      // cockpit interior have submitted actual WebGL frames.
+      //
+      // The cockpit is the reason for the ordering. Its hull uses a
+      // MeshStandardMaterial lit by two directional lights and an ambient
+      // light. That is a program the exterior scene never compiles (the nebula
+      // and stars are ShaderMaterials). If the cockpit is first drawn after
+      // the reveal, the driver has to compile that program with the visitor
+      // already looking at the screen — which is the multi-second freeze
+      // reported between the first painted frames and the stutter.
+      //
+      // Drawing it here, while the island is still assembling and the ship is
+      // the only thing on screen, moves that compile into time that was
+      // already being spent loading. `renderer.compile()` walks the whole scene
+      // graph up front, so the reveal frame creates no new programs.
+      let cockpitWarmed = false;
+      if (cockpit && !cockpitWarmed) {
+        cockpitWarmed = true;
+        try {
+          renderer.compile(scene, camera);
+        } catch (error) {
+          console.warn('[ORBITA] shader pre-compile skipped', error);
+        }
+        // The CC0 props arrive over the network, i.e. AFTER the compile above.
+        // They bring the same MeshStandardMaterial program the hull already
+        // uses, so in theory nothing new is compiled — but that assumption is
+        // exactly what must not be relied on. Compile once more the moment they
+        // land, so a slow network can never turn into a mid-frame stall.
+        const propsRef = cockpit;
+        void propsRef.propsReady.then(() => {
+          if (rendererFailed || !propsRef.group.parent) return;
+          try {
+            renderer.compile(scene, camera);
+          } catch {
+            /* the next real frame will compile anything left */
+          }
+        });
+      }
       realRenderedFrames++;
       if (!firstPaintAcknowledged && realRenderedFrames >= 2) {
         firstPaintAcknowledged = true;

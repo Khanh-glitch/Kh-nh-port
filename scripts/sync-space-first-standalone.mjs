@@ -156,6 +156,8 @@ const shipMap=JSON.parse(match[1])
 const shipModules=[
   'lib/cockpitBus',
   'lib/screenPaint',
+  'cockpit/gltf',
+  'cockpit/furnish',
   'cockpit/interior',
   'App',
   'components/SpaceScene',

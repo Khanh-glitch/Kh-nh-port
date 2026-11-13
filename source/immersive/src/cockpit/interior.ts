@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { cockpitState, onCockpit, setCockpit, type CockpitLang } from '../lib/cockpitBus';
+import { disposeFurnishing, furnishCockpit } from './furnish';
 import {
   makeCanvas,
   paintKey,
@@ -42,6 +43,8 @@ interface ScreenSlot {
 
 export interface CockpitHandles {
   group: THREE.Group;
+  /** Resolves once the CC0 props have been folded in (or have failed). */
+  propsReady: Promise<void>;
   handlePointer: (clientX: number, clientY: number, camera: THREE.Camera) => void;
   activate: (camera: THREE.Camera) => boolean;
   dispose: () => void;
@@ -356,13 +359,48 @@ export function buildCockpit(data: ScreenData): CockpitHandles {
     return false;
   };
 
+  /* ── furnished props from the CC0 kit ────────────────────────────────────
+     Loaded asynchronously and folded into the hull group when ready, so the
+     cockpit is usable — screens painted and interactive — before a single
+     prop has arrived. Props are ~1.8k triangles total across eight draw-call
+     meshes, which is why they can simply be plain meshes rather than an
+     instanced or LOD setup.
+
+     If an asset is missing (for example the cockpit is opened without the
+     assets/ directory), the load reports it and the interior keeps working. */
+  let props: THREE.Group | null = null;
+  let disposed = false;
+  let resolveProps: () => void = () => undefined;
+  const propsReady = new Promise<void>((resolve) => { resolveProps = resolve; });
+  void furnishCockpit().then((result) => {
+    if (disposed) {
+      disposeFurnishing(result.group);
+      return;
+    }
+    props = result.group;
+    group.add(props);
+    const diag = window as Window & { __orbitaCockpitProps?: unknown };
+    diag.__orbitaCockpitProps = {
+      loaded: 8 - result.failed.length,
+      failed: result.failed,
+      triangles: result.triangles,
+      drawCalls: result.drawCalls,
+    };
+    resolveProps();
+  }).catch((error) => {
+    console.warn('[ORBITA] cockpit props unavailable', error);
+    resolveProps();
+  });
+
   const dispose = () => {
+    disposed = true;
     window.removeEventListener('resize', layoutAll);
+    if (props) disposeFurnishing(props);
     unsubscribe();
     for (const d of disposables) d.dispose();
     group.clear();
     group.removeFromParent();
   };
 
-  return { group, handlePointer, activate, dispose };
+  return { group, propsReady, handlePointer, activate, dispose };
 }
