@@ -14,7 +14,16 @@ page.on('requestfailed', r => { if (/youtube|googlevideo/i.test(r.url())) result
 try {
   await page.goto('http://127.0.0.1:4173/#at=-26,20,0,0&autostart&skip', { waitUntil: 'domcontentloaded', timeout: 120000 })
   await page.waitForFunction(() => !!window.__orbitaReality, null, { timeout: 120000 })
-  await page.evaluate(() => window.__orbitaReality.requestReality('ngay-mai'))
+  // A real Playwright click gives the browser a transient user activation;
+  // this test-only button calls the same request API, not the sheet geometry.
+  await page.evaluate(() => {
+    const button = document.createElement('button')
+    button.textContent = 'QA: start real YouTube'
+    button.style.cssText = 'position:fixed;top:0;left:0;z-index:10000'
+    button.onclick = () => { window.__orbitaReality.requestReality('ngay-mai'); button.remove() }
+    document.body.appendChild(button)
+  })
+  await page.getByRole('button', { name:'QA: start real YouTube' }).click()
   await page.waitForSelector('iframe[src*="youtube"]', { state:'attached', timeout: 120000 })
   const inspect = async label => {
     const frame = page.frames().find(f => /youtube(?:-nocookie)?\.com\/embed\//.test(f.url()))
@@ -40,8 +49,8 @@ try {
   await page.screenshot({path:'youtube-evidence/scene.png', timeout:60000})
   result.playbackVerified = !!(first?.video && last?.video && !last.video.paused && last.video.readyState >= 2 && first.video.time >= 80 && last.video.time > first.video.time + 1)
   await page.evaluate(() => window.__orbitaReality.dismissReality())
-  await page.waitForTimeout(10000)
-  result.iframesAfterDismiss = await page.locator('iframe[src*="youtube"]').count()
+  await page.waitForFunction(() => !document.querySelector('iframe[src*="youtube-nocookie.com/embed/179btG24VE8"]'), null, {timeout:60000}).catch(() => {})
+  result.iframesAfterDismiss = await page.locator('iframe[src*="youtube-nocookie.com/embed/179btG24VE8"]').count()
 } catch (e) { result.error = String(e) }
 await browser.close()
 writeFileSync('youtube-evidence/report.json', JSON.stringify(result, null, 2))
