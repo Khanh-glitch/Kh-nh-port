@@ -19,8 +19,8 @@ const PROJECT_FILMS: { id: string; label: string; src?: string; projectRole?: st
   { id: '1RfgyAe0LeKlENlNUTLRYanoFpslrKDz3', label: 'UNHEARD · MUSIC DISCOVERY', src: './portfolio/films/unheard-music-discovery.mp4' },
   { id: '13TybcMrggmZG2K5MpHREdY54WGSyWRh3', label: 'CORAVAMARIS · VIDEO PROJECT 3', src: './portfolio/films/coravamaris.mp4', projectRole: 'Dự án: Audio · Pitch · Level Design' },
   { id: '1Q8fq-i-Of1jMqeuFCPNCpLhZTatq4j4h', label: 'SOCIAL MEDIA · 92da', src: './portfolio/films/social-2.mp4' },
-  { id: '1sR4CaGBWVUNnmaIQK-gWbmYP_0W4KDko', label: 'SOCIAL MEDIA · 9c40', src: './portfolio/films/social-1.mp4' },
-  { id: '1O5hcaN86PB4KGd9Sb476Mdahqgv6W-bY', label: 'SOCIAL MEDIA · ea07', src: './portfolio/films/social-3.mp4' },
+  { id: '1sR4CaGBWVUNnmaIQK-gWbmYP_0W4KDko', label: 'THANH ÂM CỦA HÒA BÌNH', src: './portfolio/films/social-1.mp4', projectRole: 'Biên soạn mở đầu · Chỉnh sửa hậu kỳ' },
+  { id: '1O5hcaN86PB4KGd9Sb476Mdahqgv6W-bY', label: 'SOCIAL MEDIA · ea07', src: './portfolio/films/social-3.mp4', projectRole: 'Hậu kỳ · Thuyết minh' },
 ]
 
 function cinemaHomography(src: number[][], dst: number[][]): number[] | null {

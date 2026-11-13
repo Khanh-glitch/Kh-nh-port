@@ -205,5 +205,8 @@ not video authorship: the project's `Game` brief, `Video Project 3.mp4`, and
 `1sDcyfw0MZBOYx3OutZEDUw7REXDAwVPd`. The team's own spreadsheet lists Lê Quốc
 Khánh's selected responsibilities as Audio, Pitch/Presentation and Level
 Design. The public GitHub portfolio at `teehihi/tee-lab` also identifies
-CoravaMaris as a VNG Prompt to Play game. The other five clips still have no
-individual credit supported by available source evidence.
+CoravaMaris as a VNG Prompt to Play game. Two additional credits come directly from the films: `social-1` end credits
+(at 11:10–11:22) name Lê Quốc Khánh for opening content and post-production;
+`social-3` credits (at 9:10) name Quoc Khanh for post-production and narration.
+The remaining three clips have no individual credit supported by available
+source evidence.
