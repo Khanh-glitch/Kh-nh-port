@@ -14,10 +14,10 @@ import { PadRing, isFacing, mats, useWorldColliders, worldPos } from './common'
 const ex = EXHIBITS.cinema
 
 // Same-origin clips can autoplay and advance reliably without Drive player clicks.
-const PROJECT_FILMS: { id: string; label: string; src?: string }[] = [
+const PROJECT_FILMS: { id: string; label: string; src?: string; projectRole?: string }[] = [
   { id: '1fkUo-py1nE_pqeGVYvpnJCJCs1IlWAKe', label: 'THE FOOT BETRAYS YOU', src: './portfolio/films/the-foot-betrays-you.mp4' },
   { id: '1RfgyAe0LeKlENlNUTLRYanoFpslrKDz3', label: 'UNHEARD · MUSIC DISCOVERY', src: './portfolio/films/unheard-music-discovery.mp4' },
-  { id: '13TybcMrggmZG2K5MpHREdY54WGSyWRh3', label: 'CORAVAMARIS · VIDEO PROJECT 3', src: './portfolio/films/coravamaris.mp4' },
+  { id: '13TybcMrggmZG2K5MpHREdY54WGSyWRh3', label: 'CORAVAMARIS · VIDEO PROJECT 3', src: './portfolio/films/coravamaris.mp4', projectRole: 'Dự án: Audio · Pitch · Level Design' },
   { id: '1Q8fq-i-Of1jMqeuFCPNCpLhZTatq4j4h', label: 'SOCIAL MEDIA · 92da', src: './portfolio/films/social-2.mp4' },
   { id: '1sR4CaGBWVUNnmaIQK-gWbmYP_0W4KDko', label: 'SOCIAL MEDIA · 9c40', src: './portfolio/films/social-1.mp4' },
   { id: '1O5hcaN86PB4KGd9Sb476Mdahqgv6W-bY', label: 'SOCIAL MEDIA · ea07', src: './portfolio/films/social-3.mp4' },
@@ -660,7 +660,7 @@ export function Cinema() {
       {/* Automatic entrance doors reopen when approached from either side. */}
       <mesh ref={leftDoor} position={[-2.47, 1.9, 6.2]} material={velvet}><boxGeometry args={[1.6, 3.8, 0.15]} /></mesh>
       <mesh ref={rightDoor} position={[2.47, 1.9, 6.2]} material={velvet}><boxGeometry args={[1.6, 3.8, 0.15]} /></mesh>
-      {projectFilm !== null && <Label title={PROJECT_FILMS[projectFilm].label} sub="Vai trò: chưa có thông tin xác minh" color="#ffb070" position={[0, 5.6, -5.3]} scale={0.65} fadeNear={1} fadeFar={28} />}
+      {projectFilm !== null && <Label title={PROJECT_FILMS[projectFilm].label} sub={PROJECT_FILMS[projectFilm].projectRole ?? 'Vai trò: chưa có thông tin xác minh'} color="#ffb070" position={[0, 5.6, -5.3]} scale={0.65} fadeNear={1} fadeFar={28} />}
       {/* màn hình + rèm */}
       <mesh position={[0, 2.95, -5.98]}>
         <planeGeometry args={[8.3, 3.64]} />

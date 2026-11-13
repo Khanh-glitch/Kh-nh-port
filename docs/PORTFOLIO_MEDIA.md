@@ -198,3 +198,12 @@ versus 4926ms (batch second), still far above the release gate. This order can
 favor the second run, so it is **not enabled by default**. Counterbalanced
 forward/reverse runs and the lifecycle visual job are required before drawing
 any performance or fidelity conclusion.
+
+The Cinema credit for CoravaMaris is specifically marked as a **project role**,
+not video authorship: the project's `Game` brief, `Video Project 3.mp4`, and
+`VNGenius_Members` spreadsheet all share Drive folder
+`1sDcyfw0MZBOYx3OutZEDUw7REXDAwVPd`. The team's own spreadsheet lists Lê Quốc
+Khánh's selected responsibilities as Audio, Pitch/Presentation and Level
+Design. The public GitHub portfolio at `teehihi/tee-lab` also identifies
+CoravaMaris as a VNG Prompt to Play game. The other five clips still have no
+individual credit supported by available source evidence.
