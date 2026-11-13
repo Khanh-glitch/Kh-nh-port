@@ -5,7 +5,7 @@
  * a capability check, and an offscreen WebGL2 MSAA framebuffer read-back test.
  * The probe cannot guarantee future driver stability on all hardware.
  */
-export type FrameQuality = 'high' | 'low'
+export type FrameQuality = 'high' | 'low' | 'performance'
 
 type Frame = { t: number; dt: number }
 type GateResult = { ok: boolean; reason: string }

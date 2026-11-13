@@ -23,8 +23,8 @@ const experience=moduleSource('scene/Experience');
 assert(experience.includes("phase === 'intro' ? 0.5"),
   'Published scene throttles unseen island rasterization during spaceship');
 const experienceSource=readFileSync('source/src/scene/Experience.tsx','utf8');
-assert(experienceSource.includes("phase === 'intro' ? 0.5 : low ? 1 : [1, 1.6]"),
-  'Visible game original DPR and high quality range must be restored');
+assert(experienceSource.includes("phase === 'intro' ? 0.5 : low ? concessions.renderScale : [1, 1.6]"),
+  'Low/high DPR remains available; performance mode reduces pixel load');
 assert(experienceSource.includes('shadow-mapSize={[2048, 2048]}'),
   'Full original shadows must remain unchanged in the visible world');
 const overlay=moduleSource('ui/Overlay');

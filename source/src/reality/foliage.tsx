@@ -494,7 +494,7 @@ function buildTreeStructure(plan: TreePlan, leafCardsPerTip: number) {
 
 // ------------------------------------------------------------------ Toàn bộ cây sân trường UEH + hoa phượng 3D thật + cỏ
 export function UEHFoliage() {
-  const low = useStore((s) => s.quality) === 'low'
+  const low = useStore((s) => s.quality) !== 'high'
 
   const { trunkGeo, greenLeaves, blossomClusters } = useMemo(() => {
     FLAMBOYANT_CANOPIES.length = 0

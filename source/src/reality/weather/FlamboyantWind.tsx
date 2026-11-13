@@ -152,7 +152,7 @@ function insideBuildingFootprint(x: number, z: number) {
 }
 
 export function FlamboyantWind() {
-  const low = useStore((s) => s.quality) === 'low'
+  const low = useStore((s) => s.quality) !== 'high'
   const N_PETALS = low ? 1150 : 1900
   const N_WHOLE = low ? 190 : 320
   const TOTAL = N_PETALS + N_WHOLE

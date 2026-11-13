@@ -1,3 +1,4 @@
+import { DomOcclusion } from '../scene/domOcclusion'
 import { useReality } from '../reality/state'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
@@ -998,7 +999,9 @@ export function LedVideo({ stageGroup }: { stageGroup: React.RefObject<THREE.Gro
   const realityPhase = useReality((s) => s.phase)
   const videoMuted = useShow((s) => s.videoMuted)
   const globalMuted = useStore((s) => s.muted)
-  const { gl } = useThree()
+  const { gl, scene } = useThree()
+  const occlusion = useMemo(() => new DomOcclusion(), [])
+  const worldCorners = useMemo(() => Array.from({ length: 4 }, () => new THREE.Vector3()), [])
   // lớp DOM chứa iframe, được chiếu đúng lên mặt LED bằng homography (CSS matrix3d)
   const dom = useMemo(() => {
     const d = document.createElement('div')
@@ -1142,11 +1145,15 @@ export function LedVideo({ stageGroup }: { stageGroup: React.RefObject<THREE.Gro
         g.localToWorld(v)
         const cz = v.clone().applyMatrix4(state.camera.matrixWorldInverse).z
         if (cz > -0.2) behind = true
+        worldCorners[k].copy(v)
         v.project(state.camera)
         pts.push(((v.x + 1) / 2) * cw, ((1 - v.y) / 2) * ch)
       })
       if (behind) visible = false
-      else w.style.transform = homography(VIDEO_PX_W, VIDEO_PX_H, pts)
+      else {
+        w.style.transform = homography(VIDEO_PX_W, VIDEO_PX_H, pts)
+        occlusion.update(w, state.camera, scene, worldCorners, performance.now() / 1000)
+      }
     }
     st.vis = damp(st.vis, visible ? 1 : 0, 3, dt)
     w.style.opacity = st.vis.toFixed(3)

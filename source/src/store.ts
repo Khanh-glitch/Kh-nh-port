@@ -19,7 +19,7 @@ interface State {
   muted: boolean
   touch: boolean
   toast: string | null
-  quality: 'high' | 'low'
+  quality: 'high' | 'low' | 'performance'
   setLoading: (v: number) => void
   setReady: () => void
   setPhase: (p: 'intro' | 'playing') => void
@@ -30,7 +30,7 @@ interface State {
   setHover: (h: HoverInfo | null) => void
   setMuted: (m: boolean) => void
   setToast: (t: string | null) => void
-  setQuality: (q: 'high' | 'low') => void
+  setQuality: (q: 'high' | 'low' | 'performance') => void
 }
 
 export const useStore = create<State>((set) => ({

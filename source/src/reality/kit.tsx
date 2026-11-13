@@ -107,7 +107,7 @@ export function SkyDome({ world }: { world: 'ueh' | 'tomorrow' }) {
 
 // ------------------------------------------------------------------ đáy đảo đá & rễ (chất liệu đất đá thực)
 export function Underside({ palette }: { palette: 'ueh' | 'tomorrow' }) {
-  const low = useStore((s) => s.quality) === 'low'
+  const low = useStore((s) => s.quality) !== 'high'
   const { body, roots } = useMemo(() => {
     const pts: THREE.Vector2[] = []
     const prof: [number, number][] = [[59.6, 0], [60, -0.6], [59, -2.2], [52, -6.5], [42, -11.5], [31, -17.5], [20, -23.5], [9, -29.5], [2, -34], [0, -36]]
@@ -186,7 +186,7 @@ export function Underside({ palette }: { palette: 'ueh' | 'tomorrow' }) {
 
 // ------------------------------------------------------------------ bụi nắng chiều / đèn lồng tinh tế (size nhỏ, có chiều sâu)
 export function Drift({ mode, count, colA, colB, size = 1, mirror = false }: { mode: 'fall' | 'rise'; count: number; colA: string; colB: string; size?: number; mirror?: boolean }) {
-  const low = useStore((s) => s.quality) === 'low'
+  const low = useStore((s) => s.quality) !== 'high'
   const n = Math.round(count * (low ? 0.55 : 1))
   const geo = useMemo(() => {
     const g = new THREE.BufferGeometry()
@@ -358,7 +358,7 @@ class Reel {
 export const reel = new Reel()
 
 export function MemoryFrames({ id, accent }: { id: TrackId; accent: string }) {
-  const low = useStore((s) => s.quality) === 'low'
+  const low = useStore((s) => s.quality) !== 'high'
   const groupRef = useRef<THREE.Group>(null)
   const N = low ? 6 : 8
   const mats = useMemo(() => {

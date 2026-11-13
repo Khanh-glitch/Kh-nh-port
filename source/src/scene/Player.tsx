@@ -79,7 +79,6 @@ export function Player() {
   const hovered = useRef<{ it: Interactive; hit: THREE.Intersection } | null>(null)
   const hoverKey = useRef('')
   const vel = useRef(new THREE.Vector3()).current
-  const yVel = useRef(0)
   const bob = useRef(0)
   const lastStep = useRef(0)
   const trans = useRef({ active: false, t: 0, fromP: new THREE.Vector3(), fromQ: new THREE.Quaternion(), lastPhase: 'intro' }).current
@@ -295,14 +294,21 @@ export function Player() {
     const sin = Math.sin(player.yaw)
     const cos = Math.cos(player.yaw)
     // forward = (-sin, -cos), right = (cos, -sin)
-    const wx = (-sin * fz + cos * fx) * speed
-    const wz = (-cos * fz - sin * fx) * speed
+    // Free flight follows the look vector; strafing stays horizontal. Space
+    // and Ctrl provide precise ascent/descent independently of camera pitch.
+    const horizontal = Math.cos(player.pitch)
+    const wx = (-sin * horizontal * fz + cos * fx) * speed
+    const wz = (-cos * horizontal * fz - sin * fx) * speed
+    const vertical = canMove ? ((keys.Space ? 1 : 0) - (keys.ControlLeft || keys.ControlRight ? 1 : 0)) : 0
+    const wy = (Math.sin(player.pitch) * fz + vertical) * speed
     const k = 1 - Math.exp(-9 * dt)
     vel.x += (wx - vel.x) * k
     vel.z += (wz - vel.z) * k
+    vel.y += (wy - vel.y) * k
     player.pos.x += vel.x * dt
     player.pos.z += vel.z * dt
-    resolveCollisions(player.pos)
+    player.pos.y = THREE.MathUtils.clamp(player.pos.y + vel.y * dt, EYE, 150)
+    if (player.pos.y < EYE + 3) resolveCollisions(player.pos)
     const rr = Math.hypot(player.pos.x, player.pos.z)
     const maxR = DISC_R - 1.6
     if (rr > maxR) {
@@ -311,22 +317,8 @@ export function Player() {
     }
     player.speed = Math.hypot(vel.x, vel.z)
 
-    // nhảy (trọng lực thấp)
-    if (canMove && keys.Space && player.grounded) {
-      yVel.current = 6.4
-      player.grounded = false
-      audio.jump()
-    }
-    if (!player.grounded) {
-      yVel.current -= 10.5 * dt
-      player.pos.y += yVel.current * dt
-      if (player.pos.y <= EYE) {
-        player.pos.y = EYE
-        player.grounded = true
-        yVel.current = 0
-        audio.land()
-      }
-    }
+    // No gravity: release movement to hover at the current altitude.
+    player.grounded = player.pos.y <= EYE + 0.02
 
     // bob + bước chân
     if (player.grounded && player.speed > 0.6) {

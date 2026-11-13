@@ -71,7 +71,7 @@ void main(){
 }`
 
 export function HexLattice() {
-  const low = useStore((s) => s.quality) === 'low'
+  const low = useStore((s) => s.quality) !== 'high'
   const { geo, count } = useMemo(() => {
     const S = HEX_S * (low ? 1 : 1)
     const R = low ? 104 : 118

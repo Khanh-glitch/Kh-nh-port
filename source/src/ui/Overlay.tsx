@@ -214,6 +214,7 @@ function Hud() {
   const hover = useStore((s) => s.hover)
   const toast = useStore((s) => s.toast)
   const muted = useStore((s) => s.muted)
+  const quality = useStore((s) => s.quality)
   const touch = useStore((s) => s.touch)
   const panel = useStore((s) => s.panel)
   const paused = useStore((s) => s.paused)
@@ -266,10 +267,14 @@ function Hud() {
             <Kbd>M</Kbd> {muted ? 'bật tiếng' : 'tắt tiếng'}
           </span>
           <span className="flex items-center gap-1">
-            <Kbd>Q</Kbd> chất lượng
+            <Kbd>Q</Kbd> {quality.toUpperCase()} · <Kbd>H</Kbd> HIGH
           </span>
         </div>
       )}
+      <div className="pointer-events-auto absolute right-4 top-16 flex gap-2 text-xs">
+        <button className="rounded-full border border-white/30 bg-black/60 px-3 py-2" onClick={() => window.dispatchEvent(new KeyboardEvent('keydown', { code: 'KeyQ' }))} aria-label="Đổi chất lượng HIGH, LOW hoặc PERFORMANCE">{quality.toUpperCase()}</button>
+        <button className="rounded-full border border-white/30 bg-black/60 px-3 py-2" onClick={() => window.dispatchEvent(new KeyboardEvent('keydown', { code: 'KeyH' }))}>HIGH</button>
+      </div>
       <div className={`absolute bottom-5 left-5 transition-opacity duration-300 ${focus ? 'opacity-0' : 'opacity-100'}`}>
         <Minimap />
       </div>

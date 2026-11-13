@@ -81,12 +81,11 @@ export const GITHUB_PROFILE = 'https://github.com/Khanh-glitch'
 /** Đích của sáu icon Beacon, theo slug trong scene/socialLogoPaths.ts. */
 export const PROFILES: Record<string, { url: string; confirmed: boolean }> = {
   github: { url: GITHUB_PROFILE, confirmed: true },
-  // TODO(profile): thay bằng URL thật; giữ confirmed:false khi vẫn trỏ fallback.
-  facebook: { url: DRIVE_PORTFOLIO, confirmed: false },
-  instagram: { url: DRIVE_PORTFOLIO, confirmed: false },
-  tiktok: { url: DRIVE_PORTFOLIO, confirmed: false },
+  facebook: { url: 'https://www.facebook.com/menisrealforeverbae', confirmed: true },
+  instagram: { url: 'https://www.instagram.com/menisrealforeverbae/', confirmed: true },
+  tiktok: { url: 'https://www.tiktok.com/@menisrealforeverbae', confirmed: true },
   discord: { url: DRIVE_PORTFOLIO, confirmed: false },
-  linkedin: { url: DRIVE_PORTFOLIO, confirmed: false },
+  linkedin: { url: 'https://www.linkedin.com/in/quockhanh-le/', confirmed: true },
 }
 
 /** Mở tab mới, không để trang phía sau điều hướng. */

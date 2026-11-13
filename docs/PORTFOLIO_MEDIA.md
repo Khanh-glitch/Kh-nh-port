@@ -86,3 +86,24 @@ video exceeds the Drive connector's 100 MiB download limit, so it has not
 been converted to a local playable video. The before-click scene snapshot
 reduces repeated trigger work but first-use GPU hitch and remote Google
 playback still require checking in a real browser with an actual GPU/network.
+
+Latest playback/interaction update (supersedes previous Cinema/Beacon notes):
+Cinema includes all three original SOCIAL MEDIA Drive previews alongside the
+three local clips; local clips attempt sound unless the global mute is active,
+and expose controls if autoplay is blocked. Drive embeds remain subject to
+Google and browser playback policies; end-of-video cannot be observed by the
+parent, so use the next-film button to advance from a Drive preview. The owner
+provided the Facebook, Instagram, TikTok, LinkedIn and GitHub URLs; Discord
+alone remains unconfirmed. The Mùa Hạ recording is still a separate same-origin
+MP3 that seeks to 114s; the unrelated video is a Drive iframe. Drive does not
+provide a controllable mute API for that preview, so `mute=1` is only a request,
+not a guarantee that its own soundtrack cannot overlap the MP3.
+
+The visible scene now offers LOW / PERFORMANCE / gated HIGH (Q and H, or the
+buttons), and forward motion follows the view pitch; Space/Ctrl adjust altitude.
+PERFORMANCE restores the measured six-rung auto-ladder from baseline 7bf01fa: it starts at LOW and adjusts film passes, resolution, shadow size and bloom only as needed; particles use LOW counts.
+Before HEX sweep, ignition waits for critical prewarm resources for up to eight
+seconds; this can reduce cold GPU work but does not prove no stalls on every
+GPU. HTML video layers use a throttled coarse 6×4 scene raycast mask: real
+opaque obstacles hide approximate portions of the video, not a pixel-perfect
+WebGL depth buffer. The VNG photo is an ordinary depth-tested Three.js mesh.

@@ -416,7 +416,7 @@ function SummerMist() {
 }
 
 export function SummerRain() {
-  const low = useStore((s) => s.quality) === 'low'
+  const low = useStore((s) => s.quality) !== 'high'
   return (
     <group>
       <RainStreaks low={low} />

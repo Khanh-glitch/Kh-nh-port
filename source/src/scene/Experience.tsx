@@ -1,4 +1,4 @@
-import { Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { Bloom, ChromaticAberration, EffectComposer, Noise, ToneMapping, Vignette } from '@react-three/postprocessing'
 import { BlendFunction, ToneMappingMode } from 'postprocessing'
@@ -12,6 +12,8 @@ import { Exhibits } from './Exhibits'
 import { player } from '../world'
 import { SPAWN, EYE } from '../layout'
 import { highGuard } from '../highGuard'
+import { perfLadder, RUNG_CONCESSIONS, type PerfRung } from '../perfLadder'
+import { DomOcclusion } from './domOcclusion'
 import { RealityHost } from '../reality/RealityHost'
 import { PANELS, type PanelContent, type PanelId } from '../content'
 import { closePanel } from './Player'
@@ -24,9 +26,16 @@ import { CanvasTexture } from 'three'
 import { FONT } from '../gfx'
 import { EXHIBITS } from '../layout'
 
-function Lights() {
+function Lights({ shadowEdge = 2048 }: { shadowEdge?: 2048 | 1024 }) {
   const light = useRef<THREE.DirectionalLight>(null)
   const target = useMemo(() => new THREE.Object3D(), [])
+  useEffect(() => {
+    const l = light.current
+    if (!l || l.shadow.mapSize.x === shadowEdge) return
+    l.shadow.mapSize.set(shadowEdge, shadowEdge)
+    l.shadow.map?.dispose()
+    l.shadow.map = null
+  }, [shadowEdge])
   useFrame(() => {
     const l = light.current
     if (!l) return
@@ -62,14 +71,14 @@ function Lights() {
   )
 }
 
-function Post({ low }: { low: boolean }) {
+function Post({ low, filmPasses = true, bloomLevels }: { low: boolean; filmPasses?: boolean; bloomLevels?: number }) {
   const ca = useMemo(() => new THREE.Vector2(0.0007, 0.0009), [])
   return (
     <EffectComposer multisampling={low ? 0 : 4} enableNormalPass={false}>
-      <Bloom intensity={low ? 0.9 : 1.25} luminanceThreshold={0.82} luminanceSmoothing={0.25} mipmapBlur radius={0.78} levels={low ? 5 : 8} />
+      <Bloom intensity={low ? 0.9 : 1.25} luminanceThreshold={0.82} luminanceSmoothing={0.25} mipmapBlur radius={0.78} levels={bloomLevels ?? (low ? 5 : 8)} />
       <ChromaticAberration offset={ca} radialModulation modulationOffset={0.35} blendFunction={low ? BlendFunction.SKIP : BlendFunction.NORMAL} />
-      <Noise opacity={0.035} blendFunction={BlendFunction.SOFT_LIGHT} />
-      <Vignette offset={0.25} darkness={0.55} />
+      {filmPasses && <Noise opacity={0.035} blendFunction={BlendFunction.SOFT_LIGHT} />}
+      {filmPasses && <Vignette offset={0.25} darkness={0.55} />}
       <ToneMapping mode={ToneMappingMode.ACES_FILMIC} />
     </EffectComposer>
   )
@@ -255,6 +264,11 @@ function IslandFirstPaintGate() {
     }
     useStore.getState().setReady()
   })
+  return null
+}
+
+function PerfTierMeter() {
+  useFrame((_, delta) => perfLadder.record(delta))
   return null
 }
 
@@ -826,7 +840,9 @@ export { HEX_SCREEN_LOCAL, HEX_SCREEN_H, HEX_SCREEN_W }
 export function HexVideoLayer() {
   const phase = useReality((s) => s.phase)
   const track = useReality((s) => s.track)
-  const { gl, camera } = useThree()
+  const { gl, camera, scene } = useThree()
+  const occlusion = useMemo(() => new DomOcclusion(), [])
+  const worldCorners = useMemo(() => Array.from({ length: 4 }, () => new THREE.Vector3()), [])
   const dom = useMemo(() => {
     const d = document.createElement('div')
     Object.assign(d.style, {
@@ -904,6 +920,7 @@ export function HexVideoLayer() {
       const v = corners[i].set(local[i][0], local[i][1], local[i][2])
       const cam = v.clone().applyMatrix4(camera.matrixWorldInverse).z
       if (cam > -0.2) behind = true
+      worldCorners[i].copy(v)
       v.project(camera)
       pts.push(((v.x + 1) / 2) * cw, ((1 - v.y) / 2) * ch)
     }
@@ -940,6 +957,7 @@ export function HexVideoLayer() {
     w.style.visibility = 'visible'
     w.style.opacity = '1'
     w.style.transform = `matrix3d(${m.join(',')})`
+    occlusion.update(w, camera, scene, worldCorners, performance.now() / 1000)
   })
   return null
 }
@@ -999,7 +1017,15 @@ export function Experience() {
   }, [panelCanvas])
   useEffect(() => () => panelTex.dispose(), [panelTex])
   const phase = useStore((s) => s.phase)
-  const low = quality === 'low'
+  const low = quality !== 'high'
+  const performanceMode = quality === 'performance'
+  const rung: PerfRung = useSyncExternalStore(
+    performanceMode ? perfLadder.subscribe.bind(perfLadder) : () => () => {},
+    () => performanceMode ? perfLadder.rung : 0,
+    () => 0,
+  )
+  const concessions = RUNG_CONCESSIONS[performanceMode ? rung : 0]
+  useEffect(() => { if (!performanceMode) perfLadder.reset() }, [performanceMode])
   // DIAGNOSTIC ONLY: compare first-laser GPU scheduling with/without the
   // composer. Normal portfolio path always retains Bloom/AA/tonemapping.
   const postProbeOff = typeof window !== 'undefined' &&
@@ -1007,20 +1033,32 @@ export function Experience() {
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.code !== 'KeyQ' || e.repeat || useStore.getState().phase !== 'playing') return
-      if (useStore.getState().quality === 'high') {
-        highGuard.resetToLow()
-        useStore.getState().setQuality('low')
-        toast('Chất lượng: THẤP')
+      if ((e.code !== 'KeyQ' && e.code !== 'KeyH') || e.repeat || useStore.getState().phase !== 'playing') return
+      if (e.code === 'KeyH') {
+        const verdict = highGuard.tryEnable()
+        if (verdict.ok) { useStore.getState().setQuality('high'); toast('Chất lượng: HIGH') }
+        else if (verdict.reason) toast(verdict.reason, 3200)
         return
       }
-      const verdict = highGuard.tryEnable()
-      if (verdict.ok) {
-        useStore.getState().setQuality('high')
-        toast('Chất lượng: CAO — đã vượt qua kiểm tra GPU')
-      } else if (verdict.reason) {
-        // A rejected machine never enters High. Repeated Q is ignored.
-        toast(verdict.reason, 3200)
+      const current = useStore.getState().quality
+      if (current === 'low') {
+        const verdict = highGuard.tryEnable()
+        if (verdict.ok) {
+          useStore.getState().setQuality('high')
+          toast('Chất lượng: HIGH')
+        } else {
+          perfLadder.reset()
+          useStore.getState().setQuality('performance')
+          toast(verdict.reason ? `${verdict.reason} Chuyển sang PERFORMANCE.` : 'Chất lượng: PERFORMANCE — tự đo', 3600)
+        }
+      } else if (current === 'high') {
+        perfLadder.reset()
+        useStore.getState().setQuality('performance')
+        toast('Chất lượng: PERFORMANCE — tự đo')
+      } else {
+        highGuard.resetToLow()
+        useStore.getState().setQuality('low')
+        toast('Chất lượng: LOW')
       }
     }
     window.addEventListener('keydown', onKey)
@@ -1035,15 +1073,16 @@ export function Experience() {
       // Restore the EXACT original visible DPR on 'playing' before descent.
       // This cuts concurrent WebGL pressure without simplifying a single
       // UEH/HEX mesh or reducing the game's 2048px shadow map.
-      dpr={phase === 'intro' ? 0.5 : low ? 1 : [1, 1.6]}
+      dpr={phase === 'intro' ? 0.5 : low ? concessions.renderScale : [1, 1.6]}
       shadows="percentage"
       camera={{ fov: 72, near: 0.1, far: 9000, position: [0, 17, 88] }}
       gl={{ antialias: false, powerPreference: 'high-performance', toneMapping: THREE.NoToneMapping, stencil: false }}
     >
       <HighGateMeter />
+      {performanceMode && <PerfTierMeter />}
       <Suspense fallback={null}>
         <Sky />
-        <Lights />
+        <Lights shadowEdge={concessions.shadowMapSize} />
         <LandingGpuPreflight />
         <Phenomena />
         <Platform />
@@ -1054,7 +1093,7 @@ export function Experience() {
         <HexVideoLayer />
         <HexStageVideoLink />
         <HexPlayerControls />
-        {!postProbeOff && <Post low={low} />}
+        {!postProbeOff && <Post low={low} filmPasses={!concessions.dropFilmPasses} bloomLevels={performanceMode ? concessions.bloomLevels : undefined} />}
         <IslandFirstPaintGate />
       </Suspense>
     </Canvas>

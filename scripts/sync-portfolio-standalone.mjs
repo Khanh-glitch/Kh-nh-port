@@ -12,10 +12,12 @@ const tag = '<script id="orbita-embedded-map" type="application/json">'
 const html = readFileSync(htmlPath, 'utf8'), begin = html.indexOf(tag), end = html.indexOf('</script>', begin + tag.length)
 if (begin < 0 || end < 0) throw Error('Standalone module map missing')
 const map = JSON.parse(html.slice(begin + tag.length, end))
-const targets = ['layout', 'reality/RealityHost', 'reality/kit', 'reality/music', 'reality/tracks', 'scene/Beacon', 'scene/Cinema', 'scene/Experience', 'scene/Player', 'scene/SocialDrops', 'scene/VngGallery', 'stage/ShowSystem', 'stage/showState', 'ui/Overlay']
+const targets = ['layout', 'store', 'highGuard', 'perfLadder', 'reality/RealityHost', 'reality/Front', 'reality/foliage', 'reality/weather/SummerRain', 'reality/weather/FlamboyantWind', 'reality/kit', 'reality/music', 'reality/tracks', 'scene/Beacon', 'scene/Cinema', 'scene/domOcclusion', 'scene/Experience', 'scene/Player', 'scene/SocialDrops', 'scene/VngGallery', 'stage/ShowSystem', 'stage/showState', 'ui/Overlay']
+if (!map['orbita/perfLadder']) map['orbita/perfLadder'] = 'pending'
+if (!map['orbita/scene/domOcclusion']) map['orbita/scene/domOcclusion'] = 'pending'
 for (const moduleName of targets) {
   const id = 'orbita/' + moduleName
-  if (!(id in map)) throw Error('Missing embedded module ' + id)
+  if (!(id in map) && moduleName !== 'scene/domOcclusion') throw Error('Missing embedded module ' + id)
   const path = resolve(src, moduleName + (existsSync(resolve(src, moduleName + '.tsx')) ? '.tsx' : '.ts'))
   const result = ts.transpileModule(readFileSync(path, 'utf8'), { fileName: path, reportDiagnostics: true,
     compilerOptions: { jsx: ts.JsxEmit.ReactJSX, target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext, removeComments: false } })

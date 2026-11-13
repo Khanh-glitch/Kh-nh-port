@@ -80,6 +80,8 @@ export function RealityHost() {
     warmStarted: false,
     triggerPrepared: false,
     triggerPrepareQueued: false,
+    triggerWarmNotice: false,
+    ignitionStartedAt: 0,
     warmTex: [] as THREE.Texture[],
     warmMesh: [] as THREE.Object3D[],
     warmCritical: [] as THREE.Object3D[],
@@ -922,7 +924,10 @@ export function RealityHost() {
     const pendingShaderInput = (navigator as Navigator & {
       scheduling?:{isInputPending?:()=>boolean}
     }).scheduling?.isInputPending?.() ?? false
-    const shaderHealthy = rawDt > 0 && rawDt <= 0.10 &&
+    // Performance mode continues incremental warming on slower devices too;
+    // otherwise a 10fps machine never even starts its preparation queue.
+    const shaderBudget = useStore.getState().quality === 'performance' ? 0.25 : 0.10
+    const shaderHealthy = rawDt > 0 && rawDt <= shaderBudget &&
       document.visibilityState === 'visible' && !pendingShaderInput
     S.warmHealthyPaints = shaderHealthy ? S.warmHealthyPaints + 1 : 0
     const warmOpportunity = S.warmHealthyPaints >= 2
@@ -1096,6 +1101,8 @@ export function RealityHost() {
     if (st.phase !== S.lastPhase) {
       if (st.phase === 'ignite') {
         S.ignT = 0
+        S.ignitionStartedAt = performance.now()
+        S.triggerWarmNotice = false
         S.u = 0
         rt.ignite = 0
         audio.prepare()
@@ -1141,7 +1148,16 @@ export function RealityHost() {
     if (st.phase === 'ignite') {
       S.ignT += dt / IGNITE_S
       rt.ignite = ease.inOut(Math.min(1, S.ignT))
-      if (S.ignT >= 1) useReality.getState().setPhase('sweep')
+      // The sweep reveals the expensive UEH GPU scene. Give in-flight critical
+      // shaders and textures extra ignition frames before that reveal rather
+      // than discarding a cold queue on the click. Never wait indefinitely on
+      // a broken driver; after 8 seconds proceed with the actual scene.
+      const criticalReady = S.warmCritical.length === 0 && S.warmTex.length === 0 && !S.warmCompilePending
+      if (S.ignT >= 1 && !criticalReady && !S.triggerWarmNotice) {
+        S.triggerWarmNotice = true
+        toast('Đang chuẩn bị hiệu ứng bài hát…', 2400)
+      }
+      if (S.ignT >= 1 && (criticalReady || performance.now() - S.ignitionStartedAt >= 8000)) useReality.getState().setPhase('sweep')
     } else if (st.phase === 'sweep') {
       S.u += dt / SWEEP_S
       rt.front = curve(S.u)

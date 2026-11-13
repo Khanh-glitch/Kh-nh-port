@@ -3,10 +3,11 @@ import { useFrame, useThree } from '@react-three/fiber'
 import * as THREE from 'three'
 import { EXHIBITS, openExternal } from '../layout'
 import { audio, type Bus } from '../audio'
-import { toast } from '../store'
+import { toast, useStore } from '../store'
 import { FONT, beamGeometry, beamMaterial, canvasTex, rbox, roundRect } from '../gfx'
 import { useReality } from '../reality/state'
 import { Hit } from './Hit'
+import { DomOcclusion } from './domOcclusion'
 import { Label } from './Label'
 import { PadRing, isFacing, mats, useWorldColliders, worldPos } from './common'
 
@@ -17,6 +18,9 @@ const PROJECT_FILMS: { id: string; label: string; src?: string }[] = [
   { id: '1fkUo-py1nE_pqeGVYvpnJCJCs1IlWAKe', label: 'THE FOOT BETRAYS YOU', src: './portfolio/films/the-foot-betrays-you.mp4' },
   { id: '1RfgyAe0LeKlENlNUTLRYanoFpslrKDz3', label: 'UNHEARD · MUSIC DISCOVERY', src: './portfolio/films/unheard-music-discovery.mp4' },
   { id: '13TybcMrggmZG2K5MpHREdY54WGSyWRh3', label: 'CORAVAMARIS · VIDEO PROJECT 3', src: './portfolio/films/coravamaris.mp4' },
+  { id: '1Q8fq-i-Of1jMqeuFCPNCpLhZTatq4j4h', label: 'SOCIAL MEDIA · 92da' },
+  { id: '1sR4CaGBWVUNnmaIQK-gWbmYP_0W4KDko', label: 'SOCIAL MEDIA · 9c40' },
+  { id: '1O5hcaN86PB4KGd9Sb476Mdahqgv6W-bY', label: 'SOCIAL MEDIA · ea07' },
 ]
 
 function cinemaHomography(src: number[][], dst: number[][]): number[] | null {
@@ -55,38 +59,51 @@ function cinemaHomography(src: number[][], dst: number[][]): number[] | null {
 }
 
 function CinemaVideo({ index, onClose, onNext }: { index: number | null; onClose: () => void; onNext: () => void }) {
-  const { gl, camera } = useThree()
+  const { gl, camera, scene } = useThree()
+  const occlusion = useMemo(() => new DomOcclusion(), [])
+  const worldCorners = useMemo(() => Array.from({ length: 4 }, () => new THREE.Vector3()), [])
   const layer = useMemo(() => {
     const el = document.createElement('div')
     Object.assign(el.style, { position: 'absolute', left: '0', top: '0', width: '1280px', height: '720px', transformOrigin: '0 0', visibility: 'hidden', overflow: 'hidden', pointerEvents: 'none' })
     return el
   }, [])
   const phase = useReality((s) => s.phase)
+  const muted = useStore((s) => s.muted)
+  useEffect(() => {
+    const video = layer.querySelector('video')
+    if (video) video.muted = muted
+  }, [muted, layer, index])
   useEffect(() => {
     if (index === null || phase !== 'idle') return
     const film = PROJECT_FILMS[index]
     const frame = film.src ? document.createElement('video') : document.createElement('iframe')
     if (frame instanceof HTMLVideoElement) {
       frame.src = film.src!
-      frame.controls = false
-      frame.muted = true // muted autoplay is allowed without a new browser gesture
+      frame.controls = true
+      frame.muted = useStore.getState().muted || !audio.started
       frame.autoplay = true
       frame.playsInline = true
       frame.preload = 'auto'
       frame.onended = onNext
-      void frame.play().catch(() => {})
+      void frame.play().catch(() => { frame.muted = true; void frame.play().catch(() => {}) })
     } else {
-      frame.src = `https://drive.google.com/file/d/${film.id}/preview`
+      frame.src = `https://drive.google.com/file/d/${film.id}/preview?autoplay=1`
       frame.allow = 'autoplay; fullscreen'
     }
     frame.title = film.label
     frame.style.cssText = 'width:100%;height:100%;border:0;background:#000;object-fit:contain'
-    frame.style.pointerEvents = 'none'
+    frame.style.pointerEvents = 'auto'
+    layer.style.pointerEvents = 'auto'
     layer.appendChild(frame)
+    const nextButton = document.createElement('button')
+    nextButton.textContent = 'PHIM TIẾP ▶'
+    nextButton.style.cssText = 'position:absolute;right:18px;top:18px;z-index:2;padding:12px 18px;color:white;background:#111c;border:1px solid white;border-radius:8px;cursor:pointer;font:600 22px sans-serif'
+    nextButton.onclick = onNext
+    layer.appendChild(nextButton)
     gl.domElement.parentElement?.appendChild(layer)
     return () => {
       if (frame instanceof HTMLVideoElement) { frame.onended = null; frame.pause(); frame.removeAttribute('src'); frame.load() }
-      frame.remove(); layer.remove()
+      nextButton.remove(); frame.remove(); layer.remove()
     }
   }, [index, phase, layer, gl, onNext])
   const points = useMemo(() => [new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3()], [])
@@ -103,6 +120,7 @@ function CinemaVideo({ index, onClose, onNext }: { index: number | null; onClose
       const [x,y] = xy[i], z = -5.75
       const v = points[i].set(ex.x + x*c + z*s, y, ex.z - x*s + z*c)
       if (v.clone().applyMatrix4(camera.matrixWorldInverse).z > -0.2) { layer.style.visibility = 'hidden'; return }
+      worldCorners[i].copy(v)
       v.project(camera)
       dst.push([(v.x+1)*gl.domElement.clientWidth/2, (1-v.y)*gl.domElement.clientHeight/2])
     }
@@ -110,6 +128,7 @@ function CinemaVideo({ index, onClose, onNext }: { index: number | null; onClose
     if (!matrix) { layer.style.visibility = 'hidden'; return }
     layer.style.visibility = 'visible'
     layer.style.transform = `matrix3d(${matrix.join(',')})`
+    occlusion.update(layer, camera, scene, worldCorners, performance.now() / 1000)
   })
   return null
 }
@@ -424,11 +443,14 @@ export function Cinema() {
   const next = () => {
     const nextFilm = projectFilm === null ? 0 : (projectFilm + 1) % PROJECT_FILMS.length
     setProjectFilm(nextFilm)
+    // Release the cursor so native video/Drive controls remain usable.
+    useStore.getState().setFree(true)
+    if (document.pointerLockElement) document.exitPointerLock()
     st.reel = nextFilm
     st.reelT = 0
     st.flash = 1
     if (busRef.current) audio.cubeClick(busRef.current, 0.6)
-    toast(`Rạp phim: ${PROJECT_FILMS[nextFilm].label} · tự phát (không tiếng)`)
+    toast(`Rạp phim: ${PROJECT_FILMS[nextFilm].label} · chọn nút phát nếu trình duyệt yêu cầu`)
   }
 
   useFrame((state, dt) => {
