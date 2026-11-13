@@ -1000,14 +1000,14 @@ export function HexVideoLayer() {
     // The video is behind the canvas; recovery controls must be above it.
     const button = document.createElement('button')
     button.textContent = yt.state === 'blocked' ? '▶ Phát video và âm thanh' : 'Mở video gốc trên YouTube ↗'
-    button.style.cssText = 'position:absolute;left:50%;bottom:32px;transform:translateX(-50%);z-index:3;padding:12px 18px;background:#111;color:white;border:1px solid white;border-radius:8px;pointer-events:auto;cursor:pointer;font:600 16px sans-serif'
+    button.style.cssText = 'position:fixed;left:50%;bottom:32px;transform:translateX(-50%);z-index:10000;padding:12px 18px;background:#111;color:white;border:1px solid white;border-radius:8px;pointer-events:auto;cursor:pointer;font:600 16px sans-serif'
     button.onclick = () => yt.state === 'blocked' ? yt.resume() : openExternal('https://youtu.be/179btG24VE8?t=82')
-    parent.appendChild(button)
+    document.body.appendChild(button)
     const original = document.createElement('button')
     original.textContent = 'Mở YouTube ↗'
-    original.style.cssText = 'position:absolute;right:16px;bottom:32px;z-index:3;padding:12px 16px;background:#111;color:white;border:1px solid white;border-radius:8px;pointer-events:auto;cursor:pointer;font:600 14px sans-serif'
+    original.style.cssText = 'position:fixed;right:16px;bottom:32px;z-index:10000;padding:12px 16px;background:#111;color:white;border:1px solid white;border-radius:8px;pointer-events:auto;cursor:pointer;font:600 14px sans-serif'
     original.onclick = () => openExternal('https://youtu.be/179btG24VE8?t=82')
-    if (yt.state === 'blocked') parent.appendChild(original)
+    if (yt.state === 'blocked') document.body.appendChild(original)
     return () => { button.remove(); original.remove() }
   }, [wanted, track, yt.state, gl])
   const corners = useMemo(

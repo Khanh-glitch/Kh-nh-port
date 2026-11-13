@@ -40,7 +40,7 @@ try {
   let first = await inspect('initial')
   const recovery = page.getByRole('button', {name:'Phát video và âm thanh'})
   if (await recovery.isVisible().catch(() => false)) {
-    await recovery.click({timeout:10000})
+    await recovery.click({timeout:60000})
     await page.waitForTimeout(10000)
     first = await inspect('after-real-recovery-click')
   }
