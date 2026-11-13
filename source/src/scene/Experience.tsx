@@ -690,6 +690,12 @@ export function useVideoSurface(host: VideoSurfaceHost, hostEl: HTMLElement | nu
     const mine = ++token.current
     let cancelled = false
     setState('loading')
+    // YouTube can remain indefinitely in an unstarted/buffering state
+    // without dispatching onAutoplayBlocked (network policy, codec or bot
+    // checks). Offer a real user-gesture recovery instead of a silent screen.
+    const startTimer = window.setTimeout(() => {
+      if (!cancelled && mine === token.current) setState(previous => previous === 'loading' ? 'blocked' : previous)
+    }, 12000)
     const el = document.createElement('div')
     hostEl.appendChild(el)
     loadYouTubeAPI()
@@ -736,6 +742,7 @@ export function useVideoSurface(host: VideoSurfaceHost, hostEl: HTMLElement | nu
       .catch(() => !cancelled && mine === token.current && setState('error'))
     return () => {
       cancelled = true
+      window.clearTimeout(startTimer)
       token.current++
       try {
         player.current?.destroy()
@@ -996,7 +1003,12 @@ export function HexVideoLayer() {
     button.style.cssText = 'position:absolute;left:50%;bottom:32px;transform:translateX(-50%);z-index:3;padding:12px 18px;background:#111;color:white;border:1px solid white;border-radius:8px;pointer-events:auto;cursor:pointer;font:600 16px sans-serif'
     button.onclick = () => yt.state === 'blocked' ? yt.resume() : openExternal('https://youtu.be/179btG24VE8?t=82')
     parent.appendChild(button)
-    return () => button.remove()
+    const original = document.createElement('button')
+    original.textContent = 'Mở YouTube ↗'
+    original.style.cssText = 'position:absolute;right:16px;bottom:32px;z-index:3;padding:12px 16px;background:#111;color:white;border:1px solid white;border-radius:8px;pointer-events:auto;cursor:pointer;font:600 14px sans-serif'
+    original.onclick = () => openExternal('https://youtu.be/179btG24VE8?t=82')
+    if (yt.state === 'blocked') parent.appendChild(original)
+    return () => { button.remove(); original.remove() }
   }, [wanted, track, yt.state, gl])
   const corners = useMemo(
     () => [new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3()],
