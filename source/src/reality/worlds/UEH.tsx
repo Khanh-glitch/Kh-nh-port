@@ -11,7 +11,7 @@ import { canvasTex as ct, FONT } from '../../gfx'
 import { patchNew } from '../mask'
 import { createConcretePBR, createHeritagePlasterPBR, createTerracottaTilePBR, createWoodPBR } from '../pbr'
 import { UEHFoliage } from '../foliage'
-import { Drift, MemoryFrames, SkyDome, Underside, WU, reel } from '../kit'
+import { Drift, MemoryFrames, SkyDome, Underside, WU, reel, campusVideo } from '../kit'
 import { SummerRain } from '../weather/SummerRain'
 import { FlamboyantWind } from '../weather/FlamboyantWind'
 import { useReality } from '../state'
@@ -911,7 +911,7 @@ function CampusStage() {
     im.instanceMatrix.needsUpdate = true
   }, [])
   useFrame(() => {
-    scrMat.uniforms.uTex.value = reel.tex
+    scrMat.uniforms.uTex.value = campusVideo.texture ?? reel.tex
   })
   return (
     <group position={[e.x, 0, e.z]} rotation={[0, e.rotY, 0]}>

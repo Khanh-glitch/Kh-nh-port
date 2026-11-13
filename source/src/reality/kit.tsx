@@ -8,6 +8,10 @@ import { music } from './music'
 import { TRACKS, probeMedia, probePlayable, type TrackId } from './tracks'
 import { useReality } from './state'
 
+// Shared only by the actual campus display and the Mùa Hạ media lifecycle.
+// Null restores the original procedural reel without cloning the screen mesh.
+export const campusVideo: { texture: THREE.Texture | null } = { texture: null }
+
 export const WU = {
   uMus: { value: new THREE.Vector4() },
   uProg: { value: 0 },

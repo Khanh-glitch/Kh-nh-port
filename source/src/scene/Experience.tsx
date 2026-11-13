@@ -22,6 +22,7 @@ import { openExternal, NGAY_MAI_CUE, NGAY_MAI_VIDEO_ID, HEX_MAIN_STAGE_VIDEO_SRC
 import { loadYouTubeAPI, type YTPlayer } from '../stage/showState'
 import { useReality } from '../reality/state'
 import { music } from '../reality/music'
+import { campusVideo } from '../reality/kit'
 import { CanvasTexture } from 'three'
 import { FONT } from '../gfx'
 import { EXHIBITS } from '../layout'
@@ -888,6 +889,7 @@ function HexLocalVideo() {
     if (!playing) return
     const video = media.video
     video.src = './portfolio/films/mua-ha.mp4'
+    campusVideo.texture = media.texture
     const sync = () => {
       const target = 114 + music.elapsed
       if (Number.isFinite(video.duration) && target < video.duration && Math.abs(video.currentTime - target) > 1.5) video.currentTime = target
@@ -903,19 +905,14 @@ function HexLocalVideo() {
       video.removeEventListener('loadedmetadata', sync)
       window.removeEventListener('pointerdown', retry)
       window.removeEventListener('keydown', retry)
+      if (campusVideo.texture === media.texture) campusVideo.texture = null
       video.pause()
       video.removeAttribute('src')
       video.load()
     }
   }, [playing, media])
   useEffect(() => () => media.texture.dispose(), [media])
-  if (!playing) return null
-  return <group position={[HEX_STAGE.x, 0, HEX_STAGE.z]} rotation={[0, HEX_STAGE.rotY, 0]}>
-    <mesh position={[HEX_SCREEN_LOCAL[0], HEX_SCREEN_LOCAL[1], HEX_SCREEN_LOCAL[2] + 0.012]}>
-      <planeGeometry args={[HEX_SCREEN_W, HEX_SCREEN_H]} />
-      <meshBasicMaterial map={media.texture} toneMapped={false} />
-    </mesh>
-  </group>
+  return null
 }
 
 /**

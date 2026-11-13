@@ -11,6 +11,8 @@ const browser=await chromium.launch({headless:true,args:[
 ]})
 const reports=[]
 const contexts=[{name:'baseline-main-4454511',port:4173},{name:'hex-candidate',port:4174}]
+// Counterbalance to distinguish a rendering gain from warmed browser/driver caches.
+if(process.env.HEX_AB_ORDER==='reverse') contexts.reverse()
 for(const test of contexts){
  const context=await browser.newContext({viewport:{width:960,height:540},deviceScaleFactor:1})
  const page=await context.newPage()

@@ -183,3 +183,18 @@ while the uncovered half remained visible. This tests compositor/depth wiring,
 not live YouTube network playback. Transparency without depth writes follows
 the renderer's ordinary depth-buffer behavior and is not equivalent to
 per-pixel blending of translucent foreground objects.
+
+Mùa Hạ now uses the *existing campus screen material* instead of a separate
+plane: its texture is swapped to the muted video for playback and restored on
+exit. This preserves the exact screen geometry, depth and scan-materialization
+shader; the video cannot appear before the corresponding part of the screen.
+A Chromium scene smoke check observed the video texture mounted during playback
+and removed on exit, without page errors.
+
+An opt-in tree-batch experiment keeps every original tree instance and material
+but submits a tree only after its conservative scan bound reaches the front.
+The first same-code native run `43464516228` recorded 8997ms (control first)
+versus 4926ms (batch second), still far above the release gate. This order can
+favor the second run, so it is **not enabled by default**. Counterbalanced
+forward/reverse runs and the lifecycle visual job are required before drawing
+any performance or fidelity conclusion.
