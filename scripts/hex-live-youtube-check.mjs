@@ -15,7 +15,7 @@ try {
   await page.goto('http://127.0.0.1:4173/#at=-26,20,0,0&autostart&skip', { waitUntil: 'domcontentloaded', timeout: 120000 })
   await page.waitForFunction(() => !!window.__orbitaReality, null, { timeout: 120000 })
   await page.evaluate(() => window.__orbitaReality.requestReality('ngay-mai'))
-  await page.waitForSelector('iframe[src*="youtube"]', { timeout: 120000 })
+  await page.waitForSelector('iframe[src*="youtube"]', { state:'attached', timeout: 120000 })
   const inspect = async label => {
     const frame = page.frames().find(f => /youtube(?:-nocookie)?\.com\/embed\//.test(f.url()))
     const data = frame ? await frame.evaluate(() => {
