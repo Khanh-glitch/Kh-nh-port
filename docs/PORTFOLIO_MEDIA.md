@@ -258,3 +258,7 @@ The current default (without experimental tree batching), native Metal run
 was still queued when this entry was recorded. Cinema scene smoke test saw the
 real `unheard-music-discovery.mp4` playing unmuted after automatic advancement,
 with the HRTF bus configured at rolloff 1.4/max distance 75 and no page errors.
+A further gesture-based Chromium test attached an analyser to the real lyric
+video's MediaElementAudioSourceNode: AudioContext was `running` and decoded
+signal RMS was 0.0828 while video advanced from 82.0s to 90.09s. This checks
+signal in the graph, not speakers or every device's autoplay policy.
