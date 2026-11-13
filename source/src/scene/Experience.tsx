@@ -21,6 +21,7 @@ import { openExternal, NGAY_MAI_CUE, NGAY_MAI_VIDEO_ID, HEX_MAIN_STAGE_VIDEO_SRC
 import { loadYouTubeAPI, type YTPlayer } from '../stage/showState'
 import { useReality } from '../reality/state'
 import { music } from '../reality/music'
+import { audio } from '../audio'
 import { campusVideo } from '../reality/kit'
 import { CanvasTexture } from 'three'
 import { FONT } from '../gfx'
@@ -104,13 +105,15 @@ class HexDepthPortalEffect extends Effect {
   }
 }
 
+const officialYoutubeMode = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('hexOfficialYoutube') === '1'
+
 function Post({ low, filmPasses = true, bloomLevels, portalOnly = false }: { low: boolean; filmPasses?: boolean; bloomLevels?: number; portalOnly?: boolean }) {
   const { camera } = useThree()
   const phase = useReality(s => s.phase)
   const track = useReality(s => s.track)
   const portal = useMemo(() => new HexDepthPortalEffect(camera), [camera])
   useEffect(() => () => portal.dispose(), [portal])
-  const showPortal = track === 'ngay-mai' && (phase === 'sweep' || phase === 'active')
+  const showPortal = officialYoutubeMode && track === 'ngay-mai' && (phase === 'sweep' || phase === 'active')
   const ca = useMemo(() => new THREE.Vector2(0.0007, 0.0009), [])
   if (portalOnly && !showPortal) return null
   return (
@@ -877,47 +880,66 @@ export function hexScreenCorners(): [number, number, number][] {
 
 export { HEX_SCREEN_LOCAL, HEX_SCREEN_H, HEX_SCREEN_W }
 
-/** Same-origin, muted Mùa Hạ footage participates in the actual depth buffer. */
+/** Original local screen footage uses the existing screen's real depth buffer.
+ * Mùa Hạ's video is muted; its separate audio is managed by Music. Nếu Ngày
+ * Mai uses the supplied original lyric video as its only audio/video source. */
 function HexLocalVideo() {
   const phase = useReality(s => s.phase)
   const track = useReality(s => s.track)
-  const playing = (phase === 'sweep' || phase === 'active') && track === 'mua-ha'
+  const playing = (phase === 'sweep' || phase === 'active') &&
+    (track === 'mua-ha' || (track === 'ngay-mai' && !officialYoutubeMode))
   const media = useMemo(() => {
     const video = document.createElement('video')
     video.preload = 'auto'
-    video.muted = true
-    video.defaultMuted = true
     video.playsInline = true
     const texture = new THREE.VideoTexture(video)
     texture.colorSpace = THREE.SRGBColorSpace
     return { video, texture }
   }, [])
+  const source = useRef<MediaElementAudioSourceNode | null>(null)
   useEffect(() => {
-    if (!playing) return
+    if (!playing || !track) return
     const video = media.video
-    video.src = './portfolio/films/mua-ha.mp4'
+    const summer = track === 'mua-ha'
+    video.muted = summer
+    video.defaultMuted = summer
+    video.src = summer ? './portfolio/films/mua-ha.mp4' : './portfolio/films/ngay-mai.mp4'
     campusVideo.texture = media.texture
-    const sync = () => {
-      const target = 114 + music.elapsed
-      if (Number.isFinite(video.duration) && target < video.duration && Math.abs(video.currentTime - target) > 1.5) video.currentTime = target
+    if (!summer) {
+      audio.prepare()
+      source.current ??= audio.ctx.createMediaElementSource(video)
+      source.current.connect(audio.master)
+      music.followVideo(video, NGAY_MAI_CUE)
+      video.onended = () => { music.ended = true }
     }
-    video.addEventListener('loadedmetadata', sync)
-    void video.play().catch(() => {})
-    const retry = () => { if (video.paused) void video.play().catch(() => {}) }
+    const sync = () => {
+      const target = summer ? 114 + music.elapsed : NGAY_MAI_CUE
+      if (Number.isFinite(video.duration) && target < video.duration &&
+          Math.abs(video.currentTime - target) > (summer ? 1.5 : 0.1)) video.currentTime = target
+    }
+    video.addEventListener('loadedmetadata', sync, { once: !summer })
+    const retry = () => {
+      if (!video.paused) return
+      if (!summer && audio.ctx.state === 'suspended') void audio.ctx.resume().catch(() => {})
+      void video.play().catch(() => {})
+    }
+    void video.play().catch(() => { if (!summer) toast('Bấm hoặc nhấn phím để phát video Nếu ngày mai', 4000) })
     window.addEventListener('pointerdown', retry)
     window.addEventListener('keydown', retry)
-    const timer = window.setInterval(sync, 2000)
+    const timer = summer ? window.setInterval(sync, 2000) : undefined
     return () => {
-      clearInterval(timer)
+      if (timer !== undefined) clearInterval(timer)
       video.removeEventListener('loadedmetadata', sync)
       window.removeEventListener('pointerdown', retry)
       window.removeEventListener('keydown', retry)
+      if (!summer) { music.unfollowVideo(video); source.current?.disconnect() }
+      video.onended = null
       if (campusVideo.texture === media.texture) campusVideo.texture = null
       video.pause()
       video.removeAttribute('src')
       video.load()
     }
-  }, [playing, media])
+  }, [playing, media, track])
   useEffect(() => () => media.texture.dispose(), [media])
   return null
 }
@@ -1195,9 +1217,9 @@ export function Experience() {
         <RealityHost />
         <FloatingPanel canvas={panelCanvas} tex={panelTex} />
         <HexLocalVideo />
-        <HexVideoLayer />
+        {officialYoutubeMode && <HexVideoLayer />}
         <HexStageVideoLink />
-        <HexPlayerControls />
+        {officialYoutubeMode && <HexPlayerControls />}
         <Post low={low} portalOnly={postProbeOff} filmPasses={!concessions.dropFilmPasses} bloomLevels={performanceMode ? concessions.bloomLevels : undefined} />
         <IslandFirstPaintGate />
       </Suspense>

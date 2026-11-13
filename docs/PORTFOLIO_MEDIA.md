@@ -226,3 +226,22 @@ new 12-second recovery state offers a user-gesture retry and an explicit link
 to the official source rather than silently leaving an unstarted player. A
 follow-up diagnostic uses a real Playwright mouse click for transient browser
 activation; it still invokes the reality API, not the in-world sheet geometry.
+
+
+### Original Nếu ngày mai lyric video
+
+The user's connected Drive also contains `HDCG_NeuNgayMai_LyricVideo.mp4`
+(`1mR5sELGHX1lvsvjtEk3y1Ndbi0ej_zTO`, 295.829s, H.264/AAC), in the
+`Visual NeuNgayMai` folder. Run `43470324589` transcoded that supplied original
+to an 854×480 H.264/AAC web copy; `43470779710` imported the 7.2 MB result.
+The default HEX screen now plays that original directly as a depth-tested
+VideoTexture with its own audio, starting at 82 seconds and ending on its
+actual media-ended event. The official YouTube link remains available;
+`?hexOfficialYoutube=1` retains the embedded-player diagnostic alternative.
+
+Chromium full-scene test (software rendering, local HTTP range server, real
+media and accelerated autoplay policy) observed the lyric video at 82.0s
+then 91.0s, `paused=false`, `muted=false`, 854×480 and real VideoTexture.
+Leaving HEX paused and removed its source and restored the original screen.
+There were no page errors. This proves browser decoding/timing in that test,
+not audible output on every device or native-GPU hitch acceptance.

@@ -37,7 +37,7 @@
   "orbita/reality/foliage": "100304488c60c2be24cd5c27e691d52efa1cca8bb42055f7c7eed91854b18de3",
   "orbita/reality/kit": "c43421c275f39c0e767920151a7b2daf4a1a69f89dc284dbc2a2bc5c82551398",
   "orbita/reality/mask": "41b22309987ae56e11a12cd337bbdf4f8e50447f978c785f6c8d8c75da898513",
-  "orbita/reality/music": "c043681419115dc39a2fcc405b041d0387dc073117a745e796eb9b9cdc05b0e5",
+  "orbita/reality/music": "f4cb85a2db37a5988647d624beb1538f08adbcc8a5e6c6aefbdc5431e036d589",
   "orbita/reality/pbr": "12e482e5480e9a572ca13abf1d5f914a334ff7879cc1892c5aca47a4c6b7068e",
   "orbita/reality/site": "cf8f41d9a414abb377f7083b70887da765ce660aed9a69f94c4dbd91e54c4679",
   "orbita/reality/state": "210fd2ec7f0800eae3ffe8a3053ae26bcccdc9f401040aa6c56c6b7cd8d4eb1d",
@@ -52,5 +52,5 @@
   "orbita/vng/textures": "3491ae433de9169b44ad20edb2d2e5eaecc5cb36af3f4cb7fc1a87d5916edff4",
   "orbita/vng/types": "c5a076aac6fd0e504fdb083e4a7b5c1098c392cbbb4e41287c6b074533438ee1",
   "orbita/ui/Overlay": "495dcc5c5f66cce4e7943ac38fff490a7129705d1ba689ee4c57198c44946250",
-  "orbita/scene/Experience": "dfa4a530a901498efc38ece79005a94ba21f141359e6cbf6a29e560ab8989720"
+  "orbita/scene/Experience": "aa2e219410f2ab68a1112f1adfcc2ae3450b4fdd5cca91848f54974999cf5430"
 }

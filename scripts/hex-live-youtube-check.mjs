@@ -12,7 +12,7 @@ const page = await browser.newPage({ viewport: { width: 960, height: 540 } })
 page.on('pageerror', e => result.pageErrors.push(e.message))
 page.on('requestfailed', r => { if (/youtube|googlevideo/i.test(r.url())) result.failedRequests.push({url:r.url().split('?')[0], error:r.failure()?.errorText}) })
 try {
-  await page.goto('http://127.0.0.1:4173/#at=-26,20,0,0&autostart&skip', { waitUntil: 'domcontentloaded', timeout: 120000 })
+  await page.goto('http://127.0.0.1:4173/?hexOfficialYoutube=1#at=-26,20,0,0&autostart&skip', { waitUntil: 'domcontentloaded', timeout: 120000 })
   await page.waitForFunction(() => !!window.__orbitaReality, null, { timeout: 120000 })
   // A real Playwright click gives the browser a transient user activation;
   // this test-only button calls the same request API, not the sheet geometry.

@@ -85,6 +85,10 @@ class Music {
   private rainSrc: AudioBufferSourceNode | null = null
   private token = 0
   private retryCleanup: (() => void) | null = null
+  private videoClock: { element: HTMLVideoElement; cue: number } | null = null
+
+  followVideo(element: HTMLVideoElement, cue: number) { this.videoClock = { element, cue } }
+  unfollowVideo(element: HTMLVideoElement) { if (this.videoClock?.element === element) this.videoClock = null }
 
   private ensureRainBed() {
     if (this.rainGain || !audio.prepared || !audio.noise) return
@@ -253,7 +257,9 @@ class Music {
     const ctx = audio.ctx
     this.elapsed = this.el && !this.demo
       ? Math.max(0, this.el.currentTime - TRACKS[this.trackId!].highlight.start)
-      : Math.max(0, ctx.currentTime - this.t0)
+      : this.trackId === 'ngay-mai' && this.videoClock
+        ? Math.max(0, this.videoClock.element.currentTime - this.videoClock.cue)
+        : Math.max(0, ctx.currentTime - this.t0)
     this.progress = Math.min(1, this.elapsed / this.dur)
     // Real media ends on its own event, not at the demo's fixed duration.
     if (!this.ended && this.demo && this.elapsed >= this.dur) this.ended = true
