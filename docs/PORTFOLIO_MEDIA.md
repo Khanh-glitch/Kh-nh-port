@@ -210,3 +210,19 @@ CoravaMaris as a VNG Prompt to Play game. Two additional credits come directly f
 `social-3` credits (at 9:10) name Quoc Khanh for post-production and narration.
 The remaining three clips have no individual credit supported by available
 source evidence.
+
+### Additional measured results
+
+Counterbalanced native Metal tree-batch experiment `43466274160` did not pass:
+forward order measured 9047ms control then 5727ms candidate for first summon;
+reverse order measured 7302ms candidate then 7855ms control. The candidate
+remains opt-in only. Both runs also showed 767–983ms switch gaps. These are
+runner measurements, not a claim about every physical GPU.
+
+Live YouTube diagnostic `43468747917` reached the real official iframe and
+identified its title, but the embedded video remained paused at time 0 with
+readyState 0. No real playback was verified; the report was correctly red. A
+new 12-second recovery state offers a user-gesture retry and an explicit link
+to the official source rather than silently leaving an unstarted player. A
+follow-up diagnostic uses a real Playwright mouse click for transient browser
+activation; it still invokes the reality API, not the in-world sheet geometry.
