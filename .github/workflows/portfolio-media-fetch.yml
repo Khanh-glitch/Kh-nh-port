@@ -1,0 +1,34 @@
+name: Fetch portfolio media for conversion
+on:
+  push:
+    branches: [arena/1e2ad83c-kh-nh-port]
+    paths: [.github/workflows/portfolio-media-fetch.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  convert:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - run: pip install gdown
+      - name: Download and transcode public portfolio videos
+        shell: bash
+        run: |
+          set -euxo pipefail
+          mkdir -p converted
+          ids=(1gkTtTvvEgyD7lLRFFc3VhXtq1rF8h1wB 1sR4CaGBWVUNnmaIQK-gWbmYP_0W4KDko 1Q8fq-i-Of1jMqeuFCPNCpLhZTatq4j4h 1O5hcaN86PB4KGd9Sb476Mdahqgv6W-bY)
+          names=(mua-ha social-1 social-2 social-3)
+          for i in 0 1 2 3; do
+            gdown "${ids[$i]}" -O input.mp4
+            ffprobe -v error -show_entries format=duration -of default=nw=1 input.mp4
+            if [ "$i" = 0 ]; then audio=(-an); else audio=(-c:a aac -b:a 64k -ac 2); fi
+            ffmpeg -nostdin -hide_banner -loglevel error -y -i input.mp4 -vf 'scale=854:480:force_original_aspect_ratio=decrease,pad=854:480:(ow-iw)/2:(oh-ih)/2' -c:v libx264 -preset veryfast -crf 28 -maxrate 650k -bufsize 1300k "${audio[@]}" -movflags +faststart "converted/${names[$i]}.mp4"
+            rm input.mp4
+          done
+      - uses: actions/upload-artifact@v4
+        with:
+          name: converted-portfolio-videos
+          path: converted/*.mp4
+          retention-days: 2

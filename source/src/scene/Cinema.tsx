@@ -58,6 +58,57 @@ function cinemaHomography(src: number[][], dst: number[][]): number[] | null {
   return [h[0], h[3], 0, h[6], h[1], h[4], 0, h[7], 0, 0, 1, 0, h[2], h[5], 0, 1]
 }
 
+// Same-origin films are real WebGL textures, so the screen is depth-tested
+// pixel-for-pixel against the cinema, furniture and moving objects. The media
+// element enters the existing HRTF/reverb bus rather than playing in 2D.
+function LocalCinemaFilm({ index, onNext }: { index: number | null; onNext: () => void }) {
+  const phase = useReality(s => s.phase)
+  const media = useMemo(() => {
+    const video = document.createElement('video')
+    video.playsInline = true
+    video.preload = 'auto'
+    const texture = new THREE.VideoTexture(video)
+    texture.colorSpace = THREE.SRGBColorSpace
+    return { video, texture }
+  }, [])
+  const sourceRef = useRef<MediaElementAudioSourceNode | null>(null)
+  useEffect(() => {
+    const film = index === null ? null : PROJECT_FILMS[index]
+    if (!film?.src || phase !== 'idle') return
+    audio.prepare()
+    const bus = audio.createBus('cinema-film', worldPos(ex, 0, 2.95, -5.8), { ref: 4, rolloff: 1.4, maxDist: 75, reverb: 0.45, gain: 0.9 })
+    const source = sourceRef.current ?? (sourceRef.current = audio.ctx.createMediaElementSource(media.video))
+    source.connect(bus.input)
+    media.video.src = film.src
+    media.video.muted = false // global mute is applied by the shared master bus
+    media.video.onended = onNext
+    void media.video.play().catch(() => { toast('Bấm để cho phép phim phát có tiếng') })
+    const resume = () => {
+      if (!media.video.paused) return
+      if (audio.ctx.state === 'suspended') void audio.ctx.resume()
+      void media.video.play().catch(() => {})
+    }
+    window.addEventListener('pointerdown', resume)
+    window.addEventListener('keydown', resume)
+    return () => {
+      window.removeEventListener('pointerdown', resume)
+      window.removeEventListener('keydown', resume)
+      media.video.onended = null
+      media.video.pause()
+      media.video.removeAttribute('src')
+      media.video.load()
+      source.disconnect()
+    }
+  }, [index, phase, media, onNext])
+  useEffect(() => () => media.texture.dispose(), [media])
+  const film = index === null ? null : PROJECT_FILMS[index]
+  if (!film?.src || phase !== 'idle') return null
+  return <mesh position={[0, 2.95, -5.94]}>
+    <planeGeometry args={[8.3, 3.64]} />
+    <meshBasicMaterial map={media.texture} toneMapped={false} />
+  </mesh>
+}
+
 function CinemaVideo({ index, onClose, onNext }: { index: number | null; onClose: () => void; onNext: () => void }) {
   const { gl, camera, scene } = useThree()
   const occlusion = useMemo(() => new DomOcclusion(), [])
@@ -74,7 +125,7 @@ function CinemaVideo({ index, onClose, onNext }: { index: number | null; onClose
     if (video) video.muted = muted
   }, [muted, layer, index])
   useEffect(() => {
-    if (index === null || phase !== 'idle') return
+    if (index === null || phase !== 'idle' || PROJECT_FILMS[index].src) return
     const film = PROJECT_FILMS[index]
     const frame = film.src ? document.createElement('video') : document.createElement('iframe')
     if (frame instanceof HTMLVideoElement) {
@@ -108,7 +159,7 @@ function CinemaVideo({ index, onClose, onNext }: { index: number | null; onClose
   }, [index, phase, layer, gl, onNext])
   const points = useMemo(() => [new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3()], [])
   useFrame(() => {
-    if (index === null || phase !== 'idle' || !layer.parentElement) return
+    if (index === null || phase !== 'idle' || PROJECT_FILMS[index].src || !layer.parentElement) return
     const dx = camera.position.x - ex.x, dz = camera.position.z - ex.z
     const localZ = dx * Math.sin(ex.rotY) + dz * Math.cos(ex.rotY)
     if (Math.hypot(dx, dz) > 38) { onClose(); return }
@@ -406,6 +457,9 @@ export function Cinema() {
   }, [])
   const st = useRef({ reel: 0, reelT: 0, flash: 0, lastDraw: 0, scoreOn: false, lastAvg: 0 }).current
   const roomLight = useRef<THREE.PointLight>(null)
+  const entrance = useMemo(() => worldPos(ex, 0, 0, 6.2), [])
+  const leftDoor = useRef<THREE.Mesh>(null)
+  const rightDoor = useRef<THREE.Mesh>(null)
   const bulbs = useRef<THREE.InstancedMesh>(null)
   const dummy = useMemo(() => new THREE.Object3D(), [])
   const col = useMemo(() => new THREE.Color(), [])
@@ -455,6 +509,10 @@ export function Cinema() {
 
   useFrame((state, dt) => {
     const t = state.clock.elapsedTime
+    const approachingDoor = Math.hypot(state.camera.position.x - entrance.x, state.camera.position.z - entrance.z) < 3
+    const doorOffset = projectFilm !== null && !approachingDoor ? 0 : 1.65
+    if (leftDoor.current) leftDoor.current.position.x = THREE.MathUtils.damp(leftDoor.current.position.x, -0.82 - doorOffset, 3, dt)
+    if (rightDoor.current) rightDoor.current.position.x = THREE.MathUtils.damp(rightDoor.current.position.x, 0.82 + doorOffset, 3, dt)
     if (projectFilm === null && realityPhase === 'idle' && Math.hypot(state.camera.position.x - ex.x, state.camera.position.z - ex.z) < 24) setProjectFilm(0)
     if (!st.scoreOn && projectFilm === null && audio.started && busRef.current) {
       st.scoreOn = true
@@ -483,7 +541,7 @@ export function Cinema() {
       // away and the HEX transition is running, reading 4x2 pixels cannot
       // affect the local piano/UEH scene but can trigger a multi-second
       // Canvas2D GPU readback fence. Keep every cinema film frame intact.
-      const distantDuringHex = hexCinemaFarLightGate &&
+      const distantDuringHex = (hexCinemaFarLightGate || useReality.getState().phase !== 'idle') &&
         useReality.getState().phase !== 'idle' &&
         Math.hypot(state.camera.position.x - ex.x,
           state.camera.position.z - ex.z) > 24
@@ -560,6 +618,7 @@ export function Cinema() {
 
   return (
     <group position={[ex.x, 0, ex.z]} rotation={[0, ex.rotY, 0]}>
+      <LocalCinemaFilm index={projectFilm} onNext={advanceFilm} />
       <CinemaVideo index={projectFilm} onClose={() => setProjectFilm(null)} onNext={advanceFilm} />
       <PadRing radius={10.2} color={ex.color} />
       <Label title="Mini Cinema" sub="Film · Motion · Aftermovie" color={ex.color} position={[0, 9.4, 3]} scale={1.2} />
@@ -603,6 +662,10 @@ export function Cinema() {
         <boxGeometry args={[11.2, 0.08, 0.08]} />
       </mesh>
 
+      {/* Automatic entrance doors reopen when approached from either side. */}
+      <mesh ref={leftDoor} position={[-2.47, 1.9, 6.2]} material={velvet}><boxGeometry args={[1.6, 3.8, 0.15]} /></mesh>
+      <mesh ref={rightDoor} position={[2.47, 1.9, 6.2]} material={velvet}><boxGeometry args={[1.6, 3.8, 0.15]} /></mesh>
+      {projectFilm !== null && <Label title={PROJECT_FILMS[projectFilm].label} sub="Vai trò: chưa có thông tin xác minh" color="#ffb070" position={[0, 5.6, -5.3]} scale={0.65} fadeNear={1} fadeFar={28} />}
       {/* màn hình + rèm */}
       <mesh position={[0, 2.95, -5.98]}>
         <planeGeometry args={[8.3, 3.64]} />
@@ -674,8 +737,8 @@ export function Cinema() {
         </group>
       ))}
 
-      <pointLight position={[0, 4.2, 0]} color="#ffb98a" intensity={22} distance={13} decay={2} />
-      <pointLight ref={roomLight} position={[0, 2.8, -4.2]} color="#ffffff" intensity={55} distance={13} decay={2} />
+      <pointLight position={[0, 4.2, 0]} color="#ffb98a" intensity={projectFilm === null ? 22 : 0} distance={13} decay={2} />
+      <pointLight ref={roomLight} position={[0, 2.8, -4.2]} color="#ffffff" intensity={projectFilm === null ? 55 : 5} distance={13} decay={2} />
       <pointLight position={[0, 4, 9]} color="#ff4d4d" intensity={90} distance={14} decay={2} />
 
       <Hit id="cinema-screen" label="Mini Cinema · Màn hình" hint="Đổi phim" panel="cinema" maxDist={40} size={[8.4, 3.8, 0.3]} position={[0, 2.95, -5.8]} onClick={next} />

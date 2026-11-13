@@ -107,3 +107,26 @@ seconds; this can reduce cold GPU work but does not prove no stalls on every
 GPU. HTML video layers use a throttled coarse 6×4 scene raycast mask: real
 opaque obstacles hide approximate portions of the video, not a pixel-perfect
 WebGL depth buffer. The VNG photo is an ordinary depth-tested Three.js mesh.
+
+Latest Cinema/HEX changes: same-origin films now play on a native Three.js
+VideoTexture plane with ordinary pixel-level depth testing. Their audio is
+routed once through the existing HRTF cinema-film bus (distance rolloff and
+reverb, master mute). The room light dims and the entrance doors close while a
+film is selected, reopening when the player approaches from either side. The
+film label explicitly says the individual credit is not verified: a search of
+the owner's GitHub repositories found no per-film role for these six titles.
+Drive previews still cannot be sampled into WebGL or routed to WebAudio due to
+cross-origin restrictions, so the three Drive films retain DOM projection,
+coarse masking, browser playback controls and non-spatial sound.
+
+Mùa Hạ's Drive preview iframe was removed to prevent its uncontrollable audio
+from overlapping the separately supplied recording. The video is now a muted
+HTML media element; direct Google Drive download can return a confirmation
+page or be blocked, in which case an explicit original-video link appears
+instead. This guarantees the embedded video's sound is muted but does not
+prove the Drive video will actually decode in every visitor's browser.
+
+The distant Cinema canvas readback gate now runs by default during HEX; older
+native traces identify that readback as an independent main-thread bottleneck.
+The remaining cold GPU UEH draw is not yet proven hitch-free; real GPU frame
+pacing and partial occlusion of cross-origin embeds still need verification.
