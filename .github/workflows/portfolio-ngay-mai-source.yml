@@ -1,0 +1,37 @@
+name: Verify supplied original lyric video
+on:
+  push:
+    branches: [arena/1e2ad83c-kh-nh-port]
+    paths: ['.github/workflows/portfolio-ngay-mai-source.yml']
+permissions:
+  contents: read
+jobs:
+  verify-source:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install media utilities
+        run: |
+          python3 -m pip install --user gdown
+          sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
+      - name: Download supplied Drive file and prepare browser-compatible copy
+        run: |
+          set -euxo pipefail
+          python3 -m gdown 1mR5sELGHX1lvsvjtEk3y1Ndbi0ej_zTO -O original.mp4
+          ffprobe -v error -show_entries format=duration:stream=codec_name,codec_type,width,height -of json original.mp4 > media-info.json
+          ffmpeg -nostdin -hide_banner -loglevel error -y -i original.mp4 -vf 'scale=854:480:force_original_aspect_ratio=decrease,pad=854:480:(ow-iw)/2:(oh-ih)/2' -c:v libx264 -pix_fmt yuv420p -preset veryfast -crf 27 -maxrate 750k -bufsize 1500k -c:a aac -b:a 112k -ac 2 -movflags +faststart ngay-mai.mp4
+          ffmpeg -nostdin -hide_banner -loglevel error -ss 82 -i ngay-mai.mp4 -frames:v 1 cue.jpg
+      - name: Report original metadata
+        if: always()
+        run: |
+          if test -f media-info.json; then echo "::notice title=Original lyric video metadata::$(tr -d '\n' < media-info.json)"; fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ngay-mai-original-check
+          path: |
+            ngay-mai.mp4
+            media-info.json
+            cue.jpg
+          if-no-files-found: warn
