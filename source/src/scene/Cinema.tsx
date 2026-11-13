@@ -734,7 +734,7 @@ export function Cinema() {
       ))}
 
       <pointLight position={[0, 4.2, 0]} color="#ffb98a" intensity={projectFilm === null ? 22 : 0} distance={13} decay={2} />
-      <pointLight ref={roomLight} position={[0, 2.8, -4.2]} color="#ffffff" intensity={projectFilm === null ? 55 : 5} distance={13} decay={2} />
+      <pointLight ref={roomLight} position={[0, 2.8, -4.2]} color="#ffffff" intensity={projectFilm === null ? 55 : 0} distance={13} decay={2} />
       <pointLight position={[0, 4, 9]} color="#ff4d4d" intensity={90} distance={14} decay={2} />
 
       <Hit id="cinema-screen" label="Mini Cinema · Màn hình" hint="Đổi phim" panel="cinema" maxDist={40} size={[8.4, 3.8, 0.3]} position={[0, 2.95, -5.8]} onClick={next} />
