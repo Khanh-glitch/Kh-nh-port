@@ -8,7 +8,7 @@ permissions:
   contents: read
 jobs:
   live-network:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
@@ -26,6 +26,12 @@ jobs:
         run: |
           python3 -m http.server 4173 --bind 127.0.0.1 --directory dist-pages >/tmp/hex-http.log 2>&1 &
           node scripts/hex-live-youtube-check.mjs
+      - name: Report live diagnostic
+        if: always()
+        run: |
+          if test -f youtube-evidence/report.json; then
+            echo "::notice title=Live YouTube result::$(tr -d '\n' < youtube-evidence/report.json)"
+          fi
       - uses: actions/upload-artifact@v4
         if: always()
         with:

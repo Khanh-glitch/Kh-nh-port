@@ -4,6 +4,7 @@
 //   giọng "ooh/aah" tổng hợp) — luôn được gắn nhãn DEMO, KHÔNG phải tác phẩm thật.
 // Mọi thế giới đọc cùng một giao diện: bass / mid / high / kick / energy / progress.
 import { audio } from '../audio'
+import { toast } from '../store'
 import { rt } from './state'
 import { TRACKS, probePlayable, type TrackId } from './tracks'
 
@@ -83,6 +84,7 @@ class Music {
   private rainGain: GainNode | null = null
   private rainSrc: AudioBufferSourceNode | null = null
   private token = 0
+  private retryCleanup: (() => void) | null = null
 
   private ensureRainBed() {
     if (this.rainGain || !audio.prepared || !audio.noise) return
@@ -153,7 +155,11 @@ class Music {
       candidate.src = tr.audioSrc
       const playable = await probePlayable(candidate)
       if (tok !== this.token) return
-      if (playable) el = candidate
+      // Keep the supplied track even after a timeout/error. Never substitute a
+      // synthetic arrangement for the owner's audio. A later user gesture can
+      // retry this same element if the browser/network temporarily blocked it.
+      el = candidate
+      if (!playable) toast('Audio chưa sẵn sàng · bấm để thử phát lại', 4000)
     }
     if (tok !== this.token) return
     this.t0 = ctx.currentTime + delay
@@ -161,25 +167,35 @@ class Music {
       this.demo = false
       // Only a same-origin/CORS-clean element may enter the WebAudio graph, and
       // that is exactly what probePlayable confirmed above.
-      el.currentTime = tr.highlight.start
+      const seekCue = () => {
+        if (tok === this.token && el && el.currentTime < tr.highlight.start) el.currentTime = tr.highlight.start
+      }
+      if (el.readyState >= 1) seekCue()
+      else el.addEventListener('loadedmetadata', seekCue, { once: true })
       if (Number.isFinite(el.duration)) this.dur = Math.max(0.01, el.duration - tr.highlight.start)
       this.el = el
       el.addEventListener('ended', () => { if (tok === this.token) this.ended = true }, { once: true })
       this.src = ctx.createMediaElementSource(el)
       this.src.connect(this.out)
+      const retry = () => {
+        if (tok !== this.token || !el) return
+        if (ctx.state === 'suspended') void ctx.resume().catch(() => {})
+        void el.play().then(() => { if (tok === this.token) this.retryCleanup?.() }).catch(() => {})
+      }
+      const armRetry = () => {
+        if (tok !== this.token || this.retryCleanup) return
+        toast('Bấm hoặc nhấn phím để phát audio Mùa Hạ', 4000)
+        window.addEventListener('pointerdown', retry)
+        window.addEventListener('keydown', retry)
+        this.retryCleanup = () => {
+          window.removeEventListener('pointerdown', retry)
+          window.removeEventListener('keydown', retry)
+          this.retryCleanup = null
+        }
+      }
       window.setTimeout(() => {
-        if (tok !== this.token) return
-        el.play().catch(() => {
-          if (tok !== this.token) return
-          // Autoplay can be denied even after metadata loaded. Fall back to the
-          // explicitly labelled demo, never claim a silent element is playing.
-          this.demo = true
-          this.t0 = ctx.currentTime
-          this.rnd = mulberry(SONGS[id].seed)
-          this.step = 0
-          this.nextStep = this.t0
-          this.timer = window.setInterval(() => this.schedule(id), 40)
-        })
+        if (tok !== this.token || !el) return
+        void el.play().catch(armRetry)
       }, delay * 1000)
     } else {
       this.demo = true
@@ -193,6 +209,7 @@ class Music {
 
   stop(fade = 2.5) {
     this.token++
+    this.retryCleanup?.()
     this.playing = false
     window.clearInterval(this.timer)
     const out = this.out

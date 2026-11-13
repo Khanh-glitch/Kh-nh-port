@@ -6,7 +6,8 @@ import { createRequire } from 'node:module'
 const require = createRequire(import.meta.url)
 const ts = require('../source/node_modules/typescript')
 const pending = []
-globalThis.window = { setTimeout: fn => (pending.push(fn), pending.length), setInterval: () => 1, clearInterval: () => {} }
+const listeners = new Map()
+globalThis.window = { setTimeout: fn => (pending.push(fn), pending.length), setInterval: () => 1, clearInterval: () => {}, addEventListener: (k, fn) => listeners.set(k, fn), removeEventListener: k => listeners.delete(k) }
 const node = () => ({ gain: { value: 0, setTargetAtTime() {}, cancelScheduledValues() {} }, frequency: {}, Q: {}, connect() { return this }, disconnect() {}, start() {}, getByteFrequencyData() {} })
 const ctx = { currentTime: 50, state: 'running', createGain: node, createAnalyser: node, createMediaElementSource: node }
 globalThis.__testAudio = { prepared: false, ctx, prepare() { this.prepared = true }, master: node(), reverbSend: node() }
@@ -24,6 +25,7 @@ globalThis.Audio = FakeAudio
 let source = readFileSync('source/src/reality/music.ts', 'utf8')
 let js = ts.transpileModule(source, { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext } }).outputText
 js = js.replace("import { audio } from '../audio';", 'const audio = globalThis.__testAudio;')
+  .replace("import { toast } from '../store';", 'const toast = () => {};')
   .replace("import { rt } from './state';", 'const rt = globalThis.__testRt;')
   .replace("import { TRACKS, probePlayable } from './tracks';", 'const TRACKS = globalThis.__testTracks, probePlayable = globalThis.__testProbe;')
 assert.ok(!js.includes('import {'), 'all test imports must be substituted')
@@ -44,4 +46,18 @@ assert.equal(music.ended, true, 'actual ended event ends the experience')
 music.stop(0)
 for (const cb of pending.splice(0)) cb()
 assert.equal(element.paused, true)
+// Blocked autoplay must not start a synthetic substitute; the same audio is
+// retried on a genuine later gesture and listeners disappear on success.
+await music.start('mua-ha', 0)
+element.play = () => Promise.reject(new Error('blocked'))
+pending.shift()()
+await new Promise(resolve => setImmediate(resolve))
+assert.equal(music.demo, false)
+assert.ok(listeners.has('pointerdown'))
+element.play = () => { element.paused = false; return Promise.resolve() }
+listeners.get('pointerdown')()
+await new Promise(resolve => setImmediate(resolve))
+assert.equal(element.paused, false)
+assert.equal(listeners.size, 0)
+music.stop(0)
 console.log('MUA_HA_AUDIO_BEHAVIOR_PASS')

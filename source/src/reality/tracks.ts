@@ -92,9 +92,8 @@ export async function probeMedia(src?: string, kind: 'audio' | 'video' = 'audio'
  *
  * Setting `crossOrigin` and connecting an element to WebAudio turns a successful
  * load into a hard requirement: a response without `Access-Control-Allow-Origin`
- * fires `error` instead of degrading. So the element is the test. If it loads,
- * it is playable; if it errors, the procedural arrangement stays and the DEMO
- * label stays with it. No silent lie either way.
+ * fires `error` instead of degrading. A failed or timed-out check does not
+ * replace the supplied track: playback is retried after user interaction.
  */
 export function probePlayable(el: HTMLAudioElement | HTMLVideoElement, timeoutMs = 6000) {
   return new Promise<boolean>((resolve) => {
