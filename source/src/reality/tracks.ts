@@ -2,7 +2,7 @@
 //
 // Audio Mùa Hạ được tải từ Drive do chủ dự án cung cấp, chuyển sang MP3 và
 // phục vụ cùng website. Giữ toàn bộ timeline để mốc 1:54 khớp bản gốc.
-// Video YouTube dùng player chính thức, không trích xuất thành texture.
+// Video Nếu ngày mai dùng bản lyric gốc trong Drive; YouTube vẫn có thể mở chính thức.
 
 import { MUA_HA_AUDIO_SRC, MUA_HA_MEDIA_SRC, MUA_HA_CUE, NGAY_MAI_CUE, NGAY_MAI_VIDEO_ID } from '../layout'
 
@@ -55,9 +55,8 @@ export const TRACKS: Record<TrackId, TrackDef> = {
     world: 'ueh',
     worldName: 'UEH · Hoa Phượng Trong Gió',
     accent: '#ff7048',
-    // Owner cue: the lyric video from 1:22 (82 s). YouTube cannot become a
-    // VideoTexture (CORS + terms), so `videoId` drives the official embed and
-    // the procedural visuals run alongside it.
+    // Owner cue: 1:22 (82 s). The supplied original lyric file drives the
+    // local depth-tested screen; videoId retains the official YouTube option.
     highlight: { start: NGAY_MAI_CUE, dur: 72 },
     audioSrc: undefined,
     videoSrc: undefined,

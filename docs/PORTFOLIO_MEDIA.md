@@ -245,3 +245,9 @@ then 91.0s, `paused=false`, `muted=false`, 854×480 and real VideoTexture.
 Leaving HEX paused and removed its source and restored the original screen.
 There were no page errors. This proves browser decoding/timing in that test,
 not audible output on every device or native-GPU hitch acceptance.
+
+A second Chromium scene test used a real Playwright click to start audio and
+select the track, without an autoplay-policy override. The local lyric video
+advanced from 82.0 to 86.97 seconds unmuted, and stopped and released its
+texture on exit. This was a test control calling the app's reality API, not a
+full interaction test of the in-world sheet.

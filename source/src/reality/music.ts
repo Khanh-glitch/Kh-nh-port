@@ -145,7 +145,8 @@ class Music {
 
     // Wait for metadata before seeking to the owner's cue; a successful HEAD
     // request alone does not prove that the browser can decode the file.
-    // The official player owns this song's audio, not the DEMO arrangement.
+    // The original lyric video (or official YouTube alternative) owns this
+    // song's audio; never play the DEMO arrangement on top of it.
     if (tr.videoId) {
       this.demo = false
       this.t0 = ctx.currentTime + delay
