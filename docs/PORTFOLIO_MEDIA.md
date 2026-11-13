@@ -148,3 +148,16 @@ Chromium successfully decoded all four converted files and sought Mùa Hạ to
 was muted, and stopped on exit; a Cinema clip used an HRTF bus. This is not a
 visual/performance acceptance test on a user's hardware. The old DOM mask is
 still approximate for YouTube, and native GPU benchmark acceptance is pending.
+
+Native Metal full-lifecycle benchmark on commit `ea08d7d` (GitHub Actions run
+`43458331763`) measured a **5188ms** maximum initial HEX frame gap on the
+virtualized Apple GPU, versus 11308ms on the baseline. It did not pass the
+no-hitch release gate. A separate leaves-only diagnostic run `43459322272`
+measured 7996ms and is not enabled by default; the machines/runs are variable,
+so this is not proof of a portable regression or improvement. Both runs also
+recorded aborted media requests during track switching, which require separate
+classification from missing assets. A GitHub-hosted attempt to retrieve the
+supplied YouTube video returned YouTube's bot verification; the official embed
+continues to be used instead of claiming a local copy exists. The two 10-bit
+SOCIAL MEDIA transcodes were converted to 8-bit yuv420p H.264 for wider browser
+compatibility while retaining their AAC audio.
