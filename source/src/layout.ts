@@ -34,3 +34,63 @@ export const EXHIBITS: Record<ExhibitId, ExhibitDef> = {
 }
 
 export const EXHIBIT_LIST = Object.values(EXHIBITS)
+
+
+// ---------------------------------------------------------------------------
+// Dữ liệu liên kết ra ngoài — nguồn sự thật duy nhất cho mọi URL trong đảo.
+//
+// Vì sao nằm ở đây chứ không ở một file mới: standalone ở gốc repo là một bản
+// build KHÔNG có Vite, chạy bằng import map nhúng trong index.html. Bộ module
+// của nó là cố định (64 slot, mỗi slot một module), và một file mới không có
+// slot sẽ không thể publish. Thêm một module mới là thay đổi hạ tầng publish,
+// không phải thêm dữ liệu — nên dữ liệu thuần nằm trong module đã có sẵn.
+//
+// Quy tắc:
+//   1. URL do chủ dự án đưa thì dùng nguyên văn, không rút gọn, không đoán.
+//   2. Nền tảng chưa biết link thật thì trỏ về thư mục Drive, KHÔNG trỏ vào
+//      link chết và KHÔNG đoán tài khoản của người khác.
+//      Tìm `TODO(profile)` để thay handle thật.
+//   3. Thời điểm là giây, lấy từ chính mốc chủ dự án đưa.
+// ---------------------------------------------------------------------------
+
+/** Thư mục dự án (Drive) do chủ dự án đưa. */
+export const DRIVE_PORTFOLIO =
+  'https://drive.google.com/drive/u/0/folders/1VwZseTeVQaOWxhVKLEj7Oa6hwiZ4AQTj'
+
+/** "Mùa Hạ Thứ 18" — phát từ 1:54 (114 s) đến hết. */
+export const MUA_HA_AUDIO_SRC =
+  'https://drive.google.com/file/d/14pmfR3_CIDgX8-QgMiUpQen_-hZ0BSID/view?usp=drive_link'
+// The complete owner-supplied recording, transcoded from WAV for the web.
+// Keep the full timeline so MUA_HA_CUE still means 1:54 in the original.
+export const MUA_HA_MEDIA_SRC = './reality/mua-ha-thu-18.mp3'
+export const MUA_HA_CUE = 114
+
+/** Video sân khấu chính trong HEX. Chỉ dùng BÊN TRONG HEX. */
+export const HEX_MAIN_STAGE_VIDEO_SRC =
+  'https://drive.google.com/file/d/1gkTtTvvEgyD7lLRFFc3VhXtq1rF8h1wB/view?usp=drive_link'
+
+/** "Nếu Ngày Mai" — lyric video chính thức. YouTube không thể thành
+ *  VideoTexture (CORS + điều khoản), nên phải nhúng, không lấy mẫu. */
+export const NGAY_MAI_WATCH_URL = 'https://youtu.be/179btG24VE8'
+export const NGAY_MAI_VIDEO_ID = '179btG24VE8'
+export const NGAY_MAI_CUE = 82
+
+/** Đã xác nhận. */
+export const GITHUB_PROFILE = 'https://github.com/Khanh-glitch'
+
+/** Đích của sáu icon Beacon, theo slug trong scene/socialLogoPaths.ts. */
+export const PROFILES: Record<string, { url: string; confirmed: boolean }> = {
+  github: { url: GITHUB_PROFILE, confirmed: true },
+  // TODO(profile): thay bằng URL thật; giữ confirmed:false khi vẫn trỏ fallback.
+  facebook: { url: DRIVE_PORTFOLIO, confirmed: false },
+  instagram: { url: DRIVE_PORTFOLIO, confirmed: false },
+  tiktok: { url: DRIVE_PORTFOLIO, confirmed: false },
+  discord: { url: DRIVE_PORTFOLIO, confirmed: false },
+  linkedin: { url: DRIVE_PORTFOLIO, confirmed: false },
+}
+
+/** Mở tab mới, không để trang phía sau điều hướng. */
+export function openExternal(url: string) {
+  if (typeof window === 'undefined' || !url) return
+  window.open(url, '_blank', 'noopener,noreferrer')
+}

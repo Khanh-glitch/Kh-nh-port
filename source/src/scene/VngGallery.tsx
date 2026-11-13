@@ -7,6 +7,7 @@ import { Label } from './Label'
 import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js'
 import { addCollider, player } from '../world'
 import { toast } from '../store'
+import { DRIVE_PORTFOLIO, openExternal } from '../layout'
 import { createVngMonument } from '../vng/models/vngLogo'
 import { createProjectorSystem } from '../vng/models/projector'
 import { createStuffCollection } from '../vng/models/stuffCollection'
@@ -114,6 +115,23 @@ export function VngGallery() {
     return { monument, projection, collection, desk }
   }, [])
   const slide = useRef<ProjectorSlideId>(0)
+  const projectPhoto = useMemo(() => {
+    const tex = new THREE.TextureLoader().load('./portfolio/vng-prompt-to-play.jpg')
+    tex.colorSpace = THREE.SRGBColorSpace
+    return tex
+  }, [])
+  // The owner's image belongs on the actual projector surface, not a separate
+  // floating panel. Keep the other slides and projector controls intact.
+  const photoScreen = useMemo(() => {
+    const photo = new THREE.Mesh(new THREE.PlaneGeometry(2.78, 1.56),
+      new THREE.MeshBasicMaterial({ map: projectPhoto, toneMapped: false }))
+    photo.position.set(0, 1.48, 0.04)
+    return photo
+  }, [projectPhoto])
+  useEffect(() => {
+    assets.projection.screenGroup.add(photoScreen)
+    return () => { photoScreen.removeFromParent(); photoScreen.geometry.dispose(); (photoScreen.material as THREE.Material).dispose(); projectPhoto.dispose() }
+  }, [assets, photoScreen, projectPhoto])
 
   // Prevent walking through the substantial tabletop while leaving the open
   // approach between Robot console, Ragnarok and the VNG booth unobstructed.
@@ -129,6 +147,7 @@ export function VngGallery() {
     slide.current = ((slide.current + step + count) % count) as ProjectorSlideId
     assets.projection.setPowered(true)
     assets.projection.setSlide(slide.current)
+    photoScreen.visible = slide.current === 0
     toast(`VNG Work Gallery · ${PROJECTOR_SLIDES[slide.current].title}`)
   }
   useFrame(({ clock }) => {
@@ -153,6 +172,8 @@ export function VngGallery() {
     </group>
     <primitive object={assets.desk} />
     <primitive object={assets.monument.group} />
+    <Hit id="vng-project-link" label="VNGenius · Prompt To Play" hint="Mở thư mục dự án" maxDist={16}
+      size={[3.3, 2.3, 1.2]} position={[0, 1.7, -1.55]} onClick={() => openExternal(DRIVE_PORTFOLIO)} />
     <primitive object={assets.projection.group} />
     <primitive object={assets.collection.group} />
     <pointLight position={[0, 3.8, 2.4]} color="#ff9655" intensity={12} distance={12} decay={2} />

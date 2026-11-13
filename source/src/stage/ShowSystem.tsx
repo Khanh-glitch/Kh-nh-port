@@ -1,3 +1,4 @@
+import { useReality } from '../reality/state'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
 import * as THREE from 'three'
@@ -994,6 +995,7 @@ const VIDEO_WORLD_W = (LED_WORLD_H * VID_W) / LED_H
 export function LedVideo({ stageGroup }: { stageGroup: React.RefObject<THREE.Group | null> }) {
   const active = useShow((s) => s.active)
   const clip = useShow((s) => s.clip)
+  const realityPhase = useReality((s) => s.phase)
   const videoMuted = useShow((s) => s.videoMuted)
   const globalMuted = useStore((s) => s.muted)
   const { gl } = useThree()
@@ -1018,7 +1020,7 @@ export function LedVideo({ stageGroup }: { stageGroup: React.RefObject<THREE.Gro
   const c = show?.clips[clip]
 
   useEffect(() => {
-    if (!c || !hostEl) return
+    if (!c || !hostEl || realityPhase !== 'idle') return
     let cancelled = false
     const setVideo = useShow.getState().setVideo
     setVideo('loading')
@@ -1095,7 +1097,7 @@ export function LedVideo({ stageGroup }: { stageGroup: React.RefObject<THREE.Gro
       player.current = null
       host.innerHTML = ''
     }
-  }, [c, hostEl])
+  }, [c, hostEl, realityPhase])
 
   useEffect(() => {
     const p = player.current
@@ -1115,7 +1117,7 @@ export function LedVideo({ stageGroup }: { stageGroup: React.RefObject<THREE.Gro
     const w = dom.d
     const s = useShow.getState()
     const p = localCam(stageGroup.current, state.camera)
-    let visible = !!s.active && s.video === 'playing' && showElapsed() > 2.6 && !s.focus
+    let visible = realityPhase === 'idle' && !!s.active && s.video === 'playing' && showElapsed() > 2.6 && !s.focus
     if (p) {
       // chỉ hiện khi đứng trước sân khấu (iframe là lớp DOM nên không thể bị che bởi vật thể 3D)
       const ang = Math.atan2(Math.abs(p.x), p.z + 4.7)

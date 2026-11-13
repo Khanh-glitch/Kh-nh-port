@@ -78,6 +78,8 @@ export function RealityHost() {
     lastSwitchSeq: 0,
     ignT: 0,
     warmStarted: false,
+    triggerPrepared: false,
+    triggerPrepareQueued: false,
     warmTex: [] as THREE.Texture[],
     warmMesh: [] as THREE.Object3D[],
     warmCritical: [] as THREE.Object3D[],
@@ -195,7 +197,7 @@ export function RealityHost() {
             const a=geom.getAttribute(k)
             return [k,a.itemSize,a.normalized,a.array.constructor.name].join(':')
           }).join(',')
-          const key=[m.material.uuid,m.castShadow,m.receiveShadow,
+          const key=[(m.material as THREE.Material).uuid,m.castShadow,m.receiveShadow,
             m.renderOrder,m.frustumCulled,m.layers.mask,signature].join('|')
           const group=buckets.get(key)??[]
           group.push(m)
@@ -206,8 +208,8 @@ export function RealityHost() {
           mergeGroups++
           savedCalls+=group.length-1
           if(samples.length<40)samples.push({
-            parent:parent.name||parent.type,material:group[0].material.name||
-              group[0].material.type,count:group.length,saved:group.length-1
+            parent:parent.name||parent.type,material:(group[0].material as THREE.Material).name||
+              (group[0].material as THREE.Material).type,count:group.length,saved:group.length-1
           })
         }
       }
@@ -596,7 +598,7 @@ export function RealityHost() {
       } else if ((any.isMesh || any.isPoints || any.isLine) && o.visible && any.geometry) {
         const g = any.geometry
         const im = o as THREE.InstancedMesh
-        if ((o as THREE.InstancedMesh).isInstancedMesh) im.computeBoundingSphere()
+        if ((o as THREE.InstancedMesh).isInstancedMesh && !im.boundingSphere) im.computeBoundingSphere()
         const bs = (o as THREE.InstancedMesh).isInstancedMesh && im.boundingSphere ? im.boundingSphere : (g.boundingSphere ?? (g.computeBoundingSphere(), g.boundingSphere))
         if (bs) {
           const c = bs.center.clone().applyMatrix4(o.matrixWorld)
@@ -1074,6 +1076,19 @@ export function RealityHost() {
     }
     // --- 2. Hiện diện của người chơi quanh đàn ---
     const dist = Math.hypot(player.pos.x - CENTER.x, player.pos.z - CENTER.z)
+    // Build the expensive world snapshot before the visitor clicks a sheet.
+    // Never run it during a HEX transition, and keep a synchronous fallback for
+    // visitors who trigger instantly before preparation has had a chance to run.
+    if (dist < 24 && st.phase === 'idle' && !S.triggerPrepared && !S.triggerPrepareQueued) {
+      S.triggerPrepareQueued = true
+      window.setTimeout(() => {
+        S.triggerPrepareQueued = false
+        if (useReality.getState().phase !== 'idle' || S.triggerPrepared) return
+        collect()
+        patchAll()
+        S.triggerPrepared = true
+      }, 0)
+    }
     const pt = 1 - ease.smooth(8, 15, dist)
     rt.presence += (pt - rt.presence) * (1 - Math.exp(-dt * 3))
 
@@ -1084,8 +1099,8 @@ export function RealityHost() {
         S.u = 0
         rt.ignite = 0
         audio.prepare()
-        collect()
-        patchAll()
+        if (!S.triggerPrepared) { collect(); patchAll() }
+        S.triggerPrepared = false
         const reelStarted = performance.now()
         reel.use(st.track!)
         recordHexTiming('reel-use-call', reelStarted)

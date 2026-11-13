@@ -5,7 +5,7 @@ import * as THREE from 'three'
 import { useStore } from '../store'
 import { patchNew, RW } from './mask'
 import { music } from './music'
-import { TRACKS, probeMedia, type TrackId } from './tracks'
+import { TRACKS, probeMedia, probePlayable, type TrackId } from './tracks'
 import { useReality } from './state'
 
 export const WU = {
@@ -278,14 +278,24 @@ class Reel {
     this.video?.pause()
     this.video = null
     this.demo = true
-    if (tr.videoSrc && (await probeMedia(tr.videoSrc, 'video'))) {
+    // Only an owner file served with CORS can become a VideoTexture. A YouTube
+    // id is deliberately NOT tried here: sampling a YouTube IFrame is not
+    // permitted by their terms and the stream cannot be read cross-origin
+    // anyway. `Probe: see TrackDef.videoId` — those play through the official
+    // embed, and this screen keeps its procedural visuals.
+    let v: HTMLVideoElement | null = null
+    if (tr.videoSrc) {
+      const candidate = document.createElement('video')
+      candidate.src = tr.videoSrc
+      candidate.muted = true
+      candidate.loop = true
+      candidate.playsInline = true
+      candidate.crossOrigin = 'anonymous'
+      const ok = (await probeMedia(tr.videoSrc, 'video')) || (await probePlayable(candidate))
       if (generation !== this.useGeneration) return
-      const v = document.createElement('video')
-      v.src = tr.videoSrc
-      v.muted = true
-      v.loop = true
-      v.playsInline = true
-      v.crossOrigin = 'anonymous'
+      if (ok) v = candidate
+    }
+    if (v) {
       v.currentTime = tr.highlight.start
       await v.play().catch(() => {})
       if (generation !== this.useGeneration) { v.pause(); return }
@@ -394,7 +404,6 @@ export function MemoryFrames({ id, accent }: { id: TrackId; accent: string }) {
       })),
     [N],
   )
-  const phase = useReality((s) => s.phase)
   useEffect(() => {
     mats.forEach((m) => m.uniforms.uAcc.value.set(accent))
     // RealityHost owns the single authoritative track request. The old

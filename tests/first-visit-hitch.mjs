@@ -39,8 +39,9 @@ for (const [file, key] of pairs) {
   if (file.includes('RealityHost')) assert.ok(js.includes('warmCompilePending') && js.includes('intro'), 'Piano intro-only async scheduler')
 }
 const world = source['source/src/reality/RealityHost.tsx']
-assert.ok(world.includes("S.warmPass < 2 && useStore.getState().phase !== 'intro'"), 'UEH cannot be left accidentally visible')
-assert.ok(world.includes('ueh.current.visible = false'), 'UEH restored on exit from intro')
+assert.ok(world.includes("const reveal = st.phase === 'sweep' || st.phase === 'active' || st.phase === 'retract'"), 'UEH reveal is restricted to HEX phases')
+assert.ok(world.includes("ueh.current.visible = reveal && hexGpuDiag !== 'no-world'"), 'UEH visibility is restored after HEX')
+assert.ok(world.includes('<group ref={ueh} visible={false}>'), 'UEH starts hidden')
 assert.ok(source['source/src/scene/ShowcaseWarmup.tsx'].includes('scene.traverseVisible'), 'avoid hidden showcase lights during precompile')
 const experience = read('source/src/scene/Experience.tsx')
 assert.ok(experience.includes('shadow-mapSize={[2048, 2048]}'), 'shadow resolution unchanged')
@@ -92,7 +93,7 @@ assert.ok(mat.includes("mat.customProgramCacheKey = () => 'orbita-materialize-sh
 assert.ok(!mat.includes('orbita-materialize-${tag}'), 'unique decorative tags must not split identical shader programs')
 
 assert.ok(showWarm.includes("const roots: THREE.Object3D[] = [...beams, ...(showcaseRoots as THREE.Object3D[])]"), 'laser emitters must be GPU-primed before the larger models')
-assert.ok(showWarm.includes('window.setTimeout(() => { void warm() }, 0)'), 'async first-use work must not wait for a potentially stalled first render frame')
+assert.ok(showWarm.includes('cancelTimeout = window.setTimeout(() => {') && showWarm.includes('await waitForLandingPreflight()') && showWarm.includes('if (!interrupted()) await warm()'), 'prewarm starts via a cancellable timeout after landing preflight, not the first scene frame')
 
 assert.ok(showWarm.includes('const laserProxies = proxies.slice(0, beams.length)'), 'all four laser drawables are first priority')
 assert.ok(showWarm.includes('laserProxies.forEach(proxy => { proxy.visible = true })') &&

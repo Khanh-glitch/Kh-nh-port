@@ -5,7 +5,7 @@
 // Mọi thế giới đọc cùng một giao diện: bass / mid / high / kick / energy / progress.
 import { audio } from '../audio'
 import { rt } from './state'
-import { TRACKS, probeMedia, type TrackId } from './tracks'
+import { TRACKS, probePlayable, type TrackId } from './tracks'
 
 const mtof = (m: number) => 440 * Math.pow(2, (m - 69) / 12)
 function mulberry(seed: number) {
@@ -121,6 +121,9 @@ class Music {
     this.progress = 0
     this.elapsed = 0
     this.dur = tr.highlight.dur
+    // Media probing is async; do not let a previous track's clock end this one.
+    this.t0 = ctx.currentTime + delay
+    this.demo = false
     this.kicks = []
     this.out = ctx.createGain()
     this.out.gain.value = 0.0001
@@ -134,18 +137,50 @@ class Music {
     this.out.connect(send).connect(audio.reverbSend)
     this.out.gain.setTargetAtTime(0.9, ctx.currentTime + delay, 0.6)
 
-    const real = tr.audioSrc && (await probeMedia(tr.audioSrc, 'audio'))
+    // Wait for metadata before seeking to the owner's cue; a successful HEAD
+    // request alone does not prove that the browser can decode the file.
+    // The official player owns this song's audio, not the DEMO arrangement.
+    if (tr.videoId) {
+      this.demo = false
+      this.t0 = ctx.currentTime + delay
+      return
+    }
+    let el: HTMLAudioElement | null = null
+    if (tr.audioSrc) {
+      const candidate = new Audio()
+      candidate.crossOrigin = 'anonymous'
+      candidate.preload = 'metadata'
+      candidate.src = tr.audioSrc
+      const playable = await probePlayable(candidate)
+      if (tok !== this.token) return
+      if (playable) el = candidate
+    }
     if (tok !== this.token) return
     this.t0 = ctx.currentTime + delay
-    if (real) {
+    if (el) {
       this.demo = false
-      const el = new Audio(tr.audioSrc)
-      el.crossOrigin = 'anonymous'
+      // Only a same-origin/CORS-clean element may enter the WebAudio graph, and
+      // that is exactly what probePlayable confirmed above.
       el.currentTime = tr.highlight.start
+      if (Number.isFinite(el.duration)) this.dur = Math.max(0.01, el.duration - tr.highlight.start)
       this.el = el
+      el.addEventListener('ended', () => { if (tok === this.token) this.ended = true }, { once: true })
       this.src = ctx.createMediaElementSource(el)
       this.src.connect(this.out)
-      window.setTimeout(() => tok === this.token && el.play().catch(() => {}), delay * 1000)
+      window.setTimeout(() => {
+        if (tok !== this.token) return
+        el.play().catch(() => {
+          if (tok !== this.token) return
+          // Autoplay can be denied even after metadata loaded. Fall back to the
+          // explicitly labelled demo, never claim a silent element is playing.
+          this.demo = true
+          this.t0 = ctx.currentTime
+          this.rnd = mulberry(SONGS[id].seed)
+          this.step = 0
+          this.nextStep = this.t0
+          this.timer = window.setInterval(() => this.schedule(id), 40)
+        })
+      }, delay * 1000)
     } else {
       this.demo = true
       const s = SONGS[id]
@@ -199,9 +234,12 @@ class Music {
       return
     }
     const ctx = audio.ctx
-    this.elapsed = Math.max(0, ctx.currentTime - this.t0)
+    this.elapsed = this.el && !this.demo
+      ? Math.max(0, this.el.currentTime - TRACKS[this.trackId!].highlight.start)
+      : Math.max(0, ctx.currentTime - this.t0)
     this.progress = Math.min(1, this.elapsed / this.dur)
-    if (!this.ended && this.elapsed >= this.dur) this.ended = true
+    // Real media ends on its own event, not at the demo's fixed duration.
+    if (!this.ended && this.demo && this.elapsed >= this.dur) this.ended = true
     this.an.getByteFrequencyData(this.fft)
     const avg = (a: number, b: number) => {
       let s = 0

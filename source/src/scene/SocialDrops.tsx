@@ -1,13 +1,29 @@
 import { useEffect, useMemo, useRef } from 'react'
-import { useFrame } from '@react-three/fiber'
+import { useFrame, useThree } from '@react-three/fiber'
 import * as THREE from 'three'
 import { SVGLoader } from 'three/examples/jsm/loaders/SVGLoader.js'
 import { SOCIAL_PATHS } from './socialLogoPaths'
+import { PROFILES, openExternal } from '../layout'
+import { Hit } from './Hit'
 
 /**
  * Original user-supplied social icon geometry, spatially linked to the existing
  * Beacon energy beam. No external API, extra renderer or secondary Canvas.
- * The icons are decorative until real per-platform profile URLs are supplied.
+ *
+ * ORIENTATION — measured, not guessed.
+ *
+ * The icons arrived upside down. Rasterising the raw SVG paths showed the paths
+ * themselves are correct (the TikTok note hangs low, the octocat's ears are on
+ * top), so the flip was happening in the pipeline, not in the artwork:
+ * `SVGLoader` hands back coordinates in SVG space, where y grows DOWN, and
+ * `ExtrudeGeometry` treats them as if y grew UP. Every silhouette therefore
+ * rendered mirrored about its own horizontal axis.
+ *
+ * Baked into the geometry with `rotateX(PI)` after centring, rather than onto
+ * the mesh's rotation, because the per-frame animation already writes
+ * `rotation.z` (a settling wobble) and would have to compose with a correction
+ * that must never be lost. After `center()` the extrusion is symmetric in z, so
+ * the extra z flip costs nothing.
  */
 const ease = (v: number) => 1 - Math.pow(1 - THREE.MathUtils.clamp(v, 0, 1), 3)
 const textureCache = new Map<string, THREE.BufferGeometry | null>()
@@ -29,6 +45,9 @@ function logoGeometry(path: string) {
       const size = new THREE.Vector3()
       geo.boundingBox!.getSize(size)
       geo.scale(2.3 / Math.max(size.x, size.y, .001), 2.3 / Math.max(size.x, size.y, .001), 2.3 / Math.max(size.x, size.y, .001))
+      // SVG y-down -> three y-up. See ORIENTATION above. Applied before the
+      // normals are rebuilt so the flipped faces still light correctly.
+      geo.rotateX(Math.PI)
       geo.computeVertexNormals()
     }
   } catch (error) { console.warn('[ORBITA SocialDrops] icon geometry', error) }
@@ -36,9 +55,31 @@ function logoGeometry(path: string) {
   return geo
 }
 
+/**
+ * FREEZE THE SCENE-WIDE POINT-LIGHT COUNT.
+ *
+ * Every point light that becomes visible adds a `NUM_POINT_LIGHTS` define and a
+ * new shader Program for EVERY lit material in the whole island (the sun's
+ * shadow variant too). The six icons used to carry their own point lights
+ * inside `visible={false}` groups, so the very first beacon signal made the
+ * renderer recompile hundreds of programs in a single frame — the freeze and
+ * the black flash reported when activating the beacon.
+ *
+ * All six lights now live in an always-mounted root at zero intensity, and each
+ * one is re-positioned onto its icon every frame. The light count never changes,
+ * so activation compiles nothing; the lighting itself is identical because the
+ * light still travels with the icon and only lights up while it is on screen.
+ */
+const DROP_LIGHT_INTENSITY = 2.6
+const DROP_LIGHT_DISTANCE = 5
+/** Descent: a short drop from just above the dish, landing on the pad. */
+const DROP_START_Y = 16
+const DROP_LAND_Y = 1.0
+
 export function SocialDrops({ signal }: { signal: {send:number} }) {
   const nodes=useRef<Array<THREE.Group|null>>([])
   const rings=useRef<Array<THREE.Mesh|null>>([])
+  const lights=useRef<Array<THREE.PointLight|null>>([])
   const icons=useMemo(() => SOCIAL_PATHS.map((l)=>({
     ...l, geometry:logoGeometry(l.path),
     material:new THREE.MeshPhysicalMaterial({
@@ -47,6 +88,34 @@ export function SocialDrops({ signal }: { signal: {send:number} }) {
     }),
   })),[])
   useEffect(()=>()=>{icons.forEach((l)=>l.material.dispose())},[icons])
+  // Second half of the same fix: the icons use MeshPhysicalMaterial (clearcoat),
+  // which is its own shader variant. Until it has been compiled once, the first
+  // signal would compile it synchronously mid-frame. Prepare those few
+  // programs asynchronously while the visitor is still walking around — the
+  // SAME real materials, no dummy geometry, no reduced quality, and it yields
+  // completely once a signal is actually sent.
+  const { gl, scene, camera } = useThree()
+  useEffect(()=>{
+    if (signal.send > 0) return
+    let cancelled = false
+    let done = false
+    let timer = 0
+    const queue = icons.filter(i=>i.geometry).map(i=>i.geometry as THREE.BufferGeometry)
+    const step = () => {
+      if (cancelled || done || typeof gl.compileAsync !== 'function') return
+      const geo = queue.shift()
+      if (!geo || signal.send > 0) { done = true; return }
+      const mat = icons.find(i=>i.geometry===geo)!.material
+      const proxy = new THREE.Mesh(geo, mat)
+      proxy.matrixAutoUpdate = false
+      try { void gl.compileAsync(proxy, camera, scene).catch(()=>{}) } catch { /* ignore */ }
+      timer = window.setTimeout(step, 320)
+    }
+    timer = window.setTimeout(step, 1200)
+    return ()=>{ cancelled = true; window.clearTimeout(timer) }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  },[])
+
   useFrame((state)=>{
     const age = signal.send < 0 ? -100 : performance.now()/1000 - signal.send
     for(let i=0;i<icons.length;i++){
@@ -54,24 +123,56 @@ export function SocialDrops({ signal }: { signal: {send:number} }) {
       const halo=rings.current[i]
       if(!g)continue
       const t=age - i*.19 - .17
-      if(t<0){g.visible=false;if(halo)halo.visible=false;continue}
+      const lamp=lights.current[i]
+      if(t<0){
+        g.visible=false;if(halo)halo.visible=false
+        if(lamp&&lamp.intensity!==0)lamp.intensity=0
+        continue
+      }
       g.visible=true
       const x=ease(t/1.75)
       const angle = -Math.PI/2 + i*Math.PI*2/icons.length
       const radius = 3.6 + (i%2)*.6
       const bx=Math.cos(angle)*radius, bz=Math.sin(angle)*radius
-      const hover = .16*Math.sin(state.clock.elapsedTime*1.4+i*.9)
-      g.position.set(bx*(.15+.85*x), 34 - 28.5*x + hover*x, bz*(.15+.85*x))
+      // The icons used to settle at y = 5.5, hanging in mid-air beside a 9.5 m
+      // mast. They now land on the pad: the group is 2.3 * 0.82 tall, so a
+      // centre at ~1.0 m puts the lowest vertex on the ground.
+      const hover = .07*Math.sin(state.clock.elapsedTime*1.4+i*.9)
+      const y = DROP_START_Y - (DROP_START_Y - DROP_LAND_Y)*x + hover*x
+      g.position.set(bx*(.15+.85*x), y, bz*(.15+.85*x))
       g.scale.setScalar(Math.max(0.005, Math.min(1, x*1.3)) * .82)
       g.rotation.set(.03*Math.sin(state.clock.elapsedTime+i), state.clock.elapsedTime*.24+i*.17, -0.12*Math.sin(t*2)*Math.exp(-t*.9))
-      if(halo){halo.visible=t<2.8;halo.position.copy(g.position);halo.position.y-=.17;halo.scale.setScalar(1+.2*Math.sin(state.clock.elapsedTime*8+i))}
+      // The halo is the contact shadow: it must sit on the pad, not on the icon.
+      if(halo){halo.visible=t<3.4;halo.position.copy(g.position);halo.position.y=.03;halo.scale.setScalar(1+.2*Math.sin(state.clock.elapsedTime*8+i))}
+      // Same position/intensity as the original per-icon light, but the light
+      // itself stays mounted so the shader define never changes. The icon's
+      // wrapper group is an identity transform, so `g.position` is already in
+      // this root's local space — no matrix work (and no one-frame lag).
+      if(lamp){
+        lamp.position.copy(g.position)
+        if(lamp.intensity!==DROP_LIGHT_INTENSITY)lamp.intensity=DROP_LIGHT_INTENSITY
+      }
     }
   })
   return <group>
+    {/* Always-visible, zero-intensity carriers: see DROP_LIGHT_INTENSITY. */}
+    {icons.map((entry,i)=>
+      <pointLight key={`lamp-${entry.slug}`} ref={(r)=>{lights.current[i]=r}}
+        color={entry.color} intensity={0} distance={DROP_LIGHT_DISTANCE} decay={2}/>)}
     {icons.map((entry,i)=>entry.geometry&&<group key={entry.slug}>
       <group ref={(r)=>{nodes.current[i]=r}} visible={false}>
         <mesh geometry={entry.geometry} material={entry.material} />
-        <pointLight color={entry.color} intensity={2.6} distance={5} decay={2}/>
+        {/* The icon is a real link now. The target lives in the icon's own
+            group so it inherits the descent, the settle and the hover scale;
+            `Hit` is invisible but raycastable from the crosshair. */}
+        <Hit
+          id={`social-${entry.slug}`}
+          label={entry.slug.toUpperCase()}
+          hint={PROFILES[entry.slug]?.confirmed ? 'Mở trang cá nhân' : 'Mở thư mục dự án'}
+          maxDist={34}
+          size={[1.6, 1.6, 1.2]}
+          onClick={() => openExternal(PROFILES[entry.slug]?.url ?? '')}
+        />
       </group>
       <mesh ref={(r)=>{rings.current[i]=r}} visible={false} rotation={[-Math.PI/2,0,0]}>
         <ringGeometry args={[.68,.75,32]}/>

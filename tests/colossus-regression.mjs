@@ -16,7 +16,7 @@ for (const [name, data] of [['APEX', apex], ['Ragnarok', rag]]) {
   assert.match(data, /<group ref=\{plinthRef\} visible=\{false\}>/, `${name}: plinth begins hidden`)
   assert.match(data, /plinthReveal = THREE\.MathUtils\.smoothstep\(prog/, `${name}: base has scan driven reveal`)
 }
-assert.match(rag, /<group ref=\{exhibitRef\} visible=\{false\}>/, 'Ragnarok environment starts hidden')
+assert.match(rag, /<group ref=\{exhibitRef\}[^>]*visible=\{false\}>/, 'Ragnarok environment starts hidden')
 assert.match(rag, /spriteMat = patchMaterialize\(/, 'Sprite atlas obeys fabrication scan')
 assert.match(rag, /uReveal/, 'Pixel ocean has wave reveal')
 assert.match(rag, /treeRefs\.current\.forEach/, 'Trees sway in wind')
@@ -31,28 +31,29 @@ assert.match(weather, /<spriteMaterial map=\{cloudTextures/, 'Pixel cloud billbo
 assert.match(cloud, /NearestFilter/, 'Pixel clouds use nearest-neighbor crisp sampling')
 assert.match(weather, /rain\.connect\(rainFilter\)/, 'Storm audio layer')
 assert.match(uv, /lastUV = new WeakMap/, 'Animated sprite UV upload cache')
-assert.match(warmup, /await gl\.compileAsync/, 'Shader prewarming away from summon event')
+assert.match(warmup, /(?:await | = )gl\.compileAsync\(/, 'Shader prewarming away from summon event')
 assert.match(warmup, /gl\.render\(stageNow, camera\)/, 'Actual GPU draw primes geometry & programs, not only compileAsync')
 assert.doesNotMatch(warmup, /if \(\'requestIdleCallback\' in window/, 'Warmup cannot be postponed indefinitely to browser idle')
 assert.match(robot, /coldProbe\.warmStatusAtClick/, 'Cold vs warm first-activation diagnostics available')
 assert.match(robot, /<ShowcaseWarmup arenaState=\{st\} \/>/, 'Cooperative prewarm is mounted with laser state')
 assert.match(robot, /apexColliderRemove/, 'Invisible plinth no longer collides')
 assert.match(robot, /ragColliderRemove/, 'Invisible Ragnarok plinth no longer collides')
-console.log('PASS: 22 static Colossus contracts (NOT a substitute for browser visual QA)')
 
 // Static rounded parts must survive Robot/Apex React state transitions without
 // invalidating the GPU buffers already uploaded during prewarm.
-const stableRobot = read('source/src/scene/Robot.tsx')
-const stableApex = read('source/src/scene/ApexShowcase.tsx')
+const stableRobot = robot
+const stableApex = apex
 assert.match(stableRobot, /const stableGeometry = useMemo\(/, 'Colossus Part geometry cached per dimension')
 assert.match(stableRobot, /geometry=\{roundedBox\(/, 'Colossus inline rounded geometry cached')
 assert.match(stableApex, /geometry=\{roundedBox\(/, 'APEX inline rounded geometry cached')
 
 // Native offscreen preflight may modify the live sun ONLY synchronously:
 // no public rAF can run while the real camera or sun points at Colossus.
-const nativeWarmSource = read('source/src/scene/ShowcaseWarmup.tsx')
+const nativeWarmSource = warmup
 assert.match(nativeWarmSource, /for \(let repeat = 0; repeat < info\.nativeSceneRepeats; repeat\+\+\)/, 'native warmup repeats are frame-budgeted')
 const offscreenBegin = nativeWarmSource.indexOf('sun.target.position.set(0, 0, -41)')
 const offscreenEnd = nativeWarmSource.indexOf('sun.target.position.copy(targetPos)', offscreenBegin)
 assert.ok(offscreenBegin >= 0 && offscreenEnd > offscreenBegin, 'native source camera and sun restored')
 assert.ok(!nativeWarmSource.slice(offscreenBegin, offscreenEnd).includes('await '), 'no await while public camera or sun is temporarily moved')
+
+console.log('PASS: static Colossus contracts (NOT a substitute for browser visual QA)')

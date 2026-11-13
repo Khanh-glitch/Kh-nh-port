@@ -97,7 +97,7 @@ export function Player() {
     for (const h of hits) {
       if (!passesInteractiveFilter(h.object)) continue
       const it = getInteractive(h.object)
-      if (it && h.distance <= it.maxDist) return { it, hit: h }
+      if (it && h.distance <= it.maxDist && (!useStore.getState().panel || it.id.startsWith('panel-'))) return { it, hit: h }
     }
     return null
   }
@@ -173,7 +173,7 @@ export function Player() {
     }
     const onDown = (e: PointerEvent) => {
       const s = st.getState()
-      if (s.phase !== 'playing' || s.panel || s.paused) return
+      if (s.phase !== 'playing' || s.paused) return
       if (document.pointerLockElement === el) {
         activate('click', hovered.current)
         return
@@ -276,7 +276,7 @@ export function Player() {
     }
 
     // ---- input & chuyển động ----
-    const canMove = !s.paused && !s.panel && !trans.active
+    const canMove = !s.paused && !trans.active
     let fx = 0
     let fz = 0
     if (canMove) {
@@ -355,7 +355,7 @@ export function Player() {
     }
 
     // ---- hover ----
-    if (!s.panel && !s.paused && !trans.active) {
+    if (!s.paused && !trans.active) {
       const found = pick(!s.locked && !s.touch ? true : false)
       hovered.current = found
       const key = found ? found.it.id + found.it.label + (found.it.hint ?? '') : ''

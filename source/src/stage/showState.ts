@@ -155,8 +155,8 @@ export function loadYouTubeAPI(): Promise<YTNS> {
     document.head.appendChild(s)
     window.setTimeout(() => reject(new Error('youtube api timeout')), 45000)
   })
-  ytPromise.catch(() => {
-    /* xử lý ở nơi gọi */
-  })
+  // A transient network error must not poison all later playback attempts.
+  const pending = ytPromise
+  pending.catch(() => { if (ytPromise === pending) ytPromise = null })
   return ytPromise
 }

@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useRef } from 'react'
-import { useFrame } from '@react-three/fiber'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useFrame, useThree } from '@react-three/fiber'
 import * as THREE from 'three'
-import { EXHIBITS } from '../layout'
+import { EXHIBITS, openExternal } from '../layout'
 import { audio, type Bus } from '../audio'
 import { toast } from '../store'
 import { FONT, beamGeometry, beamMaterial, canvasTex, rbox, roundRect } from '../gfx'
@@ -11,6 +11,144 @@ import { Label } from './Label'
 import { PadRing, isFacing, mats, useWorldColliders, worldPos } from './common'
 
 const ex = EXHIBITS.cinema
+
+// Same-origin clips can autoplay and advance reliably without Drive player clicks.
+const PROJECT_FILMS: { id: string; label: string; src?: string }[] = [
+  { id: '1fkUo-py1nE_pqeGVYvpnJCJCs1IlWAKe', label: 'THE FOOT BETRAYS YOU', src: './portfolio/films/the-foot-betrays-you.mp4' },
+  { id: '1RfgyAe0LeKlENlNUTLRYanoFpslrKDz3', label: 'UNHEARD · MUSIC DISCOVERY', src: './portfolio/films/unheard-music-discovery.mp4' },
+  { id: '13TybcMrggmZG2K5MpHREdY54WGSyWRh3', label: 'CORAVAMARIS · VIDEO PROJECT 3', src: './portfolio/films/coravamaris.mp4' },
+]
+
+function cinemaHomography(src: number[][], dst: number[][]): number[] | null {
+  const A: number[][] = []
+  const b: number[] = []
+  for (let i = 0; i < 4; i++) {
+    const [u, v] = src[i]
+    const [x, y] = dst[i]
+    A.push([u, v, 1, 0, 0, 0, -u * x, -v * x])
+    b.push(x)
+    A.push([0, 0, 0, u, v, 1, -u * y, -v * y])
+    b.push(y)
+  }
+  // Gaussian elimination with partial pivoting.
+  const n = 8
+  for (let col = 0; col < n; col++) {
+    let piv = col
+    for (let r = col + 1; r < n; r++) if (Math.abs(A[r][col]) > Math.abs(A[piv][col])) piv = r
+    if (Math.abs(A[piv][col]) < 1e-9) return null
+    ;[A[col], A[piv]] = [A[piv], A[col]]
+    ;[b[col], b[piv]] = [b[piv], b[col]]
+    const d = A[col][col]
+    for (let c = col; c < n; c++) A[col][c] /= d
+    b[col] /= d
+    for (let r = 0; r < n; r++) {
+      if (r === col) continue
+      const f = A[r][col]
+      if (!f) continue
+      for (let c = col; c < n; c++) A[r][c] -= f * A[col][c]
+      b[r] -= f * b[col]
+    }
+  }
+  const h = b
+  // CSS matrix3d is column-major: columns (h11 h21 h31 h41) ...
+  return [h[0], h[3], 0, h[6], h[1], h[4], 0, h[7], 0, 0, 1, 0, h[2], h[5], 0, 1]
+}
+
+function CinemaVideo({ index, onClose, onNext }: { index: number | null; onClose: () => void; onNext: () => void }) {
+  const { gl, camera } = useThree()
+  const layer = useMemo(() => {
+    const el = document.createElement('div')
+    Object.assign(el.style, { position: 'absolute', left: '0', top: '0', width: '1280px', height: '720px', transformOrigin: '0 0', visibility: 'hidden', overflow: 'hidden', pointerEvents: 'none' })
+    return el
+  }, [])
+  const phase = useReality((s) => s.phase)
+  useEffect(() => {
+    if (index === null || phase !== 'idle') return
+    const film = PROJECT_FILMS[index]
+    const frame = film.src ? document.createElement('video') : document.createElement('iframe')
+    if (frame instanceof HTMLVideoElement) {
+      frame.src = film.src!
+      frame.controls = false
+      frame.muted = true // muted autoplay is allowed without a new browser gesture
+      frame.autoplay = true
+      frame.playsInline = true
+      frame.preload = 'auto'
+      frame.onended = onNext
+      void frame.play().catch(() => {})
+    } else {
+      frame.src = `https://drive.google.com/file/d/${film.id}/preview`
+      frame.allow = 'autoplay; fullscreen'
+    }
+    frame.title = film.label
+    frame.style.cssText = 'width:100%;height:100%;border:0;background:#000;object-fit:contain'
+    frame.style.pointerEvents = 'none'
+    layer.appendChild(frame)
+    gl.domElement.parentElement?.appendChild(layer)
+    return () => {
+      if (frame instanceof HTMLVideoElement) { frame.onended = null; frame.pause(); frame.removeAttribute('src'); frame.load() }
+      frame.remove(); layer.remove()
+    }
+  }, [index, phase, layer, gl, onNext])
+  const points = useMemo(() => [new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3()], [])
+  useFrame(() => {
+    if (index === null || phase !== 'idle' || !layer.parentElement) return
+    const dx = camera.position.x - ex.x, dz = camera.position.z - ex.z
+    const localZ = dx * Math.sin(ex.rotY) + dz * Math.cos(ex.rotY)
+    if (Math.hypot(dx, dz) > 38) { onClose(); return }
+    if (localZ < -5.7) { layer.style.visibility = 'hidden'; return }
+    const c = Math.cos(ex.rotY), s = Math.sin(ex.rotY)
+    const xy = [[-4.2,4.85], [4.2,4.85], [-4.2,1.05], [4.2,1.05]]
+    const dst: number[][] = []
+    for (let i=0; i<4; i++) {
+      const [x,y] = xy[i], z = -5.75
+      const v = points[i].set(ex.x + x*c + z*s, y, ex.z - x*s + z*c)
+      if (v.clone().applyMatrix4(camera.matrixWorldInverse).z > -0.2) { layer.style.visibility = 'hidden'; return }
+      v.project(camera)
+      dst.push([(v.x+1)*gl.domElement.clientWidth/2, (1-v.y)*gl.domElement.clientHeight/2])
+    }
+    const matrix = cinemaHomography([[0,0],[1280,0],[0,720],[1280,720]], dst)
+    if (!matrix) { layer.style.visibility = 'hidden'; return }
+    layer.style.visibility = 'visible'
+    layer.style.transform = `matrix3d(${matrix.join(',')})`
+  })
+  return null
+}
+
+// Silent exterior teaser, decoded only when the visitor is near the cinema.
+function CinemaTeaser() {
+  const teaser = useMemo(() => {
+    const video = document.createElement('video')
+    video.muted = true
+    video.loop = true
+    video.playsInline = true
+    video.preload = 'none'
+    const texture = new THREE.VideoTexture(video)
+    texture.colorSpace = THREE.SRGBColorSpace
+    return { video, texture, loaded: false, lastCheck: 0 }
+  }, [])
+  useFrame(({ camera, clock }) => {
+    if (clock.elapsedTime - teaser.lastCheck < 1) return
+    teaser.lastCheck = clock.elapsedTime
+    const near = useReality.getState().phase === 'idle' && Math.hypot(camera.position.x - ex.x, camera.position.z - ex.z) < 24
+    if (!near) { if (!teaser.video.paused) teaser.video.pause(); return }
+    if (!teaser.loaded) {
+      teaser.loaded = true
+      teaser.video.src = PROJECT_FILMS[0].src!
+    }
+    if (teaser.video.paused) void teaser.video.play().catch(() => {})
+  })
+  useEffect(() => () => {
+    teaser.video.pause()
+    teaser.video.removeAttribute('src')
+    teaser.video.load()
+    teaser.texture.dispose()
+  }, [teaser])
+  return <mesh position={[0, 0, 0.06]}>
+    <planeGeometry args={[1, 0.5625]} />
+    <meshBasicMaterial map={teaser.texture} toneMapped={false} />
+  </mesh>
+}
+
 const SW = 1024
 const SH = 450
 const TITLES = ['AFTERGLOW', 'RUN OF SHOW', 'PARTICLES', 'TUNNEL']
@@ -217,6 +355,9 @@ function posterTex(title: string, a: string, b: string, sub: string) {
 
 export function Cinema() {
   const busRef = useRef<Bus | null>(null)
+  const [projectFilm, setProjectFilm] = useState<number | null>(null)
+  const realityPhase = useReality((s) => s.phase)
+  useEffect(() => { if (realityPhase !== 'idle') setProjectFilm(null) }, [realityPhase])
   // Diagnostic only: do not read Cinema screen pixels to update a distant
   // room light during HEX. The full 1024x450 film keeps drawing, unchanged.
   const hexCinemaFarLightGate = typeof window !== 'undefined' &&
@@ -279,22 +420,27 @@ export function Cinema() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  const advanceFilm = useCallback(() => setProjectFilm(i => i === null ? 0 : (i + 1) % PROJECT_FILMS.length), [])
   const next = () => {
-    st.reel = (st.reel + 1) % 4
+    const nextFilm = projectFilm === null ? 0 : (projectFilm + 1) % PROJECT_FILMS.length
+    setProjectFilm(nextFilm)
+    st.reel = nextFilm
     st.reelT = 0
     st.flash = 1
     if (busRef.current) audio.cubeClick(busRef.current, 0.6)
-    toast(`Rạp phim: ${TITLES[st.reel]}`)
+    toast(`Rạp phim: ${PROJECT_FILMS[nextFilm].label} · tự phát (không tiếng)`)
   }
 
   useFrame((state, dt) => {
     const t = state.clock.elapsedTime
-    if (!st.scoreOn && audio.started && busRef.current) {
+    if (projectFilm === null && realityPhase === 'idle' && Math.hypot(state.camera.position.x - ex.x, state.camera.position.z - ex.z) < 24) setProjectFilm(0)
+    if (!st.scoreOn && projectFilm === null && audio.started && busRef.current) {
       st.scoreOn = true
       audio.startScore(busRef.current)
     }
+    if (busRef.current) busRef.current.input.gain.setTargetAtTime(projectFilm === null ? 0.8 : 0.0001, audio.ctx.currentTime, 0.15)
     st.reelT += dt
-    if (st.reelT > 16) {
+    if (projectFilm === null && st.reelT > 16) {
       st.reel = (st.reel + 1) % 4
       st.reelT = 0
     }
@@ -392,6 +538,7 @@ export function Cinema() {
 
   return (
     <group position={[ex.x, 0, ex.z]} rotation={[0, ex.rotY, 0]}>
+      <CinemaVideo index={projectFilm} onClose={() => setProjectFilm(null)} onNext={advanceFilm} />
       <PadRing radius={10.2} color={ex.color} />
       <Label title="Mini Cinema" sub="Film · Motion · Aftermovie" color={ex.color} position={[0, 9.4, 3]} scale={1.2} />
 
@@ -501,6 +648,7 @@ export function Cinema() {
             <planeGeometry args={[1.0, 1.5]} />
             <meshBasicMaterial map={tex} toneMapped={false} />
           </mesh>
+          {i === 0 && <CinemaTeaser />}
         </group>
       ))}
 
@@ -509,7 +657,10 @@ export function Cinema() {
       <pointLight position={[0, 4, 9]} color="#ff4d4d" intensity={90} distance={14} decay={2} />
 
       <Hit id="cinema-screen" label="Mini Cinema · Màn hình" hint="Đổi phim" panel="cinema" maxDist={40} size={[8.4, 3.8, 0.3]} position={[0, 2.95, -5.8]} onClick={next} />
-      <Hit id="cinema-sign" label="Mini Cinema" hint="Đổi phim" panel="cinema" maxDist={40} size={[9.4, 1.8, 0.6]} position={[0, 4.75, 6.5]} onClick={next} />
+      <Hit id="cinema-project-link" label="Phim dự án" hint="Mở video trên Drive" maxDist={35}
+        size={[2.4, 1.2, 0.5]} position={[-3.4, 2.3, 6.5]}
+        onClick={() => openExternal(`https://drive.google.com/file/d/${PROJECT_FILMS[projectFilm ?? 0].id}/view`)} />
+      <Hit id="cinema-sign" label="Mini Cinema" hint="Chọn phim dự án" panel="cinema" maxDist={40} size={[9.4, 1.8, 0.6]} position={[0, 4.75, 6.5]} onClick={next} />
     </group>
   )
 }

@@ -1,13 +1,10 @@
 // ORBITA · Reality Rewrite — cấu hình hai "sheet" (hai bài hát) dùng chung không gian UEH.
 //
-// NGUỒN SỰ THẬT: tên bài + vai trò lấy từ nhánh portfolio/data-intake
-// (portfolio-data/SHOWTIME_SITE_CONTENT_V1.json). Ở đó quyền rehost audio/video của cả hai bài
-// đang là "not_granted", vì vậy KHÔNG có file thật nào được đóng gói trong build này.
-//
-// ĐỂ GẮN TÁC PHẨM THẬT (không cần sửa code khác):
-//   1. Đặt file vào  public/reality/  (ví dụ  public/reality/mua-ha-thu-18.mp3, .mp4)
-//   2. Điền  audioSrc / videoSrc  bên dưới, chỉnh  highlight.start / highlight.dur  (45–90 giây).
-//   Khi file tồn tại, nhãn DEMO tự biến mất và nhạc/video thật thay thế bản demo thủ tục.
+// Audio Mùa Hạ được tải từ Drive do chủ dự án cung cấp, chuyển sang MP3 và
+// phục vụ cùng website. Giữ toàn bộ timeline để mốc 1:54 khớp bản gốc.
+// Video YouTube dùng player chính thức, không trích xuất thành texture.
+
+import { MUA_HA_AUDIO_SRC, MUA_HA_MEDIA_SRC, MUA_HA_CUE, NGAY_MAI_CUE, NGAY_MAI_VIDEO_ID } from '../layout'
 
 export type TrackId = 'mua-ha' | 'ngay-mai'
 export type WorldId = 'ueh'
@@ -24,6 +21,8 @@ export interface TrackDef {
   highlight: { start: number; dur: number }
   audioSrc?: string
   videoSrc?: string
+  /** YouTube id for the official embed (never sampled into a texture). */
+  videoId?: string
   links: { label: string; url: string }[]
 }
 
@@ -37,10 +36,15 @@ export const TRACKS: Record<TrackId, TrackDef> = {
     world: 'ueh',
     worldName: 'UEH · Cơn Mưa Mùa Hạ',
     accent: '#8fc8ff',
-    highlight: { start: 0, dur: 66 },
-    audioSrc: undefined,
+    // Owner cue: from 1:54 (114 s) to the end. `dur` only bounds the procedurally
+    // driven visuals; the real file plays until it ends.
+    highlight: { start: MUA_HA_CUE, dur: 66 },
+    audioSrc: MUA_HA_MEDIA_SRC,
     videoSrc: undefined,
-    links: [{ label: 'Xem reel gốc', url: 'https://www.facebook.com/reel/848691413758411' }],
+    links: [
+      { label: 'Nghe audio gốc trên Drive', url: MUA_HA_AUDIO_SRC },
+      { label: 'Xem reel gốc', url: 'https://www.facebook.com/reel/848691413758411' },
+    ],
   },
   'ngay-mai': {
     id: 'ngay-mai',
@@ -51,9 +55,13 @@ export const TRACKS: Record<TrackId, TrackDef> = {
     world: 'ueh',
     worldName: 'UEH · Hoa Phượng Trong Gió',
     accent: '#ff7048',
-    highlight: { start: 0, dur: 72 },
+    // Owner cue: the lyric video from 1:22 (82 s). YouTube cannot become a
+    // VideoTexture (CORS + terms), so `videoId` drives the official embed and
+    // the procedural visuals run alongside it.
+    highlight: { start: NGAY_MAI_CUE, dur: 72 },
     audioSrc: undefined,
     videoSrc: undefined,
+    videoId: NGAY_MAI_VIDEO_ID,
     links: [
       { label: 'Nghe trên Spotify', url: 'https://open.spotify.com/track/2AkPSNohBGtrZMGeTtwV12' },
       { label: 'Lyric video chính thức', url: 'https://www.youtube.com/watch?v=179btG24VE8' },
@@ -72,4 +80,40 @@ export async function probeMedia(src?: string, kind: 'audio' | 'video' = 'audio'
   } catch {
     return false
   }
+}
+
+/**
+ * Can this exact element play without CORS problems?
+ *
+ * `probeMedia` checks the response type; a Drive viewer is HTML and cannot be
+ * assigned to an audio element. Even the public download endpoint can be blocked
+ * by Drive confirmation pages or CORS. Loading the element is a second check,
+ * not a promise that every browser or sharing configuration will play it.
+ *
+ * Setting `crossOrigin` and connecting an element to WebAudio turns a successful
+ * load into a hard requirement: a response without `Access-Control-Allow-Origin`
+ * fires `error` instead of degrading. So the element is the test. If it loads,
+ * it is playable; if it errors, the procedural arrangement stays and the DEMO
+ * label stays with it. No silent lie either way.
+ */
+export function probePlayable(el: HTMLAudioElement | HTMLVideoElement, timeoutMs = 6000) {
+  return new Promise<boolean>((resolve) => {
+    let settled = false
+    const done = (ok: boolean) => {
+      if (settled) return
+      settled = true
+      window.clearTimeout(timer)
+      el.removeEventListener('loadedmetadata', onOk)
+      el.removeEventListener('canplay', onOk)
+      el.removeEventListener('error', onErr)
+      resolve(ok)
+    }
+    const onOk = () => done(true)
+    const onErr = () => done(false)
+    const timer = window.setTimeout(() => done(false), timeoutMs)
+    el.addEventListener('loadedmetadata', onOk)
+    el.addEventListener('canplay', onOk)
+    el.addEventListener('error', onErr)
+    if (el.readyState >= 1) done(true)
+  })
 }

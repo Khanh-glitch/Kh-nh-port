@@ -7,7 +7,6 @@ import { toast } from '../store'
 import { beamGeometry, beamMaterial, glowTexture, rand } from '../gfx'
 import { Hit } from './Hit'
 import { Label } from './Label'
-import { openPanel } from './Player'
 import { PadRing, mats, useWorldColliders, worldPos } from './common'
 import { SocialDrops } from './SocialDrops'
 
@@ -44,8 +43,7 @@ export function Beacon() {
     waves.forEach((w, i) => (w.t0 = now + i * 0.22))
     if (busRef.current) audio.ping(busRef.current)
     toast('Tín hiệu đã phát vào vũ trụ…')
-    window.clearTimeout(st.pendingOpen)
-    st.pendingOpen = window.setTimeout(() => openPanel('beacon'), 1600)
+    // Leave the dropped links accessible instead of opening a blocking card.
   }
 
   useFrame((state) => {
