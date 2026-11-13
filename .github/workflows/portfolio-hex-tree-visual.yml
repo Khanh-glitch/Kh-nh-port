@@ -1,0 +1,55 @@
+name: Portfolio tree batch visual comparison
+on:
+  push:
+    branches: [arena/1e2ad83c-kh-nh-port]
+    paths: ['.github/workflows/portfolio-hex-tree-visual.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  metal-source-identical:
+    runs-on: macos-15
+    timeout-minutes: 27
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - label: tree-batches
+            query: '?hexTreeBatches=1'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: candidate
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build exact published scene and all existing source preservation gates
+        run: |
+          npm ci --prefix candidate/source
+          npm install --prefix candidate/source --no-save --package-lock=false playwright@1.56.1
+          (cd candidate/source && npx playwright install chromium)
+          (cd candidate && npm run build --prefix source && node scripts/sync-portfolio-standalone.mjs && node scripts/build-pages.mjs && node tests/hex-preservation.mjs)
+      - name: Capture original and vertex-clipped 3D through summon, front, song switch, retract and repeat
+        env:
+          HEX_VISUAL_REFERENCE_LABEL: original-unflagged
+          HEX_VISUAL_CANDIDATE_QUERY: ${{ matrix.query }}
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 --directory candidate/dist-pages >/tmp/hex-original.log 2>&1 &
+          python3 -m http.server 4174 --bind 127.0.0.1 --directory candidate/dist-pages >/tmp/hex-gated.log 2>&1 &
+          for n in {1..80}; do
+            if curl -fsS -o /dev/null http://127.0.0.1:4173/ && curl -fsS -o /dev/null http://127.0.0.1:4174/; then break; fi
+            sleep 1
+          done
+          node candidate/scripts/hex-visual-parity-front.mjs
+      - name: Summarize visual captures
+        if: always()
+        run: |
+          if test -f hex-visual-frames/report.json; then
+            python3 -c "import json; print('::notice title=HEX visual summary::'+json.dumps([{'name':r['name'],'frames':len(r['frames']),'error':r.get('error'),'pageErrors':r['errors'],'blackRows':r.get('blackRectangleConsecutiveRows')} for r in json.load(open('hex-visual-frames/report.json'))],separators=(',',':')))"
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: hex-full-visual-${{ matrix.label }}
+          path: hex-visual-frames/
+          if-no-files-found: warn
