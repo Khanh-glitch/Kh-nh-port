@@ -1265,6 +1265,22 @@ a.comms-row:hover .go { opacity: 1; transform: translate(1px, -1px); color: var(
   color: rgb(var(--ice) / 0.78);
 }
 
+/* Keep the primary action inset from the plate edge and let it shrink
+   gracefully; the grid above it is 1.45fr/1fr, which can overflow at the
+   narrowest cockpit widths if the label is long (Vietnamese is longer). */
+.console-plate .cta {
+  margin-top: 0.7rem;
+  grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr);
+}
+.console-plate .btn {
+  height: 2.2rem;
+  padding: 0 0.6rem;
+  font-size: 0.68rem;
+  min-width: 0;
+}
+.console-plate .btn > span,
+.console-plate .btn { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
 .console-hint {
   margin: 0.55rem 0 0;
   font-size: 0.66rem;
