@@ -130,3 +130,21 @@ The distant Cinema canvas readback gate now runs by default during HEX; older
 native traces identify that readback as an independent main-thread bottleneck.
 The remaining cold GPU UEH draw is not yet proven hitch-free; real GPU frame
 pacing and partial occlusion of cross-origin embeds still need verification.
+
+## Current media implementation (supersedes earlier preview notes)
+
+A GitHub-hosted conversion job downloaded the four publicly linked originals
+and produced 854x480 H.264 web copies. The SOCIAL MEDIA videos map respectively
+9c40 to `social-1.mp4`, 92da to `social-2.mp4`, and ea07 to `social-3.mp4`.
+All six Cinema films are now same-origin VideoTextures on the depth-tested
+screen, with a single spatial Web Audio source. Film-end events advance the
+playlist; autoplay with sound is subject to the browser's gesture policy.
+The original Drive links remain available. The Mùa Hạ copy has no audio track;
+its muted VideoTexture seeks to the MP3's 114-second cue and tracks playback.
+The YouTube iframe remains cross-origin, and cannot join the WebGL depth buffer
+or be guaranteed pixel-accurate occlusion by a static GitHub Pages site.
+Chromium successfully decoded all four converted files and sought Mùa Hạ to
+114 seconds. In the full SwiftShader scene, the Mùa Hạ element reached 117.57s,
+was muted, and stopped on exit; a Cinema clip used an HRTF bus. This is not a
+visual/performance acceptance test on a user's hardware. The old DOM mask is
+still approximate for YouTube, and native GPU benchmark acceptance is pending.

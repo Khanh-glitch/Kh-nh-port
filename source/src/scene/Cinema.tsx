@@ -18,9 +18,9 @@ const PROJECT_FILMS: { id: string; label: string; src?: string }[] = [
   { id: '1fkUo-py1nE_pqeGVYvpnJCJCs1IlWAKe', label: 'THE FOOT BETRAYS YOU', src: './portfolio/films/the-foot-betrays-you.mp4' },
   { id: '1RfgyAe0LeKlENlNUTLRYanoFpslrKDz3', label: 'UNHEARD · MUSIC DISCOVERY', src: './portfolio/films/unheard-music-discovery.mp4' },
   { id: '13TybcMrggmZG2K5MpHREdY54WGSyWRh3', label: 'CORAVAMARIS · VIDEO PROJECT 3', src: './portfolio/films/coravamaris.mp4' },
-  { id: '1Q8fq-i-Of1jMqeuFCPNCpLhZTatq4j4h', label: 'SOCIAL MEDIA · 92da' },
-  { id: '1sR4CaGBWVUNnmaIQK-gWbmYP_0W4KDko', label: 'SOCIAL MEDIA · 9c40' },
-  { id: '1O5hcaN86PB4KGd9Sb476Mdahqgv6W-bY', label: 'SOCIAL MEDIA · ea07' },
+  { id: '1Q8fq-i-Of1jMqeuFCPNCpLhZTatq4j4h', label: 'SOCIAL MEDIA · 92da', src: './portfolio/films/social-2.mp4' },
+  { id: '1sR4CaGBWVUNnmaIQK-gWbmYP_0W4KDko', label: 'SOCIAL MEDIA · 9c40', src: './portfolio/films/social-1.mp4' },
+  { id: '1O5hcaN86PB4KGd9Sb476Mdahqgv6W-bY', label: 'SOCIAL MEDIA · ea07', src: './portfolio/films/social-3.mp4' },
 ]
 
 function cinemaHomography(src: number[][], dst: number[][]): number[] | null {
@@ -430,8 +430,6 @@ export function Cinema() {
   useEffect(() => { if (realityPhase !== 'idle') setProjectFilm(null) }, [realityPhase])
   // Diagnostic only: do not read Cinema screen pixels to update a distant
   // room light during HEX. The full 1024x450 film keeps drawing, unchanged.
-  const hexCinemaFarLightGate = typeof window !== 'undefined' &&
-    new URLSearchParams(window.location.search).get('hexCinemaFarLightGate') === '1'
   // A/B ONLY: keep the real 1024×450 cinema pixels and exact CanvasTexture,
   // but opt into a CPU-backed 2D canvas to avoid a native readback fence when
   // the 4×2 room-light sampler calls getImageData(). No display changes allowed.
@@ -525,7 +523,7 @@ export function Cinema() {
       st.reelT = 0
     }
     st.flash = Math.max(0, st.flash - dt * 3)
-    if (isFacing(state.camera, ex.x, ex.z) && t - st.lastDraw > 1 / 26) {
+    if (projectFilm === null && isFacing(state.camera, ex.x, ex.z) && t - st.lastDraw > 1 / 26) {
       st.lastDraw = t
       const ctx = screenTex.ctx
       ctx.save()
@@ -537,15 +535,12 @@ export function Cinema() {
       }
       screenTex.tex.needsUpdate = true
       // màu trung bình của phim -> ánh sáng phòng
-      // A Cinema light has a 13m attenuation range. When the visitor is far
-      // away and the HEX transition is running, reading 4x2 pixels cannot
-      // affect the local piano/UEH scene but can trigger a multi-second
-      // Canvas2D GPU readback fence. Keep every cinema film frame intact.
-      const distantDuringHex = (hexCinemaFarLightGate || useReality.getState().phase !== 'idle') &&
-        useReality.getState().phase !== 'idle' &&
-        Math.hypot(state.camera.position.x - ex.x,
-          state.camera.position.z - ex.z) > 24
-      if (t - st.lastAvg > 0.2 && !distantDuringHex) {
+      // A synchronous canvas readback caused multi-second main-thread stalls.
+      // The cinema light contributes nothing useful during HEX or from far
+      // away, so never read its pixels in those cases.
+      const skipReadback = useReality.getState().phase !== 'idle' ||
+        Math.hypot(state.camera.position.x - ex.x, state.camera.position.z - ex.z) > 24
+      if (t - st.lastAvg > 0.2 && !skipReadback) {
         st.lastAvg = t
         tiny.drawImage(screenTex.canvas, 0, 34, SW, SH - 68, 0, 0, 4, 2)
         const d = tiny.getImageData(0, 0, 4, 2).data

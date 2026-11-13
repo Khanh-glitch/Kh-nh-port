@@ -94,7 +94,7 @@ assert.doesNotMatch(kit, /videoId[\s\S]{0,80}VideoTexture/, 'no VideoTexture fro
 // --- 2c. The HEX video cannot outlive HEX ----------------------------------
 // The DOM layer is only appended while the reality is open, and the player is
 // destroyed when the wanted id goes away.
-assert.match(exp, /const wanted = inHex && \(track === 'ngay-mai' \|\| track === 'mua-ha'\)/, 'HEX video is gated on the reality')
+assert.match(exp, /const wanted = inHex && track === 'ngay-mai'/, 'HEX video is gated on the reality')
 assert.match(
   exp,
   /if \(!parent \|\| !wanted\) return/,

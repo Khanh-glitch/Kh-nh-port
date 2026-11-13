@@ -828,6 +828,55 @@ export function hexScreenCorners(): [number, number, number][] {
 
 export { HEX_SCREEN_LOCAL, HEX_SCREEN_H, HEX_SCREEN_W }
 
+/** Same-origin, muted Mùa Hạ footage participates in the actual depth buffer. */
+function HexLocalVideo() {
+  const phase = useReality(s => s.phase)
+  const track = useReality(s => s.track)
+  const playing = (phase === 'sweep' || phase === 'active') && track === 'mua-ha'
+  const media = useMemo(() => {
+    const video = document.createElement('video')
+    video.preload = 'auto'
+    video.muted = true
+    video.defaultMuted = true
+    video.playsInline = true
+    const texture = new THREE.VideoTexture(video)
+    texture.colorSpace = THREE.SRGBColorSpace
+    return { video, texture }
+  }, [])
+  useEffect(() => {
+    if (!playing) return
+    const video = media.video
+    video.src = './portfolio/films/mua-ha.mp4'
+    const sync = () => {
+      const target = 114 + music.elapsed
+      if (Number.isFinite(video.duration) && target < video.duration && Math.abs(video.currentTime - target) > 1.5) video.currentTime = target
+    }
+    video.addEventListener('loadedmetadata', sync)
+    void video.play().catch(() => {})
+    const retry = () => { if (video.paused) void video.play().catch(() => {}) }
+    window.addEventListener('pointerdown', retry)
+    window.addEventListener('keydown', retry)
+    const timer = window.setInterval(sync, 2000)
+    return () => {
+      clearInterval(timer)
+      video.removeEventListener('loadedmetadata', sync)
+      window.removeEventListener('pointerdown', retry)
+      window.removeEventListener('keydown', retry)
+      video.pause()
+      video.removeAttribute('src')
+      video.load()
+    }
+  }, [playing, media])
+  useEffect(() => () => media.texture.dispose(), [media])
+  if (!playing) return null
+  return <group position={[HEX_STAGE.x, 0, HEX_STAGE.z]} rotation={[0, HEX_STAGE.rotY, 0]}>
+    <mesh position={[HEX_SCREEN_LOCAL[0], HEX_SCREEN_LOCAL[1], HEX_SCREEN_LOCAL[2] + 0.012]}>
+      <planeGeometry args={[HEX_SCREEN_W, HEX_SCREEN_H]} />
+      <meshBasicMaterial map={media.texture} toneMapped={false} />
+    </mesh>
+  </group>
+}
+
 /**
  * Projects a YouTube player onto the HEX campus stage screen.
  *
@@ -868,7 +917,7 @@ export function HexVideoLayer() {
   // for a late script request after the browser's gesture window has expired.
   useEffect(() => { void loadYouTubeAPI().catch(() => {}) }, [])
   const inHex = phase === 'ignite' || phase === 'sweep' || phase === 'active'
-  const wanted = inHex && (track === 'ngay-mai' || track === 'mua-ha')
+  const wanted = inHex && track === 'ngay-mai'
   useEffect(() => {
     const parent = gl.domElement.parentElement
     if (!parent || !wanted) return
@@ -888,38 +937,6 @@ export function HexVideoLayer() {
     dom.d.appendChild(button)
     return () => button.remove()
   }, [wanted, track, yt.state, dom])
-  // Never use a Drive preview iframe here: its soundtrack cannot be muted by
-  // the embedding page and would overlap the separate Mùa Hạ recording.
-  // A direct media element is guaranteed muted; Drive may return a download
-  // confirmation page instead of video, in which case show an honest fallback.
-  useEffect(() => {
-    if (!wanted || track !== 'mua-ha') return
-    const video = document.createElement('video')
-    video.src = 'https://drive.google.com/uc?export=download&confirm=t&id=1gkTtTvvEgyD7lLRFFc3VhXtq1rF8h1wB'
-    video.muted = true
-    video.defaultMuted = true
-    video.playsInline = true
-    video.autoplay = true
-    video.loop = true
-    video.style.cssText = 'width:100%;height:100%;border:0;object-fit:contain;background:#000;pointer-events:none'
-    const fallback = document.createElement('button')
-    fallback.textContent = 'Video không tải được · mở bản gốc trên Drive ↗'
-    fallback.style.cssText = 'display:none;position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);padding:16px;color:white;background:#111;border:1px solid white;pointer-events:auto;cursor:pointer;font:600 23px sans-serif'
-    fallback.onclick = () => openExternal(HEX_MAIN_STAGE_VIDEO_SRC)
-    video.onerror = () => { fallback.style.display = 'block' }
-    dom.h.appendChild(video)
-    dom.d.appendChild(fallback)
-    void video.play().catch(() => { fallback.style.display = 'block' })
-    return () => {
-      video.onerror = null
-      video.pause()
-      video.removeAttribute('src')
-      video.load()
-      video.remove()
-      fallback.remove()
-    }
-  }, [wanted, track, dom])
-
   const corners = useMemo(
     () => [new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3()],
     [],
@@ -1106,6 +1123,7 @@ export function Experience() {
         <Player />
         <RealityHost />
         <FloatingPanel canvas={panelCanvas} tex={panelTex} />
+        <HexLocalVideo />
         <HexVideoLayer />
         <HexStageVideoLink />
         <HexPlayerControls />

@@ -25,7 +25,7 @@ const cinemaEmbedded=map['orbita/scene/Cinema']
 assert.ok(cinemaEmbedded?.startsWith('data:text/javascript;base64,'),
   'Full Cinema module remains part of the standalone')
 const cinemaJs=Buffer.from(cinemaEmbedded.split(',')[1],'base64').toString('utf8')
-for(const flag of ['hexCinemaCpuCanvas','hexCinemaFarLightGate']){
+for(const flag of ['hexCinemaCpuCanvas','skipReadback']){
  assert.ok(cinemaSource.includes(flag),'Cinema source includes test option '+flag)
  assert.ok(cinemaJs.includes(flag),'Published standalone actually embeds Cinema '+flag)
 }

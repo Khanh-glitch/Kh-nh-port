@@ -50,7 +50,7 @@ jobs:
         if: always()
         run: |
           if test -f hex-evidence/bench.json; then
-            python3 -c "import json; print('::notice title=HEX measured benchmark::'+json.dumps(json.load(open('hex-evidence/bench.json')),separators=(',',':'))[:60000])"
+            python3 -c "import json; print('::notice title=HEX measured benchmark::'+json.dumps([{'name':r['name'],'samples':[{k:s.get(k) for k in ['name','maxObservedGapMs','p95Ms','maxLongTaskMs','frames']} for s in r.get('samples',[])],'errors':r.get('errors',[]),'failures':r.get('failures',[])[:1]} for r in json.load(open('hex-evidence/bench.json'))],separators=(',',':')))"
           fi
       - uses: actions/upload-artifact@v4
         if: always()
