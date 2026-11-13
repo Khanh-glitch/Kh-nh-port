@@ -112,21 +112,28 @@ function measure(object: THREE.Object3D): THREE.Box3 {
   return new THREE.Box3().setFromObject(object);
 }
 
-function applyTint(root: THREE.Object3D, tint: number, strength: number) {
+function applyTint(root: THREE.Object3D, tint: number) {
   root.traverse((o) => {
     const mesh = o as THREE.Mesh;
     const material = mesh.material as THREE.MeshStandardMaterial | undefined;
     if (!material || Array.isArray(material)) return;
-    // Keep the model's own value structure, shift only its hue. Writing the
-    // original colour into userData means a second pass cannot darken it twice.
     if (material.userData.__tinted) return;
     material.userData.__tinted = true;
-    const base = material.color.clone();
-    const target = new THREE.Color(tint);
-    material.color.copy(base).lerp(target, strength);
-    // Cockpit fittings are matte metal, not varnished living-room wood.
-    material.metalness = Math.min(0.9, material.metalness + 0.35);
-    material.roughness = Math.max(0.35, material.roughness * 0.8);
+
+    // Driving the hue straight from the tint is the only version that is not
+    // a colour-space trap. An earlier attempt lerped the model's base colour
+    // toward the tint, but glTF hands baseColorFactor over as LINEAR values
+    // while a hex literal is interpreted as sRGB, so the mix happened between
+    // two different spaces: living-room wood (f3cca8) came out as warm brown
+    // again instead of the steel the cockpit needs.
+    //
+    // `luma` keeps each part's light/dark structure -- a shelf's shadowed face
+    // must stay darker than its lit face or the prop flattens into a slab --
+    // and it is a scalar on one colour, so it cannot reintroduce the mismatch.
+    const luma = 0.2126 * material.color.r + 0.7152 * material.color.g + 0.0722 * material.color.b;
+    const shade = 0.55 + 0.95 * Math.min(1, luma);
+
+    material.color.set(tint).multiplyScalar(shade);
     material.needsUpdate = true;
   });
 }
@@ -176,7 +183,7 @@ export async function furnishCockpit(baseUrl = PROP_BASE): Promise<FurnishingRes
       );
       if (spec.rotation) model.rotation.set(...spec.rotation);
 
-      applyTint(model, spec.tint ?? 0x2a3648, spec.tintStrength ?? 0.72);
+      applyTint(model, spec.tint ?? 0x2a3648);
 
       model.traverse((o) => {
         const mesh = o as THREE.Mesh;

@@ -244,8 +244,13 @@ export function buildCockpit(data: ScreenData): CockpitHandles {
   };
 
   const paintMain = () => {
-    const scale = 2;
-    paintScreen(mainSection, main.canvas, data, lastLang, lastReady, lastProgress, scale);
+    // `main.canvas` is MAIN_W x MAIN_H (1024x640) and paintScreen's layout is
+    // authored at exactly that size, so the scale factor must stay 1. A scale
+    // of 2 multiplied the transform by two while the backing store stayed
+    // 1024x640, so only the top-left quarter of the report survived -- the
+    // pilot's name was cut off mid-word ("LÊ QUỐC KH..."). If the backing store
+    // is ever raised, raise the canvas size instead of this number.
+    paintScreen(mainSection, main.canvas, data, lastLang, lastReady, lastProgress, 1);
     main.texture.needsUpdate = true;
   };
 
