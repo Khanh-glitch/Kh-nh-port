@@ -251,3 +251,10 @@ select the track, without an autoplay-policy override. The local lyric video
 advanced from 82.0 to 86.97 seconds unmuted, and stopped and released its
 texture on exit. This was a test control calling the app's reality API, not a
 full interaction test of the in-world sheet.
+
+The current default (without experimental tree batching), native Metal run
+`43471396328`, reverse-order job measured 7335ms first-summon rAF gap and
+700ms song-switch gap. This remains a release failure; the opposite-order job
+was still queued when this entry was recorded. Cinema scene smoke test saw the
+real `unheard-music-discovery.mp4` playing unmuted after automatic advancement,
+with the HRTF bus configured at rolloff 1.4/max distance 75 and no page errors.
