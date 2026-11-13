@@ -943,7 +943,10 @@ export function FocusViewer() {
       place(ov.main, 0, my - lift, sc, bw, bh)
       place(ov.cap, 0, my - ov.main.h / 2 - gap - ov.cap.h / 2 - lift, sc, bw, bh)
     }
-    // lượt render riêng, sau hậu kỳ, thẳng ra màn hình
+    // Own pass after postprocessing, straight to the screen.
+    // `gl.render()` would re-bind the default framebuffer with an implicit
+    // clear, which is why the explicit setRenderTarget(null) is redundant but
+    // kept for the state contract. Depth is cleared only, colour is preserved.
     gl.setRenderTarget(null)
     const ac = gl.autoClear
     gl.autoClear = false

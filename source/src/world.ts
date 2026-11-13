@@ -14,16 +14,28 @@ export interface Interactive {
 
 const registry = new Map<THREE.Object3D, () => Interactive>()
 let targetList: THREE.Object3D[] = []
+// Every `Hit` registers/unregisters itself, and hits mount in batches whenever
+// a show, summon or panel swaps its contents. Rebuilding the whole target array
+// on each of those calls allocated a fresh array per object — easy GC churn in
+// exactly the frames that must stay smooth. Mark it stale instead and rebuild
+// once, lazily, the next time a raycast actually asks for the list.
+let targetsDirty = false
 
 export function registerInteractive(obj: THREE.Object3D, get: () => Interactive) {
   registry.set(obj, get)
-  targetList = Array.from(registry.keys())
+  targetsDirty = true
   return () => {
     registry.delete(obj)
-    targetList = Array.from(registry.keys())
+    targetsDirty = true
   }
 }
-export const getTargets = () => targetList
+export const getTargets = () => {
+  if (targetsDirty) {
+    targetList = Array.from(registry.keys())
+    targetsDirty = false
+  }
+  return targetList
+}
 // Bộ lọc tương tác tùy chọn (Reality Rewrite dùng để vô hiệu hóa tương tác "ma" của vật thể đã bị biến đổi).
 let interactiveFilter: ((o: THREE.Object3D) => boolean) | null = null
 export const setInteractiveFilter = (f: ((o: THREE.Object3D) => boolean) | null) => {

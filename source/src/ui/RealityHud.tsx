@@ -13,17 +13,25 @@ export function RealityHud() {
   const playing = useStore((s) => s.phase === 'playing')
   const touch = useStore((s) => s.touch)
   const [near, setNear] = useState(false)
-  const [prog, setProg] = useState(0)
   const [title, setTitle] = useState(false)
   const bar = useRef<HTMLDivElement>(null)
 
+  // The old 120ms interval wrote two pieces of state — `near` (a boolean that
+  // only matters while the piano is idle) and the track progress percent — on
+  // every tick, forever. Each tick re-rendered this HUD even when neither value
+  // could possibly have changed. Now the poll only commits values that can
+  // actually move, and the progress bar is written straight to its DOM node, so
+  // it keeps its original 120ms cadence without any React render at all.
   useEffect(() => {
+    if (!playing) return
     const id = window.setInterval(() => {
-      setNear(rt.presence > 0.55)
-      setProg(music.progress)
+      // Returning the same value lets React bail out of the re-render.
+      setNear((v) => ((rt.presence > 0.55) === v ? v : !v))
+      const pct = Math.round(music.progress * 100)
+      if (bar.current) bar.current.style.width = `${pct}%`
     }, 120)
     return () => window.clearInterval(id)
-  }, [])
+  }, [playing])
   useEffect(() => {
     const isLive = phase === 'sweep' || phase === 'active'
     if (phase === 'sweep' || (switchSeq > 0 && isLive)) {
@@ -33,9 +41,10 @@ export function RealityHud() {
     }
     if (phase === 'retract' || phase === 'idle') setTitle(false)
   }, [phase, switchSeq])
+  // Paint the bar once when it (re)appears; the interval above owns it after.
   useEffect(() => {
-    if (bar.current) bar.current.style.width = `${Math.round(prog * 100)}%`
-  }, [prog, phase])
+    if (bar.current) bar.current.style.width = `${Math.round(music.progress * 100)}%`
+  }, [phase])
 
   if (!playing) return null
   const tr = trackId ? TRACKS[trackId] : null
@@ -90,7 +99,8 @@ export function RealityHud() {
             )}
           </div>
           <div className="mt-3 h-1 overflow-hidden rounded-full bg-white/15">
-            <div ref={bar} className="h-full rounded-full" style={{ width: '0%', background: `linear-gradient(90deg, ${tr.accent}, #fff2c8)` }} />
+            {/* width is driven imperatively at 120ms — see the interval above */}
+            <div ref={bar} className="h-full rounded-full" style={{ width: '0%', willChange: 'width', background: `linear-gradient(90deg, ${tr.accent}, #fff2c8)` }} />
           </div>
           {demo && (
             <div className="mt-2 rounded-lg border border-amber-300/30 bg-amber-300/10 px-2 py-1 text-[10px] leading-snug text-amber-100/90">

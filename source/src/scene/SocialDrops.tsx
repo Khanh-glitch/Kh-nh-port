@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef } from 'react'
-import { useFrame } from '@react-three/fiber'
+import { useFrame, useThree } from '@react-three/fiber'
 import * as THREE from 'three'
 import { SVGLoader } from 'three/examples/jsm/loaders/SVGLoader.js'
 import { SOCIAL_PATHS } from './socialLogoPaths'
@@ -36,9 +36,28 @@ function logoGeometry(path: string) {
   return geo
 }
 
+/**
+ * FREEZE THE SCENE-WIDE POINT-LIGHT COUNT.
+ *
+ * Every point light that becomes visible adds a `NUM_POINT_LIGHTS` define and a
+ * new shader Program for EVERY lit material in the whole island (the sun's
+ * shadow variant too). The six icons used to carry their own point lights
+ * inside `visible={false}` groups, so the very first beacon signal made the
+ * renderer recompile hundreds of programs in a single frame — the freeze and
+ * the black flash reported when activating the beacon.
+ *
+ * All six lights now live in an always-mounted root at zero intensity, and each
+ * one is re-positioned onto its icon every frame. The light count never changes,
+ * so activation compiles nothing; the lighting itself is identical because the
+ * light still travels with the icon and only lights up while it is on screen.
+ */
+const DROP_LIGHT_INTENSITY = 2.6
+const DROP_LIGHT_DISTANCE = 5
+
 export function SocialDrops({ signal }: { signal: {send:number} }) {
   const nodes=useRef<Array<THREE.Group|null>>([])
   const rings=useRef<Array<THREE.Mesh|null>>([])
+  const lights=useRef<Array<THREE.PointLight|null>>([])
   const icons=useMemo(() => SOCIAL_PATHS.map((l)=>({
     ...l, geometry:logoGeometry(l.path),
     material:new THREE.MeshPhysicalMaterial({
@@ -47,6 +66,34 @@ export function SocialDrops({ signal }: { signal: {send:number} }) {
     }),
   })),[])
   useEffect(()=>()=>{icons.forEach((l)=>l.material.dispose())},[icons])
+  // Second half of the same fix: the icons use MeshPhysicalMaterial (clearcoat),
+  // which is its own shader variant. Until it has been compiled once, the first
+  // signal would compile it synchronously mid-frame. Prepare those few
+  // programs asynchronously while the visitor is still walking around — the
+  // SAME real materials, no dummy geometry, no reduced quality, and it yields
+  // completely once a signal is actually sent.
+  const { gl, scene, camera } = useThree()
+  useEffect(()=>{
+    if (signal.send > 0) return
+    let cancelled = false
+    let done = false
+    let timer = 0
+    const queue = icons.filter(i=>i.geometry).map(i=>i.geometry as THREE.BufferGeometry)
+    const step = () => {
+      if (cancelled || done || typeof gl.compileAsync !== 'function') return
+      const geo = queue.shift()
+      if (!geo || signal.send > 0) { done = true; return }
+      const mat = icons.find(i=>i.geometry===geo)!.material
+      const proxy = new THREE.Mesh(geo, mat)
+      proxy.matrixAutoUpdate = false
+      try { void gl.compileAsync(proxy, camera, scene).catch(()=>{}) } catch { /* ignore */ }
+      timer = window.setTimeout(step, 320)
+    }
+    timer = window.setTimeout(step, 1200)
+    return ()=>{ cancelled = true; window.clearTimeout(timer) }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  },[])
+
   useFrame((state)=>{
     const age = signal.send < 0 ? -100 : performance.now()/1000 - signal.send
     for(let i=0;i<icons.length;i++){
@@ -54,7 +101,12 @@ export function SocialDrops({ signal }: { signal: {send:number} }) {
       const halo=rings.current[i]
       if(!g)continue
       const t=age - i*.19 - .17
-      if(t<0){g.visible=false;if(halo)halo.visible=false;continue}
+      const lamp=lights.current[i]
+      if(t<0){
+        g.visible=false;if(halo)halo.visible=false
+        if(lamp&&lamp.intensity!==0)lamp.intensity=0
+        continue
+      }
       g.visible=true
       const x=ease(t/1.75)
       const angle = -Math.PI/2 + i*Math.PI*2/icons.length
@@ -65,13 +117,24 @@ export function SocialDrops({ signal }: { signal: {send:number} }) {
       g.scale.setScalar(Math.max(0.005, Math.min(1, x*1.3)) * .82)
       g.rotation.set(.03*Math.sin(state.clock.elapsedTime+i), state.clock.elapsedTime*.24+i*.17, -0.12*Math.sin(t*2)*Math.exp(-t*.9))
       if(halo){halo.visible=t<2.8;halo.position.copy(g.position);halo.position.y-=.17;halo.scale.setScalar(1+.2*Math.sin(state.clock.elapsedTime*8+i))}
+      // Same position/intensity as the original per-icon light, but the light
+      // itself stays mounted so the shader define never changes. The icon's
+      // wrapper group is an identity transform, so `g.position` is already in
+      // this root's local space — no matrix work (and no one-frame lag).
+      if(lamp){
+        lamp.position.copy(g.position)
+        if(lamp.intensity!==DROP_LIGHT_INTENSITY)lamp.intensity=DROP_LIGHT_INTENSITY
+      }
     }
   })
   return <group>
+    {/* Always-visible, zero-intensity carriers: see DROP_LIGHT_INTENSITY. */}
+    {icons.map((entry,i)=>
+      <pointLight key={`lamp-${entry.slug}`} ref={(r)=>{lights.current[i]=r}}
+        color={entry.color} intensity={0} distance={DROP_LIGHT_DISTANCE} decay={2}/>)}
     {icons.map((entry,i)=>entry.geometry&&<group key={entry.slug}>
       <group ref={(r)=>{nodes.current[i]=r}} visible={false}>
         <mesh geometry={entry.geometry} material={entry.material} />
-        <pointLight color={entry.color} intensity={2.6} distance={5} decay={2}/>
       </group>
       <mesh ref={(r)=>{rings.current[i]=r}} visible={false} rotation={[-Math.PI/2,0,0]}>
         <ringGeometry args={[.68,.75,32]}/>

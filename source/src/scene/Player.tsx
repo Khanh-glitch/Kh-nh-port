@@ -14,6 +14,9 @@ export function requestLock() {
   const s = useStore.getState()
   if (!el || s.touch) return
   try {
+    // Chrome treats pointer lock as a transient user gesture. Closing a panel
+    // from a click is fine; closing it from a 1.6s timer (beacon signal) is not,
+    // so the rejected promise is swallowed and handled by checkLockLater().
     const p = el.requestPointerLock() as unknown as Promise<void> | undefined
     p?.catch?.(() => {})
   } catch {
@@ -82,18 +85,26 @@ export function Player() {
   const yVel = useRef(0)
   const bob = useRef(0)
   const lastStep = useRef(0)
-  const trans = useRef({ active: false, t: 0, fromP: new THREE.Vector3(), fromQ: new THREE.Quaternion(), lastPhase: 'intro' }).current
+  const trans = useRef({ active: false, t: 0, fromP: new THREE.Vector3(), fromQ: new THREE.Quaternion(), lastPhase: useStore.getState().phase }).current
   const tmpQ = useMemo(() => new THREE.Quaternion(), [])
   const tmpE = useMemo(() => new THREE.Euler(0, 0, 0, 'YXZ'), [])
   const tmpV = useMemo(() => new THREE.Vector3(), [])
   const lookTarget = useMemo(() => new THREE.Vector3(0, 8, 0), [])
   const center = useMemo(() => new THREE.Vector2(0, 0), [])
+  const lastPickAt = useRef(0)
+  const lastPickPointer = useRef({ x: Number.NaN, y: Number.NaN }).current
+
+  // Reused result array: THREE.Raycaster allocates a fresh array (and one
+  // intersection object per candidate) on every call, and hover runs every
+  // frame. The buffer is cleared per pick, never kept across frames.
+  const pickHits = useMemo<THREE.Intersection[]>(() => [], [])
 
   const pick = (usePointer: boolean) => {
     if (usePointer) ray.setFromCamera(pointer, camera)
     else ray.setFromCamera(center, camera)
     ray.far = 70
-    const hits = ray.intersectObjects(getTargets(), false)
+    pickHits.length = 0
+    const hits = ray.intersectObjects(getTargets(), false, pickHits)
     for (const h of hits) {
       if (!passesInteractiveFilter(h.object)) continue
       const it = getInteractive(h.object)
@@ -159,8 +170,15 @@ export function Player() {
     const onMouseMove = (e: MouseEvent) => {
       if (document.pointerLockElement === el) look(e.movementX, e.movementY)
     }
+    // getBoundingClientRect() forces a synchronous layout. Doing it twice per
+    // pointermove (hundreds per second on trackpads) competes with the render
+    // loop; the canvas rect only changes on resize/scroll, so cache it.
+    let rect = el.getBoundingClientRect()
+    const remeasure = () => { rect = el.getBoundingClientRect() }
+    window.addEventListener('resize', remeasure)
+    window.addEventListener('scroll', remeasure, true)
     const onPointerMove = (e: PointerEvent) => {
-      const r = el.getBoundingClientRect()
+      const r = rect
       pointer.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1)
       if (dragging) {
         const dx = e.clientX - lx
@@ -182,7 +200,7 @@ export function Player() {
       moved = 0
       lx = e.clientX
       ly = e.clientY
-      const r = el.getBoundingClientRect()
+      const r = rect
       pointer.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1)
       try {
         el.setPointerCapture(e.pointerId)
@@ -246,6 +264,8 @@ export function Player() {
       el.removeEventListener('pointerdown', onDown)
       el.removeEventListener('pointerup', onUp)
       el.removeEventListener('pointercancel', onUp)
+      window.removeEventListener('resize', remeasure)
+      window.removeEventListener('scroll', remeasure, true)
       window.removeEventListener('keydown', kd)
       window.removeEventListener('keyup', ku)
       window.removeEventListener('blur', blur)
@@ -267,6 +287,9 @@ export function Player() {
       return
     }
 
+    // The long descent is the intro -> playing transition, nothing else.
+    // Opening a profile panel is not a camera event: without this guard every
+    // panel open played a 3.2s cinematic pan that also stopped the player.
     if (trans.lastPhase !== s.phase) {
       trans.lastPhase = s.phase
       trans.active = true
@@ -355,7 +378,17 @@ export function Player() {
     }
 
     // ---- hover ----
-    if (!s.panel && !s.paused && !trans.active) {
+    // The camera cannot rotate in the space between two frames, so re-casting
+    // the identical ray 60x per second is pure waste; it also allocates while
+    // the GC later has to collect it. A moving pointer still resolves every
+    // frame, and a still view re-checks at 15 Hz which is instant to a human.
+    const nowMs = performance.now()
+    const pointerMoved = pointer.x !== lastPickPointer.x || pointer.y !== lastPickPointer.y
+    if (!s.panel && !s.paused && !trans.active &&
+        (pointerMoved || nowMs - lastPickAt.current > 66)) {
+      lastPickPointer.x = pointer.x
+      lastPickPointer.y = pointer.y
+      lastPickAt.current = nowMs
       const found = pick(!s.locked && !s.touch ? true : false)
       hovered.current = found
       const key = found ? found.it.id + found.it.label + (found.it.hint ?? '') : ''

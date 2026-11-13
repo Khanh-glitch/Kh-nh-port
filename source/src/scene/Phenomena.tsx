@@ -445,10 +445,12 @@ function Meteors() {
         mesh.visible = false
         if (m.next <= 0) {
           m.life = m.dur = rand(1.1, 2.0)
-          const dir = new THREE.Vector3(rand(-1, 1), rand(0.05, 0.9), rand(-1, 1)).normalize()
+          // Reuse the loop's scratch vectors instead of allocating two new
+          // Vector3 on every meteor respawn.
+          const dir = tmp.y.set(rand(-1, 1), rand(0.05, 0.9), rand(-1, 1)).normalize()
           m.p0.copy(dir).multiplyScalar(rand(380, 620))
           tmp.z.copy(m.p0).negate().normalize()
-          const rnd = new THREE.Vector3(rand(-1, 1), rand(-1, 0.2), rand(-1, 1))
+          const rnd = dir.set(rand(-1, 1), rand(-1, 0.2), rand(-1, 1))
           m.v.copy(rnd).addScaledVector(tmp.z, -rnd.dot(tmp.z)).normalize().multiplyScalar(rand(260, 420))
           mesh.position.copy(m.p0)
           tmp.x.copy(m.v).normalize()

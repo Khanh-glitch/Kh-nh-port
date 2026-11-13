@@ -25,6 +25,11 @@ type ArenaMode = 'dormant' | 'summon_apex' | 'summon_rag' | 'active' | 'retracti
 
 const accent = new THREE.MeshStandardMaterial({ color: '#ff7a1f', emissive: '#ff4d00', emissiveIntensity: 0.55, metalness: 0.5, roughness: 0.4 })
 const eyeColor = new THREE.Color('#ffa24a').multiplyScalar(3.2)
+const EYE_FLASH_COLOR = new THREE.Color(1.4, 2.7, 3.2)
+const eyeFlash = new THREE.Color()
+// Read once: never re-parse the query string inside useFrame.
+const OMIT_LASER_FOR_PROBE = typeof window !== 'undefined' &&
+  new URLSearchParams(window.location.search).get('colossusLaserProbe') === 'off'
 const glowMat = new THREE.MeshBasicMaterial({ color: new THREE.Color('#ff8a2a').multiplyScalar(2.8), toneMapped: false })
 
 type V3 = [number, number, number]
@@ -766,9 +771,9 @@ export function Robot() {
       orientBeam(beamEye.current, tmp.c, tmp.tgt, '#a6ecff')
       // Diagnostic ONLY: isolate the 3 laser draws from the first-visible
       // showcase and shadow/compositor workload. Never active in production.
-      const omitLaserForProbe = typeof window !== 'undefined' &&
-        new URLSearchParams(window.location.search).get('colossusLaserProbe') === 'off'
-      if (omitLaserForProbe) {
+      // Parsed once at module scope: rebuilding URLSearchParams inside the
+      // render loop allocated on every single frame.
+      if (OMIT_LASER_FOR_PROBE) {
         if (beamL.current) beamL.current.visible = false
         if (beamR.current) beamR.current.visible = false
         if (beamEye.current) beamEye.current.visible = false
@@ -783,7 +788,7 @@ export function Robot() {
         if (latest) latest.firstBeamFrameAtMs = coldProbe.firstBeamFrameAtMs
       }
       if (impactFlare.current) {
-        impactFlare.current.visible = !omitLaserForProbe
+        impactFlare.current.visible = !OMIT_LASER_FOR_PROBE
         impactFlare.current.position.copy(tmp.tgt)
         impactFlare.current.scale.setScalar(2.4 + Math.sin(t * 24) * 0.6)
         ;(impactFlare.current.material as THREE.SpriteMaterial).color.set(laserColor)
@@ -818,7 +823,9 @@ export function Robot() {
     if (eyes.current) {
       const blink = Math.sin(t * 0.7) > 0.985 ? 0.1 : 1
       const flash = waving || showLasers ? 1 : 0
-      eyes.current.color.copy(eyeColor).lerp(new THREE.Color(1.4, 2.7, 3.2), flash * 0.75).multiplyScalar((0.85 + 0.15 * Math.sin(t * 3)) * blink)
+      // Reuse one scratch colour: this ran every frame and allocated twice.
+      eyeFlash.copy(eyeColor).lerp(EYE_FLASH_COLOR, flash * 0.75).multiplyScalar((0.85 + 0.15 * Math.sin(t * 3)) * blink)
+      eyes.current.color.copy(eyeFlash)
     }
     const pulse = 0.75 + 0.25 * Math.sin(t * 2.2) + (waving || showLasers ? 0.45 : 0)
     if (reactor.current) reactor.current.scale.setScalar(pulse)

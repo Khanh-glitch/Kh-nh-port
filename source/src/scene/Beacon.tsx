@@ -7,7 +7,6 @@ import { toast } from '../store'
 import { beamGeometry, beamMaterial, glowTexture, rand } from '../gfx'
 import { Hit } from './Hit'
 import { Label } from './Label'
-import { openPanel } from './Player'
 import { PadRing, mats, useWorldColliders, worldPos } from './common'
 import { SocialDrops } from './SocialDrops'
 
@@ -25,7 +24,7 @@ export function Beacon() {
   const wave = useRef<(THREE.Mesh | null)[]>([])
   const flash = useRef<THREE.Sprite>(null)
   const light = useRef<THREE.PointLight>(null)
-  const st = useRef({ send: -100, nextAmbient: 3, pendingOpen: 0 }).current
+  const st = useRef({ send: -100, nextAmbient: 3 }).current
   const beamGeo = useMemo(() => beamGeometry(600, 1.5, 0.45, 20), [])
   const beamMat = useMemo(() => beamMaterial('#78a8ff', 0.8), [])
   const waveMat = useMemo(() => new THREE.MeshBasicMaterial({ color: new THREE.Color('#9fc4ff').multiplyScalar(2.6), toneMapped: false, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false }), [])
@@ -43,9 +42,11 @@ export function Beacon() {
     st.send = now
     waves.forEach((w, i) => (w.t0 = now + i * 0.22))
     if (busRef.current) audio.ping(busRef.current)
+    // Sending a signal is a WORLD action (beam, rings, social icons). It must
+    // never take over the screen: the profile panel now opens only when the
+    // visitor actually targets the floating panel / press E, so the signal
+    // keeps pulsing where the beam is instead of a dark sheet + blur.
     toast('Tín hiệu đã phát vào vũ trụ…')
-    window.clearTimeout(st.pendingOpen)
-    st.pendingOpen = window.setTimeout(() => openPanel('beacon'), 1600)
   }
 
   useFrame((state) => {

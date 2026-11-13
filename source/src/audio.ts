@@ -18,6 +18,9 @@ export interface Bus {
   pos: THREE.Vector3
   maxDist: number
   dist: number
+  /** last scheduled values, so unchanged audio automation is not re-queued */
+  lastFreq?: number
+  lastFade?: number
 }
 
 const rand = (a: number, b: number) => a + Math.random() * (b - a)
@@ -217,12 +220,22 @@ class AudioEngine {
       ll.setOrientation(this.fwd.x, this.fwd.y, this.fwd.z, 0, 1, 0)
     }
     const now = this.ctx.currentTime
+    // `setTargetAtTime` inserts a new audio automation event on every call, so
+    // scheduling one per bus per rendered frame piles up thousands of entries.
+    // Only re-schedule when the value actually changed audibly; the time
+    // constant already glides the parameter, so this sounds identical.
     this.buses.forEach((b) => {
       b.dist = b.pos.distanceTo(p)
       const f = THREE.MathUtils.clamp(20000 * Math.exp(-b.dist / 60), 900, 20000)
-      b.filter.frequency.setTargetAtTime(f, now, 0.12)
+      if (!b.lastFreq || Math.abs(f - b.lastFreq) > 1) {
+        b.filter.frequency.setTargetAtTime(f, now, 0.12)
+        b.lastFreq = f
+      }
       const fade = 1 - THREE.MathUtils.smoothstep(b.dist, b.maxDist * 0.65, b.maxDist)
-      b.out.gain.setTargetAtTime(fade, now, 0.15)
+      if (b.lastFade === undefined || Math.abs(fade - b.lastFade) > 0.01) {
+        b.out.gain.setTargetAtTime(fade, now, 0.15)
+        b.lastFade = fade
+      }
     })
   }
 

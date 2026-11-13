@@ -175,14 +175,33 @@ function Intro({ onSpacePresented, onSpaceUnavailable }: SpaceEntryCallbacks) {
 
 function Minimap() {
   const arrow = useRef<SVGGElement>(null)
+  // The arrow only changes when the player actually moves or turns, but the
+  // loop used to rewrite the SVG matrix (and re-rasterise the panel) on every
+  // animation frame, even while standing still. Comparing against the last
+  // applied value skips all of that idle work and keeps the exact same pixels.
+  // (The comparison is exact, not rounded, so a moving player still gets a
+  // matrix update every frame — nothing is dropped, only idle frames.)
   useEffect(() => {
     let raf = 0
+    let px = Number.NaN
+    let pz = Number.NaN
+    let prad = Number.NaN
     const loop = () => {
       const a = arrow.current
       if (a) {
         const x = (player.pos.x / DISC_R) * 50
         const z = (player.pos.z / DISC_R) * 50
-        a.setAttribute('transform', `translate(${x.toFixed(2)} ${z.toFixed(2)}) rotate(${((-player.yaw * 180) / Math.PI).toFixed(1)})`)
+        const rad = (-player.yaw * Math.PI) / 180
+        if (x !== px || z !== pz || rad !== prad) {
+          px = x
+          pz = z
+          prad = rad
+          const c = Math.cos(rad)
+          const sn = Math.sin(rad)
+          // Same matrix as the previous `transform` attribute, applied through
+          // the SVG transform list so nothing is parsed from a string.
+          a.transform.baseVal.getItem(0).setMatrix(new DOMMatrix([c, sn, -sn, c, x, z]))
+        }
       }
       raf = requestAnimationFrame(loop)
     }
@@ -200,7 +219,9 @@ function Minimap() {
           <circle cx={(e.x / DISC_R) * 50} cy={(e.z / DISC_R) * 50} r={e.id === 'orb' ? 6 : 4.5} fill="none" stroke={e.color} strokeWidth="0.5" opacity={0.5} />
         </g>
       ))}
-      <g ref={arrow}>
+      {/* One identity transform exists up front so the rAF loop can set the
+          matrix in place; identical rendering to the old attribute update. */}
+      <g ref={arrow} transform="translate(0 0)">
         <path d="M0 -4.5 L3.2 3.2 L0 1.5 L-3.2 3.2 Z" fill="#fff" stroke="rgba(0,0,0,0.5)" strokeWidth="0.4" />
       </g>
       <text y="-46" textAnchor="middle" fontSize="5" fill="rgba(255,255,255,0.6)" letterSpacing="1">
@@ -231,7 +252,10 @@ function Hud() {
       {/* prompt */}
       {active && hover && (
         <div className="absolute left-1/2 top-[58%] flex -translate-x-1/2 flex-col items-center gap-2 animate-[fadeUp_0.25s_ease-out_both]">
-          <div className="rounded-full border border-white/15 bg-black/45 px-5 py-1.5 text-[11px] font-semibold tracking-[0.35em] text-white backdrop-blur-md">{hover.label.toUpperCase()}</div>
+          {/* Opaque instead of `backdrop-blur-md`: the pill sits on top of the
+              live WebGL canvas and a backdrop-filter on it makes the compositor
+              re-blur that region every frame while the crosshair moves. */}
+          <div className="rounded-full border border-white/20 bg-black/55 px-5 py-1.5 text-[11px] font-semibold tracking-[0.35em] text-white">{hover.label.toUpperCase()}</div>
           {!touch && (
             <div className="flex items-center gap-4 text-[12px] text-white/85 drop-shadow">
               {hover.hint && (
@@ -270,11 +294,13 @@ function Hud() {
           </span>
         </div>
       )}
+      {/* The minimap owns its own rAF loop; mount it only while it is really
+          visible instead of animating an invisible SVG behind a panel. */}
       <div className={`absolute bottom-5 left-5 transition-opacity duration-300 ${focus ? 'opacity-0' : 'opacity-100'}`}>
-        <Minimap />
+        {!panel && !paused && <Minimap />}
       </div>
       {toast && (
-        <div className="absolute left-1/2 top-20 -translate-x-1/2 animate-[fadeUp_0.3s_ease-out_both] rounded-full border border-white/15 bg-black/55 px-6 py-2 text-xs tracking-[0.2em] backdrop-blur-md">{toast}</div>
+        <div className="absolute left-1/2 top-20 -translate-x-1/2 animate-[fadeUp_0.3s_ease-out_both] rounded-full border border-white/20 bg-black/55 px-6 py-2 text-xs tracking-[0.2em]">{toast}</div>
       )}
     </div>
   )
@@ -291,11 +317,43 @@ function PanelView() {
     window.location.href = `mailto:${STUDIO.email}?subject=${sub}&body=${body}`
   }
   return (
-    <div className="absolute inset-0 z-40 flex items-stretch justify-end bg-gradient-to-l from-black/70 via-black/20 to-transparent text-white">
-      <div className="absolute inset-0" onClick={() => closePanel(true)} />
+    // The profile is a FLOATING CARD, not a full-screen sheet.
+    //
+    // Previously this layer was `absolute inset-0` with a full-height gradient
+    // plus a div that swallowed every pointer event, so the whole viewport went
+    // dark and the 3D scene could not even be looked around. The layer is now
+    // click-through; only the card takes input, the canvas keeps rendering and
+    // the visitor can still see the stage. The card body scrolls, so every word
+    // stays reachable on short screens.
+    //
+    // Layer geometry is inline on purpose: this file ships inside a single HTML
+    // with a PRE-BUILT Tailwind subset, so a new utility class (e.g.
+    // `items-start` or `pointer-events-auto`) may not exist in that CSS and
+    // would silently do nothing. Inline styles always apply.
+    <div
+      className="absolute inset-0 z-40 flex"
+      style={{
+        justifyContent: 'flex-end',
+        alignItems: 'flex-start',
+        padding: '12px 12px 0 0',
+        // The sheet must NOT swallow the screen: clicks outside the card keep
+        // reaching the canvas, so the 3D world stays interactive.
+        pointerEvents: 'none',
+        overflow: 'hidden',
+      }}
+    >
       <aside
-        className="relative m-3 flex w-full max-w-[540px] flex-col overflow-hidden rounded-3xl border border-white/15 bg-[rgba(8,10,22,0.72)] shadow-[0_30px_120px_rgba(0,0,0,0.8)] backdrop-blur-2xl animate-[slideIn_0.45s_cubic-bezier(.2,.8,.2,1)_both] sm:m-6"
-        style={{ boxShadow: `0 0 0 1px ${p.accent}22, 0 30px 120px rgba(0,0,0,0.8), 0 0 80px ${p.accent}22` }}
+        className="relative flex w-full max-w-[540px] flex-col overflow-hidden rounded-3xl border border-white/15 bg-[rgba(8,10,22,0.72)] text-white backdrop-blur-2xl animate-[slideIn_0.45s_cubic-bezier(.2,.8,.2,1)_both]"
+        style={{
+          pointerEvents: 'auto',
+          maxHeight: '100%',
+          // Written inline because this page ships a PRE-BUILT Tailwind subset:
+          // an arbitrary value the build never saw would silently not exist.
+          // 0.9 over the existing 0.72 fallback keeps the card as readable as
+          // the original sheet while the blur now only covers the card itself.
+          backgroundColor: 'rgba(8, 10, 22, 0.9)',
+          boxShadow: `0 0 0 1px ${p.accent}22, 0 30px 120px rgba(0,0,0,0.8), 0 0 80px ${p.accent}22`,
+        }}
       >
         <div className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full opacity-40 blur-3xl" style={{ background: p.accent }} />
         <div className="relative flex-1 overflow-y-auto p-7 sm:p-9">
@@ -408,9 +466,30 @@ function Paused() {
   const paused = useStore((s) => s.paused)
   const panel = useStore((s) => s.panel)
   const phase = useStore((s) => s.phase)
-  if (!paused || panel || phase !== 'playing') return null
+  // A pointer-lock drop sets `paused` immediately — including a one-frame blip
+  // while the browser re-acquires the lock. Painting a full-screen dark sheet
+  // for that frame is exactly the "black flash" that was reported while
+  // triggering exhibits, so the sheet only appears once the pause has really
+  // lasted. Resuming/re-locking inside the delay cancels it, so gameplay never
+  // sees a dark frame; a genuine pause still shows the same UI (just ~180ms
+  // later). Nothing is removed, only delayed.
+  const [visible, setVisible] = useState(false)
+  const active = paused && !panel && phase === 'playing'
+  useEffect(() => {
+    if (!active) {
+      setVisible(false)
+      return
+    }
+    const id = window.setTimeout(() => setVisible(true), 180)
+    return () => window.clearTimeout(id)
+  }, [active])
+  if (!active || !visible) return null
   return (
-    <div className="absolute inset-0 z-30 flex cursor-pointer items-center justify-center bg-black/55 text-white backdrop-blur-sm" onClick={resumeGame}>
+    // Deliberately no `backdrop-blur` here: a full-screen backdrop-filter makes
+    // the compositor re-blur the whole WebGL surface every frame, which is
+    // exactly the kind of stall that looked like a freeze. The flat scrim keeps
+    // the original 55% black by using the class already present in the build.
+    <div className="absolute inset-0 z-30 flex cursor-pointer items-center justify-center bg-black/55 text-white" onClick={resumeGame}>
       <div className="text-center animate-[fadeUp_0.4s_ease-out_both]">
         <div className="font-display text-4xl font-bold">Tạm dừng</div>
         <div className="mt-3 text-sm tracking-[0.3em] text-white/70">NHẤN ĐỂ TIẾP TỤC</div>
