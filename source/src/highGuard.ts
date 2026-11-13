@@ -5,7 +5,7 @@
  * a capability check, and an offscreen WebGL2 MSAA framebuffer read-back test.
  * The probe cannot guarantee future driver stability on all hardware.
  */
-export type FrameQuality = 'high' | 'low'
+export type FrameQuality = 'high' | 'low' | 'performance'
 
 type Frame = { t: number; dt: number }
 type GateResult = { ok: boolean; reason: string }
@@ -20,7 +20,7 @@ class HighGuard {
 
   record(deltaSeconds: number, quality: FrameQuality, renderer: { getContext: () => WebGLRenderingContext | WebGL2RenderingContext }) {
     this.renderer = renderer
-    if (quality !== 'low' || typeof document === 'undefined' || document.hidden) {
+    if (quality === 'high' || typeof document === 'undefined' || document.hidden) {
       this.frames.length = 0
       this.lastFrameAt = 0
       return

@@ -97,6 +97,12 @@ const REVIEWED_CHANGES=new Set([
   'orbita/scene/Player',
   // Profile card geometry: stays on screen, beside-card click still closes.
   'orbita/ui/Overlay',
+  // Three-tier quality: the measured performance ladder (new module), the guard
+  // accepting that tier, the Q cycle, and in-place effect textures.
+  'orbita/highGuard','orbita/perfLadder','orbita/scene/Experience',
+  'orbita/stage/ShowSystem','orbita/reality/Sheets',
+  // store: third tier in the union + perfTier entry point (low stays default).
+  'orbita/store',
 ])
 const frozenBaseline={...frozen}
 let refreshed=0

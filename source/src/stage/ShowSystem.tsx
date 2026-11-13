@@ -850,13 +850,74 @@ export function FocusViewer() {
     [ov],
   )
 
+  // The pooled textures are owned by this component too; release them with it.
+  useEffect(() => {
+    const pool = layerPoolRef.current
+    return () => {
+      pool.forEach((slot) => slot.tex.dispose())
+      pool.clear()
+    }
+  }, [])
+
+  // LAYER TEXTURE POOL.
+  //
+  // The previous implementation disposed the old texture and allocated a brand
+  // new CanvasTexture on every layer change. A freshly uploaded texture is only
+  // guaranteed to be *complete* after its upload has been processed, so the very
+  // frame that switched layers could sample an incomplete/empty texture — which
+  // is exactly how a full-screen layer turns into a black rectangle for one or
+  // more frames while an exhibit is being triggered.
+  //
+  // Reusing one texture per layer and copying the new canvas content into a
+  // pooled canvas removes the allocation churn entirely: same pixels, same
+  // filtering, same colour space, but the GPU texture object and its storage
+  // are never recreated in the middle of a trigger. Because the pooled canvas is
+  // the one the texture already wraps, `needsUpdate` re-uploads in place.
+  const layerPoolRef = useRef(new Map<OvLayer, { canvas: HTMLCanvasElement; tex: THREE.CanvasTexture }>())
+  const layerPool = layerPoolRef.current
   const setLayer = (l: OvLayer, c: HTMLCanvasElement | null) => {
-    l.mat.map?.dispose()
-    l.mat.map = c ? crispTexture(c) : null
-    l.mat.needsUpdate = true
-    l.w = c ? c.width : 1
-    l.h = c ? c.height : 1
-    l.mesh.visible = !!c
+    if (!c) {
+      // Hide, but keep the texture allocation for the next open. Disposing here
+      // is what forced a brand-new texture on every panel open.
+      l.mesh.visible = false
+      l.w = 1
+      l.h = 1
+      return
+    }
+    let slot = layerPool.get(l)
+    if (!slot) {
+      // First use: this canvas becomes the layer's permanent backing store.
+      slot = { canvas: c, tex: crispTexture(c) }
+      layerPool.set(l, slot)
+      l.mat.map = slot.tex
+      l.mat.needsUpdate = true
+      l.w = c.width
+      l.h = c.height
+      l.mesh.visible = true
+      return
+    }
+    if (slot.canvas !== c) {
+      // Reuse the SAME canvas and texture. Resizing a canvas is allowed: the
+      // texture re-uploads with the canvas' current dimensions, so no new GPU
+      // texture object is created during a trigger.
+      if (slot.canvas.width !== c.width) slot.canvas.width = c.width
+      if (slot.canvas.height !== c.height) slot.canvas.height = c.height
+      const ctx = slot.canvas.getContext('2d')
+      if (ctx) {
+        ctx.clearRect(0, 0, c.width, c.height)
+        ctx.drawImage(c, 0, 0)
+        slot.tex.needsUpdate = true
+      }
+    } else {
+      slot.tex.needsUpdate = true
+    }
+    if (l.mat.map !== slot.tex) {
+      l.mat.map = slot.tex
+      l.mat.needsUpdate = true
+    }
+    l.w = slot.canvas.width
+    l.h = slot.canvas.height
+    l.mesh.visible = true
   }
 
   // đặt lớp theo pixel, căn đúng lưới điểm ảnh khi tỉ lệ = 1

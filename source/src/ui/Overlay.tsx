@@ -231,7 +231,40 @@ function Minimap() {
   )
 }
 
+/**
+ * PERFORMANCE TIER BADGE — shows the concessions this machine auto-selected.
+ *
+ * A visual trade must never be silent, so while the tier is active the rung is
+ * always on screen. It polls `window.__orbitaPerf` (republished by the ladder on
+ * every change) and writes text directly to the node: no React render, no
+ * layout thrash in the render loop.
+ */
+function PerfBadge() {
+  const ref = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    const tick = () => {
+      const el = ref.current
+      if (!el) return
+      const api = (window as unknown as {
+        __orbitaPerf?: { concession?: string; fps?: number; rung?: number }
+      }).__orbitaPerf
+      if (!api) return
+      el.textContent = `mức ${api.rung ?? 0} · ${api.concession ?? ''}`
+    }
+    tick()
+    const id = window.setInterval(tick, 500)
+    return () => window.clearInterval(id)
+  }, [])
+  return (
+    <div className="absolute bottom-5 right-5 text-right text-[10px] leading-relaxed tracking-[0.15em] text-white/45">
+      <div>HIỆU NĂNG</div>
+      <div ref={ref} style={{ minWidth: '8rem' }} />
+    </div>
+  )
+}
+
 function Hud() {
+  const quality = useStore((s) => s.quality)
   const hover = useStore((s) => s.hover)
   const toast = useStore((s) => s.toast)
   const muted = useStore((s) => s.muted)
@@ -290,7 +323,8 @@ function Hud() {
             <Kbd>M</Kbd> {muted ? 'bật tiếng' : 'tắt tiếng'}
           </span>
           <span className="flex items-center gap-1">
-            <Kbd>Q</Kbd> chất lượng
+            <Kbd>Q</Kbd>{' '}
+            {quality === 'high' ? 'cao' : quality === 'performance' ? 'hiệu năng' : 'thấp'}
           </span>
         </div>
       )}
@@ -302,6 +336,11 @@ function Hud() {
       {toast && (
         <div className="absolute left-1/2 top-20 -translate-x-1/2 animate-[fadeUp_0.3s_ease-out_both] rounded-full border border-white/20 bg-black/55 px-6 py-2 text-xs tracking-[0.2em]">{toast}</div>
       )}
+      {/* PERFORMANCE TIER BADGE — the concessions this machine auto-selected,
+          shown only while that tier is active so a visual trade is never silent.
+          Reads `window.__orbitaPerf`, which the ladder republishes on every
+          change, and polls at 500ms; it is a DOM write, not a React render. */}
+      {quality === 'performance' && <PerfBadge />}
     </div>
   )
 }

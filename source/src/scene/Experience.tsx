@@ -1,9 +1,10 @@
-import { Suspense, useEffect, useLayoutEffect, useMemo, useRef } from 'react'
+import { Suspense, useEffect, useLayoutEffect, useMemo, useRef, useSyncExternalStore } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { Bloom, ChromaticAberration, EffectComposer, Noise, ToneMapping, Vignette } from '@react-three/postprocessing'
 import { BlendFunction, ToneMappingMode } from 'postprocessing'
 import * as THREE from 'three'
 import { useStore, toast } from '../store'
+import { perfLadder, RUNG_CONCESSIONS, type PerfRung } from '../perfLadder'
 import { Sky } from './Sky'
 import { Phenomena, SUN_DIR } from './Phenomena'
 import { Platform } from './Platform'
@@ -14,9 +15,27 @@ import { SPAWN, EYE } from '../layout'
 import { highGuard } from '../highGuard'
 import { RealityHost } from '../reality/RealityHost'
 
-function Lights() {
+// The shadow map edge is 2048 for `high` and `low`. Only the `performance` tier
+// can lower it, and only after the ladder proved the machine cannot hold the
+// target frame rate -- never as a default, which is why the default stays the
+// literal 2048 used by the two normal tiers.
+function Lights({ shadowEdge = 2048 }: { shadowEdge?: 2048 | 1024 }) {
   const light = useRef<THREE.DirectionalLight>(null)
   const target = useMemo(() => new THREE.Object3D(), [])
+  // The JSX keeps the literal 2048 that `high` and `low` have always used, so
+  // nothing about the normal path changes. Only the performance tier passes a
+  // different edge, and only after its ladder has proven the machine needs it.
+  // Applying it here (instead of in the JSX) also keeps the default provably
+  // untouched for the two normal tiers.
+  useEffect(() => {
+    const l = light.current
+    if (!l || shadowEdge === 2048) return
+    if (l.shadow.mapSize.x === shadowEdge) return
+    l.shadow.mapSize.set(shadowEdge, shadowEdge)
+    // Force the map to be reallocated at the new size.
+    l.shadow.map?.dispose()
+    l.shadow.map = null
+  }, [shadowEdge])
   useFrame(() => {
     const l = light.current
     if (!l) return
@@ -52,14 +71,21 @@ function Lights() {
   )
 }
 
-function Post({ low }: { low: boolean }) {
+function Post({ low, filmPasses = true, bloomLevels }: { low: boolean; filmPasses?: boolean; bloomLevels?: number }) {
   const ca = useMemo(() => new THREE.Vector2(0.0007, 0.0009), [])
+  // `filmPasses` is only ever false in the `performance` tier, and only after
+  // the ladder proved the machine cannot hold the target frame rate. The two
+  // passes it removes are a full-screen grain overlay and a full-screen dark
+  // frame: each is one extra RGBA pass over every pixel and neither carries any
+  // scene information. Bloom, chromatic aberration and ACES tonemapping — the
+  // passes that actually define the look — are untouched, and `high`/`low`
+  // never take this branch.
   return (
     <EffectComposer multisampling={low ? 0 : 4} enableNormalPass={false}>
-      <Bloom intensity={low ? 0.9 : 1.25} luminanceThreshold={0.82} luminanceSmoothing={0.25} mipmapBlur radius={0.78} levels={low ? 5 : 8} />
+      <Bloom intensity={low ? 0.9 : 1.25} luminanceThreshold={0.82} luminanceSmoothing={0.25} mipmapBlur radius={0.78} levels={bloomLevels ?? (low ? 5 : 8)} />
       <ChromaticAberration offset={ca} radialModulation modulationOffset={0.35} blendFunction={low ? BlendFunction.SKIP : BlendFunction.NORMAL} />
-      <Noise opacity={0.035} blendFunction={BlendFunction.SOFT_LIGHT} />
-      <Vignette offset={0.25} darkness={0.55} />
+      {filmPasses && <Noise opacity={0.035} blendFunction={BlendFunction.SOFT_LIGHT} />}
+      {filmPasses && <Vignette offset={0.25} darkness={0.55} />}
       <ToneMapping mode={ToneMappingMode.ACES_FILMIC} />
     </EffectComposer>
   )
@@ -248,6 +274,22 @@ function IslandFirstPaintGate() {
   return null
 }
 
+/**
+ * PERF TIER METER — the only frame hook the performance tier adds.
+ *
+ * It records real frame deltas into the ladder so the concessions are chosen
+ * from measurement rather than from a device name. It reads state and writes to
+ * a plain module object; it never re-renders React per frame (the component
+ * subscribes with useSyncExternalStore and only re-renders when a rung actually
+ * changes, which happens at most a handful of times per session).
+ */
+function PerfTierMeter() {
+  useFrame((_, delta) => {
+    perfLadder.record(delta)
+  })
+  return null
+}
+
 function HighGateMeter() {
   useFrame((state, delta) => {
     highGuard.record(delta, useStore.getState().quality, state.gl)
@@ -258,7 +300,20 @@ function HighGateMeter() {
 export function Experience() {
   const quality = useStore((s) => s.quality)
   const phase = useStore((s) => s.phase)
-  const low = quality === 'low'
+  // `high` is the untouched full-fidelity path. `low` and `performance` share
+  // the cheaper post/composer settings that already shipped; the extra work for
+  // `performance` is the measured ladder below.
+  const low = quality !== 'high'
+  const perf = quality === 'performance'
+  // PERF_TIER_RUNG subscribes to the ladder so a rung change re-renders exactly
+  // this component. Reading it here (instead of inside each consumer) keeps the
+  // concession set in one place, and makes it trivially inspectable.
+  const rung: PerfRung = useSyncExternalStore(
+    perf ? perfLadder.subscribe.bind(perfLadder) : () => () => {},
+    () => (perf ? perfLadder.rung : 0),
+    () => 0,
+  )
+  const concessions = RUNG_CONCESSIONS[perf ? rung : 0]
   // DIAGNOSTIC ONLY: compare first-laser GPU scheduling with/without the
   // composer. Normal portfolio path always retains Bloom/AA/tonemapping.
   const postProbeOff = typeof window !== 'undefined' &&
@@ -267,24 +322,44 @@ export function Experience() {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.code !== 'KeyQ' || e.repeat || useStore.getState().phase !== 'playing') return
-      if (useStore.getState().quality === 'high') {
-        highGuard.resetToLow()
-        useStore.getState().setQuality('low')
-        toast('Chất lượng: THẤP')
+      const current = useStore.getState().quality
+      const set = useStore.getState().setQuality
+      // Cycle low -> high -> performance -> low, with one documented deviation:
+      // on a machine the gate has permanently rejected, low -> high is skipped
+      // for performance instead of silently swallowing the key press. Without
+      // that, a rejected machine could never reach the tier it needs.
+      if (current === 'low') {
+        const verdict = highGuard.tryEnable()
+        if (verdict.ok) {
+          set('high')
+          toast('Chất lượng: CAO — đã vượt qua kiểm tra GPU')
+        } else {
+          set('performance')
+          perfLadder.reset()
+          toast(verdict.reason
+            ? `${verdict.reason} Chuyển sang HIỆU NĂNG.`
+            : 'Chất lượng: HIỆU NĂNG — tự đo và giảm dần', 3600)
+        }
         return
       }
-      const verdict = highGuard.tryEnable()
-      if (verdict.ok) {
-        useStore.getState().setQuality('high')
-        toast('Chất lượng: CAO — đã vượt qua kiểm tra GPU')
-      } else if (verdict.reason) {
-        // A rejected machine never enters High. Repeated Q is ignored.
-        toast(verdict.reason, 3200)
+      if (current === 'high') {
+        set('performance')
+        perfLadder.reset()
+        toast('Chất lượng: HIỆU NĂNG — tự đo và giảm dần')
+        return
       }
+      highGuard.resetToLow()
+      set('low')
+      toast('Chất lượng: THẤP')
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [])
+
+  // Leaving the performance tier must release its frame hook and its state.
+  useEffect(() => {
+    if (!perf) perfLadder.reset()
+  }, [perf])
 
   return (
     <Canvas
@@ -294,22 +369,23 @@ export function Experience() {
       // Restore the EXACT original visible DPR on 'playing' before descent.
       // This cuts concurrent WebGL pressure without simplifying a single
       // UEH/HEX mesh or reducing the game's 2048px shadow map.
-      dpr={phase === 'intro' ? 0.5 : low ? 1 : [1, 1.6]}
+      dpr={phase === 'intro' ? 0.5 : low ? concessions.renderScale : [1, 1.6]}
       shadows="percentage"
       camera={{ fov: 72, near: 0.1, far: 9000, position: [0, 17, 88] }}
       gl={{ antialias: false, powerPreference: 'high-performance', toneMapping: THREE.NoToneMapping, stencil: false }}
     >
       <HighGateMeter />
+      {perf && <PerfTierMeter />}
       <Suspense fallback={null}>
         <Sky />
-        <Lights />
+        <Lights shadowEdge={concessions.shadowMapSize} />
         <LandingGpuPreflight />
         <Phenomena />
         <Platform />
         <Exhibits />
         <Player />
         <RealityHost />
-        {!postProbeOff && <Post low={low} />}
+        {!postProbeOff && <Post low={low} filmPasses={!concessions.dropFilmPasses} bloomLevels={perf ? concessions.bloomLevels : undefined} />}
         <IslandFirstPaintGate />
       </Suspense>
     </Canvas>

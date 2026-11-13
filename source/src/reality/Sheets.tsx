@@ -18,10 +18,38 @@ const SLOT = [
   { x: 2.9, z: 5.2 },
 ]
 
-function paperTexture(tr: TrackDef) {
-  const W = 512
-  const H = 720
-  return canvasTex(W, H, (c) => {
+const PAPER_W = 512
+const PAPER_H = 720
+
+type PaperSlot = { canvas: HTMLCanvasElement; ctx: CanvasRenderingContext2D; tex: THREE.CanvasTexture }
+
+/**
+ * Draws the sheet's paper artwork.
+ *
+ * When `into` is given, the artwork is redrawn into that EXISTING canvas and
+ * texture instead of allocating a new one. The previous code always returned a
+ * brand-new CanvasTexture, so every track switch — including the first HEX
+ * trigger, which switches to the visitor's track — allocated and uploaded a new
+ * 512x720 texture per floating sheet. A texture that has just been uploaded is
+ * briefly incomplete, which is a classic cause of a flat/black rectangle for a
+ * frame or two exactly when an effect fires. Reusing the canvas keeps the same
+ * GPU texture and only re-uploads its pixels; every drawn pixel is identical.
+ */
+function paperTexture(tr: TrackDef, into?: PaperSlot): PaperSlot {
+  const W = PAPER_W
+  const H = PAPER_H
+  if (into) {
+    into.ctx.clearRect(0, 0, W, H)
+    drawPaper(into.ctx, W, H, tr)
+    into.tex.needsUpdate = true
+    return into
+  }
+  const made = canvasTex(W, H, (c, w, h) => drawPaper(c, w, h, tr))
+  return { canvas: made.canvas, ctx: made.ctx, tex: made.tex }
+}
+
+function drawPaper(c: CanvasRenderingContext2D, W: number, H: number, tr: TrackDef) {
+  {
     c.fillStyle = '#f2e8d2'
     c.fillRect(0, 0, W, H)
     for (let i = 0; i < 900; i++) {
@@ -68,7 +96,7 @@ function paperTexture(tr: TrackDef) {
     c.fillStyle = '#2a2018'
     c.font = `600 15px ${FONT}`
     c.fillText('HIGHLIGHT', 70, H - 58)
-  }).tex
+  }
 }
 
 const sheetVS = 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }'
@@ -95,11 +123,22 @@ function Sheet({ tr, slot }: { tr: TrackDef; slot: { x: number; z: number } }) {
   const g = useRef<THREE.Group>(null)
   const burn = useRef(0)
   const near = useRef(0)
-  const tex = useMemo(() => paperTexture(tr), [tr])
+  // ONE canvas + ONE texture per sheet, redrawn in place when the track changes.
+  // The material is created once and its uniforms are updated, so switching
+  // tracks no longer allocates a texture, a program or a material on the trigger
+  // frame -- it only repaints pixels that were already resident.
+  const paper = useMemo(() => paperTexture(tr), [])
+  const tex = paper.tex
   const mat = useMemo(
     () => new THREE.ShaderMaterial({ vertexShader: sheetVS, fragmentShader: sheetFS, uniforms: { uTex: { value: tex }, uBurn: { value: 0 }, uNear: { value: 0 }, uT: WU.uTime, uAcc: { value: new THREE.Color(tr.accent) } }, side: THREE.DoubleSide, toneMapped: false }),
-    [tex, tr.accent],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [tex],
   )
+  useEffect(() => {
+    paperTexture(tr, paper)
+    const acc = mat.uniforms.uAcc.value as THREE.Color
+    acc.set(tr.accent)
+  }, [tr, paper, mat])
   const base = useMemo(() => pianoLocal(slot.x, 0, slot.z), [slot])
   const glow = useRef<THREE.Mesh>(null)
   const glowMat = useMemo(

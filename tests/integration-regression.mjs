@@ -28,6 +28,14 @@ const REVIEWED_CHANGES=new Set([
  // Overlay: floating profile card alignment/max-height fixed so the card
  // and its close control stay on screen and beside-card click still closes.
  'orbita/ui/Overlay',
+ // Perf tier: highGuard accepts the third tier as measured input (High is
+ // still gated behind the same GPU probe), perfLadder is the new measured
+ // ladder module, Experience wires the three-tier Q cycle, and the stage/sheet
+ // textures are pooled+redrawn in place instead of allocated on a trigger.
+ 'orbita/highGuard','orbita/perfLadder','orbita/scene/Experience',
+ 'orbita/stage/ShowSystem','orbita/reality/Sheets',
+ // store: third tier in the union + perfTier entry point (low remains default).
+ 'orbita/store',
 ]);
 let baselineDirty=false;
 for(const [k,hash] of Object.entries(baseline)){
@@ -52,8 +60,14 @@ const experience=moduleSource('scene/Experience');
 assert(experience.includes("phase === 'intro' ? 0.5"),
   'Published scene throttles unseen island rasterization during spaceship');
 const experienceSource=readFileSync('source/src/scene/Experience.tsx','utf8');
-assert(experienceSource.includes("phase === 'intro' ? 0.5 : low ? 1 : [1, 1.6]"),
-  'Visible game original DPR and high quality range must be restored');
+// The island is still rasterized at 0.5 DPR under the spacecraft, `high` still
+// renders at the original [1, 1.6] range, and `low` still renders at 1x unless
+// the visitor opts into the performance tier (whose rung 0 is also exactly 1x).
+assert(experienceSource.includes("phase === 'intro' ? 0.5 : low ? concessions.renderScale : [1, 1.6]"),
+  'Visible game DPR: intro 0.5, low rung0=1x, high original [1, 1.6]');
+assert(/0: \{ dropFilmPasses: false, shadowMapSize: 2048, renderScale: 1/.test(
+  readFileSync('source/src/perfLadder.ts','utf8')),
+  'Performance rung 0 must be pixel-identical to low (1x, 2048 shadows, no pass removed)');
 assert(experienceSource.includes('shadow-mapSize={[2048, 2048]}'),
   'Full original shadows must remain unchanged in the visible world');
 const overlay=moduleSource('ui/Overlay');
