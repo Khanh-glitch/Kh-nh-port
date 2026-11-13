@@ -23,7 +23,6 @@ jobs:
         run: |
           set -euxo pipefail
           test -s downloaded-lyric/ngay-mai.mp4
-          ffprobe -v error -show_entries format=duration -of default=nw=1 downloaded-lyric/ngay-mai.mp4
           cp downloaded-lyric/ngay-mai.mp4 source/public/portfolio/films/ngay-mai.mp4
           git config user.name 'Portfolio Media Import'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
