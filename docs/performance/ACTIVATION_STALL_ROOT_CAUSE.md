@@ -157,3 +157,75 @@ lần đo trên máy thật (Chrome Performance: idle → click piano lần đ�
 nhận thời gian khựng giảm và không phát sinh khựng ở intro. Nếu đo được, tiêu
 chí chấp nhận là: (a) số program link trong frame click đầu tiên giảm mạnh,
 (b) không frame idle nào > 120 ms, (c) ảnh HEX không đổi.
+
+---
+
+# Vòng 4 — vì sao bấm panel nổi phải click nhiều lần (đã sửa)
+
+Đây là một hồi quy do chính bản tối ưu hover ở vòng trước gây ra, không phải
+hành vi cũ. Bản cũ click một lần là ăn.
+
+## 9. Nguyên nhân
+
+`Player.tsx` giới hạn raycast hover còn 15 Hz khi ngắm đứng yên. Nhưng nhánh
+`else` của đoạn đó **xoá luôn target đã resolve**:
+
+```ts
+// TRƯỚC — sai
+if (!s.panel && !s.paused && !trans.active &&
+    (pointerMoved || nowMs - lastPickAt.current > 66)) {
+  ...
+  hovered.current = found          // chỉ cập nhật khi ĐƯỢC cast
+} else if (hoverKey.current) {
+  hoverKey.current = ''
+  hovered.current = null           // ← xoá ở mọi frame bị throttle
+  s.setHover(null)
+}
+```
+
+Khi đã khoá chuột, click đọc **`hovered.current` đã cache**, không raycast lại:
+
+```ts
+if (document.pointerLockElement === el) { activate('click', hovered.current); return }
+```
+
+Nên khoảng **3 trên 4 frame** (60 fps ÷ 15 Hz) `hovered.current === null`, và
+cú click rơi vào hư không — im lặng, không log, không phản hồi. Người dùng phải
+bấm lại cho tới khi trúng đúng frame có cast. Đó chính xác là "phải click nhiều
+lần".
+
+Lỗi thứ hai cùng họ: throttle chỉ cast lại khi **con trỏ** di chuyển. Nhưng nhìn
+quanh, bước tới gần exhibit, hay intro vừa kết thúc đều đổi thứ nằm dưới tâm
+ngắm mà **không** di chuyển con trỏ ⇒ prompt đứng yên ở target cũ hoặc biến mất.
+
+## 10. Cách sửa (không đổi visual)
+
+1. **Throttle chỉ hoãn, không xoá.** Target đã resolve được giữ nguyên qua các
+   frame bị bỏ; chỉ trạng thái *thật sự bị chặn* (`panel`, `paused`,
+   `trans.active`) mới xoá nó. Click nào cũng có thứ để kích hoạt.
+2. **Cast lại khi cảnh đổi.** So sánh vị trí/hướng camera, vị trí người chơi và
+   danh sách target; chỉ khi *tất cả* đứng yên mới hạ xuống 15 Hz. Ngắm vào
+   exhibit là resolve ngay frame đó.
+3. **Thẻ profile nằm gọn trên màn hình.** Class `items-start` **không có** trong
+   bộ CSS Tailwind đã ship (đã grep `index.html`: `items-start` → 0, chỉ có
+   `items-stretch`), nên thẻ bị kéo cao hết viewport và vùng cuộn/nút đóng có
+   thể ra ngoài tầm với. Đã đặt `alignItems` inline và giới hạn
+   `maxHeight: 'calc(100% - 12px)'`.
+4. **Bấm ra ngoài thẻ vẫn đóng được** (hành vi cũ + đường thoát khi không có
+   pointer lock). Dải bấm nằm ở nửa màn hình mà thẻ *không* chiếm, nên không
+   che sân khấu đang được mô tả.
+
+## 11. Cổng kiểm chứng mới
+
+`tests/interactive-pick-contract.mjs` khoá lại: throttle không được xoá target,
+chỉ trạng thái bị chặn mới xoá, phải cast lại khi camera/player/target đổi,
+click khoá chuột đọc `hovered.current`, ngưỡng drag giữ nguyên 8, thẻ có
+`alignItems`/`maxHeight` inline và vẫn có đường đóng khi bấm ra ngoài — và kiểm
+tra cả `index.html` đã ship.
+
+## 12. Chưa kiểm chứng được
+
+Vẫn không có Chromium trong sandbox nên chưa có ảnh chụp/đo click thật. Cần
+một lần thử tay: ngắm vào 3–4 exhibit khác nhau (đứng yên, vừa xoay camera,
+vừa bước tới) và xác nhận **một** click mở panel mỗi lần, cùng việc nút ESC ✕
+và vùng ngoài thẻ vẫn bấm được.

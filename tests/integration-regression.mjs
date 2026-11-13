@@ -22,6 +22,12 @@ const REVIEWED_CHANGES=new Set([
  // the composer RenderPass actually draws (three r187 keys programs on
  // outputColorSpace). Behavioural proof: tests/hex-preflight-program-variant.mjs
  'orbita/reality/RealityHost',
+ // Player: a throttled hover frame no longer drops the resolved click
+ // target (that made most pointer-locked clicks land on null).
+ 'orbita/scene/Player',
+ // Overlay: floating profile card alignment/max-height fixed so the card
+ // and its close control stay on screen and beside-card click still closes.
+ 'orbita/ui/Overlay',
 ]);
 let baselineDirty=false;
 for(const [k,hash] of Object.entries(baseline)){

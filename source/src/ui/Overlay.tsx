@@ -319,12 +319,16 @@ function PanelView() {
   return (
     // The profile is a FLOATING CARD, not a full-screen sheet.
     //
-    // Previously this layer was `absolute inset-0` with a full-height gradient
-    // plus a div that swallowed every pointer event, so the whole viewport went
-    // dark and the 3D scene could not even be looked around. The layer is now
-    // click-through; only the card takes input, the canvas keeps rendering and
-    // the visitor can still see the stage. The card body scrolls, so every word
-    // stays reachable on short screens.
+    // Previously this layer was `inset-0` with a full-height gradient plus a div
+    // that swallowed every pointer event, so the whole viewport went dark. Now
+    // only the card is opaque; the canvas keeps rendering and the visitor still
+    // sees the stage.
+    //
+    // Clicking the area AROUND the card still closes it, which is the behaviour
+    // visitors (and the old build) expect, and it is also the recovery path when
+    // pointer lock is unavailable. That backdrop only covers the half of the
+    // screen the card does not occupy, so it cannot sit on top of the stage the
+    // card is describing.
     //
     // Layer geometry is inline on purpose: this file ships inside a single HTML
     // with a PRE-BUILT Tailwind subset, so a new utility class (e.g.
@@ -334,19 +338,38 @@ function PanelView() {
       className="absolute inset-0 z-40 flex"
       style={{
         justifyContent: 'flex-end',
+        // `alignItems: 'flex-start'` is what actually keeps the card at the top;
+        // the shipped CSS subset has no `items-start` utility, so relying on the
+        // class alone left the default `stretch` in place, stretching the card
+        // to full viewport height behind its scroll body.
         alignItems: 'flex-start',
         padding: '12px 12px 0 0',
-        // The sheet must NOT swallow the screen: clicks outside the card keep
-        // reaching the canvas, so the 3D world stays interactive.
+        // This wrapper stays click-through; only the backdrop strip above the
+        // stage half and the card itself accept input.
         pointerEvents: 'none',
         overflow: 'hidden',
       }}
     >
+      <div
+        onClick={() => closePanel(true)}
+        style={{
+          position: 'absolute',
+          inset: '0 0 0 auto',
+          width: 'min(62%, 720px)',
+          pointerEvents: 'auto',
+          cursor: 'pointer',
+        }}
+      />
       <aside
         className="relative flex w-full max-w-[540px] flex-col overflow-hidden rounded-3xl border border-white/15 bg-[rgba(8,10,22,0.72)] text-white backdrop-blur-2xl animate-[slideIn_0.45s_cubic-bezier(.2,.8,.2,1)_both]"
         style={{
           pointerEvents: 'auto',
-          maxHeight: '100%',
+          // `maxHeight: '100%'` resolves against a definite parent height. With
+          // the card stretched by flex it could exceed the viewport and push its
+          // own scroll area and the close button out of reach. Subtracting the
+          // 12px top padding keeps the whole card, including the ESC control, on
+          // screen at every window size.
+          maxHeight: 'calc(100% - 12px)',
           // Written inline because this page ships a PRE-BUILT Tailwind subset:
           // an arbitrary value the build never saw would silently not exist.
           // 0.9 over the existing 0.72 fallback keeps the card as readable as

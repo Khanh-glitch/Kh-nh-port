@@ -93,6 +93,15 @@ export function Player() {
   const center = useMemo(() => new THREE.Vector2(0, 0), [])
   const lastPickAt = useRef(0)
   const lastPickPointer = useRef({ x: Number.NaN, y: Number.NaN }).current
+  // Camera/player pose and target list captured on the last hover cast, so the
+  // throttle can tell "nothing changed" apart from "only the pointer stood
+  // still" (see the hover block).
+  const lastPickCam = useRef({
+    x: Number.NaN, z: Number.NaN,
+    qx: Number.NaN, qy: Number.NaN, qz: Number.NaN, qw: Number.NaN,
+    px: Number.NaN, pz: Number.NaN,
+    n: -1, list: null as THREE.Object3D[] | null,
+  }).current
 
   // Reused result array: THREE.Raycaster allocates a fresh array (and one
   // intersection object per candidate) on every call, and hover runs every
@@ -378,17 +387,51 @@ export function Player() {
     }
 
     // ---- hover ----
-    // The camera cannot rotate in the space between two frames, so re-casting
-    // the identical ray 60x per second is pure waste; it also allocates while
-    // the GC later has to collect it. A moving pointer still resolves every
-    // frame, and a still view re-checks at 15 Hz which is instant to a human.
+    // Re-casting an identical ray 60x per second is waste, so a truly idle view
+    // re-checks at 15 Hz. Two rules keep that throttle from eating clicks:
+    //   1. it only defers the cast; it never discards the last resolved target
+    //      (see hoverBlocked below), and
+    //   2. it re-casts immediately whenever the camera pose, the player position
+    //      or the target list changed, because looking around and walking up to
+    //      an exhibit change what is under the crosshair without any pointer
+    //      movement.
+    // Without (2) the prompt stayed stale after camera motion; without (1) a
+    // locked click read `hovered.current === null` on three frames out of four
+    // and was silently ignored, which is the "click many times" regression.
+    const camMoved = camera.position.x !== lastPickCam.x ||
+      camera.position.z !== lastPickCam.z ||
+      camera.quaternion.x !== lastPickCam.qx ||
+      camera.quaternion.y !== lastPickCam.qy ||
+      camera.quaternion.z !== lastPickCam.qz ||
+      camera.quaternion.w !== lastPickCam.qw
+    const worldMoved = player.pos.x !== lastPickCam.px || player.pos.z !== lastPickCam.pz
+    const targets = getTargets()
+    const targetsChanged = targets.length !== lastPickCam.n || targets !== lastPickCam.list
     const nowMs = performance.now()
     const pointerMoved = pointer.x !== lastPickPointer.x || pointer.y !== lastPickPointer.y
-    if (!s.panel && !s.paused && !trans.active &&
-        (pointerMoved || nowMs - lastPickAt.current > 66)) {
+    // The hover is genuinely invalid only when the player is not interacting
+    // with the world. Being throttled is NOT a reason to forget the target:
+    // the old code dropped `hovered` (and the crosshair prompt) on every frame
+    // the throttle skipped, i.e. on roughly three frames out of four. A locked
+    // click activates `hovered.current`, so those clicks hit `null` and were
+    // silently ignored -- which is exactly the "phải click nhiều lần" report.
+    const hoverBlocked = s.panel || s.paused || trans.active
+    const hoverDue = pointerMoved || camMoved || worldMoved || targetsChanged ||
+      nowMs - lastPickAt.current > 66
+    if (!hoverBlocked && hoverDue) {
       lastPickPointer.x = pointer.x
       lastPickPointer.y = pointer.y
       lastPickAt.current = nowMs
+      lastPickCam.x = camera.position.x
+      lastPickCam.z = camera.position.z
+      lastPickCam.qx = camera.quaternion.x
+      lastPickCam.qy = camera.quaternion.y
+      lastPickCam.qz = camera.quaternion.z
+      lastPickCam.qw = camera.quaternion.w
+      lastPickCam.px = player.pos.x
+      lastPickCam.pz = player.pos.z
+      lastPickCam.n = targets.length
+      lastPickCam.list = targets
       const found = pick(!s.locked && !s.touch ? true : false)
       hovered.current = found
       const key = found ? found.it.id + found.it.label + (found.it.hint ?? '') : ''
@@ -396,7 +439,10 @@ export function Player() {
         hoverKey.current = key
         s.setHover(found ? { label: found.it.label, hint: found.it.hint, hasPanel: !!found.it.panel } : null)
       }
-    } else if (hoverKey.current) {
+    } else if (hoverBlocked && hoverKey.current) {
+      // Clear only when interaction is actually suspended (panel open, paused,
+      // camera cinematic). A throttled frame keeps the resolved target so the
+      // very next click still has something to activate.
       hoverKey.current = ''
       hovered.current = null
       s.setHover(null)

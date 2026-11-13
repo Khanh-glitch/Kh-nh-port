@@ -91,6 +91,12 @@ const REVIEWED_CHANGES=new Set([
   // RenderPass draws instead of a target-less sRGB variant that could never be
   // reused. Proof and invariants: tests/hex-preflight-program-variant.mjs
   'orbita/reality/RealityHost',
+  // Player hover throttle kept discarding its target between frames, so
+  // most clicks had nothing to activate. Proof:
+  // tests/interactive-pick-contract.mjs
+  'orbita/scene/Player',
+  // Profile card geometry: stays on screen, beside-card click still closes.
+  'orbita/ui/Overlay',
 ])
 const frozenBaseline={...frozen}
 let refreshed=0
