@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { cockpitState, onCockpit, setCockpit, type CockpitLang } from '../lib/cockpitBus';
 import {
   makeCanvas,
+  paintKey,
   paintScreen,
   SCREEN_W,
   SCREEN_H,
@@ -14,10 +15,10 @@ import {
    Buồng lái — a real 3D cockpit interior.
 
    Layout follows a glass cockpit rather than a dashboard of equal small panes:
-   one large PRIMARY display in the middle, a strip of six selector keys under
-   it, and a small transfer-gate readout up top. That is what makes it readable:
-   the selected section gets a big, comfortable surface instead of every fact
-   fighting for the same small rectangle.
+   one large PRIMARY display in the middle and six selector keys in two rows of
+   three under it. That is what makes it readable: the selected section gets a
+   big, comfortable surface instead of every fact fighting for the same small
+   rectangle, and the keys act as labelled buttons rather than report panes.
 
    Performance profile:
    • ~24 untextured meshes sharing three materials, plus 8 screen quads.
@@ -178,24 +179,22 @@ export function buildCockpit(data: ScreenData): CockpitHandles {
 
   // Primary display — the big surface.
   const mainCanvas = makeCanvas(MAIN_W, MAIN_H);
-  const main = addScreen(0, mainCanvas, 1.52, 0);
+  const main = addScreen(0, mainCanvas, 1.42, 0);
 
   // Six selector keys, one per section.
   const keys: ScreenSlot[] = [];
   for (let i = 0; i < 6; i++) {
     const canvas = makeCanvas(SCREEN_W, SCREEN_H);
-    keys.push(addScreen(i + 1, canvas, 0.30, i));
+    keys.push(addScreen(i + 1, canvas, 0.54, i));
   }
 
-  // Transfer gate readout.
-  const gateCanvas = makeCanvas(SCREEN_W, SCREEN_H);
-  const gate = addScreen(7, gateCanvas, 0.52, null);
-
   /* ── placement (aspect aware, nothing can leave the frame) ────────────── */
-  const PRIMARY = { y: 0.16, radius: 2.02, tilt: -0.06 };
-  const KEY_Y = -0.66;
-  const KEY_R = 2.16;
-  const GATE = { y: 0.56, radius: 1.98, tilt: -0.16 };
+  const PRIMARY = { y: 0.26, radius: 2.02, tilt: -0.06 };
+  // Two rows of three. Six keys across one arc cannot fit: at the widest
+  // canopy opening the arc is ~1.8 units long and six 0.40-wide panes need
+  // 2.4, so they overlapped. Two rows halve that and every key stays legible.
+  const KEY_ROW_Y = [-0.48, -0.90];
+  const KEY_R = 2.10;
 
   const layoutAll = () => {
     const aspect = window.innerWidth / Math.max(1, window.innerHeight);
@@ -208,25 +207,20 @@ export function buildCockpit(data: ScreenData): CockpitHandles {
     main.bezel.rotation.copy(main.mesh.rotation);
     main.bezel.position.z += 0.012;
 
-    // Selector keys fan across the lower arc.
+    // Selector keys: three per row, two rows.
     keys.forEach((key, i) => {
-      const u = (i / 5) * 2 - 1; // -1 .. 1
-      const angle = u * half * 0.92;
+      const row = i < 3 ? 0 : 1;
+      const col = i % 3;
+      const u = col - 1; // -1, 0, 1
+      const angle = u * half * 0.86;
       const x = Math.sin(angle) * KEY_R;
       const z = Math.cos(angle) * KEY_R;
-      key.mesh.position.set(x, KEY_Y, -z);
-      key.mesh.rotation.set(-0.40, -angle, 0);
+      key.mesh.position.set(x, KEY_ROW_Y[row], -z);
+      key.mesh.rotation.set(-0.34, -angle, 0);
       key.bezel.position.copy(key.mesh.position);
       key.bezel.rotation.copy(key.mesh.rotation);
       key.bezel.position.z += 0.010;
     });
-
-    // Gate readout sits above and to the right, between the primary and the arch.
-    gate.mesh.position.set(0.86, GATE.y, -GATE.radius);
-    gate.mesh.rotation.set(GATE.tilt, -0.22, 0);
-    gate.bezel.position.copy(gate.mesh.position);
-    gate.bezel.rotation.copy(gate.mesh.rotation);
-    gate.bezel.position.z += 0.010;
   };
 
   /* ── painting ─────────────────────────────────────────────────────────── */
@@ -236,7 +230,12 @@ export function buildCockpit(data: ScreenData): CockpitHandles {
 
   const paintKeys = () => {
     keys.forEach((key, i) => {
-      paintScreen(i, key.canvas, data, lastLang, lastReady, lastProgress);
+      const ctx = key.canvas.getContext('2d');
+      if (ctx) {
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.clearRect(0, 0, key.canvas.width, key.canvas.height);
+        paintKey(ctx, i, data, lastLang, i === mainSection);
+      }
       key.texture.needsUpdate = true;
     });
   };
@@ -247,14 +246,8 @@ export function buildCockpit(data: ScreenData): CockpitHandles {
     main.texture.needsUpdate = true;
   };
 
-  const paintGate = () => {
-    paintScreen(6, gate.canvas, data, lastLang, lastReady, lastProgress);
-    gate.texture.needsUpdate = true;
-  };
-
   paintKeys();
   paintMain();
-  paintGate();
   layoutAll();
   window.addEventListener('resize', layoutAll);
 
@@ -269,8 +262,7 @@ export function buildCockpit(data: ScreenData): CockpitHandles {
     fontsDone = true;
     paintKeys();
     paintMain();
-    paintGate();
-  };
+    };
   const fonts = (document as Document & { fonts?: FontFaceSet }).fonts;
   if (fonts?.ready) {
     void fonts.ready.then(repaintAllAfterFonts).catch(() => undefined);
@@ -288,12 +280,10 @@ export function buildCockpit(data: ScreenData): CockpitHandles {
       lastLang = next.lang;
       paintKeys();
       paintMain();
-      paintGate();
-    } else if (gateChanged) {
+        } else if (gateChanged) {
       lastReady = next.ready;
       lastProgress = next.progress;
-      paintGate();
-    }
+        }
 
     // Selection highlight is a material tint, not a repaint.
     keys.forEach((key) => {
@@ -336,7 +326,7 @@ export function buildCockpit(data: ScreenData): CockpitHandles {
     diag.__orbitaCockpitHover = hit;
     diag.__orbitaCockpitScreen = slot?.section != null
       ? SECTION_LABELS[lastLang][slot.section]
-      : slot ? 'GATE' : null;
+      : null;
 
     setCockpit({ hover: hit });
     keys.forEach((key) => {
@@ -357,6 +347,7 @@ export function buildCockpit(data: ScreenData): CockpitHandles {
     if (slot.section != null && slot.section !== mainSection) {
       mainSection = slot.section;
       paintMain();
+      paintKeys();
       keys.forEach((key) => {
         key.mesh.material.color.setScalar(key.section === mainSection ? 1.0 : 0.62);
       });

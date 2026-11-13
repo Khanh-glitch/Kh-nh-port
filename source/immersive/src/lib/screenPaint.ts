@@ -504,6 +504,66 @@ export function paintContact(ctx: CanvasRenderingContext2D, d: ScreenData, lang:
   );
 }
 
+/* ── 0. PHÍM CHỌN — selector key ──────────────────────────────────────────
+   These panes are only ~220 px wide on screen, so a full report can never be
+   legible on them. Each key shows its index, its name and one line of
+   substance; pressing it loads the whole section into the primary display. */
+const SECTION_TITLES: Record<CockpitLang, string[]> = {
+  vi: ['Danh tính', 'Thông tin', 'Hành trình', 'Dự án', 'Công nghệ', 'Liên hệ'],
+  en: ['Identity', 'Facts', 'Journey', 'Projects', 'Stack', 'Contact'],
+};
+
+export function paintKey(
+  ctx: CanvasRenderingContext2D,
+  index: number,
+  d: ScreenData,
+  lang: CockpitLang,
+  selected: boolean,
+) {
+  chrome(ctx);
+  const summary: string[] = [
+    d.availability[lang],
+    d.facts[0] ? d.facts[0].value[lang] : '',
+    d.experience[0] ? d.experience[0].role : '',
+    d.projects[0] ? d.projects[0].name : '',
+    d.stack[0] ? d.stack[0].label : '',
+    d.contact.github.label,
+  ];
+  const labels = SECTION_TITLES[lang];
+
+  ctx.textAlign = 'left';
+  ctx.font = `700 44px ${MONO}`;
+  ctx.fillStyle = selected ? C.cyan : C.faint;
+  ctx.fillText(String(index + 1).padStart(2, '0'), PAD, 118);
+
+  ctx.font = `700 62px ${DISPLAY}`;
+  ctx.fillStyle = C.ice;
+  wrap(ctx, labels[index].toUpperCase(), PAD, 236, VW - PAD * 2, 66, 2);
+
+  ctx.strokeStyle = C.lineSoft;
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(PAD, 360);
+  ctx.lineTo(VW - PAD, 360);
+  ctx.stroke();
+
+  ctx.font = `500 34px ${SANS}`;
+  ctx.fillStyle = C.dim;
+  wrap(ctx, summary[index] ?? '', PAD, 428, VW - PAD * 2, 42, 3);
+
+  if (selected) {
+    ctx.fillStyle = C.cyan;
+    ctx.fillRect(PAD, VH - PAD - 6, VW - PAD * 2, 6);
+    ctx.font = `600 26px ${MONO}`;
+    ctx.fillStyle = C.cyan;
+    ctx.fillText(lang === 'vi' ? 'ĐANG MỞ' : 'ON SCREEN', PAD, VH - PAD - 28);
+  } else {
+    ctx.font = `600 26px ${MONO}`;
+    ctx.fillStyle = C.faint;
+    ctx.fillText(lang === 'vi' ? 'ẤN ĐỂ MỞ' : 'PRESS TO OPEN', PAD, VH - PAD - 28);
+  }
+}
+
 /* ── 7. CỬA CHUYỂN TIẾP — transfer gate ─────────────────────────────────── */
 export function paintGate(
   ctx: CanvasRenderingContext2D,
