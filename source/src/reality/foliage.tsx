@@ -4,10 +4,11 @@
 //  • Lớp 2: Tán lá kép lông chim xanh mượt (crossed leaf cards, alphaTest),
 //  • Lớp 3: Chùm hoa phượng 3D thật (4 cánh đỏ cam uốn cong + 1 cánh cờ trắng vàng đốm đỏ + nhị hoa vươn dài + nụ phượng) mọc trên ngọn tán!
 import { useEffect, useMemo, useRef } from 'react'
+import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { useStore } from '../store'
 import { EXHIBITS } from '../layout'
-import { patchNew } from './mask'
+import { patchNew, RW } from './mask'
 import { CENTER } from './site'
 
 // DIAGNOSTIC ONLY: exact matrices, source materials, colors and canopy counts
@@ -17,6 +18,8 @@ const hexVertexGate = typeof window === 'undefined'
   ? '' : new URLSearchParams(window.location.search).get('hexVertexGate') ?? ''
 const gateLeaves = hexVertexGate === 'leaves' || hexVertexGate === 'all'
 const gateAll = hexVertexGate === 'all'
+// Experimental A/B only; no instance is deleted or reordered.
+const treeBatchExperiment = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('hexTreeBatches') === '1'
 
 function attachConservativeHexGate(mesh: THREE.InstancedMesh | null) {
   if (!mesh || !mesh.geometry || !mesh.count) return
@@ -496,7 +499,7 @@ function buildTreeStructure(plan: TreePlan, leafCardsPerTip: number) {
 export function UEHFoliage() {
   const low = useStore((s) => s.quality) !== 'high'
 
-  const { trunkGeo, greenLeaves, blossomClusters } = useMemo(() => {
+  const { trunkGeo, greenLeaves, blossomClusters, treeBatches } = useMemo(() => {
     FLAMBOYANT_CANOPIES.length = 0
     const r = rnd(1976)
     const plans: TreePlan[] = [
@@ -538,9 +541,11 @@ export function UEHFoliage() {
     const greens: { matrix: THREE.Matrix4; color: THREE.Color }[] = []
     const blossoms: { matrix: THREE.Matrix4; color: THREE.Color }[] = []
     const tipCount = low ? 5 : 8
+    const treeBatches: Array<{ green: typeof greens; blossom: typeof blossoms }> = []
 
     plans.forEach((p) => {
       const built = buildTreeStructure(p, p.hero ? (low ? 10 : 16) : tipCount)
+      if (treeBatchExperiment) treeBatches.push({green: built.greenMats, blossom: built.blossomMats})
       allBranches.push(...built.branches)
       greens.push(...built.greenMats)
       blossoms.push(...built.blossomMats)
@@ -550,6 +555,7 @@ export function UEHFoliage() {
       trunkGeo: mergeGeos(allBranches),
       greenLeaves: greens,
       blossomClusters: blossoms,
+      treeBatches,
     }
   }, [low])
 
@@ -630,11 +636,53 @@ export function UEHFoliage() {
   return (
     <group>
       <mesh geometry={trunkGeo} material={barkMat} castShadow receiveShadow />
-      <instancedMesh ref={greenRef} args={[cardGeo, greenMat, greenLeaves.length]} frustumCulled={false} castShadow />
-      <instancedMesh ref={blossomRef} args={[corymbGeo, blossomMat, blossomClusters.length]} frustumCulled={false} />
+      {treeBatchExperiment ? treeBatches.map((batch, i) => <group key={i}>
+        <TreeBatch entries={batch.green} geometry={cardGeo} material={greenMat} castShadow />
+        <TreeBatch entries={batch.blossom} geometry={corymbGeo} material={blossomMat} />
+      </group>) : <>
+        <instancedMesh ref={greenRef} args={[cardGeo, greenMat, greenLeaves.length]} frustumCulled={false} castShadow />
+        <instancedMesh ref={blossomRef} args={[corymbGeo, blossomMat, blossomClusters.length]} frustumCulled={false} />
+      </>}
       <CourtyardGrass low={low} />
     </group>
   )
+}
+
+// A/B experiment: split only at already-existing per-tree boundaries. The
+// instance matrices, colors, order, materials and geometries remain exact.
+// Submit a tree once its most conservative bound could reach the scan front;
+// unlike the rejected radial reorder, no original array is sorted or truncated.
+function TreeBatch({ entries, geometry, material, castShadow = false }: {
+  entries: Array<{matrix: THREE.Matrix4; color: THREE.Color}>
+  geometry: THREE.BufferGeometry; material: THREE.Material; castShadow?: boolean
+}) {
+  const ref = useRef<THREE.InstancedMesh>(null)
+  const threshold = useMemo(() => {
+    if (!geometry.boundingSphere) geometry.computeBoundingSphere()
+    const sphere = geometry.boundingSphere!
+    const center = new THREE.Vector3()
+    const scale = new THREE.Vector3()
+    let first = 130
+    for (const entry of entries) {
+      center.copy(sphere.center).applyMatrix4(entry.matrix)
+      scale.setFromMatrixScale(entry.matrix)
+      const radius = sphere.radius * Math.max(scale.x, scale.y, scale.z)
+      first = Math.min(first, Math.max(0, Math.hypot(center.x - CENTER.x, center.z - CENTER.z) - radius - 16))
+    }
+    return first
+  }, [entries, geometry])
+  useEffect(() => {
+    const mesh = ref.current
+    if (!mesh) return
+    entries.forEach((entry, i) => { mesh.setMatrixAt(i, entry.matrix); mesh.setColorAt(i, entry.color) })
+    mesh.instanceMatrix.needsUpdate = true
+    if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true
+  }, [entries])
+  useFrame(() => {
+    if (ref.current) ref.current.visible = RW.uRW.value.z > .5 && RW.uRW.value.x >= threshold
+  })
+  if (!entries.length) return null
+  return <instancedMesh ref={ref} args={[geometry, material, entries.length]} frustumCulled={false} castShadow={castShadow} />
 }
 
 // ------------------------------------------------------------------ Thảm cỏ thật trong các ô vườn sân trường

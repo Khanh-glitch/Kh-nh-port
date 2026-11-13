@@ -161,3 +161,25 @@ supplied YouTube video returned YouTube's bot verification; the official embed
 continues to be used instead of claiming a local copy exists. The two 10-bit
 SOCIAL MEDIA transcodes were converted to 8-bit yuv420p H.264 for wider browser
 compatibility while retaining their AAC audio.
+
+## Depth-buffer YouTube surface (2026-11-13)
+
+The official YouTube player now sits *behind* the WebGL canvas. A depth-aware
+postprocessing effect reconstructs each pixel's world position from the scene's
+actual depth buffer and cuts the canvas alpha only where that pixel belongs to
+the campus display plane. Opaque geometry and alpha-tested holes therefore
+occlude the iframe at framebuffer resolution without sampling the cross-origin
+video or using the 6x4 raycast mask. The old approximation is retained only
+for the explicit `colossusPostProbe=off` diagnostic, where postprocessing is
+deliberately absent. The fallback play/open button sits above the canvas, and
+"Điều khiển video" temporarily allows pointer input to the iframe; Escape
+restores the game canvas.
+
+An independent Chromium/WebGL test checked a green underlay behind a depth-
+tested red occluder pixel by pixel (background alpha 255, exposed screen alpha
+0, occluder alpha 255). A second test in the actual scene used a synthetic
+YouTube player and a red foreground plane; the red half hid the green video
+while the uncovered half remained visible. This tests compositor/depth wiring,
+not live YouTube network playback. Transparency without depth writes follows
+the renderer's ordinary depth-buffer behavior and is not equivalent to
+per-pixel blending of translucent foreground objects.

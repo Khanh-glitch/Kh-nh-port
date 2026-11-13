@@ -1,7 +1,7 @@
 import { Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { Bloom, ChromaticAberration, EffectComposer, Noise, ToneMapping, Vignette } from '@react-three/postprocessing'
-import { BlendFunction, ToneMappingMode } from 'postprocessing'
+import { BlendFunction, ToneMappingMode, Effect, EffectAttribute } from 'postprocessing'
 import * as THREE from 'three'
 import { useStore, toast } from '../store'
 import { Sky } from './Sky'
@@ -71,7 +71,46 @@ function Lights({ shadowEdge = 2048 }: { shadowEdge?: 2048 | 1024 }) {
   )
 }
 
+// YouTube is cross-origin and cannot be sampled as a WebGL texture. Instead,
+// keep the official iframe *behind* the canvas and punch through exactly where
+// the existing scene depth buffer contains the campus screen. Foreground
+// opaque geometry, including its alpha-tested holes, stays in front of it.
+class HexDepthPortalEffect extends Effect {
+  constructor(camera: THREE.Camera) {
+    const inverseStage = new THREE.Matrix4().compose(
+      new THREE.Vector3(EXHIBITS.stage.x, 0, EXHIBITS.stage.z),
+      new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), EXHIBITS.stage.rotY),
+      new THREE.Vector3(1, 1, 1),
+    ).invert()
+    super('HexDepthPortal', `
+      uniform mat4 portalProjectionInverse;
+      uniform mat4 portalCameraWorld;
+      uniform mat4 portalStageInverse;
+      void mainImage(const in vec4 color, const in vec2 uv, const in float depth, out vec4 result) {
+        vec4 view = portalProjectionInverse * vec4(uv * 2.0 - 1.0, depth * 2.0 - 1.0, 1.0);
+        vec4 local = portalStageInverse * portalCameraWorld * vec4(view.xyz / view.w, 1.0);
+        bool onScreen = depth < 1.0 && abs(local.z + 3.52) < 0.015
+          && abs(local.x) < 4.8 && abs(local.y - 4.4) < 2.7;
+        result = onScreen ? vec4(0.0) : color;
+      }`, {
+      blendFunction: BlendFunction.SRC,
+      attributes: EffectAttribute.DEPTH,
+      uniforms: new Map([
+        ['portalProjectionInverse', new THREE.Uniform(camera.projectionMatrixInverse)],
+        ['portalCameraWorld', new THREE.Uniform(camera.matrixWorld)],
+        ['portalStageInverse', new THREE.Uniform(inverseStage)],
+      ]),
+    })
+  }
+}
+
 function Post({ low, filmPasses = true, bloomLevels }: { low: boolean; filmPasses?: boolean; bloomLevels?: number }) {
+  const { camera } = useThree()
+  const phase = useReality(s => s.phase)
+  const track = useReality(s => s.track)
+  const portal = useMemo(() => new HexDepthPortalEffect(camera), [camera])
+  useEffect(() => () => portal.dispose(), [portal])
+  const showPortal = track === 'ngay-mai' && (phase === 'sweep' || phase === 'active')
   const ca = useMemo(() => new THREE.Vector2(0.0007, 0.0009), [])
   return (
     <EffectComposer multisampling={low ? 0 : 4} enableNormalPass={false}>
@@ -80,6 +119,7 @@ function Post({ low, filmPasses = true, bloomLevels }: { low: boolean; filmPasse
       {filmPasses && <Noise opacity={0.035} blendFunction={BlendFunction.SOFT_LIGHT} />}
       {filmPasses && <Vignette offset={0.25} darkness={0.55} />}
       <ToneMapping mode={ToneMappingMode.ACES_FILMIC} />
+      {showPortal && <primitive object={portal} />}
     </EffectComposer>
   )
 }
@@ -801,7 +841,8 @@ function HexPlayerControls() {
       onClick={() => {
         useStore.getState().setFree(true)
         if (document.pointerLockElement) document.exitPointerLock()
-        toast('Bấm nút phát trên màn hình sân khấu')
+        window.dispatchEvent(new Event('orbita-hex-video-interact'))
+        toast('Bấm video để điều khiển · nhấn Esc để trở lại')
       }} />
   </group>
 }
@@ -902,7 +943,6 @@ export function HexVideoLayer() {
       height: '720px',
       transformOrigin: '0 0',
       pointerEvents: 'none',
-      mixBlendMode: 'screen',
       opacity: '0',
       visibility: 'hidden',
       background: '#000',
@@ -922,21 +962,50 @@ export function HexVideoLayer() {
     const parent = gl.domElement.parentElement
     if (!parent || !wanted) return
     // Controls remain clickable if the browser blocks unmuted autoplay.
+    const fallback = new URLSearchParams(window.location.search).get('colossusPostProbe') === 'off'
+    const canvas = gl.domElement
+    const previous = { position: canvas.style.position, zIndex: canvas.style.zIndex }
     dom.d.style.pointerEvents = 'auto'
     dom.h.style.pointerEvents = 'auto'
+    if (!fallback) {
+      dom.d.style.zIndex = '0'
+      canvas.style.position = 'relative'
+      canvas.style.zIndex = '1'
+    }
     parent.appendChild(dom.d)
-    return () => dom.d.remove()
+    return () => {
+      dom.d.remove()
+      canvas.style.position = previous.position
+      canvas.style.zIndex = previous.zIndex
+    }
   }, [gl, dom, wanted])
+  useEffect(() => {
+    if (!wanted) return
+    const canvas = gl.domElement
+    const prior = canvas.style.pointerEvents
+    const release = () => { canvas.style.pointerEvents = 'none' }
+    const restore = (event: KeyboardEvent) => { if (event.key === 'Escape') canvas.style.pointerEvents = prior }
+    window.addEventListener('orbita-hex-video-interact', release)
+    window.addEventListener('keydown', restore)
+    return () => {
+      window.removeEventListener('orbita-hex-video-interact', release)
+      window.removeEventListener('keydown', restore)
+      canvas.style.pointerEvents = prior
+    }
+  }, [gl, wanted])
   const yt = useVideoSurface('hex', wanted && track === 'ngay-mai' ? dom.h : null)
   useEffect(() => {
     if (!wanted || track !== 'ngay-mai' || (yt.state !== 'blocked' && yt.state !== 'error')) return
+    const parent = gl.domElement.parentElement
+    if (!parent) return
+    // The video is behind the canvas; recovery controls must be above it.
     const button = document.createElement('button')
     button.textContent = yt.state === 'blocked' ? '▶ Phát video và âm thanh' : 'Mở video gốc trên YouTube ↗'
-    button.style.cssText = 'position:absolute;left:50%;bottom:24px;transform:translateX(-50%);z-index:5;padding:16px 24px;background:#111;color:white;border:1px solid white;border-radius:8px;pointer-events:auto;cursor:pointer;font:600 24px sans-serif'
+    button.style.cssText = 'position:absolute;left:50%;bottom:32px;transform:translateX(-50%);z-index:3;padding:12px 18px;background:#111;color:white;border:1px solid white;border-radius:8px;pointer-events:auto;cursor:pointer;font:600 16px sans-serif'
     button.onclick = () => yt.state === 'blocked' ? yt.resume() : openExternal('https://youtu.be/179btG24VE8?t=82')
-    dom.d.appendChild(button)
+    parent.appendChild(button)
     return () => button.remove()
-  }, [wanted, track, yt.state, dom])
+  }, [wanted, track, yt.state, gl])
   const corners = useMemo(
     () => [new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3()],
     [],
@@ -990,7 +1059,8 @@ export function HexVideoLayer() {
     w.style.visibility = 'visible'
     w.style.opacity = '1'
     w.style.transform = `matrix3d(${m.join(',')})`
-    occlusion.update(w, camera, scene, worldCorners, performance.now() / 1000)
+    if (new URLSearchParams(window.location.search).get('colossusPostProbe') === 'off')
+      occlusion.update(w, camera, scene, worldCorners, performance.now() / 1000)
   })
   return null
 }
