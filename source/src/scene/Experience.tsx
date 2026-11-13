@@ -907,6 +907,7 @@ function HexLocalVideo() {
     campusVideo.texture = media.texture
     if (!summer) {
       audio.prepare()
+      audio.setMuted(useStore.getState().muted)
       source.current ??= audio.ctx.createMediaElementSource(video)
       source.current.connect(audio.master)
       music.followVideo(video, NGAY_MAI_CUE)

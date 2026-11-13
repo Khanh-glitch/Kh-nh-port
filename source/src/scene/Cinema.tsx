@@ -76,6 +76,7 @@ function LocalCinemaFilm({ index, onNext }: { index: number | null; onNext: () =
     const film = index === null ? null : PROJECT_FILMS[index]
     if (!film?.src || phase !== 'idle') return
     audio.prepare()
+    audio.setMuted(useStore.getState().muted)
     const bus = audio.createBus('cinema-film', worldPos(ex, 0, 2.95, -5.8), { ref: 4, rolloff: 1.4, maxDist: 75, reverb: 0.45, gain: 0.9 })
     const source = sourceRef.current ?? (sourceRef.current = audio.ctx.createMediaElementSource(media.video))
     source.connect(bus.input)
