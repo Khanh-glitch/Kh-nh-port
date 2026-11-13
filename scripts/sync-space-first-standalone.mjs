@@ -5,7 +5,7 @@
  */
 import assert from 'node:assert/strict'
 import {createHash} from 'node:crypto'
-import {readFileSync,writeFileSync} from 'node:fs'
+import {existsSync,readFileSync,writeFileSync} from 'node:fs'
 import {createRequire} from 'node:module'
 import {dirname,relative,resolve} from 'node:path'
 const require=createRequire(import.meta.url)
@@ -30,7 +30,10 @@ for(const [key,oldHash] of Object.entries(frozen)){
       'Unrelated production graphics module hash mismatch: '+key)
 }
 function compileFile(srcRoot,modulePath,prefix,map){
-  const path=resolve(srcRoot,modulePath+'.tsx')
+  // Round-6 added plain .ts modules (the cockpit state bus and the screen
+  // painter), so resolve .tsx first and fall back to .ts.
+  const tsx=resolve(srcRoot,modulePath+'.tsx')
+  const path=existsSync(tsx)?tsx:resolve(srcRoot,modulePath+'.ts')
   const source=readFileSync(path,'utf8')
   const result=ts.transpileModule(source,{
     fileName:path,reportDiagnostics:true,
@@ -113,16 +116,60 @@ assert(html.includes('id="orbita-no-legacy-loader"') &&
   html.includes(nextCheck),'Legacy spinner must remain hidden and bootstrap ship-aware')
 const shipPath=resolve(root,'assets/immersive/index.html')
 let ship=readFileSync(shipPath,'utf8')
+
+/* ── stylesheet ──────────────────────────────────────────────────────────────
+   Only JavaScript modules used to be recompiled into the published standalone,
+   so every CSS change was silently dropped. The cockpit's compositing cost
+   (backdrop-filter over a live WebGL canvas, infinite keyframes, parallax
+   will-change) lived entirely in CSS, which made those fixes invisible in
+   production. Take the emitted stylesheet from the real build whenever it is
+   available so the deployed page and ./source/immersive agree. */
+const shipBuildPath=resolve(root,'source/immersive/dist/index.html')
+if(existsSync(shipBuildPath)){
+  const built=readFileSync(shipBuildPath,'utf8')
+  const builtStyles=[...built.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/g)]
+    .map(m=>m[1]).filter(css=>css.trim().length>0)
+  assert(builtStyles.length>0,'Vite build produced no stylesheet for the ship')
+  // Keep the small ship-first reveal style that this script owns.
+  const hudStyle='<style id="orbita-space-first-hud">'+
+    '.app[data-space-painted="false"] > :not(.space-host):not(.vignette)'+
+    '{opacity:0;pointer-events:none}'+
+    '.app[data-space-painted="true"] > :not(.space-host):not(.vignette)'+
+    '{transition:opacity .7s ease-out}</style>'
+  const css=builtStyles.join('\n')
+  ship=ship.replace(
+    /<style[^>]*>[\s\S]*?<\/style>(?=<style id="orbita-space-first-hud">|$)/,
+    '<style>'+css+'</style>'
+  )
+  assert(ship.includes(css.slice(0,200)),'Failed to publish built stylesheet')
+}
+
 const match=ship.match(/<script type="importmap">([\s\S]*?)<\/script>/i)
 assert(match,'Original standalone spaceship import map missing')
 const shipMap=JSON.parse(match[1])
-const shipModules=['App','components/SpaceScene','components/Panels']
+// Modules recompiled from ./source/immersive/src into the published standalone.
+// Round 6 replaced the DOM glass cards with a real 3D cockpit, so the interior
+// model and its screen painters are now part of the shipped source too.
+// Leaf modules must come BEFORE anything that imports them: compileFile asserts
+// that every relative import already has a map slot, so this list is ordered
+// dependency-first rather than alphabetically.
+const shipModules=[
+  'lib/cockpitBus',
+  'lib/screenPaint',
+  'cockpit/interior',
+  'App',
+  'components/SpaceScene',
+  'components/Panels',
+]
 const shipRoot=resolve(root,'source/immersive/src')
 const existingShipMap=shipMap.imports
 for(const path of shipModules){
   const key='ship/'+path
-  assert(existingShipMap[key]?.startsWith('data:text/javascript;base64,'),
-    'Missing built ship source module '+key)
+  // Round-6 modules are new, so they are inserted rather than required to
+  // pre-exist; every older module must still be present byte-for-byte.
+  if(existingShipMap[key]!==undefined)
+    assert(existingShipMap[key].startsWith('data:text/javascript;base64,'),
+      'Missing built ship source module '+key)
   existingShipMap[key]=compileFile(shipRoot,path,'ship/',shipMap.imports)
 }
 ship=ship.replace(match[0],'<script type="importmap">'+

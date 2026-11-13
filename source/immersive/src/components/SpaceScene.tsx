@@ -1,6 +1,8 @@
 import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import { onFrame, VIEW_CENTER_Y } from '../lib/flight';
+import { buildCockpit, type CockpitHandles } from '../cockpit/interior';
+import { profile } from '../data/profile';
 
 /* ────────────────────────────────────────────────────────────────────────────
    Deep-space view outside the canopy.
@@ -670,6 +672,19 @@ export default function SpaceScene() {
     const rocks = new THREE.InstancedMesh(rockGeo, rockMat, ROCKS);
     rocks.frustumCulled = false;
     scene.add(rocks);
+
+    /* ── cockpit interior ──────────────────────────────────────────────────
+       A real 3D dashboard built from hull panels and physical screens, added
+       to the SAME renderer and scene as the exterior view. The canopy frame is
+       the only thing in front of the camera, so the nebula, planet, rings,
+       stars and dust outside stay exactly as they were. */
+    let cockpit: CockpitHandles | null = null;
+    try {
+      cockpit = buildCockpit(profile as never);
+      scene.add(cockpit.group);
+    } catch (error) {
+      console.warn('[ORBITA] cockpit interior unavailable', error);
+    }
     interface Rock {
       x: number;
       y: number;
@@ -700,12 +715,26 @@ export default function SpaceScene() {
     fill.position.set(0.7, -0.5, -0.3);
     scene.add(sunLight, fill, new THREE.AmbientLight(0x22344f, 1));
 
+    /* ── adaptive resolution ──────────────────────────────────────────────
+       The cockpit uses its own renderer and every screen is a texture, so the
+       fill cost is dominated by the exterior scene. Rather than dropping any
+       exterior detail (the nebula, planet, rings, stars, dust and rocks are all
+       untouched), we trade only pixel density on machines that cannot hold the
+       frame rate. Never below 1x, never above the original cap. */
+    const designDpr = Math.max(1, Math.min(
+      window.devicePixelRatio || 1, 2, Math.sqrt(6.5e6 / (window.innerWidth * window.innerHeight)),
+    ));
+    let dprScale = 1;
+    const dprFloor = 0.7;
+    let slowFrames = 0;
+    let fastFrames = 0;
+
     /* ── sizing ── */
     const size = { w: 1, h: 1 };
     const resize = () => {
       const w = Math.max(1, window.innerWidth);
       const h = Math.max(1, window.innerHeight);
-      const dpr = Math.max(1, Math.min(window.devicePixelRatio || 1, 2, Math.sqrt(6.5e6 / (w * h))));
+      const dpr = designDpr * dprScale;
       renderer.setPixelRatio(dpr);
       renderer.setSize(w, h, false);
       // shift the principal point up so the flight vector sits above the dashboard
@@ -736,8 +765,58 @@ export default function SpaceScene() {
       reportFailure('webgl-context-lost');
     };
     renderer.domElement.addEventListener('webglcontextlost', onContextLost);
+
+    /* ── pointer → cockpit screens ──────────────────────────────────────────
+       Hover/press hit-testing only. Steering still comes from the shared
+       `flight` input layer, so dragging to fly keeps working everywhere. */
+    const pointerTarget: HTMLElement | Window = window;
+    let hoverQueued = false;
+    let lastPointer = { x: 0, y: 0 };
+    const onPointerMove = (e: PointerEvent) => {
+      lastPointer = { x: e.clientX, y: e.clientY };
+      if (hoverQueued || !cockpit) return;
+      hoverQueued = true;
+      requestAnimationFrame(() => {
+        hoverQueued = false;
+        cockpit?.handlePointer(lastPointer.x, lastPointer.y, camera);
+      });
+    };
+    const onClick = (e: MouseEvent) => {
+      if (!cockpit) return;
+      // Ignore clicks that landed on real DOM controls (the centre console
+      // CTA, the language toggle, the notice dialog) so pressing a button
+      // never also activates a screen behind it.
+      const target = e.target as HTMLElement | null;
+      if (target?.closest('button, a, input, select, textarea, [role="alert"]')) return;
+      cockpit.handlePointer(e.clientX, e.clientY, camera);
+      cockpit.activate(camera);
+    };
+    pointerTarget.addEventListener('pointermove', onPointerMove as EventListener, { passive: true });
+    pointerTarget.addEventListener('click', onClick as EventListener);
+
     const off = onFrame((f, dt) => {
       if (rendererFailed) return;
+
+      // Adaptive resolution: only reacts to sustained slowness, never to a
+      // single hitch, and recovers when the machine is comfortable again.
+      const frameMs = dt * 1000;
+      if (frameMs > 22 && frameMs < 200) {
+        slowFrames += 1;
+        fastFrames = 0;
+      } else if (frameMs > 0 && frameMs < 15) {
+        fastFrames += 1;
+        slowFrames = 0;
+      }
+      if (slowFrames > 45 && dprScale > dprFloor) {
+        dprScale = Math.max(dprFloor, dprScale - 0.1);
+        renderer.setPixelRatio(designDpr * dprScale);
+        slowFrames = 0;
+      } else if (fastFrames > 240 && dprScale < 1) {
+        dprScale = Math.min(1, dprScale + 0.05);
+        renderer.setPixelRatio(designDpr * dprScale);
+        fastFrames = 0;
+      }
+
       const t = f.time;
       const rush = smooth(1.3, 9, f.speed);
 
@@ -819,8 +898,11 @@ export default function SpaceScene() {
 
     return () => {
       off();
+      pointerTarget.removeEventListener('pointermove', onPointerMove as EventListener);
+      pointerTarget.removeEventListener('click', onClick as EventListener);
       renderer.domElement.removeEventListener('webglcontextlost', onContextLost);
       window.removeEventListener('resize', resize);
+      cockpit?.dispose();
       disposables.forEach((d) => d.dispose());
       rocks.dispose();
       renderer.dispose();

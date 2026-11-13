@@ -85,6 +85,23 @@ a { color: inherit; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
 /* ── Space + glass ───────────────────────────────────────────────────────── */
+.app {
+  /* The stage, HUD and console all anchor to this element. Without it the
+     absolutely positioned children would resolve against the viewport, which
+     is how the old card layout behaved; the 3D cockpit needs one strict
+     stacking context of its own. */
+  position: relative;
+  width: 100%;
+  min-height: 100dvh;
+  isolation: isolate;
+  overflow: hidden;
+}
+.app > .vignette { z-index: 1; }
+.app > .stage, .app > .reticle, .app > .tophud { z-index: 4; }
+.app > .dash-centre, .app > .compact-dock { z-index: 6; }
+.app > .notice { z-index: 30; }
+.app > .flash { z-index: 40; }
+
 .space-host {
   position: fixed;
   inset: 0;
@@ -117,7 +134,9 @@ a { color: inherit; }
   border-radius: 50%;
   background: var(--color-mint-400);
   box-shadow: 0 0 0.55rem rgb(86 230 185 / 0.9);
-  animation: pulse 2.2s ease-in-out infinite;
+  /* No infinite keyframe here: a pulsing box-shadow on top of a live WebGL
+     canvas forces the compositor to re-blend that region every frame. The dot
+     keeps its glow; only the costly oscillation is gone. */
   flex: none;
 }
 .avail {
@@ -165,8 +184,9 @@ a { color: inherit; }
     0 0 0 1px rgb(2 6 14 / 0.7),
     0 0 2.4rem rgb(70 150 255 / 0.16),
     inset 0 0 1.8rem rgb(90 170 255 / 0.07);
-  -webkit-backdrop-filter: blur(7px) saturate(1.25);
-  backdrop-filter: blur(7px) saturate(1.25);
+  /* No backdrop-filter anywhere in this app: a blur that samples a live
+     WebGL canvas forces a full-surface readback + blur every frame. The
+     hologram look comes from gradients, borders and inner glow instead. */
 }
 .holo::before {
   content: "";
@@ -793,7 +813,7 @@ a.comms-row:hover .go { opacity: 1; transform: translate(1px, -1px); color: var(
 }
 .col-left { left: 4.5rem; width: 21rem; }
 .col-right { right: 4.5rem; width: 22.5rem; }
-.plx { will-change: transform; }
+/* parallax removed — see App.tsx */
 .centre {
   position: absolute;
   left: 50%;
@@ -1093,8 +1113,6 @@ a.comms-row:hover .go { opacity: 1; transform: translate(1px, -1px); color: var(
   border: 1px solid rgb(var(--ice) / 0.3);
   border-radius: 3px;
   background: rgb(5 12 24 / 0.7);
-  -webkit-backdrop-filter: blur(7px);
-  backdrop-filter: blur(7px);
 }
 .compact .brief::before { display: none; }
 .compact .brief-head { font-size: 1.45rem; }
@@ -1174,3 +1192,108 @@ a.comms-row:hover .go { opacity: 1; transform: translate(1px, -1px); color: var(
 @keyframes spaceBeamSpin{to{transform:rotate(360deg);}}
 @keyframes spaceBeamPulse{to{filter:brightness(2.2) blur(1px);}}
 @media(prefers-reduced-motion:reduce){.energy-particles,.energy-gate[data-warp="true"] .energy-ring{animation:none;}}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   ROUND 6 — centre console.
+
+   The 3D cockpit owns all portfolio content now. What is left in the DOM is
+   the ship's own instrument strip: a single console plate, a reticle, a
+   compass and the top HUD. Deliberately tiny, deliberately flat: no blurs, no
+   filters, no per-frame transforms, so it can sit over a live WebGL canvas
+   without costing a single composited layer.
+   ───────────────────────────────────────────────────────────────────────────── */
+
+.dash-centre {
+  /* Every value below is set explicitly: the original stylesheet also had a
+     .dash-centre rule (one designed for the old MFD panel), and any property
+     left unset here would be inherited from it — notably its 13rem height and
+     its -12.5rem margin-left, which would pull the console off centre. */
+  position: absolute;
+  left: 50%;
+  right: auto;
+  bottom: 1.1rem;
+  top: auto;
+  margin: 0;
+  height: auto;
+  width: min(92vw, 24rem);
+  transform: translateX(-50%);
+  z-index: 6;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.console-plate {
+  pointer-events: auto;
+  width: 100%;
+  height: auto;
+  padding: 0.8rem 1.1rem 0.9rem;
+  border: 1px solid rgb(var(--ice) / 0.26);
+  border-radius: 4px;
+  background:
+    linear-gradient(180deg, rgb(var(--ice) / 0.10) 0%, rgb(var(--ice) / 0.03) 32%, rgb(4 10 20 / 0.92) 100%),
+    rgb(4 10 20 / 0.94);
+  box-shadow:
+    0 0 0 1px rgb(2 6 14 / 0.8),
+    0 0.6rem 2.2rem rgb(0 4 12 / 0.6),
+    inset 0 0.1rem 0 rgb(var(--ice) / 0.10);
+  text-align: center;
+}
+
+.console-kicker {
+  margin: 0 0 0.35rem;
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgb(var(--ice) / 0.62);
+}
+
+.console-name {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  line-height: 1.15;
+  letter-spacing: 0.02em;
+  color: rgb(var(--ice-hi));
+}
+
+.console-role {
+  margin: 0.2rem 0 0.65rem;
+  font-size: 0.82rem;
+  color: rgb(var(--ice) / 0.78);
+}
+
+.console-hint {
+  margin: 0.55rem 0 0;
+  font-size: 0.66rem;
+  line-height: 1.45;
+  color: rgb(var(--ice) / 0.52);
+}
+
+.compact-dock {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  z-index: 7;
+}
+
+/* Portrait / small screens: the 3D dashboard is still there, the console just
+   becomes a scrollable bottom sheet so the nameplate and CTA stay reachable. */
+@media (max-width: 900px), (max-height: 560px) {
+  .dash-centre {
+    position: static;
+    transform: none;
+    margin: 0;
+    height: auto;
+    width: auto;
+    padding: 0 0.75rem 0.75rem;
+  }
+  .console-plate { padding: 0.85rem 1rem 0.95rem; }
+  .console-name { font-size: 1.3rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .console-plate { box-shadow: 0 0 0 1px rgb(2 6 14 / 0.8); }
+}

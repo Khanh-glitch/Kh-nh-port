@@ -1,56 +1,66 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import SpaceScene from './components/SpaceScene';
-import { CockpitFrame, Compass, Plx, Radar, Reticle, SpeedGauge, TargetMarker, TopHud } from './components/Cockpit';
-import { Brief, Comms, Console, Cta, Experience, Facts, LangToggle, PilotPhoto, Projects, Stack } from './components/Panels';
-import { profile, ui, type Lang } from './data/profile';
+import { Compass, Reticle, TopHud } from './components/Cockpit';
+import { Cta, LangToggle } from './components/Panels';
+import { profile } from './data/profile';
 import { flight } from './lib/flight';
+import { setCockpit } from './lib/cockpitBus';
 import { useViewport } from './lib/useViewport';
 
 type Jump = 'idle' | 'charging' | 'flash' | 'notice';
 
 export default function App() {
   const vp = useViewport();
-  const [lang, setLang] = useState<Lang>('vi');
-  const [live] = useState(true);
+  const [lang, setLang] = useState<'vi' | 'en'>('vi');
   const [jump, setJump] = useState<Jump>('idle');
-  const [gate, setGate] = useState({ready:false,progress:0});
+  const [gate, setGate] = useState<{ ready: boolean; progress: number }>({ ready: false, progress: 0 });
   const [spacePainted, setSpacePainted] = useState(false);
   const timers = useRef<number[]>([]);
 
   useEffect(() => {
     document.documentElement.lang = lang;
-    document.title = lang === 'vi' ? `${profile.name} — Buồng lái Portfolio` : `${profile.name} — Portfolio Cockpit`;
+    document.title = lang === 'vi'
+      ? `${profile.name} — Buồng lái Portfolio`
+      : `${profile.name} — Portfolio Cockpit`;
+    // Every painted screen in the 3D cockpit re-renders from this one call.
+    setCockpit({ lang });
   }, [lang]);
 
   // Fade the original full-quality HUD ON TOP of the real first space frame,
   // not a timer or a fake boot screen. This leaves the finished HUD identical.
   useEffect(() => {
-    const ready=()=>setSpacePainted(true);
-    if ((window as Window & {__orbitaSpacePainted?:boolean}).__orbitaSpacePainted)
-      ready();
-    window.addEventListener('ORBITA_SPACE_LOCAL_PAINTED',ready);
-    return ()=>window.removeEventListener('ORBITA_SPACE_LOCAL_PAINTED',ready);
-  },[]);
+    const ready = () => setSpacePainted(true);
+    if ((window as Window & { __orbitaSpacePainted?: boolean }).__orbitaSpacePainted) ready();
+    window.addEventListener('ORBITA_SPACE_LOCAL_PAINTED', ready);
+    return () => window.removeEventListener('ORBITA_SPACE_LOCAL_PAINTED', ready);
+  }, []);
 
-  // The cockpit is the FIRST visible screen. Do not stack a second
-  // text-heavy boot/loading overlay above the spaceship or energy ring.
+  // The cockpit is the FIRST visible screen. Do not stack a second text-heavy
+  // boot/loading overlay above the spaceship or energy ring.
   useEffect(() => {
     flight.speed = flight.reduced ? 0.4 : 6;
   }, []);
 
   useEffect(() => {
-    const onMessage=(event: MessageEvent)=>{
-      if(event.source!==window.parent || event.origin!==window.location.origin)return;
-      if(event.data?.type==='ORBITA_SPACE_READY')setGate({ready:event.data.ready===true,progress:Math.max(0,Math.min(100,Number(event.data.progress)||0))});
+    const onMessage = (event: MessageEvent) => {
+      if (event.source !== window.parent || event.origin !== window.location.origin) return;
+      if (event.data?.type === 'ORBITA_SPACE_READY') {
+        const next = {
+          ready: event.data.ready === true,
+          progress: Math.max(0, Math.min(100, Number(event.data.progress) || 0)),
+        };
+        setGate(next);
+        setCockpit({ ready: next.ready, progress: next.progress });
+      }
     };
-    window.addEventListener('message',onMessage);
-    return ()=>window.removeEventListener('message',onMessage);
-  },[]);
+    window.addEventListener('message', onMessage);
+    return () => window.removeEventListener('message', onMessage);
+  }, []);
 
-  const clearTimers = () => {
+  const clearTimers = useCallback(() => {
     timers.current.forEach((id) => window.clearTimeout(id));
     timers.current = [];
-  };
+  }, []);
 
   /** Primary action: spool up, jump, then open the detailed portfolio. */
   const engage = useCallback(() => {
@@ -58,24 +68,20 @@ export default function App() {
     clearTimers();
     setJump('charging');
     flight.warp = true;
-    window.parent.postMessage({type:'ORBITA_SPACE_ENGAGE'},window.location.origin);
+    window.parent.postMessage({ type: 'ORBITA_SPACE_ENGAGE' }, window.location.origin);
     const lead = flight.reduced ? 250 : 1900;
-    timers.current.push(
-      window.setTimeout(() => {
-        setJump('flash');
-        timers.current.push(
-          window.setTimeout(() => {
-            flight.warp = false;
-            if(window.parent!==window){
-              window.parent.postMessage({type:'ORBITA_SPACE_WARP_COMPLETE'},window.location.origin);
-            } else {
-              setJump('notice');
-            }
-          }, 520),
-        );
-      }, lead),
-    );
-  }, [jump,gate.ready]);
+    timers.current.push(window.setTimeout(() => {
+      setJump('flash');
+      timers.current.push(window.setTimeout(() => {
+        flight.warp = false;
+        if (window.parent !== window) {
+          window.parent.postMessage({ type: 'ORBITA_SPACE_WARP_COMPLETE' }, window.location.origin);
+        } else {
+          setJump('notice');
+        }
+      }, 520));
+    }, lead));
+  }, [jump, gate.ready, clearTimers]);
 
   useEffect(() => {
     const onShow = (e: PageTransitionEvent) => {
@@ -95,107 +101,65 @@ export default function App() {
       clearTimers();
       flight.warp = false;
     };
-  }, []);
+  }, [clearTimers]);
 
   const jumping = jump === 'charging' || jump === 'flash';
+  const inCockpit = vp.mode === 'cockpit';
+
+  const cta = useMemo(() => (
+    <Cta
+      lang={lang}
+      onEngage={engage}
+      jumping={jumping}
+      entryReady={gate.ready}
+      entryProgress={gate.progress}
+    />
+  ), [lang, engage, jumping, gate.ready, gate.progress]);
 
   return (
-    <div className="app" data-live={live} data-jump={jump}
-      data-space-painted={spacePainted}>
+    <div className="app" data-live="true" data-jump={jump} data-space-painted={spacePainted}>
       <SpaceScene />
       <div className="vignette" aria-hidden="true" />
 
-      {vp.mode === 'cockpit' ? (
-        <>
-          <Reticle />
-          <TargetMarker lang={lang} />
-          <CockpitFrame W={vp.W} H={vp.H} />
-          <main className="stage" style={{ ['--extra' as string]: `${Math.max(0, vp.H - 810) / 16}rem` }}>
-            <TopHud lang={lang} setLang={setLang} />
-            <Compass />
+      {/* Only true instruments remain in the DOM: reticle, compass, top strip
+          and the centre console. Every piece of portfolio content is now
+          painted onto the physical screens inside the 3D cockpit. */}
+      <Reticle />
+      <TopHud lang={lang} setLang={setLang} />
+      {inCockpit && <Compass />}
 
-            {/* nameplate + primary action come first in reading / tab order */}
-            <div className="dash-centre">
-              <Console lang={lang} delay={60} onEngage={engage} jumping={jumping} entryReady={gate.ready} entryProgress={gate.progress} />
-            </div>
-
-            <Plx depth={0.6} className="col col-left">
-              <PilotPhoto lang={lang} delay={150} />
-              <Facts lang={lang} delay={330} />
-            </Plx>
-
-            <Plx depth={0.32} className="centre">
-              <Brief lang={lang} delay={520} />
-            </Plx>
-
-            <Plx depth={0.6} className="col col-right">
-              <Experience lang={lang} delay={240} />
-              <Projects lang={lang} delay={420} />
-            </Plx>
-
-            <div className="dash-left">
-              <Stack lang={lang} delay={600} />
-            </div>
-            <div className="dash-right">
-              <Comms lang={lang} delay={680} />
-            </div>
-            <SpeedGauge lang={lang} delay={760} />
-            <Radar lang={lang} delay={760} />
-          </main>
-        </>
-      ) : (
-        <div className="compact">
-          <header className="c-top">
-            <div className="tophud-group">
-              <span className="badge">{profile.callsign}</span>
-              <span className="avail">
-                <span className="dot" aria-hidden="true" />
-                {profile.availability[lang]}
-              </span>
-            </div>
-            <LangToggle lang={lang} setLang={setLang} />
-          </header>
-          <main className="c-main">
-            <div className="span-2">
-              <PilotPhoto lang={lang} delay={100} />
-            </div>
-            <div className="span-2">
-              <Brief lang={lang} delay={200} />
-            </div>
-            <Facts lang={lang} delay={280} />
-            <div className="o-exp">
-              <Experience lang={lang} delay={340} />
-            </div>
-            <div className="o-prj">
-              <Projects lang={lang} delay={400} />
-            </div>
-            <div className="o-stack">
-              <Stack lang={lang} delay={460} />
-            </div>
-            <div className="span-2 o-comms">
-              <Comms lang={lang} delay={520} />
-            </div>
-          </main>
-          <footer className="c-console">
-            <div className="c-console-inner">
-              <h1 className="name">{profile.name}</h1>
-              <Cta lang={lang} onEngage={engage} jumping={jumping} entryReady={gate.ready} entryProgress={gate.progress} />
-            </div>
-          </footer>
+      <div className="dash-centre">
+        <div className="console-plate">
+          <p className="console-kicker">{profile.callsign} · {profile.availability[lang]}</p>
+          <h1 className="console-name">{profile.name}</h1>
+          <p className="console-role">{profile.title[lang]}</p>
+          {cta}
+          <p className="console-hint">
+            {lang === 'vi'
+              ? 'Rê chuột lên các bàn hình trong buồng lái để đọc hồ sơ.'
+              : 'Hover the screens inside the cockpit to read the profile.'}
+          </p>
         </div>
-      )}
+      </div>
+
+      <div className="compact-dock">
+        <LangToggle lang={lang} setLang={setLang} />
+      </div>
 
       {jump === 'notice' && (
         <div className="holo notice" role="alert">
-          <h2>{ui.noticeTitle[lang]}</h2>
-          <p>{ui.noticeBody[lang]}</p>
+          <h2>{lang === 'vi' ? 'Chưa thiết lập đích đến' : 'Destination not set'}</h2>
+          <p>
+            {lang === 'vi'
+              ? 'Thêm đường dẫn portfolio vào links.portfolio trong src/data/profile.ts để hoàn tất bước nhảy.'
+              : 'Add your portfolio URL to links.portfolio in src/data/profile.ts to complete the jump.'}
+          </p>
           <button type="button" onClick={() => setJump('idle')}>
-            {ui.dismiss[lang]}
+            {lang === 'vi' ? 'Đóng' : 'Dismiss'}
           </button>
         </div>
       )}
       <div className="flash" aria-hidden="true" />
-
     </div>
   );
 }
