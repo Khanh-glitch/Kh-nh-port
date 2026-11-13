@@ -87,6 +87,10 @@ const REVIEWED_CHANGES=new Set([
   // so the first signal cannot add a NUM_POINT_LIGHTS shader variant.
   'orbita/scene/SocialDrops',
   'orbita/world',
+  // HEX first-trigger preflight: compiles the Linear-sRGB variant the composer
+  // RenderPass draws instead of a target-less sRGB variant that could never be
+  // reused. Proof and invariants: tests/hex-preflight-program-variant.mjs
+  'orbita/reality/RealityHost',
 ])
 const frozenBaseline={...frozen}
 let refreshed=0

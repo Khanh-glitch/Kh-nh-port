@@ -634,15 +634,30 @@ export function RealityHost() {
     }
   }
 
-  // Test-only successor to the REJECTED one-shot 32-variant Linear precompile.
-  // Keep the EXISTING one-material-per-healthy-frame schedule, but use the
-  // same Linear-sRGB output variant as the native postprocessing composer.
-  // gl.compileAsync is called with the private target bound synchronously;
-  // every R3F renderer state is restored before the callback returns.
-  // No original mesh, PBR material, texture, shadow or final framebuffer
-  // is replaced. Normal portfolio visits do not enable this experiment.
-  const hexCooperativeLinear = typeof window !== 'undefined' &&
-    new URLSearchParams(window.location.search).get('hexCooperativeLinear') === '1'
+  // The idle preflight MUST compile the program variant the composer actually
+  // draws. three r187 keys programs on `outputColorSpace`
+  // (WebGLPrograms.getProgramCacheKey -> getProgramCacheKeyParameters), and
+  // WebGLPrograms.getParameters derives it from the BOUND TARGET:
+  //   target === null -> renderer.outputColorSpace (sRGB, the direct path)
+  //   target !== null -> ColorManagement.workingColorSpace (Linear-sRGB)
+  // EffectComposer's RenderPass always binds its own target, so every HEX
+  // material is drawn from the Linear variant. Compiling with no target bound
+  // therefore produced sRGB programs that the click frame could never reuse:
+  // the measured trace showed `cached program count 113 -> 113` while 24-27
+  // programs still linked on demand at the first HEX exposure.
+  //
+  // Binding a private 1x1-class target during the EXISTING one-item-per-frame
+  // schedule makes that already-scheduled work produce the reusable variant.
+  // It adds no submission and no draw: gl.compile() only builds programs. Every
+  // renderer state is restored before the callback returns, and no original
+  // mesh, PBR material, texture, shadow or framebuffer is replaced.
+  // Default ON; `?hexCooperativeLinear=0` restores the previous behaviour, and
+  // the diagnostic composer-off path keeps the direct sRGB variant it renders.
+  const hexSearch = typeof window === 'undefined'
+    ? null : new URLSearchParams(window.location.search)
+  const hexComposerOff = hexSearch?.get('colossusPostProbe') === 'off'
+  const hexCooperativeLinear = !!hexSearch && !hexComposerOff &&
+    hexSearch.get('hexCooperativeLinear') !== '0'
   const hexCooperativeTarget = useRef<THREE.WebGLRenderTarget | null>(null)
   useEffect(()=>{
     if(!hexCooperativeLinear)return
@@ -658,15 +673,17 @@ export function RealityHost() {
     }
   },[gl,hexCooperativeLinear])
 
-  // Three.js r187 WebGLProgram.getUniforms()/getAttributes() call
-  // onFirstUse lazily, after compileAsync has resolved. The real HEX click
-  // was still synchronizing 27 shader diagnostic logs for those programs.
-  // TEST ONLY: initialize one original cached GPU program per healthy
-  // idle frame, with full original shader error checking still enabled.
-  const hexPrimeFirstUse=hexCooperativeLinear &&
-    new URLSearchParams(window.location.search).get('hexShadowProgramWarm')==='1' &&
-    typeof window!=='undefined' &&
-    new URLSearchParams(window.location.search).get('hexPrimeFirstUse')==='1'
+  // three r187 WebGLProgram resolves uniform/attribute locations lazily in
+  // onFirstUse(), on the first DRAW of a program, and that path issues
+  // blocking getProgramInfoLog/getShaderInfoLog calls while
+  // renderer.debug.checkShaderErrors is true. Priming moves that driver sync
+  // into idle frames, which trades a smooth first HEX trigger for a hitched
+  // intro -- an exchange that is explicitly rejected here. Priming therefore
+  // stays OPT-IN until a whole-run A/B proves a net win. The zero-cost part is
+  // fixing which variant the preflight compiles (see hexCooperativeLinear).
+  const hexPrimeFirstUse = hexCooperativeLinear &&
+    hexSearch?.get('hexShadowProgramWarm') === '1' &&
+    hexSearch?.get('hexPrimeFirstUse') === '1'
 
   // Optional second diagnostic: after KHR program completion, initialize
   // first-use with the release-mode shader-log setting, while explicitly
@@ -714,15 +731,19 @@ export function RealityHost() {
     }
   }
 
-  // TEST ONLY: precompile the ORIGINAL shadow-depth program variants.
-  // WebGLShadowMap builds MeshDepthMaterial from each source material and
-  // reverses FrontSide/BackSide for the shadow pass. These variants were the
-  // final three uncached GPU programs after 83 cooperative Linear shaders.
-  // We use source geometry/InstancedMesh flags, but NEVER draw a preview,
-  // change 2048px shadow resolution, or touch original source materials.
+  // The shadow pass is the residual case of the same bug: WebGLShadowMap binds
+  // shadow.map (another non-null, non-XR target) before drawing MeshDepthMaterial
+  // variants, so those depth programs are ALSO Linear-variant and also link
+  // lazily on the first reveal frame. After the main queue is fixed they were
+  // the last cold links measured at click time (instanced / mapped / alpha-test).
+  // Warming them reuses the same one-item-per-healthy-frame schedule and the
+  // same cooperative target. It never draws a preview, never changes the 2048px
+  // maps, and never touches original source materials: source geometry and
+  // InstancedMesh flags are borrowed only to select the variant. Fewer than ten
+  // items total, so this cannot shift a stall into the intro.
+  // Default ON; `?hexShadowProgramWarm=0` disables.
   const hexShadowProgramWarm = hexCooperativeLinear &&
-    typeof window !== 'undefined' &&
-    new URLSearchParams(window.location.search).get('hexShadowProgramWarm')==='1'
+    hexSearch?.get('hexShadowProgramWarm') !== '0'
   const hexShadowQueue = useRef({
     items:[] as THREE.Object3D[],
     ownedMaterials:[] as THREE.Material[]

@@ -18,6 +18,10 @@ const REVIEWED_CHANGES=new Set([
  // Beacon social icons: lights stay mounted at zero intensity.
  'orbita/scene/SocialDrops',
  'orbita/world',
+ // HEX first-trigger preflight now compiles the Linear-sRGB program variant
+ // the composer RenderPass actually draws (three r187 keys programs on
+ // outputColorSpace). Behavioural proof: tests/hex-preflight-program-variant.mjs
+ 'orbita/reality/RealityHost',
 ]);
 let baselineDirty=false;
 for(const [k,hash] of Object.entries(baseline)){
