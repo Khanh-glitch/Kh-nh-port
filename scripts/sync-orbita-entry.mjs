@@ -9,7 +9,7 @@ const tag='<script id="orbita-embedded-map" type="application/json">'
 const start=html.indexOf(tag), end=html.indexOf('</script>',start+tag.length)
 if(start<0||end<0)throw Error('Standalone module map missing')
 const map=JSON.parse(html.slice(start+tag.length,end))
-for(const name of ['scene/Experience','ui/Overlay']){
+for(const name of ['scene/Experience','scene/Exhibits','ui/Overlay']){
  const file=resolve(src,name+'.tsx'), id='orbita/'+name
  if(!(id in map))throw Error('Missing '+id)
  const result=ts.transpileModule(readFileSync(file,'utf8'),{fileName:file,reportDiagnostics:true,compilerOptions:{jsx:ts.JsxEmit.ReactJSX,target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ESNext,removeComments:false}})

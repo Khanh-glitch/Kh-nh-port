@@ -1,4 +1,4 @@
-name: HX-9 isolated ship frame measurement
+name: HX-9 staged island boot measurement
 on:
   push:
     branches: [arena/1e2ad83c-kh-nh-port]

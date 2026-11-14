@@ -16,7 +16,7 @@ await page.addInitScript(()=>{
  })
 })
 try{
- await page.goto('http://127.0.0.1:4173/?hx9DiagnosticSpeed=25&hx9Isolate=1',{waitUntil:'domcontentloaded',timeout:120000})
+ await page.goto('http://127.0.0.1:4173/?hx9DiagnosticSpeed=25&hx9Isolate=1&hx9Stage=1',{waitUntil:'domcontentloaded',timeout:120000})
  await page.waitForFunction(()=>window.__orbitaEntryGate?.shipRendered===true,null,{timeout:240000})
  const frame=page.frames().find(f=>f.url().includes('immersive/index.html'))
  if(!frame)throw Error('Spaceship frame missing')
