@@ -45,6 +45,25 @@ for(const test of contexts){
       time:Math.round(performance.now()),prep:{...window.__orbitaHexShaderPrep}
     }))
   }
+  if(test.port===4174 && process.env.HEX_DRAW_WARM==='1'){
+    // Experimental draw warm is measured separately from click performance.
+    // No result may be accepted if prep failed or an idle submit exceeded its budget.
+    await page.evaluate(()=>{
+      window.__hexWarmRaf=[];let last=0
+      function tick(t){if(last)window.__hexWarmRaf.push(t-last);last=t;requestAnimationFrame(tick)}
+      requestAnimationFrame(tick)
+    })
+    await page.waitForFunction(()=>{
+      const p=window.__orbitaHexActualDrawWarm
+      return p && ['ready','failed','empty','rejected-idle-stall'].includes(p.status)
+    },null,{timeout:180000,polling:500})
+    report.actualDrawWarm=await page.evaluate(()=>({
+      ...window.__orbitaHexActualDrawWarm,
+      maxObservedIdleGapMs:Math.round(Math.max(0,...window.__hexWarmRaf))
+    }))
+    if(report.actualDrawWarm.status!=='ready'||report.actualDrawWarm.errors||report.actualDrawWarm.maxSubmitMs>120)
+      throw Error('Actual-draw warmup rejected: '+JSON.stringify(report.actualDrawWarm))
+  }
   await page.evaluate(()=>{
     const {performance}=window
     window.__hexFrames=[]

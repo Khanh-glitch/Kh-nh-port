@@ -177,3 +177,28 @@ The candidate has a hard **120ms per-idle-submission rejection** and keeps an ex
 **Testable artifact, without production promotion:** GitHub Actions [run 42995170872](https://github.com/Khanh-glitch/Kh-nh-port/actions/runs/42995170872) built the root standalone and all original public assets; artifact `13843542258`, size 1.1MB zipped, SHA `d54572e80e05b9f2a93cc77824cdf49be2e348ad` (exact contents include `index.html` and real asset tree). The user also received an equivalent downloaded zip with `START-HEX-TEST.html` to directly choose default, leaves and full-vegetation mode. This is **playable for user validation**, but NOT certified free of freezes; feedback from real hardware is part of final acceptance. Cloudflare Pages has no confirmed preview URL in repo; never invent one. Do not merge `main` or call release DONE without both first-click and full-lifecycle frame pacing plus visual acceptance.
 
 **Next:** on latest CI, compare `maxGapMs` / `maxTimerGapMs` and actual scene visual states for leaf gates; if still multi-second, reject and target materialization GPU scheduling/overdraw with *preservation-equivalent* representation, not deletion. Keep a self-contained user-testable artifact updated for the exact accepted SHA.
+
+### 2026-11-14 — original-material, private-target warm experiment
+
+The default scene at `95240f7` still failed the native Metal release gate:
+first-summon rAF gap 7.335s candidate-first and 5.549s candidate-second;
+switch gaps 700ms and 683ms. Neither tree batching nor the earlier 2×2
+basic-material attribute warm is accepted.
+
+New query-only `?hexActualDrawWarm=1` experiment submits each of the eight
+original instanced meshes, with its original material and shared geometry and
+instance attributes, to a private 4×4 linear target, one per healthy idle
+frame. It restores render target, viewport, scissor, XR and materialization
+uniforms immediately. The scratch scene has cloned lights without shadow
+casting; it does **not** warm identical shadow variants and is not proof of a
+full first-draw cure. It does not alter any visible geometry, texture,
+resolution, shaders or shadow setting. It rejects any individual CPU submit
+above 120ms and is disabled by default.
+
+`portfolio-hex-real-draw-warm.yml` runs same-build A/B in both orders. The
+candidate waits for the experimental preparation and records idle rAF gaps,
+submission time, errors and the full lifecycle. A warmup timeout, error or
+idle stall is rejection, not a green success. Initial software-rendering scene
+smoke created the eight-item queue with no page errors; it does not establish
+performance or visual parity. Await native results and compare real nine-stage
+HIGH visual captures before considering any default change.

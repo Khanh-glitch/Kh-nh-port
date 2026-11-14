@@ -521,6 +521,121 @@ export function RealityHost() {
     }
   })
 
+  // Experimental, never enabled by default: unlike the rejected basic-material
+  // attribute probe, exercise the original instanced PBR material and original
+  // geometry/attributes in a tiny private linear target, one mesh per healthy
+  // idle frame. Nothing from this target is composited into the visible scene.
+  const actualDrawWarm = typeof window !== 'undefined' &&
+    new URLSearchParams(window.location.search).get('hexActualDrawWarm') === '1'
+  const drawWarm = useRef({
+    status: 'disabled', total: 0, done: 0, maxSubmitMs: 0, errors: 0,
+    healthy: 0, scene: null as THREE.Scene | null,
+    target: null as THREE.WebGLRenderTarget | null,
+    camera: null as THREE.PerspectiveCamera | null,
+    queue: [] as THREE.InstancedMesh[],
+  }).current
+  useEffect(() => {
+    if (!actualDrawWarm || !ueh.current) return
+    const scratch = new THREE.Scene()
+    scratch.environment = scene.environment
+    const sources: THREE.InstancedMesh[] = []
+    ueh.current.traverse(o => {
+      const m = o as THREE.InstancedMesh
+      if (m.isInstancedMesh && m.count && !Array.isArray(m.material)) sources.push(m)
+    })
+    scene.traverse(o => {
+      const light = o as THREE.Light
+      if (!light.isLight || !light.visible) return
+      const copy = light.clone()
+      light.updateWorldMatrix(true, false)
+      copy.matrixAutoUpdate = false
+      copy.matrix.copy(light.matrixWorld)
+      // Do not render shadow maps in the scratch scene; the original shadow
+      // configuration and 2048px maps in the visible scene remain untouched.
+      copy.castShadow = false
+      scratch.add(copy)
+    })
+    const queue = sources.map(source => {
+      const probe = source.clone(false) as THREE.InstancedMesh
+      probe.instanceMatrix = source.instanceMatrix
+      probe.instanceColor = source.instanceColor
+      probe.material = source.material
+      probe.geometry = source.geometry
+      source.updateWorldMatrix(true, false)
+      probe.matrixAutoUpdate = false
+      probe.matrix.copy(source.matrixWorld)
+      probe.frustumCulled = false
+      probe.castShadow = false
+      return probe
+    })
+    const target = new THREE.WebGLRenderTarget(4, 4, { depthBuffer: true, stencilBuffer: false })
+    target.texture.colorSpace = THREE.LinearSRGBColorSpace
+    const probeCamera = new THREE.PerspectiveCamera(72, 1, 0.1, 9000)
+    Object.assign(drawWarm, { status: queue.length ? 'warming' : 'empty', total: queue.length,
+      done: 0, maxSubmitMs: 0, errors: 0, healthy: 0, scene: scratch, target, camera: probeCamera, queue })
+    ;(window as unknown as {__orbitaHexActualDrawWarm?: unknown}).__orbitaHexActualDrawWarm = {
+      status: drawWarm.status, total: drawWarm.total, done: 0, maxSubmitMs: 0, errors: 0,
+    }
+    return () => { target.dispose(); scratch.clear(); drawWarm.status = 'disposed'; drawWarm.queue = [] }
+  }, [actualDrawWarm, scene, drawWarm])
+  useFrame((_state, dt) => {
+    const w = drawWarm
+    if (!actualDrawWarm || w.status !== 'warming') return
+    if (S.warmPass !== 2 || useReality.getState().phase !== 'idle' ||
+        useStore.getState().phase !== 'playing' || document.visibilityState !== 'visible') { w.healthy = 0; return }
+    const pending = (navigator as Navigator & { scheduling?: { isInputPending?: () => boolean } }).scheduling?.isInputPending?.() ?? false
+    w.healthy = dt > 0 && dt < 0.08 && !pending ? w.healthy + 1 : 0
+    if (w.healthy < 2) return
+    w.healthy = 0
+    const proxy = w.queue[w.done]
+    if (!proxy || !w.scene || !w.target || !w.camera) return
+    const previousTarget = gl.getRenderTarget()
+    const viewport = gl.getViewport(new THREE.Vector4()).clone()
+    const scissor = gl.getScissor(new THREE.Vector4()).clone()
+    const scissorTest = gl.getScissorTest()
+    const autoClear = gl.autoClear
+    const xr = gl.xr.enabled
+    const oldRw = RW.uRW.value.clone()
+    const start = performance.now()
+    try {
+      const focus = new THREE.Vector3().setFromMatrixPosition(proxy.matrix)
+      w.camera.position.copy(camera.position)
+      w.camera.lookAt(focus)
+      w.camera.updateMatrixWorld(true)
+      w.scene.add(proxy)
+      gl.xr.enabled = false
+      gl.autoClear = true
+      gl.setRenderTarget(w.target)
+      gl.setViewport(0, 0, 4, 4)
+      gl.setScissorTest(false)
+      RW.uRW.value.x = FRONT_MAX
+      RW.uRW.value.z = 1
+      gl.clear(true, true, false)
+      gl.render(w.scene, w.camera)
+      w.done++
+      if (w.done === w.total) w.status = 'ready'
+    } catch (error) {
+      w.errors++
+      w.status = 'failed'
+      console.warn('[HEX actual PBR warmup]', error)
+    } finally {
+      w.scene.remove(proxy)
+      RW.uRW.value.copy(oldRw)
+      gl.setRenderTarget(previousTarget)
+      gl.setViewport(viewport)
+      gl.setScissor(scissor)
+      gl.setScissorTest(scissorTest)
+      gl.autoClear = autoClear
+      gl.xr.enabled = xr
+      w.maxSubmitMs = Math.max(w.maxSubmitMs, performance.now() - start)
+      if (w.maxSubmitMs > 120) w.status = 'rejected-idle-stall'
+    }
+    ;(window as unknown as {__orbitaHexActualDrawWarm?: unknown}).__orbitaHexActualDrawWarm = {
+      status: w.status, total: w.total, done: w.done,
+      maxSubmitMs: Math.round(w.maxSubmitMs), errors: w.errors,
+    }
+  })
+
   const recordHexTiming = (step: string, started: number) => {
     if (typeof window === 'undefined' || new URLSearchParams(location.search).get('hexProfile') !== '1') return
     const host = window as unknown as {__orbitaHexTimings?: Array<{step:string;ms:number;at:number}>}
