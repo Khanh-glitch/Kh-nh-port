@@ -1,3 +1,4 @@
+import { portfolio } from 'ship/portfolioData';
 import { jsx as _jsx } from "react/jsx-runtime";
 import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
@@ -736,25 +737,78 @@ export default function SpaceScene() {
                 }
             } catch (error) { if (!cancelled) reportFailure('cockpit-load: ' + String(error)); }
         }
-        let identityAdded = false;
-        function addIdentity() {
-            if (identityAdded) return;
-            const primary = screens.find(s => s.index === 0);
-            if (!primary) return;
-            identityAdded = true;
-            const canvas = document.createElement('canvas'); canvas.width = 1024; canvas.height = 256;
-            const ctx = canvas.getContext('2d');
-            ctx.fillStyle = 'rgba(2,15,24,.90)'; ctx.fillRect(0,0,1024,256);
-            ctx.strokeStyle = '#65d9f1'; ctx.lineWidth=4; ctx.strokeRect(3,3,1018,250);
-            ctx.font = '500 35px sans-serif'; ctx.fillStyle = '#88cbdc'; ctx.fillText('PILOT PROFILE  /  ORBITA',42,65);
-            ctx.font = '700 78px sans-serif'; ctx.fillStyle = '#e5fbff'; ctx.fillText('LÊ QUỐC KHÁNH',42,165);
-            const tex = new THREE.CanvasTexture(canvas); tex.colorSpace=THREE.SRGBColorSpace;
-            const material = new THREE.MeshBasicMaterial({map:tex, transparent:true, toneMapped:false, depthWrite:false});
-            const overlay = new THREE.Mesh(new THREE.PlaneGeometry(.39,.097),material);
-            overlay.position.set(0,-.04,.004); overlay.layers.set(1);
-            primary.mesh.add(overlay);
-            cockpitRoot.userData.identity = {tex,material,geometry:overlay.geometry};
+        // The three main displays are the real HX-9 screen meshes, not DOM
+        // approximations. Canvas textures use large type and high contrast so
+        // they stay legible after projection onto the model's small screens.
+        const interactiveScreens = [];
+        function makeDisplay(index) {
+            const screen = screens.find(s => s.index === index);
+            if (!screen) return;
+            const wide = index === 0;
+            const canvas = document.createElement('canvas');
+            canvas.width = wide ? 1536 : 1024; canvas.height = wide ? 768 : 768;
+            const c = canvas.getContext('2d'), w = canvas.width, h = canvas.height;
+            const bg=c.createLinearGradient(0,0,w,h);bg.addColorStop(0,'#071725');bg.addColorStop(1,'#020a12');
+            c.fillStyle=bg;c.fillRect(0,0,w,h);
+            c.strokeStyle='rgba(96,202,230,.09)';c.lineWidth=2;
+            for(let x=0;x<w;x+=80){c.beginPath();c.moveTo(x,0);c.lineTo(x,h);c.stroke()}
+            for(let y=0;y<h;y+=80){c.beginPath();c.moveTo(0,y);c.lineTo(w,y);c.stroke()}
+            c.fillStyle='#5fdef2';c.fillRect(0,0,w,9);
+            c.fillStyle='#67d3e6';c.font='700 36px system-ui, sans-serif';
+            c.fillText(index===0?portfolio.labels.profile:index===2?portfolio.labels.project:portfolio.labels.connect,54,72);
+            c.fillStyle='#b7d6e3';c.font='600 34px system-ui, sans-serif';
+            if (index===0) {
+                c.fillText(portfolio.focus,54,137);
+                c.fillStyle='#f5fbff';c.font='800 95px system-ui, sans-serif';c.fillText(portfolio.name,54,267);
+                c.fillStyle='#a6c9d8';c.font='600 39px system-ui, sans-serif';c.fillText(portfolio.headline,54,342);
+                c.fillStyle='#78e0ed';c.fillRect(54,405,6,72);
+                c.fillStyle='#dceff5';c.font='500 36px system-ui, sans-serif';
+                c.fillText(portfolio.summary[0],82,436);
+                c.fillText(portfolio.summary[1],82,484);
+                c.fillStyle='#adf2ff';c.fillRect(54,576,720,112);
+                c.fillStyle='#06131c';c.font='800 40px system-ui, sans-serif';c.fillText(portfolio.labels.enter+'  ↗',85,648);
+            } else if (index===2) {
+                c.fillStyle='#f4fbff';c.font='800 78px system-ui, sans-serif';c.fillText(portfolio.project.title,54,184);
+                c.fillStyle='#bdd4e0';c.font='600 48px system-ui, sans-serif';c.fillText(portfolio.project.description,54,257);
+                c.fillStyle='#70e1ec';c.fillRect(54,309,6,85);
+                c.fillStyle='#d3e5eb';c.font='700 44px system-ui, sans-serif';c.fillText(portfolio.corava.title,78,350);
+                c.font='600 38px system-ui, sans-serif';c.fillText(portfolio.corava.role,78,405);
+                c.fillStyle='#b3f4ff';c.fillRect(54,555,735,116);
+                c.fillStyle='#06131c';c.font='800 38px system-ui, sans-serif';c.fillText(portfolio.project.action+'  ↗',82,627);
+            } else {
+                c.fillStyle='#f4fbff';c.font='800 77px system-ui, sans-serif';c.fillText('KẾT NỐI',54,184);
+                c.fillStyle='#bdd4e0';c.font='500 38px system-ui, sans-serif';c.fillText(portfolio.connectIntro[0],54,257);c.fillText(portfolio.connectIntro[1],54,310);
+                c.fillStyle='#b3f4ff';c.fillRect(54,379,720,111);c.fillStyle='#06131c';c.font='800 43px system-ui, sans-serif';c.fillText('LINKEDIN  ↗',82,449);
+                c.fillStyle='#142e3b';c.fillRect(54,525,720,111);c.strokeStyle='#72d7e7';c.strokeRect(54,525,720,111);c.fillStyle='#d9f9ff';c.fillText('GITHUB  ↗',82,595);
+            }
+            c.fillStyle='#7599aa';c.font='600 24px system-ui, sans-serif';c.fillText(portfolio.labels.hint,54,h-34);
+            const tex=new THREE.CanvasTexture(canvas);tex.colorSpace=THREE.SRGBColorSpace;
+            tex.anisotropy=Math.min(8,renderer.capabilities.getMaxAnisotropy());
+            screen.mesh.material.map=tex;screen.mesh.material.needsUpdate=true;
+            interactiveScreens.push(screen);
         }
+        let displaysAdded=false;
+        function addDisplays() {
+            if (displaysAdded) return;
+            if (![0,2,3].every(i=>screens.some(s=>s.index===i))) return;
+            displaysAdded=true;
+            for(const i of [0,2,3]) makeDisplay(i);
+        }
+        const screenRaycaster = new THREE.Raycaster(), screenPointer = new THREE.Vector2();
+        screenRaycaster.layers.set(1);
+        const onScreenClick = event => {
+            if (!introCompleted || event.button !== 0) return;
+            const rect=renderer.domElement.getBoundingClientRect();
+            screenPointer.set((event.clientX-rect.left)/rect.width*2-1, 1-(event.clientY-rect.top)/rect.height*2);
+            screenRaycaster.setFromCamera(screenPointer,camera);
+            const hit=screenRaycaster.intersectObjects(interactiveScreens.map(s=>s.mesh),false)[0];
+            if (!hit) return;
+            const screen=interactiveScreens.find(s=>s.mesh===hit.object);
+            if (screen.index===0) window.dispatchEvent(new Event('orbita-hx9-enter'));
+            else if (screen.index===2) window.open(portfolio.project.url,'_blank','noopener,noreferrer');
+            else window.open(hit.uv.y > .345 ? portfolio.links.linkedin : portfolio.links.github,'_blank','noopener,noreferrer');
+        };
+        renderer.domElement.addEventListener('click',onScreenClick);
         const orbitPosition = new THREE.Vector3();
         const dockPosition = new THREE.Vector3(0, .135, -4.58);
         const orbitLook = new THREE.Vector3(0, -.1, -5);
@@ -797,7 +851,7 @@ export default function SpaceScene() {
                 camera.lookAt(lookTarget);
                 for (const screen of screens) screen.mesh.material.color.copy(screen.base).multiplyScalar(hx.screenPower(cinematicTime,screen.index));
                 if (cockpitRoot.userData.fill) cockpitRoot.userData.fill.intensity=3.6*hx.screenPower(cinematicTime,0);
-                if (cinematicTime >= hx.CINEMATIC_END - 1.5) addIdentity();
+                if (cinematicTime >= hx.POWER_START - .5) addDisplays();
                 if (cinematicTime >= hx.CINEMATIC_END && !introCompleted && parts.size === 6) {
                     introCompleted = true;
                     progress('Phi thuyền sẵn sàng · mời bạn khởi hành.');
@@ -904,6 +958,7 @@ export default function SpaceScene() {
             cockpitEnvironment?.dispose();
             off();
             renderer.domElement.removeEventListener('webglcontextlost', onContextLost);
+            renderer.domElement.removeEventListener('click', onScreenClick);
             window.removeEventListener('resize', resize);
             disposables.forEach((d) => d.dispose());
             rocks.dispose();

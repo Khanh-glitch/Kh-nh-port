@@ -1,0 +1,18 @@
+import assert from 'node:assert/strict'
+import {readFileSync} from 'node:fs'
+const {portfolio}=await import('../assets/immersive/src/portfolioData.js')
+const scene=readFileSync('assets/immersive/src/SpaceScene.js','utf8')
+const app=readFileSync('assets/immersive/src/App.js','utf8')
+assert.equal(portfolio.name,'LÊ QUỐC KHÁNH')
+assert.equal(portfolio.links.linkedin,'https://www.linkedin.com/in/quockhanh-le/')
+assert.equal(portfolio.links.github,'https://github.com/Khanh-glitch')
+assert.equal(portfolio.project.url,'https://apex-chaos.pages.dev/')
+assert(scene.includes('screenRaycaster.layers.set(1)'))
+assert(scene.includes('for(const i of [0,2,3]) makeDisplay(i)'))
+assert(scene.includes('screen.mesh.material.map=tex'))
+assert(scene.includes("window.dispatchEvent(new Event('orbita-hx9-enter'))"))
+assert(app.includes('aria-label'))
+assert(app.includes('portfolio.links.linkedin'))
+assert(app.includes('portfolio.links.github'))
+assert(!JSON.stringify(portfolio).includes('hello@orbita.studio'))
+console.log('HX9_RECRUITER_SCREENS_PASS')

@@ -1,3 +1,4 @@
+import { portfolio } from 'ship/portfolioData';
 import { jsx as h, jsxs } from 'react/jsx-runtime';
 import { useState, useEffect, useCallback } from 'react';
 import SpaceScene from 'ship/components/SpaceScene';
@@ -42,14 +43,33 @@ export default function App() {
     setSpooled(false);setJump('charging');setStatus('Đang tăng tốc · chuẩn bị đảo Orbita…');flight.warp=true;
     parent.postMessage({type:'ORBITA_SPACE_ENGAGE'},location.origin);
   },[cockpitReady,jump]);
+  useEffect(()=>{ window.addEventListener('orbita-hx9-enter',engage); return ()=>window.removeEventListener('orbita-hx9-enter',engage); },[engage]);
   return jsxs('div',{className:'app hx9-app','data-space-painted':painted?'true':'false','data-jump':jump,children:[
     h(SpaceScene,{}),
-    jsxs('div',{className:'hx9-status',role:'status','aria-live':'polite',children:[
+    jsxs('div',{className:'hx9-status'+(cockpitReady?' hx9-status-ready':''),role:'status','aria-live':'polite',children:[
       h('div',{className:'hx9-eyebrow',children:'ORBITA · HX-9'}),
       h('div',{className:'hx9-title',children:'Hành trình đang hình thành'}),
       h('div',{className:'hx9-copy',children:jump === 'charging' ? 'Đang tăng tốc · chuẩn bị đảo Orbita…' : gate?'Phi thuyền sẵn sàng · Không gian Orbita đã mở':status}),
       h('div',{className:'hx9-line',children:h('span',{})}),
       cockpitReady && h('button',{type:'button',className:'hx9-enter',disabled:jump!=='idle',onClick:engage,children:jump!=='idle'?'ĐANG KHỞI HÀNH':'BƯỚC VÀO ORBITA'})
+    ]}),
+    cockpitReady && h('p',{className:'hx9-sr-only',children:portfolio.name+'. '+portfolio.focus+'. '+portfolio.summary[0]+'. '+portfolio.project.title+': '+portfolio.project.description+'. '+portfolio.corava.title+': '+portfolio.corava.role+'.'}),
+    cockpitReady && jump === 'idle' && jsxs('details',{className:'hx9-mobile-brief',children:[
+      h('summary',{children:'HỒ SƠ & TÁC PHẨM'}),
+      jsxs('div',{className:'hx9-mobile-brief-body',children:[
+        h('strong',{children:portfolio.name}),
+        h('p',{children:portfolio.focus+' — '+portfolio.summary[0]}),
+        h('strong',{children:portfolio.project.title}),
+        h('p',{children:portfolio.project.description}),
+        h('strong',{children:portfolio.corava.title}),
+        h('p',{children:portfolio.corava.role}),
+        h('p',{children:'Chọn liên kết bên dưới để chơi demo hoặc liên hệ.'})
+      ]})
+    ]}),
+    cockpitReady && jump === 'idle' && jsxs('nav',{className:'hx9-actions','aria-label':'Liên kết portfolio và liên hệ',children:[
+      h('a',{href:portfolio.project.url,target:'_blank',rel:'noopener noreferrer',children:'CHƠI APEX CHAOS ↗'}),
+      h('a',{href:portfolio.links.linkedin,target:'_blank',rel:'noopener noreferrer',children:'LIÊN HỆ LINKEDIN ↗'}),
+      h('a',{href:portfolio.links.github,target:'_blank',rel:'noopener noreferrer',children:'GITHUB ↗'})
     ]}),
     h('div',{className:'flash','aria-hidden':'true'})
   ]});

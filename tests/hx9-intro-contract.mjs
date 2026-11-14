@@ -9,7 +9,7 @@ assert(ship.indexOf('realRenderedFrames >= 2') < ship.indexOf('if (modelReady &&
 assert(ship.includes('loader.parseAsync'))
 assert(ship.includes('hx.fabricationScan'))
 assert(ship.includes('hx.patchFabrication'))
-assert(ship.includes('LÊ QUỐC KHÁNH'))
+assert(ship.includes('portfolio.name'))
 assert(ship.includes("type: 'ORBITA_SPACE_FRAME_READY'"))
 assert(ship.includes('cockpitEnvironment?.dispose()'))
 assert(app.includes('ORBITA_SPACE_WARP_COMPLETE'))
