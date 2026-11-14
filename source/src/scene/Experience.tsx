@@ -1,4 +1,4 @@
-import { Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
+import { Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { Bloom, ChromaticAberration, EffectComposer, Noise, ToneMapping, Vignette } from '@react-three/postprocessing'
 import { BlendFunction, ToneMappingMode, Effect, EffectAttribute } from 'postprocessing'
@@ -1128,9 +1128,6 @@ function homography(src: number[][], dst: number[][]): number[] | null {
 
 export function Experience() {
   const [islandPrepared, setIslandPrepared] = useState(false)
-  const stageBoot = new URLSearchParams(window.location.search).get('hx9Stage') === '1'
-  const [exhibitsReady, setExhibitsReady] = useState(!stageBoot)
-  const onExhibitsReady = useCallback(() => setExhibitsReady(true), [])
   const quality = useStore((s) => s.quality)
   // One panel canvas and one texture for the whole session. Allocating them per
   // open would upload a fresh 1024x1280 texture and drop the old one while the
@@ -1216,16 +1213,16 @@ export function Experience() {
         {!islandPrepared && <LandingGpuPreflight />}
         <Phenomena />
         <Platform />
-        <Exhibits staged={stageBoot} onReady={onExhibitsReady} />
+        <Exhibits />
         <Player />
-        {exhibitsReady && <RealityHost />}
+        <RealityHost />
         <FloatingPanel canvas={panelCanvas} tex={panelTex} />
         <HexLocalVideo />
         {officialYoutubeMode && <HexVideoLayer />}
         <HexStageVideoLink />
         {officialYoutubeMode && <HexPlayerControls />}
         <Post low={low} portalOnly={postProbeOff} filmPasses={!concessions.dropFilmPasses} bloomLevels={performanceMode ? concessions.bloomLevels : undefined} />
-        {exhibitsReady && <IslandFirstPaintGate onReady={() => setIslandPrepared(true)} />}
+        <IslandFirstPaintGate onReady={() => setIslandPrepared(true)} />
       </Suspense>
     </Canvas>
   )
