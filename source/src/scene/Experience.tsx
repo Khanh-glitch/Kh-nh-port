@@ -280,42 +280,6 @@ function LandingGpuPreflight() {
  * submitted actual scene frames, not after a timer or a synthetic percentage.
  * This is intentionally independent of optional HEX/robot shader prewarm.
  */
-/** Diagnostic: compile the real visible island shaders before its first draw.
- * No readiness is reported here: IslandFirstPaintGate still requires actual frames. */
-function IslandShaderPrecompile({ onComplete }: { onComplete: () => void }) {
-  const { gl, scene, camera } = useThree()
-  useEffect(() => {
-    let cancelled = false
-    const info = { status: 'starting', startedAt: performance.now(), error: '' }
-    ;(window as unknown as {__orbitaIslandShaderCompile: typeof info}).__orbitaIslandShaderCompile = info
-    const finish = (status: string) => {
-      if (cancelled) return
-      info.status = status
-      onComplete()
-    }
-    // Without parallel compilation there is no non-blocking status query.
-    if (!gl.getContext().getExtension('KHR_parallel_shader_compile')) {
-      finish('unsupported')
-      return () => { cancelled = true }
-    }
-    const timer = window.setTimeout(() => {
-      try {
-        info.status = 'compiling'
-        scene.updateMatrixWorld(true)
-        void gl.compileAsync(scene, camera).then(() => finish('ready'), (error) => {
-          info.error = String(error)
-          finish('failed')
-        })
-      } catch (error) {
-        info.error = String(error)
-        finish('failed')
-      }
-    }, 0)
-    return () => { cancelled = true; clearTimeout(timer) }
-  }, [gl, scene, camera, onComplete])
-  return null
-}
-
 function IslandFirstPaintGate({ onReady }: { onReady: () => void }) {
   const { gl } = useThree()
   const done = useRef(false)
@@ -1164,9 +1128,6 @@ function homography(src: number[][], dst: number[][]): number[] | null {
 
 export function Experience() {
   const [islandPrepared, setIslandPrepared] = useState(false)
-  const [shadersPrepared, setShadersPrepared] = useState(false)
-  const setShadersPreparedTrue = useMemo(() => () => setShadersPrepared(true), [])
-  const testAsyncCompile = new URLSearchParams(window.location.search).get('hx9AsyncCompile') === '1'
   const quality = useStore((s) => s.quality)
   // One panel canvas and one texture for the whole session. Allocating them per
   // open would upload a fresh 1024x1280 texture and drop the old one while the
@@ -1238,7 +1199,7 @@ export function Experience() {
       // Render the hidden island at its existing preparation DPR. After its
       // real first frames, stop hidden animation to give warp the GPU; the
       // original full-quality DPR is restored when the island becomes visible.
-      frameloop={phase === 'intro' && testAsyncCompile && !shadersPrepared ? 'never' : phase === 'intro' && islandPrepared ? 'demand' : 'always'}
+      frameloop={phase === 'intro' && islandPrepared ? 'demand' : 'always'}
       dpr={phase === 'intro' ? 0.5 : low ? concessions.renderScale : [1, 1.6]}
       shadows="percentage"
       camera={{ fov: 72, near: 0.1, far: 9000, position: [0, 17, 88] }}
@@ -1261,7 +1222,6 @@ export function Experience() {
         <HexStageVideoLink />
         {officialYoutubeMode && <HexPlayerControls />}
         <Post low={low} portalOnly={postProbeOff} filmPasses={!concessions.dropFilmPasses} bloomLevels={performanceMode ? concessions.bloomLevels : undefined} />
-        {testAsyncCompile && !shadersPrepared && <IslandShaderPrecompile onComplete={setShadersPreparedTrue} />}
         <IslandFirstPaintGate onReady={() => setIslandPrepared(true)} />
       </Suspense>
     </Canvas>
