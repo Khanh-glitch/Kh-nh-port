@@ -768,13 +768,13 @@ export default function SpaceScene() {
                 c.fillStyle='#adf2ff';c.fillRect(54,576,720,112);
                 c.fillStyle='#06131c';c.font='800 40px system-ui, sans-serif';c.fillText(portfolio.labels.enter+'  ↗',85,648);
             } else if (index===2) {
-                c.fillStyle='#f4fbff';c.font='800 78px system-ui, sans-serif';c.fillText(portfolio.project.title,54,184);
-                c.fillStyle='#bdd4e0';c.font='600 48px system-ui, sans-serif';c.fillText(portfolio.project.description,54,257);
-                c.fillStyle='#70e1ec';c.fillRect(54,309,6,85);
-                c.fillStyle='#d3e5eb';c.font='700 44px system-ui, sans-serif';c.fillText(portfolio.corava.title,78,350);
-                c.font='600 38px system-ui, sans-serif';c.fillText(portfolio.corava.role,78,405);
+                c.fillStyle='#f4fbff';c.font='800 66px system-ui, sans-serif';c.fillText(portfolio.corava.title,54,181);
+                c.fillStyle='#bdd4e0';c.font='600 40px system-ui, sans-serif';c.fillText(portfolio.corava.role,54,247);
+                c.fillStyle='#70e1ec';c.fillRect(54,300,6,104);
+                c.fillStyle='#f4fbff';c.font='700 54px system-ui, sans-serif';c.fillText(portfolio.music.title,78,349);
+                c.fillStyle='#bdd4e0';c.font='600 40px system-ui, sans-serif';c.fillText(portfolio.music.role,78,407);
                 c.fillStyle='#b3f4ff';c.fillRect(54,555,735,116);
-                c.fillStyle='#06131c';c.font='800 38px system-ui, sans-serif';c.fillText(portfolio.project.action+'  ↗',82,627);
+                c.fillStyle='#06131c';c.font='800 38px system-ui, sans-serif';c.fillText('XEM HỒ SƠ & TÁC PHẨM  ↗',82,627);
             } else {
                 c.fillStyle='#f4fbff';c.font='800 77px system-ui, sans-serif';c.fillText('KẾT NỐI',54,184);
                 c.fillStyle='#bdd4e0';c.font='500 38px system-ui, sans-serif';c.fillText(portfolio.connectIntro[0],54,257);c.fillText(portfolio.connectIntro[1],54,310);
@@ -805,7 +805,7 @@ export default function SpaceScene() {
             if (!hit) return;
             const screen=interactiveScreens.find(s=>s.mesh===hit.object);
             if (screen.index===0) window.dispatchEvent(new Event('orbita-hx9-enter'));
-            else if (screen.index===2) window.open(portfolio.project.url,'_blank','noopener,noreferrer');
+            else if (screen.index===2) window.dispatchEvent(new Event('orbita-hx9-brief'));
             else window.open(hit.uv.y > .345 ? portfolio.links.linkedin : portfolio.links.github,'_blank','noopener,noreferrer');
         };
         renderer.domElement.addEventListener('click',onScreenClick);

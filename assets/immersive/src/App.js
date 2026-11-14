@@ -10,6 +10,7 @@ export default function App() {
   const [gate,setGate]=useState(false);
   const [jump,setJump]=useState('idle');
   const [spooled,setSpooled]=useState(false);
+  const [briefOpen,setBriefOpen]=useState(false);
   useEffect(()=>{
     const progress=e=>{setStatus(e.detail);setPainted(true)};
     const msg=e=>{if(e.origin===location.origin && e.source===parent && e.data?.type==='ORBITA_SPACE_READY')setGate(e.data.ready===true)};
@@ -44,6 +45,7 @@ export default function App() {
     parent.postMessage({type:'ORBITA_SPACE_ENGAGE'},location.origin);
   },[cockpitReady,jump]);
   useEffect(()=>{ window.addEventListener('orbita-hx9-enter',engage); return ()=>window.removeEventListener('orbita-hx9-enter',engage); },[engage]);
+  useEffect(()=>{const open=()=>setBriefOpen(true);window.addEventListener('orbita-hx9-brief',open);return ()=>window.removeEventListener('orbita-hx9-brief',open)},[]);
   return jsxs('div',{className:'app hx9-app','data-space-painted':painted?'true':'false','data-jump':jump,children:[
     h(SpaceScene,{}),
     jsxs('div',{className:'hx9-status'+(cockpitReady?' hx9-status-ready':''),role:'status','aria-live':'polite',children:[
@@ -53,17 +55,18 @@ export default function App() {
       h('div',{className:'hx9-line',children:h('span',{})}),
       cockpitReady && h('button',{type:'button',className:'hx9-enter',disabled:jump!=='idle',onClick:engage,children:jump!=='idle'?'ĐANG KHỞI HÀNH':'BƯỚC VÀO ORBITA'})
     ]}),
-    cockpitReady && h('p',{className:'hx9-sr-only',children:portfolio.name+'. '+portfolio.focus+'. '+portfolio.summary[0]+'. '+portfolio.project.title+': '+portfolio.project.description+'. '+portfolio.corava.title+': '+portfolio.corava.role+'.'}),
-    cockpitReady && jump === 'idle' && jsxs('details',{className:'hx9-mobile-brief',children:[
+    cockpitReady && h('p',{className:'hx9-sr-only',children:portfolio.name+'. '+portfolio.focus+'. '+portfolio.summary.join('. ')+'. '+portfolio.corava.title+': '+portfolio.corava.role+'. '+portfolio.music.title+': '+portfolio.music.role+'.'}),
+    cockpitReady && jump === 'idle' && jsxs('details',{className:'hx9-mobile-brief',open:briefOpen,onToggle:e=>setBriefOpen(e.currentTarget.open),children:[
       h('summary',{children:'HỒ SƠ & TÁC PHẨM'}),
       jsxs('div',{className:'hx9-mobile-brief-body',children:[
-        h('strong',{children:portfolio.name}),
-        h('p',{children:portfolio.focus+' — '+portfolio.summary[0]}),
-        h('strong',{children:portfolio.project.title}),
-        h('p',{children:portfolio.project.description}),
-        h('strong',{children:portfolio.corava.title}),
-        h('p',{children:portfolio.corava.role}),
-        h('p',{children:'Chọn liên kết bên dưới để chơi demo hoặc liên hệ.'})
+        h('strong',{className:'hx9-brief-name',children:portfolio.name}),
+        h('p',{children:portfolio.focus+' — '+portfolio.headline}),
+        ...portfolio.highlights.map(item=>jsxs('section',{className:'hx9-brief-item',children:[
+          h('span',{className:'hx9-brief-category',children:item.category}),
+          h('strong',{children:item.title}),h('p',{children:item.role}),
+          item.url ? h('a',{href:item.url,target:'_blank',rel:'noopener noreferrer',children:item.linkLabel+' ↗'}) : h('span',{className:'hx9-brief-note',children:item.linkLabel})
+        ]},item.title)),
+        h('a',{className:'hx9-brief-demo',href:portfolio.project.url,target:'_blank',rel:'noopener noreferrer',children:'Chơi APEX CHAOS ↗'})
       ]})
     ]}),
     cockpitReady && jump === 'idle' && jsxs('nav',{className:'hx9-actions','aria-label':'Liên kết portfolio và liên hệ',children:[

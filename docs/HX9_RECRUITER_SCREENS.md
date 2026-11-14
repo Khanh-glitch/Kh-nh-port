@@ -1,38 +1,47 @@
-# HX-9: hồ sơ trên ba màn hình
+# HX-9: thông tin cho nhà tuyển dụng
 
-`assets/immersive/src/portfolioData.js` là nguồn quản lí nội dung cho cả ba
-màn hình và các liên kết truy cập bằng bàn phím. Khi cập nhật, chỉ công bố vai
-trò và đường dẫn có thể kiểm chứng; không suy diễn chức danh, thâm niên, thành
-tích, email, số điện thoại hoặc kết quả dự án chưa có nguồn.
+`assets/immersive/src/portfolioData.js` là trung tâm quản lí nội dung của ba
+màn hình khoang lái, hồ sơ nhanh và các liên kết. Cập nhật dữ liệu ở đây rồi
+chạy `node scripts/build-hx9-intro.mjs` để xuất bản import map.
 
-## Cấu trúc dành cho nhà tuyển dụng
+## Cách chọn thông tin mở đầu
 
-- **Trung tâm — giới thiệu & khám phá**: tên thật, ba lĩnh vực thể hiện trong
-  portfolio, và nút vào thế giới để xem tác phẩm và phạm vi đóng góp.
-- **Trái — bằng chứng công việc**: APEX CHAOS với liên kết bản demo đã có trong
-  `source/src/content.ts`; CoravaMaris ghi rõ phạm vi *Audio / Pitch / Level
-  Design*, không gán vai trò sản xuất video. Nguồn và giới hạn ở
-  `docs/PORTFOLIO_MEDIA.md` mục Additional project credits.
-- **Phải — liên hệ**: LinkedIn và GitHub theo `source/src/layout.ts`. Không dùng
-  email hoặc số điện thoại mẫu trong `STUDIO` của `source/src/content.ts`.
+Các nguồn hướng dẫn tuyển dụng đề xuất giới thiệu ngắn, nêu rõ **đóng góp cá
+nhân**, có ví dụ công việc và một bước tiếp theo dễ thực hiện. Ví dụ:
+[ADPList — portfolio interview và one-pager](https://adplist.substack.com/p/the-best-portfolio-playbook-thats),
+[Creativepool — vai trò dự án và lời kêu gọi hành động](https://creativepool.com/magazine/workshop/what-makes-a-digital-portfolio-stand-out-to-employers-and-agencies)
+và [UX Design Institute — case study, liên hệ](https://www.uxdesigninstitute.com/blog/hiring-managers-ux-portfolio/).
+Vì vậy màn trung tâm nói ngay Khánh làm gì; màn trái đưa hai tác phẩm ở hai
+lĩnh vực; màn phải giúp liên hệ. Hồ sơ nhanh cung cấp thêm bối cảnh và đường
+dẫn, không bắt nhà tuyển dụng đi hết đảo để biết phần đóng góp.
 
-Lựa chọn này theo nguyên tắc giới thiệu dễ quét, mô tả rõ phần đóng góp, có
-bằng chứng/tác phẩm và thông tin liên hệ dễ tiếp cận: [UX recruiter portfolio
-tips](https://www.toptal.com/designers/ux/ux-portfolio-tips-recruiter) và
-[UX Design Institute](https://www.uxdesigninstitute.com/blog/hiring-managers-ux-portfolio/).
-Không đặt số liệu thành tích nếu chưa có chứng cứ. `STUDIO` và một số `PANELS`
-là nội dung mẫu không được xem là tiểu sử cá nhân.
+## Bản đồ thông tin trong repo
 
-Ba nội dung được vẽ vào texture trên chính mesh màn hình của HX-9. Click màn
-trung tâm để vào đảo; màn trái mở demo APEX, màn phải mở LinkedIn hoặc GitHub.
-Các liên kết HTML có thể dùng bàn phím và màn hình nhỏ, không phụ thuộc vào độ
-chính xác khi chạm màn 3D. Trên web, mở liên kết bên ngoài bằng tab mới.
+- **Một Chút Yêu Thương 3**: điều phối và theo dõi cánh sân khấu, cue và phối
+  hợp kỹ thuật. `source/src/stage/shows.ts`, trường `roleTitle` và `roleLines`.
+  Link recap là video của ban tổ chức để xem chương trình, không phải khẳng
+  định video liệt kê vai trò cá nhân.
+- **CoravaMaris**: Audio, Pitch/Presentation và Level Design. Xem mục
+  Additional project credits trong `docs/PORTFOLIO_MEDIA.md` và
+  `source/src/scene/Cinema.tsx`; video được gắn nhãn là video dự án.
+- **Mùa Hạ Thứ 18**: sáng tác, theo `source/src/reality/tracks.ts`; liên kết
+  tới reel gốc từ cùng cấu hình.
+- **Thanh Âm Của Hòa Bình**: biên soạn mở đầu và chỉnh sửa hậu kỳ, theo
+  `source/src/scene/Cinema.tsx` và credit trong `docs/PORTFOLIO_MEDIA.md`.
+- **APEX CHAOS**: bản demo được dẫn trong `source/src/content.ts` và repo
+  `Khanh-glitch/APEX-CHAOS`. Nút demo là đường dẫn trực tiếp; không gán thêm
+  chức danh cá nhân mà nguồn dự án chưa ghi ở màn hình này.
+- **LinkedIn và GitHub**: theo `source/src/layout.ts`.
 
-Ở khung dọc, hai màn phụ có thể nằm ngoài tầm nhìn buồng lái. Nút
-**HỒ SƠ & TÁC PHẨM** mở bản tóm tắt dễ đọc; các liên kết bên dưới có kích
-thước chạm tối thiểu 44px và vẫn hoạt động bằng bàn phím.
+Không ghép hồ sơ `STUDIO` có tên người khác vào hồ sơ Lê Quốc Khánh. Các mục
+trên giữ đúng phạm vi đóng góp theo nội dung trong repo và tự thuật của chủ
+portfolio; số liệu của một sự kiện không được tự động biến thành thành tích
+cá nhân. Thông tin cá nhân khác có thể bổ sung vào nguồn tập trung khi phù hợp.
 
-Kiểm tra trình duyệt thực hiện trên Chromium với WebGL phần mềm: nhấp trực
-tiếp màn trái, hai lựa chọn màn phải và màn trung tâm; kiểm tra ba liên kết,
-khung dọc 390px và luồng tiếp tục vào đảo. Đây không phải bằng chứng đo hiệu
-năng GPU thật; các kết quả native trước đó vẫn được ghi trong README HX-9.
+## Tương tác và kiểm tra
+
+Ba nội dung được vẽ vào texture trên mesh màn hình thật của HX-9. Màn trung
+tâm mở đảo; màn trái mở hồ sơ nhanh có các dự án và nguồn xem; màn phải mở
+LinkedIn hoặc GitHub. Nút HTML tương đương dùng được bằng bàn phím. Trên màn
+hình dọc, hồ sơ nhanh giúp đọc các màn phụ khi chúng nằm ngoài góc nhìn; các
+nút liên kết có chiều cao chạm tối thiểu 44px.
