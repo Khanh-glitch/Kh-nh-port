@@ -94,7 +94,7 @@ function Intro({ onSpacePresented, onSpaceUnavailable, onWarpReveal }: SpaceEntr
       const progress = ready ? 100 : 0
       if (new URLSearchParams(location.search).get('hx9IncrementalShaders') === '1' && status !== lastProbeStatus) {
         lastProbeStatus = status
-        console.info('[HX9-GATE]', JSON.stringify({status, shipRendered, islandRendered, ready}))
+        console.info('[HX9-GATE]', JSON.stringify({status, shipRendered, islandRendered, ready, at:Date.now()}))
       }
       ;(window as unknown as { __orbitaEntryGate?: unknown }).__orbitaEntryGate = {
         ready, progress, status,

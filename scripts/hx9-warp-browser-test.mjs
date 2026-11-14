@@ -61,7 +61,7 @@ try{
  await frame.evaluate(async()=>{
    const flight=(await import('ship/lib/flight')).flight, node=document.querySelector('.hx9-app')
    let active=false,last=0,frames=0,maxGap=0,first=0
-   function tick(t){if(active){if(last)maxGap=Math.max(maxGap,t-last);else first=t;last=t;frames++;if(frames%20===0)console.info('[HX9-SHIP]',JSON.stringify({frames,maxGap:Math.round(maxGap),speed:flight.speed,jump:node.dataset.jump,ready:node.dataset.islandReady}))}requestAnimationFrame(tick)}
+   function tick(t){if(active){if(last)maxGap=Math.max(maxGap,t-last);else first=t;last=t;frames++;if(frames%20===0)console.info('[HX9-SHIP]',JSON.stringify({frames,maxGap:Math.round(maxGap),speed:flight.speed,jump:node.dataset.jump,ready:node.dataset.islandReady,at:Date.now()}))}requestAnimationFrame(tick)}
    requestAnimationFrame(tick)
    new MutationObserver(()=>{
      const state=node.dataset.jump
@@ -86,6 +86,7 @@ try{
  console.log('HX9_WARP_PASS '+JSON.stringify(report))
 }catch(e){
  report.error=String(e)
+ report.stoppedAt=Date.now()
  report.lastIncrementalProgress=incrementalProgress
  report.lastRenderProgress=renderProgress
  report.lastPaintProgress=paintProgress
