@@ -73,3 +73,14 @@ removed intermediate screenshot readbacks, reached the controls scan, then
 timed out; the largest observed rAF gap before the timeout was 4.916 s.
 Neither run establishes a smooth or complete native experience. The visual
 and accelerated software tests above must not be mistaken for performance proof.
+
+## Continuous reveal
+
+The laser beams, scan rings, particles and flare have been removed. The
+holographic materialization on the original meshes remains. Model downloads
+start in parallel; assemblies are decoded in order with paint opportunities
+between them, and the reveal starts after all are ready, so there is no
+network/parse wait between cues. Each cue starts exactly as the previous cue
+finishes. The sequence and camera move are shorter; full detail is retained.
+The initial preparation can still take time and native GPU stalls previously
+measured above are not automatically solved by this scheduling change.

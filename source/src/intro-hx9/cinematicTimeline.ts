@@ -5,17 +5,17 @@ export type Cue = { name: AssemblyName; start: number; duration: number; offset:
 // Whole, mechanically meaningful subassemblies, never hundreds of flying parts.
 // Small negative overshoot is a controlled seating movement, not random shake.
 export const ASSEMBLY_CUES: readonly Cue[] = [
-  { name: 'seat', start: 2.5, duration: 3.8, offset: [0, 0, 0], rotation: [0, 0, 0] },
-  { name: 'dashboard', start: 6.5, duration: 3.8, offset: [0, 0, 0], rotation: [0, 0, 0] },
-  { name: 'controls', start: 10.5, duration: 3.6, offset: [0, 0, 0], rotation: [0, 0, 0] },
-  { name: 'structure', start: 14.3, duration: 4.0, offset: [0, 0, 0], rotation: [0, 0, 0] },
-  { name: 'shell', start: 18.5, duration: 3.7, offset: [0, 0, 0], rotation: [0, 0, 0] },
-  { name: 'glass', start: 22.4, duration: 3.4, offset: [0, 0, 0], rotation: [0, 0, 0] },
+  { name: 'seat', start: 1.2, duration: 2.4, offset: [0, 0, 0], rotation: [0, 0, 0] },
+  { name: 'dashboard', start: 3.6, duration: 2.4, offset: [0, 0, 0], rotation: [0, 0, 0] },
+  { name: 'controls', start: 6, duration: 2.2, offset: [0, 0, 0], rotation: [0, 0, 0] },
+  { name: 'structure', start: 8.2, duration: 2.5, offset: [0, 0, 0], rotation: [0, 0, 0] },
+  { name: 'shell', start: 10.7, duration: 2.3, offset: [0, 0, 0], rotation: [0, 0, 0] },
+  { name: 'glass', start: 13, duration: 2.1, offset: [0, 0, 0], rotation: [0, 0, 0] },
 ]
-export const CAMERA_DOCK_START = 26.8
-export const CAMERA_DOCK_END = 33.8
-export const POWER_START = 30.8
-export const CINEMATIC_END = 36.8
+export const CAMERA_DOCK_START = 15.1
+export const CAMERA_DOCK_END = 21
+export const POWER_START = 18.5
+export const CINEMATIC_END = 23
 const clamp = (v: number) => Math.max(0, Math.min(1, v))
 /** Monotonic fifth-order ease has zero velocity and acceleration at both ends. */
 export const smootherstep = (v: number) => { const t = clamp(v); return t*t*t*(t*(t*6-15)+10) }
