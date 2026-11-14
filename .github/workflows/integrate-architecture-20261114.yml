@@ -1,0 +1,78 @@
+name: ORBITA architecture integration (protected 3D source)
+on:
+  push:
+    branches:
+      - integration/architecture-four-exhibits-20261114
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  integrate:
+    if: github.event_name == 'workflow_dispatch' || !contains(github.event.head_commit.message, '[arch-published]')
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout exact integration branch
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+          fetch-depth: 0
+      - name: Prepare isolated integration kit
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/architecture-kit"
+          unzip -q integration-input/architecture-integration-kit.zip -d "$RUNNER_TEMP/architecture-kit"
+          python3 "$RUNNER_TEMP/architecture-kit/integrate_latest.py" . --dry-run
+      - name: Apply 3D geometry and physical FOH only
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 "$RUNNER_TEMP/architecture-kit/integrate_latest.py" .
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: source/package-lock.json
+      - name: Install exact source dependencies
+        run: npm ci --prefix source
+      - name: Validate source types and scene wiring
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd source
+          npx tsc --noEmit
+          cd ..
+          node "$RUNNER_TEMP/architecture-kit/verify_source.mjs" .
+      - name: Sync the actual root standalone, not preview
+        shell: bash
+        run: |
+          set -euo pipefail
+          node "$RUNNER_TEMP/architecture-kit/sync_architecture_standalone.mjs" . --dry-run
+          node "$RUNNER_TEMP/architecture-kit/sync_architecture_standalone.mjs" .
+          node scripts/build-pages.mjs
+      - name: Check protected app/media modules remain unchanged
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --exit-code HEAD -- source/src/App.tsx source/src/scene/Experience.tsx source/src/reality/RealityHost.tsx source/src/reality/music.ts source/src/stage/ShowSystem.tsx source/src/stage/shows.ts source/src/ui/Overlay.tsx source/src/scene/ShowcaseWarmup.tsx source/src/perfLadder.ts
+          test -f dist-pages/index.html
+          test -f source/src/scene/Station.tsx
+          test -f source/src/scene/FohStation.tsx
+          git status --short | head -60
+      - name: Commit and push integrated source and runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add source/src/layout.ts source/src/scene/Exhibits.tsx source/src/scene/Player.tsx source/src/scene/Stage.tsx source/src/scene/Cinema.tsx source/src/scene/Beacon.tsx
+          git add source/src/scene/Station.tsx source/src/scene/FohStation.tsx source/src/scene/beacon/ source/src/scene/cinema/ source/src/scene/kit/ source/src/scene/arch/ 
+          git add index.html ARCHITECTURE_INTEGRATION_REPORT.json
+          if git diff --cached --quiet; then
+            echo "No uncommitted production changes"
+          else
+            git commit -m "feat(architecture): station beacon cinema from architecture 1 and FOH from preview fix [arch-published]"
+            git push origin "HEAD:${GITHUB_REF_NAME}"
+          fi
