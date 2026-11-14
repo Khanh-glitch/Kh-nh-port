@@ -2,7 +2,7 @@ import {createRequire} from 'node:module'
 import {mkdirSync,writeFileSync} from 'node:fs'
 const {chromium}=createRequire(import.meta.url)('../source/node_modules/playwright')
 mkdirSync('hx9-warp-evidence',{recursive:true})
-const browser=await chromium.launch({headless:true,args:['--enable-webgl','--ignore-gpu-blocklist']})
+const browser=await chromium.launch({headless:true,args:['--enable-webgl','--ignore-gpu-blocklist','--use-angle=metal']})
 const page=await browser.newPage({viewport:{width:800,height:600},deviceScaleFactor:1})
 const report={errors:[],events:[]}
 const cdp=await page.context().newCDPSession(page)
