@@ -310,10 +310,12 @@ function IslandIncrementalShaderProbe({ onComplete }: { onComplete: () => void }
       })
       info.total = queue.length
       info.status = 'compiling'
+      console.info('[HX9-INCREMENTAL]', JSON.stringify(info))
       for (const obj of queue) {
         if (cancelled) return
         await nextFrame()
         if (cancelled) return
+        console.info('[HX9-INCREMENTAL]', JSON.stringify({...info, next: obj.type}))
         try {
           // Compile a child-free proxy against the real scene lights. Geometry,
           // materials and textures remain the original full-quality resources.
@@ -336,6 +338,7 @@ function IslandIncrementalShaderProbe({ onComplete }: { onComplete: () => void }
         info.done++
       }
       info.status = 'complete'
+      console.info('[HX9-INCREMENTAL]', JSON.stringify(info))
       if (!cancelled) onComplete()
     }
     const timer = window.setTimeout(() => { void run().catch(error => {

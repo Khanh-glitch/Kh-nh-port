@@ -27,7 +27,7 @@ jobs:
         if: always()
         run: |
           if test -f hx9-warp-evidence/result.json; then
-            python3 -c "import json; r=json.load(open('hx9-warp-evidence/result.json')); p=r.get('profile') or r.get('diagnostic',{}).get('profile') or {}; print('::notice title=HX9 warp::'+json.dumps({'error':r.get('error'),'timing':r.get('timing'),'events':r.get('events'),'cpu':r.get('cpu'),'incremental':r.get('incremental') or r.get('diagnostic',{}).get('incremental'),'gate':r.get('diagnostic',{}).get('gate'),'calls':sorted(((k,round(v['totalMs']),round(v['maxMs'])) for k,v in (p.get('calls') or {}).items()),key=lambda x:x[1],reverse=True)[:12],'animationFrames':sorted(p.get('animationFrames',[]),key=lambda x:x['ms'],reverse=True)[:5],'longTasks':sorted(p.get('longTasks',[]),key=lambda x:x['ms'],reverse=True)[:12]},separators=(',',':')))"
+            python3 -c "import json; r=json.load(open('hx9-warp-evidence/result.json')); p=r.get('profile') or r.get('diagnostic',{}).get('profile') or {}; print('::notice title=HX9 warp::'+json.dumps({'error':r.get('error'),'timing':r.get('timing'),'events':r.get('events'),'cpu':r.get('cpu'),'incremental':r.get('incremental') or r.get('diagnostic',{}).get('incremental') or r.get('lastIncrementalProgress'),'gate':r.get('diagnostic',{}).get('gate'),'calls':sorted(((k,round(v['totalMs']),round(v['maxMs'])) for k,v in (p.get('calls') or {}).items()),key=lambda x:x[1],reverse=True)[:12],'animationFrames':sorted(p.get('animationFrames',[]),key=lambda x:x['ms'],reverse=True)[:5],'longTasks':sorted(p.get('longTasks',[]),key=lambda x:x['ms'],reverse=True)[:12]},separators=(',',':')))"
           fi
       - uses: actions/upload-artifact@v4
         if: always()
