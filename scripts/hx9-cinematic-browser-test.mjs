@@ -22,9 +22,11 @@ try{
   await frame.waitForFunction(t=>window.__orbitaHx9?.time>=t,time,{timeout:90000})
   const stats=await frame.evaluate(()=>({hx:window.__orbitaHx9,frames:window.__hx9Frames.length,maxGap:Math.round(Math.max(0,...window.__hx9Frames))}))
   data.phases.push({name,...stats})
-  await page.screenshot({path:`hx9-evidence/${name}.png`,timeout:120000})
+  // Screenshot readback can itself fence the GPU for seconds; keep the
+  // no-stall measurement free from capture operations during the sequence.
  }
  data.gaps=await frame.evaluate(()=>{const a=window.__hx9Frames.slice().sort((x,y)=>x-y);return {max:Math.max(...a),p95:a[Math.floor(a.length*.95)],frames:a.length}})
+ await page.screenshot({path:'hx9-evidence/pilot.png',timeout:120000})
  await page.frameLocator('iframe[title*="spaceship cockpit"]').locator('.hx9-enter').click({timeout:90000})
  await page.waitForFunction(()=>window.__orbitaEntryGate?.ready===true,null,{timeout:240000})
  data.gate=await page.evaluate(()=>({gate:window.__orbitaEntryGate,order:window.__hx9Order}))
