@@ -1243,6 +1243,10 @@ export function Experience() {
       shadows="percentage"
       camera={{ fov: 72, near: 0.1, far: 9000, position: [0, 17, 88] }}
       gl={{ antialias: false, powerPreference: 'high-performance', toneMapping: THREE.NoToneMapping, stencil: false }}
+      onCreated={({ gl }) => {
+        if (new URLSearchParams(location.search).get('hx9NoLogs') === '1')
+          gl.debug.checkShaderErrors = false
+      }}
     >
       <HighGateMeter />
       {performanceMode && <PerfTierMeter />}
