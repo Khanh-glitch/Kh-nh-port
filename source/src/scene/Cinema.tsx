@@ -505,6 +505,16 @@ function posterTex(title: string, a: string, b: string, sub: string) {
 export function Cinema() {
   const busRef = useRef<Bus | null>(null)
   const [projectFilm, setProjectFilm] = useState<number | null>(null)
+  const [inside, setInside] = useState(false)
+  const insideRef = useRef(false)
+  const cinemaGroup = useRef<THREE.Group>(null)
+  const localCamera = useMemo(() => new THREE.Vector3(), [])
+  const scene = useThree(state => state.scene)
+  const suppressedLights = useRef(new Map<THREE.Light, boolean>())
+  useEffect(() => () => {
+    suppressedLights.current.forEach((visible, light) => { light.visible = visible })
+    suppressedLights.current.clear()
+  }, [])
   const realityPhase = useReality((s) => s.phase)
   useEffect(() => { if (realityPhase !== 'idle') setProjectFilm(null) }, [realityPhase])
   // Diagnostic only: do not read Cinema screen pixels to update a distant
@@ -587,7 +597,33 @@ export function Cinema() {
   useFrame((state, dt) => {
     const t = state.clock.elapsedTime
     const approachingDoor = Math.hypot(state.camera.position.x - entrance.x, state.camera.position.z - entrance.z) < 3
-    const doorOffset = projectFilm !== null && !approachingDoor ? 0 : 1.65
+    const group = cinemaGroup.current
+    if (group) {
+      group.updateWorldMatrix(true, false)
+      localCamera.copy(state.camera.position)
+      group.worldToLocal(localCamera)
+      // Only close the entrance after the camera has crossed into the room.
+      const inRoom = realityPhase === 'idle' && Math.abs(localCamera.x) < 5.1 &&
+        localCamera.z > -6.05 && localCamera.z < 6.0 && localCamera.y > 0 && localCamera.y < 5.8
+      if (inRoom !== insideRef.current) {
+        insideRef.current = inRoom
+        setInside(inRoom)
+        if (inRoom) {
+          // World ambient and exterior lights also penetrate walls in Three.js.
+          // Save visibility once on entry and restore it on exit or unmount.
+          scene.traverse(object => {
+            const light = object as THREE.Light
+            if (!light.isLight) return
+            suppressedLights.current.set(light, light.visible)
+            light.visible = false
+          })
+        } else {
+          suppressedLights.current.forEach((visible, light) => { light.visible = visible })
+          suppressedLights.current.clear()
+        }
+      }
+    }
+    const doorOffset = insideRef.current && !approachingDoor ? 0 : 1.65
     if (leftDoor.current) leftDoor.current.position.x = THREE.MathUtils.damp(leftDoor.current.position.x, -0.82 - doorOffset, 3, dt)
     if (rightDoor.current) rightDoor.current.position.x = THREE.MathUtils.damp(rightDoor.current.position.x, 0.82 + doorOffset, 3, dt)
     if (projectFilm === null && realityPhase === 'idle' && Math.hypot(state.camera.position.x - ex.x, state.camera.position.z - ex.z) < 24) setProjectFilm(0)
@@ -691,7 +727,7 @@ export function Cinema() {
   )
 
   return (
-    <group position={[ex.x, 0, ex.z]} rotation={[0, ex.rotY, 0]}>
+    <group ref={cinemaGroup} position={[ex.x, 0, ex.z]} rotation={[0, ex.rotY, 0]}>
       <LocalCinemaFilm index={projectFilm} onNext={advanceFilm} />
       <CinemaVideo index={projectFilm} onClose={() => setProjectFilm(null)} onNext={advanceFilm} />
       <PadRing radius={10.2} color={ex.color} />
@@ -716,11 +752,11 @@ export function Cinema() {
           <mesh position={[s * 1.82, 2.9, 6.48]} material={neonRed}>
             <boxGeometry args={[0.07, 5.8, 0.06]} />
           </mesh>
-          <mesh position={[s * 5.04, 3.2, 0]} material={neonRed}>
+          <mesh position={[s * 5.04, 3.2, 0]} material={inside ? mats.darkMetal : neonRed}>
             <boxGeometry args={[0.05, 0.05, 12.2]} />
           </mesh>
           {[-4.2, -1.7, 0.8, 3.3].map((z) => (
-            <mesh key={z} position={[s * 5.0, 2.7, z]} material={warm}>
+            <mesh key={z} position={[s * 5.0, 2.7, z]} material={inside ? mats.darkMetal : warm}>
               <boxGeometry args={[0.08, 0.7, 0.16]} />
             </mesh>
           ))}
@@ -739,7 +775,6 @@ export function Cinema() {
       {/* Automatic entrance doors reopen when approached from either side. */}
       <mesh ref={leftDoor} position={[-2.47, 1.9, 6.2]} material={velvet}><boxGeometry args={[1.6, 3.8, 0.15]} /></mesh>
       <mesh ref={rightDoor} position={[2.47, 1.9, 6.2]} material={velvet}><boxGeometry args={[1.6, 3.8, 0.15]} /></mesh>
-      {projectFilm !== null && <Label title={PROJECT_FILMS[projectFilm].label} sub={PROJECT_FILMS[projectFilm].projectRole ?? 'Vai trò: chưa có thông tin xác minh'} color="#ffb070" position={[0, 5.6, -5.3]} scale={0.65} fadeNear={1} fadeFar={28} />}
       {/* màn hình + rèm */}
       <mesh position={[0, 2.95, -5.98]}>
         <planeGeometry args={[8.3, 3.64]} />
@@ -779,7 +814,7 @@ export function Cinema() {
         )),
       )}
       {[-1.5, 1.5].map((x) => (
-        <mesh key={x} position={[x, 0.045, 0.6]} material={warm}>
+        <mesh key={x} position={[x, 0.045, 0.6]} material={inside ? mats.darkMetal : warm}>
           <boxGeometry args={[0.06, 0.02, 10]} />
         </mesh>
       ))}
