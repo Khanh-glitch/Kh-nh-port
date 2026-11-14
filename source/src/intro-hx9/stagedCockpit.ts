@@ -26,6 +26,8 @@ export function createStagedCockpit() {
   ]
   return {
     group,
+    materials,
+    screens: context.screenMeshes,
     get completed() { return stage },
     get total() { return steps.length },
     buildNext() {

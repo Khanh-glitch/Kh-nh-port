@@ -28,3 +28,24 @@ page errors. This is not a native GPU smoothness benchmark. Headless Chromium
 CPU construction previously measured roughly 150–1321 ms for individual stages;
 the status text appears before each stage, but first-visit pauses can still be
 noticeable. Real-device startup and Cloudflare deployment remain to be checked.
+
+## Assembly-cinematic investigation
+
+`cinematicTimeline.ts` contains a tested, deterministic six-cue motion plan,
+including smooth approach, a controlled seating stroke, camera docking and
+staggered screen power. It is not connected to the live renderer and does not
+constitute a working cinematic.
+
+A separate `workerPrepare.ts` experiment built the original procedural model
+in a real Chromium Worker using OffscreenCanvas. Its measured worker-only stages
+were approximately 1232, 646, 898, 263 and 172 ms and produced all 914 meshes;
+this demonstrates construction can move off the main thread. It does **not**
+yet transfer the actual geometries, materials and canvas textures to the
+renderer, prewarm their GPU resources, or demonstrate an uninterrupted camera.
+The production intro is therefore unchanged until those pieces and visual
+validation are complete.
+
+An exploratory GLTF export of the complete model was approximately 51 MB; the
+six proposed assemblies were each under the 25 MiB Cloudflare per-file limit.
+The exporter reported material-map conversion; visual and material fidelity were
+not established, so these files were not shipped as a replacement for the model.
