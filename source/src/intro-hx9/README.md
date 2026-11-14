@@ -47,3 +47,22 @@ experience. That candidate was reverted; the unbatched cinematic remains on
 the branch and also has not passed native performance validation (earlier run
 `43553008332` reached controls and timed out, with a 3.75-second observed gap).
 Do not describe either result as a successful no-stall release.
+
+## Inside-out laser fabrication
+
+The actual imported meshes now use a materialization scan derived from the
+Colossus shader: a luminous holographic grid ahead of the moving scanline, a
+bright weld seam, and the original shaded material behind it. Instanced mesh
+positions are included in the world-space scan. Once finished, the shader
+bypasses the effect; no model geometry or final material settings are reduced.
+The 3D laser beams, scan rings, sparks and impact flare follow each part's true
+world-space bounds. The aft bulkhead is exported with the outer shell instead
+of the seat, so the seat and dashboard appear before the exterior.
+
+Accelerated software-Chromium captures showed the seat, dashboard, frame and
+outer shell being fabricated, then the original pilot view with identity. A
+full accelerated parent-page run reached the real island gate and entered
+Orbita with no page errors. This is a visual/lifecycle check only; native GPU
+performance and actual Cloudflare deployment need separate validation. Previous
+native cinematic runs had severe rAF stalls; the laser effect is not evidence
+that those stalls are resolved.

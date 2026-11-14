@@ -518,6 +518,8 @@ export function buildSeatAndBulkhead(ctx: BuildContext): void {
     -0.35,
   );
 
+  // Export-only boundary: keep the pilot seat separate from the exterior aft bulkhead.
+  group.userData.hx9AftStart = group.children.length;
   /* ═══ 2 · ORTHOGRID AFT PRESSURE BULKHEAD & EQUALISATION HATCH ═══════════ */
 
   const bhZ = DATUM.aftZ;

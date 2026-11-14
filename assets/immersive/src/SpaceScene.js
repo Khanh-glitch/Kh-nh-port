@@ -662,6 +662,7 @@ export default function SpaceScene() {
         const diagnosticSpeed = Math.max(1, Math.min(30, Number(new URLSearchParams(location.search).get('hx9DiagnosticSpeed')) || 1));
         let introCompleted = false;
         const parts = new Map();
+        const fabrication = new Map();
         const screens = [];
         const cockpitRoot = new THREE.Group();
         cockpitRoot.position.set(0, 0, -5);
@@ -688,12 +689,14 @@ export default function SpaceScene() {
                 cockpitRoot.userData.fill = fillCabin;
                 camera.layers.enable(1);
                 const loader = new hx.GLTFLoader();
-                const names = ['structure', 'shell', 'seat', 'dashboard', 'controls', 'glass'];
+                const names = ['seat', 'dashboard', 'controls', 'structure', 'shell', 'glass'];
                 for (const name of names) {
                     if (cancelled || rendererFailed) return;
                     const result = await loader.loadAsync(new URL('model/' + name + '.glb', document.baseURI).href);
                     if (cancelled || rendererFailed) return;
                     const part = result.scene;
+                    const uniforms = hx.createFabricationUniforms();
+                    const patched = new WeakSet();
                     part.visible = false;
                     part.traverse(o => {
                         o.layers.set(1);
@@ -704,11 +707,76 @@ export default function SpaceScene() {
                             screens.push({ mesh:o, index:Number(o.userData.hx9Screen), base:o.material.color.clone() });
                             o.material.color.setRGB(0,0,0);
                         }
+                        const actual = Array.isArray(o.material) ? o.material : o.material ? [o.material] : [];
+                        for (const mat of actual) if (!patched.has(mat)) { patched.add(mat); hx.patchFabrication(mat, uniforms); }
                     });
-                    cockpitRoot.add(part); parts.set(name, part);
+                    cockpitRoot.add(part);
+                    part.updateWorldMatrix(true, true);
+                    const bounds = new THREE.Box3().setFromObject(part);
+                    if (bounds.isEmpty()) throw Error('Empty fabrication bounds: ' + name);
+                    fabrication.set(name, { uniforms, bounds });
+                    parts.set(name, part);
                     await nextPaint();
                 }
             } catch (error) { if (!cancelled) reportFailure('cockpit-load: ' + String(error)); }
+        }
+        // Twin focused laser cores, a softer volumetric envelope, scan rings
+        // and impact sparks track the actual materialization plane in 3D.
+        const effects = new THREE.Group(); effects.layers.set(1); effects.visible=false;
+        cockpitRoot.add(effects);
+        const ringGeo = new THREE.TorusGeometry(1, .008, 6, 96);
+        const bright = new THREE.MeshBasicMaterial({color:0x8cf6ff, transparent:true, opacity:.95, blending:THREE.AdditiveBlending, depthWrite:false, toneMapped:false});
+        const soft = new THREE.MeshBasicMaterial({color:0x35bfff, transparent:true, opacity:.20, blending:THREE.AdditiveBlending, depthWrite:false, toneMapped:false});
+        const scanRing = new THREE.Mesh(ringGeo,bright); scanRing.layers.set(1); scanRing.rotation.x=Math.PI/2; effects.add(scanRing);
+        const halo = new THREE.Mesh(new THREE.TorusGeometry(1,.028,6,96),soft); halo.layers.set(1); halo.rotation.x=Math.PI/2; effects.add(halo);
+        const beamGeo = new THREE.CylinderGeometry(1,1,1,8,1,true);
+        const beams = [];
+        for (let i=0;i<2;i++) {
+            const core = new THREE.Mesh(beamGeo,bright), glow = new THREE.Mesh(beamGeo,soft);
+            core.layers.set(1);glow.layers.set(1);effects.add(glow,core);beams.push({core,glow});
+        }
+        const sparksGeo = new THREE.BufferGeometry();
+        const sparksArray = new Float32Array(36*3);
+        sparksGeo.setAttribute('position',new THREE.BufferAttribute(sparksArray,3));
+        const sparksMat = new THREE.PointsMaterial({color:0xc5ffff,size:.045,transparent:true,opacity:.85,blending:THREE.AdditiveBlending,depthWrite:false,toneMapped:false});
+        const sparks = new THREE.Points(sparksGeo,sparksMat); sparks.layers.set(1); sparks.frustumCulled=false; effects.add(sparks);
+        const flareCanvas=document.createElement('canvas'); flareCanvas.width=128; flareCanvas.height=128;
+        const flareCtx=flareCanvas.getContext('2d');
+        const radial=flareCtx.createRadialGradient(64,64,0,64,64,64);
+        radial.addColorStop(0,'rgba(255,255,255,1)');radial.addColorStop(.12,'rgba(170,255,255,.9)');
+        radial.addColorStop(.4,'rgba(38,187,255,.38)');radial.addColorStop(1,'rgba(0,130,255,0)');
+        flareCtx.fillStyle=radial;flareCtx.fillRect(0,0,128,128);
+        const flareTex=new THREE.CanvasTexture(flareCanvas);flareTex.colorSpace=THREE.SRGBColorSpace;
+        const flare=new THREE.Sprite(new THREE.SpriteMaterial({map:flareTex,color:0xb2faff,transparent:true,blending:THREE.AdditiveBlending,depthWrite:false,toneMapped:false}));
+        flare.layers.set(1);effects.add(flare);
+        const axis = new THREE.Vector3(0,1,0), source = new THREE.Vector3(), target = new THREE.Vector3(), vector = new THREE.Vector3();
+        function drawLaser(bounds, y, t) {
+            const cx=(bounds.min.x+bounds.max.x)*.5 - cockpitRoot.position.x;
+            const cz=(bounds.min.z+bounds.max.z)*.5 - cockpitRoot.position.z;
+            const localY=y-cockpitRoot.position.y;
+            const radius=Math.max(.35, Math.min(1.35, Math.max(bounds.max.x-bounds.min.x,bounds.max.z-bounds.min.z)*.48));
+            scanRing.position.set(cx,localY,cz); halo.position.copy(scanRing.position);
+            scanRing.scale.setScalar(radius);halo.scale.setScalar(radius*(1.015+.01*Math.sin(t*7)));
+            scanRing.rotation.z=t*.35;halo.rotation.z=-t*.22;
+            target.set(cx+.18*Math.sin(t*3.1),localY,cz+.18*Math.cos(t*2.7));
+            flare.position.copy(target);flare.scale.setScalar(.30+.045*Math.sin(t*17));
+            for(let i=0;i<2;i++) {
+                source.set((i?1:-1)*2.15,2.3,-.5);
+                vector.subVectors(target,source);const length=vector.length();
+                for(const mesh of [beams[i].core,beams[i].glow]) {
+                    mesh.position.copy(source).addScaledVector(vector,.5);
+                    mesh.quaternion.setFromUnitVectors(axis,vector.clone().normalize());
+                    const width=mesh === beams[i].core ? .009 : .035;
+                    mesh.scale.set(width,length,width);
+                }
+            }
+            for(let i=0;i<36;i++) {
+                const a=i*2.399+t*(1.8+(i%4)*.35), r=radius*(.75+.25*Math.sin(i*9.7+t*2));
+                sparksArray[i*3]=cx+Math.cos(a)*r;
+                sparksArray[i*3+1]=localY+.05*Math.sin(i*3.1+t*9);
+                sparksArray[i*3+2]=cz+Math.sin(a)*r;
+            }
+            sparksGeo.attributes.position.needsUpdate=true;
         }
         let identityAdded = false;
         function addIdentity() {
@@ -744,16 +812,23 @@ export default function SpaceScene() {
                 const cueNow = [...hx.ASSEMBLY_CUES].reverse().find(c => cinematicTime >= c.start);
                 if (cueNow && cueNow.name !== lastCueName) {
                     lastCueName = cueNow.name;
-                    const labels = { structure:'Định hình khung kết cấu…', shell:'Đưa vỏ tàu vào khớp…', seat:'Cố định ghế phi công…', dashboard:'Gắn bảng điều khiển…', controls:'Lắp các thiết bị điều khiển…', glass:'Đóng kính buồng lái…' };
+                    const labels = { structure:'Laser đang dựng khung kết cấu…', shell:'Laser đang hoàn thiện vỏ tàu…', seat:'Laser đang tạo ghế phi công…', dashboard:'Laser đang dựng bảng điều khiển…', controls:'Laser đang tạo thiết bị điều khiển…', glass:'Laser đang tạo kính buồng lái…' };
                     progress(labels[lastCueName]);
                 }
                 window.__orbitaHx9 = {time:cinematicTime, cue:lastCueName, loaded:parts.size, complete:introCompleted};
+                effects.visible=false;
                 for (const cue of hx.ASSEMBLY_CUES) {
-                    const part = parts.get(cue.name); if (!part) continue;
-                    const pose = hx.assemblyPose(cue, cinematicTime);
-                    part.visible = pose.visible;
-                    part.position.set(cue.offset[0]*pose.remaining,cue.offset[1]*pose.remaining,cue.offset[2]*pose.remaining);
-                    part.rotation.set(cue.rotation[0]*pose.remaining,cue.rotation[1]*pose.remaining,cue.rotation[2]*pose.remaining);
+                    const part = parts.get(cue.name), state=fabrication.get(cue.name);
+                    if (!part || !state) continue;
+                    const phase=THREE.MathUtils.clamp((cinematicTime-cue.start)/cue.duration,0,1);
+                    part.visible=cinematicTime>=cue.start;
+                    state.uniforms.uTime.value=t;
+                    state.uniforms.uComplete.value=phase>=1?1:0;
+                    state.uniforms.uScanY.value=hx.fabricationScan(state.bounds.min.y,state.bounds.max.y,phase);
+                    if (phase>0 && phase<1) {
+                        effects.visible=true;
+                        drawLaser(state.bounds,state.uniforms.uScanY.value,t);
+                    }
                 }
                 const dock = hx.cameraDock(cinematicTime);
                 // Cross above the canopy before settling into the pilot eye,

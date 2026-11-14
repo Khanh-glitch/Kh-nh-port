@@ -9,7 +9,7 @@ try {
  const file=join(dir,'timeline.mjs')
  await esbuild.build({entryPoints:['source/src/intro-hx9/cinematicTimeline.ts'],outfile:file,bundle:true,format:'esm'})
  const {ASSEMBLY_CUES,assemblyPose,cameraDock,screenPower,CINEMATIC_END}=await import('file://'+file)
- assert.deepEqual(ASSEMBLY_CUES.map(c=>c.name),['structure','shell','seat','dashboard','controls','glass'])
+ assert.deepEqual(ASSEMBLY_CUES.map(c=>c.name),['seat','dashboard','controls','structure','shell','glass'])
  for(const cue of ASSEMBLY_CUES){
   assert.equal(assemblyPose(cue,cue.start-.01).visible,false)
   assert.equal(assemblyPose(cue,cue.start).remaining,1)
