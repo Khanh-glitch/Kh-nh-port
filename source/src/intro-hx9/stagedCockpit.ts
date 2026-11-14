@@ -8,10 +8,9 @@ import { buildPedestalAndControls } from './cockpit/assemblies/pedestalAndContro
 import { buildSeatAndBulkhead } from './cockpit/assemblies/seatAndBulkhead'
 
 /**
- * Preparation-only adapter. Original assemblies/materials stay intact; no
- * source-project sky, application UI, dossier or postprocessing is imported.
- * Yielding between assemblies does not guarantee a smooth frame: individual
- * builders and their first GPU draws still require profiling before use.
+ * Original assemblies/materials stay intact; no source-project sky or UI.
+ * The caller yields between assemblies and announces each step. Individual
+ * assembly construction and first GPU upload may still cause a visible pause.
  */
 export function createStagedCockpit() {
   const group = new THREE.Group()

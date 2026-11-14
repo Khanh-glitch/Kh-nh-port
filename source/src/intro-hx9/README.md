@@ -1,24 +1,30 @@
-# HX-9 source staging (not connected to the opening scene)
+# HX-9 cockpit in the opening scene
 
-Imported from `https://github.com/Khanh-glitch/hauek`, `main`, file
-`advanced-aerospace-cockpit-redesign.zip`. The cockpit assemblies, geometry,
-materials, textures, datum and data/blueprint are kept unchanged. No original
-project sky, UI, dossier, independent 2D canvases or engine were imported.
-Canvas textures used on the actual cockpit instruments remain part of the model.
+The model assemblies, geometry, materials, textures, datum and blueprint in this
+folder are taken unchanged from `Khanh-glitch/hauek`, `main`, archive
+`advanced-aerospace-cockpit-redesign.zip`. The upstream space, UI, dossier and
+standalone engine are not used; instrument textures remain part of the model.
 
-`stagedCockpit.ts` is an experimental adapter which splits the unchanged build
-into four assembly calls. This is not yet an acceptable loading experience:
-individual calls and first-use GPU uploads may still block. It is deliberately
-not imported by the live opening scene. Before integrating, use the existing
-space renderer (not the upstream sky), render its real first frame, then build
-and GPU-warm the cockpit progressively and acknowledge readiness only when the
-whole cockpit has actually rendered. Mount Orbita only after that acknowledgement.
-Measure real main-thread and rAF gaps, check appearance against the upstream
-pilot view, mobile and cleanup, and preserve failure/retry behavior.
+`stagedCockpit.ts` builds the same four assemblies in their original order.
+The deployed renderer is the existing `assets/immersive` space renderer. After
+its first two real frames it builds and presents the cockpit progressively,
+showing the name of the current step before each operation. The cockpit's
+reflection environment is applied to its own materials without replacing the
+existing space. Orbita's renderer mounts only after the final model has rendered;
+entry waits for Orbita's own real first frame. A retry path remains for errors.
 
-Initial headless Chromium CPU-only construction smoke: materials 1321 ms,
-hull/canopy 969 ms, dash/HUD 1239 ms, pedestal 309 ms, seat/bulkhead 150 ms;
-914 meshes, no page errors. This is not a real-device performance benchmark or
-visual validation, but it shows that simply scheduling each whole assembly on
-separate animation frames is insufficient. GPU upload/render costs were not
-measured. The adapter therefore remains excluded from the published intro.
+Rebuild the shipped intro after changing its source with
+`node scripts/build-hx9-intro.mjs`, then synchronize the root HTML with
+`node scripts/sync-portfolio-standalone.mjs` and run `node scripts/build-pages.mjs`.
+The import map uses the existing Three.js version; no full upstream application
+or second space renderer is loaded.
+
+Validation: software-rendered Chromium displayed the original cockpit over the
+existing planet and sent the readiness message after all four assemblies. A
+full parent-page offline-CDN test confirmed that the ship readiness message
+preceded mounting the Orbita canvas, the dual real-frame gate reached ready,
+and clicking the entry button removed the intro and entered the island without
+page errors. This is not a native GPU smoothness benchmark. Headless Chromium
+CPU construction previously measured roughly 150–1321 ms for individual stages;
+the status text appears before each stage, but first-visit pauses can still be
+noticeable. Real-device startup and Cloudflare deployment remain to be checked.

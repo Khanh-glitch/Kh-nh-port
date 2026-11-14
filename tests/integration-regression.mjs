@@ -51,7 +51,7 @@ assert(existsSync('assets/stage/mcyt-crew-stage.jpg'),'Real provided stage photo
 const ship=readFileSync('assets/immersive/index.html','utf8');
 assert(ship.includes('ship/main'),'Full spaceship import must be embedded');
 assert(!ship.includes('import "./index.css"'),'Standalone must not attempt unresolved CSS import');
-assert(ship.includes('energy-gate'),'Ship warp CTA ring present');
+assert(ship.includes('orbita-hx9-ui'),'HX-9 entry control present');
 const shipMapMatch=ship.match(/<script type="importmap">([^<]+)<\/script>/);
 assert(shipMapMatch,'Spaceship import map missing');
 const shipMap=JSON.parse(shipMapMatch[1]).imports;
@@ -65,7 +65,7 @@ for(const [name,mod] of Object.entries(map)){
  for(const m of text.matchAll(/\bfrom\s+['"](orbita\/[^'"]+)['"]/g))assert(map[m[1]],`Unresolved source module ${name} -> ${m[1]}`);
 }
 for(const [name,mod] of Object.entries(shipMap)){
- if(!name.startsWith('ship/'))continue;
+ if(!name.startsWith('ship/') || !mod.startsWith('data:'))continue;
  const text=Buffer.from(mod.split(',')[1],'base64').toString('utf8');
  for(const m of text.matchAll(/\bfrom\s+['"](ship\/[^'"]+)['"]/g))assert(shipMap[m[1]],`Unresolved spacecraft import ${name} -> ${m[1]}`);
 }

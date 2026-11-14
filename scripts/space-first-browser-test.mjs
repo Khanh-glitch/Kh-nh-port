@@ -95,7 +95,7 @@ try{
       gate.firstPaint.islandBeforeSpace)
     throw Error('Entry is a fake timer instead of confirmed dual-scene readiness')
   const shipFrame=page.frameLocator('iframe[title*="spaceship cockpit"]')
-  const enter=shipFrame.locator('.energy-gate button.btn-primary')
+  const enter=shipFrame.locator('.hx9-enter')
   await enter.waitFor({state:'visible',timeout:45000})
   if(await enter.isDisabled())throw Error('Authentic ready gate never enabled spacecraft entry')
   await page.screenshot({path:'browser-evidence/entry/02-loaded-and-actually-enterable.png',timeout:120000})

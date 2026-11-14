@@ -98,12 +98,12 @@ function Intro({ onSpacePresented, onSpaceUnavailable }: SpaceEntryCallbacks) {
         ready, progress, status,
       }, origin)
 
-      if (!shipRendered && !fallbackReported.current && now-started>18000)
+      if (!shipRendered && !fallbackReported.current && now-started>120000)
         failSpace('Phi thuyền chưa dựng được khung hình đầu.')
       // If island loading fails, offer an actual retry, never a false 100%
       // or silently bypass the readiness gate.
       if ((shipRendered || fallbackReported.current) && !current.ready &&
-          now-started>35000) setIslandTrouble(true)
+          now-started>150000) setIslandTrouble(true)
       if (current.ready) setIslandTrouble(false)
     }
     const heartbeat = window.setInterval(update, 150)

@@ -1,0 +1,16 @@
+import assert from 'node:assert/strict'
+import {readFileSync} from 'node:fs'
+const ship=readFileSync('assets/immersive/src/SpaceScene.js','utf8')
+const app=readFileSync('assets/immersive/src/App.js','utf8')
+const main=readFileSync('source/src/App.tsx','utf8')
+const adapter=readFileSync('source/src/intro-hx9/stagedCockpit.ts','utf8')
+assert(ship.includes("await import('ship/hx9')"))
+assert(ship.indexOf('realRenderedFrames >= 2') < ship.indexOf('if (modelReady && !firstPaintAcknowledged)'))
+assert(ship.includes('cockpit.buildNext()'))
+assert(ship.includes("type: 'ORBITA_SPACE_FRAME_READY'"))
+assert(ship.includes('cockpit?.dispose()'))
+assert(app.includes('ORBITA_SPACE_WARP_COMPLETE'))
+assert(!app.includes('CockpitFrame'))
+assert(main.includes('spacePresented && <Experience'))
+for (const part of ['buildHullAndCanopy','buildDashAndHud','buildPedestalAndControls','buildSeatAndBulkhead']) assert(adapter.includes(part))
+console.log('HX9_INTRO_STAGED_AND_HANDOFF_CONTRACT_PASS')
