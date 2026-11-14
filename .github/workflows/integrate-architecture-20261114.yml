@@ -23,7 +23,17 @@ jobs:
           set -euo pipefail
           mkdir -p "$RUNNER_TEMP/architecture-kit"
           unzip -q integration-input/architecture-integration-kit.zip -d "$RUNNER_TEMP/architecture-kit"
-          python3 "$RUNNER_TEMP/architecture-kit/integrate_latest.py" . --dry-run
+          python3 "$RUNNER_TEMP/architecture-kit/integrate_latest.py" . --dry-run 2>&1 | tee .integration-prepare-diagnostic.log
+      - name: Preserve failed preparation diagnostics
+        if: failure()
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          test -f .integration-prepare-diagnostic.log || echo "Failed before Python dry-run (unzip or kit path)" > .integration-prepare-diagnostic.log
+          git add .integration-prepare-diagnostic.log
+          git commit -m "diagnostics: architecture prepare failure [arch-published]" || true
+          git push origin "HEAD:${GITHUB_REF_NAME}"
       - name: Apply 3D geometry and physical FOH only
         shell: bash
         run: |
