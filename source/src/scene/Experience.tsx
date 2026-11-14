@@ -1282,6 +1282,7 @@ export function Experience() {
       gl={{ antialias: false, powerPreference: 'high-performance', toneMapping: THREE.NoToneMapping, stencil: false }}
       onCreated={({ gl }) => {
         if (!incrementalProbe) return
+        if (new URLSearchParams(location.search).get('hx9NoLogs') === '1') gl.debug.checkShaderErrors = false
         const render = gl.render.bind(gl)
         let count = 0
         gl.render = (scene, camera) => {
