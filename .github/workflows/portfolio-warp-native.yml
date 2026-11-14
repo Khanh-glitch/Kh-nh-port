@@ -1,4 +1,4 @@
-name: HX-9 isolated ship frame measurement
+name: HX-9 warp baseline frame measurement
 on:
   push:
     branches: [arena/1e2ad83c-kh-nh-port]
@@ -19,7 +19,7 @@ jobs:
       - run: node scripts/build-pages.mjs
       - name: Measure real warp handoff
         run: |
-          node scripts/hx9-cors-server.mjs >/tmp/hx9-server.log 2>&1 &
+          python3 -m http.server 4173 --bind 127.0.0.1 --directory dist-pages >/tmp/hx9-server.log 2>&1 &
           node scripts/hx9-warp-browser-test.mjs
       - name: Report measurements
         if: always()

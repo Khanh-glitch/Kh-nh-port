@@ -44,6 +44,6 @@ if (oversized.length) {
   throw new Error(`Cloudflare Pages rejects assets over ${PAGES_MAX_ASSET_BYTES / 1024 / 1024} MiB. Reduce these files before deploying:\n${files}`)
 }
 
-writeFileSync(join(out, '_headers'), '/index.html\n  Cache-Control: no-cache, must-revalidate\n/assets/immersive/*\n  Access-Control-Allow-Origin: *\n')
+writeFileSync(join(out, '_headers'), '/index.html\n  Cache-Control: no-cache, must-revalidate\n')
 console.log(`[ORBITA Pages] Ready: ${out} — standalone HTML ${(Buffer.byteLength(html) / 1024 / 1024).toFixed(2)} MiB`)
 console.log('[ORBITA Pages] Build output: dist-pages | Production branch: main')
