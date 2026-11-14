@@ -79,7 +79,6 @@ function Intro({ onSpacePresented, onSpaceUnavailable, onWarpReveal }: SpaceEntr
     // No percent is inferred from elapsed time, rAF ticks, or an unrelated
     // HEX/Colossus warmup. The island must actually render after Suspense
     // resolves and the spacecraft must have painted real WebGL content.
-    let lastProbeStatus = ''
     const update = () => {
       const now = performance.now()
       const shipRendered = spacePainted.current
@@ -92,10 +91,6 @@ function Intro({ onSpacePresented, onSpaceUnavailable, onWarpReveal }: SpaceEntr
         : ready ? 'ready'
         : !shipRendered ? 'rendering-space' : 'rendering-island'
       const progress = ready ? 100 : 0
-      if (new URLSearchParams(location.search).get('hx9IncrementalShaders') === '1' && status !== lastProbeStatus) {
-        lastProbeStatus = status
-        console.info('[HX9-GATE]', JSON.stringify({status, shipRendered, islandRendered, ready, at:Date.now()}))
-      }
       ;(window as unknown as { __orbitaEntryGate?: unknown }).__orbitaEntryGate = {
         ready, progress, status,
         shipRendered, islandReady: islandRendered,

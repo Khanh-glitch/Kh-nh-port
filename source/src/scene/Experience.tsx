@@ -280,78 +280,6 @@ function LandingGpuPreflight() {
  * submitted actual scene frames, not after a timer or a synthetic percentage.
  * This is intentionally independent of optional HEX/robot shader prewarm.
  */
-// Opt-in measurement only: spread real material compilation across frames.
-// The public gate below still waits for actual island frames, not this queue.
-function IslandIncrementalShaderProbe({ onComplete }: { onComplete: () => void }) {
-  const { gl, scene, camera } = useThree()
-  useEffect(() => {
-    let cancelled = false
-    const info = { status: 'collecting', total: 0, done: 0, errors: 0, maxSubmitMs: 0, maxPrimeMs: 0, startedAt: Math.round(performance.now()), durationMs: 0 }
-    ;(window as unknown as {__orbitaIslandIncremental: typeof info}).__orbitaIslandIncremental = info
-    const nextFrame = () => new Promise<void>(resolve => requestAnimationFrame(() => resolve()))
-    const run = async () => {
-      if (!gl.getContext().getExtension('KHR_parallel_shader_compile')) {
-        info.status = 'unsupported'
-        if (!cancelled) onComplete()
-        return
-      }
-      scene.updateMatrixWorld(true)
-      const queue: THREE.Object3D[] = []
-      const seen = new Set<string>()
-      scene.traverseVisible((obj) => {
-        const renderable = obj as THREE.Mesh
-        if (!(renderable.isMesh || (obj as THREE.Line).isLine || (obj as THREE.Points).isPoints || (obj as THREE.Sprite).isSprite)) return
-        const materials = Array.isArray(renderable.material) ? renderable.material : [renderable.material]
-        if (!materials[0]) return
-        const key = `${obj.type}:${materials.map(m => m.uuid).join(',')}:${obj.castShadow}:${obj.receiveShadow}`
-        if (seen.has(key)) return
-        seen.add(key)
-        queue.push(obj)
-      })
-      info.total = queue.length
-      info.status = 'compiling'
-      console.info('[HX9-INCREMENTAL]', JSON.stringify(info))
-      for (const obj of queue) {
-        if (cancelled) return
-        await nextFrame()
-        if (cancelled) return
-        console.info('[HX9-INCREMENTAL]', JSON.stringify({...info, next: obj.type}))
-        try {
-          // Compile a child-free proxy against the real scene lights. Geometry,
-          // materials and textures remain the original full-quality resources.
-          const proxy = obj.clone(false)
-          const started = performance.now()
-          await gl.compileAsync(proxy, camera, scene)
-          info.maxSubmitMs = Math.max(info.maxSubmitMs, Math.round(performance.now() - started))
-          const material = (proxy as THREE.Mesh).material
-          for (const m of Array.isArray(material) ? material : [material]) {
-            if (!m) continue
-            const program = (gl.properties.get(m) as unknown as {currentProgram?:{getUniforms?:()=>unknown}}).currentProgram
-            const prime = performance.now()
-            program?.getUniforms?.()
-            info.maxPrimeMs = Math.max(info.maxPrimeMs, Math.round(performance.now() - prime))
-          }
-        } catch (error) {
-          info.errors++
-          console.warn('[ORBITA] incremental shader probe', error)
-        }
-        info.done++
-      }
-      info.status = 'complete'
-      info.durationMs = Math.round(performance.now() - info.startedAt)
-      console.info('[HX9-INCREMENTAL]', JSON.stringify(info))
-      if (!cancelled) onComplete()
-    }
-    const timer = window.setTimeout(() => { void run().catch(error => {
-      console.warn('[ORBITA] shader probe failed', error)
-      info.status = 'failed'
-      if (!cancelled) onComplete()
-    }) }, 0)
-    return () => { cancelled = true; clearTimeout(timer) }
-  }, [gl, scene, camera, onComplete])
-  return null
-}
-
 function IslandFirstPaintGate({ onReady }: { onReady: () => void }) {
   const { gl } = useThree()
   const done = useRef(false)
@@ -379,7 +307,6 @@ function IslandFirstPaintGate({ onReady }: { onReady: () => void }) {
       shaderPrograms:gl.info.programs?.length??0,
     }
     useStore.getState().setReady()
-    if (new URLSearchParams(location.search).get('hx9IncrementalShaders') === '1') console.info('[HX9-PAINT]', JSON.stringify(diag.__orbitaIslandFirstPaint))
     onReady()
   })
   return null
@@ -1201,9 +1128,6 @@ function homography(src: number[][], dst: number[][]): number[] | null {
 
 export function Experience() {
   const [islandPrepared, setIslandPrepared] = useState(false)
-  const [probeDone, setProbeDone] = useState(false)
-  const finishProbe = useMemo(() => () => setProbeDone(true), [])
-  const incrementalProbe = new URLSearchParams(window.location.search).get('hx9IncrementalShaders') === '1'
   const quality = useStore((s) => s.quality)
   // One panel canvas and one texture for the whole session. Allocating them per
   // open would upload a fresh 1024x1280 texture and drop the old one while the
@@ -1275,33 +1199,18 @@ export function Experience() {
       // Render the hidden island at its existing preparation DPR. After its
       // real first frames, stop hidden animation to give warp the GPU; the
       // original full-quality DPR is restored when the island becomes visible.
-      frameloop={phase === 'intro' && incrementalProbe && !probeDone ? 'never' : phase === 'intro' && islandPrepared ? 'demand' : 'always'}
+      frameloop={phase === 'intro' && islandPrepared ? 'demand' : 'always'}
       dpr={phase === 'intro' ? 0.5 : low ? concessions.renderScale : [1, 1.6]}
       shadows="percentage"
       camera={{ fov: 72, near: 0.1, far: 9000, position: [0, 17, 88] }}
       gl={{ antialias: false, powerPreference: 'high-performance', toneMapping: THREE.NoToneMapping, stencil: false }}
-      onCreated={({ gl }) => {
-        if (!incrementalProbe) return
-        if (new URLSearchParams(location.search).get('hx9NoLogs') === '1') gl.debug.checkShaderErrors = false
-        const render = gl.render.bind(gl)
-        let count = 0
-        gl.render = (scene, camera) => {
-          const frame = ++count
-          const start = performance.now()
-          if (frame <= 12 || frame % 30 === 0) console.info('[HX9-RENDER]', JSON.stringify({frame, status:'start'}))
-          try { return render(scene, camera) }
-          finally {
-            if (frame <= 12 || frame % 30 === 0) console.info('[HX9-RENDER]', JSON.stringify({frame, status:'end', ms:Math.round(performance.now()-start)}))
-          }
-        }
-      }}
     >
       <HighGateMeter />
       {performanceMode && <PerfTierMeter />}
       <Suspense fallback={null}>
         <Sky />
         <Lights shadowEdge={concessions.shadowMapSize} />
-        {!islandPrepared && (!incrementalProbe || probeDone) && <LandingGpuPreflight />}
+        {!islandPrepared && <LandingGpuPreflight />}
         <Phenomena />
         <Platform />
         <Exhibits />
@@ -1313,7 +1222,6 @@ export function Experience() {
         <HexStageVideoLink />
         {officialYoutubeMode && <HexPlayerControls />}
         <Post low={low} portalOnly={postProbeOff} filmPasses={!concessions.dropFilmPasses} bloomLevels={performanceMode ? concessions.bloomLevels : undefined} />
-        {incrementalProbe && !probeDone && <IslandIncrementalShaderProbe onComplete={finishProbe} />}
         <IslandFirstPaintGate onReady={() => setIslandPrepared(true)} />
       </Suspense>
     </Canvas>
