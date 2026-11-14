@@ -18,9 +18,10 @@ function Kbd({ children }: { children: React.ReactNode }) {
 type SpaceEntryCallbacks = {
   onSpacePresented: () => void
   onSpaceUnavailable: () => void
+  onWarpReveal?: () => void
 }
 
-function Intro({ onSpacePresented, onSpaceUnavailable }: SpaceEntryCallbacks) {
+function Intro({ onSpacePresented, onSpaceUnavailable, onWarpReveal }: SpaceEntryCallbacks) {
   const [islandReady, setIslandReady] = useState(false)
   const frame = useRef<HTMLIFrameElement>(null)
   const warpStarted = useRef(false)
@@ -69,6 +70,7 @@ function Intro({ onSpacePresented, onSpaceUnavailable }: SpaceEntryCallbacks) {
       if (data?.type === 'ORBITA_SPACE_WARP_COMPLETE' &&
           engaged.current && entry.current.ready && !warpStarted.current) {
         warpStarted.current = true
+        onWarpReveal?.()
         startGame()
       }
     }
@@ -116,7 +118,7 @@ function Intro({ onSpacePresented, onSpaceUnavailable }: SpaceEntryCallbacks) {
       window.clearInterval(heartbeat)
       window.removeEventListener('message', onMessage)
     }
-  }, [attempt, onSpacePresented, failSpace])
+  }, [attempt, onSpacePresented, onWarpReveal, failSpace])
 
   const requestFallback = () => {
     if (!fallbackRequested) {
@@ -436,6 +438,8 @@ function TouchControls() {
 }
 
 export function Overlay({ onSpacePresented, onSpaceUnavailable }: SpaceEntryCallbacks) {
+  const [handoffFlash, setHandoffFlash] = useState(false)
+  const onWarpReveal = useCallback(() => setHandoffFlash(true), [])
   const phase = useStore((s) => s.phase)
   useEffect(() => {
     audio.prepare()
@@ -444,11 +448,16 @@ export function Overlay({ onSpacePresented, onSpaceUnavailable }: SpaceEntryCall
     <>
       <div className="pointer-events-none absolute inset-0 z-10 bg-[radial-gradient(ellipse_at_center,transparent_55%,rgba(0,0,8,0.55)_100%)]" />
       {phase === 'intro'
-        ? <Intro onSpacePresented={onSpacePresented} onSpaceUnavailable={onSpaceUnavailable} />
+        ? <Intro onSpacePresented={onSpacePresented} onSpaceUnavailable={onSpaceUnavailable} onWarpReveal={onWarpReveal} />
         : <Hud />}
       <PanelView />
       <Paused />
       <TouchControls />
+      {handoffFlash && <>
+        <style>{`@keyframes orbita-handoff-fade{from{opacity:1}to{opacity:0}} @media(prefers-reduced-motion:reduce){.orbita-handoff-flash{animation-duration:1ms!important}}`}</style>
+        <div aria-hidden="true" className="orbita-handoff-flash" onAnimationEnd={() => setHandoffFlash(false)}
+          style={{position:'absolute',inset:0,zIndex:100,pointerEvents:'none',background:'radial-gradient(circle at 50% 38.5%, #fff 0%, #dcefff 28%, #86bcff 75%, #3f7fd8 100%)',animation:'orbita-handoff-fade 400ms ease-out both'}} />
+      </>}
     </>
   )
 }

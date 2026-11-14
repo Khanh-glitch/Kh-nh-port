@@ -280,7 +280,7 @@ function LandingGpuPreflight() {
  * submitted actual scene frames, not after a timer or a synthetic percentage.
  * This is intentionally independent of optional HEX/robot shader prewarm.
  */
-function IslandFirstPaintGate() {
+function IslandFirstPaintGate({ onReady }: { onReady: () => void }) {
   const { gl } = useThree()
   const done = useRef(false)
   const goodFrames = useRef(0)
@@ -307,6 +307,7 @@ function IslandFirstPaintGate() {
       shaderPrograms:gl.info.programs?.length??0,
     }
     useStore.getState().setReady()
+    onReady()
   })
   return null
 }
@@ -1126,6 +1127,7 @@ function homography(src: number[][], dst: number[][]): number[] | null {
 }
 
 export function Experience() {
+  const [islandPrepared, setIslandPrepared] = useState(false)
   const quality = useStore((s) => s.quality)
   // One panel canvas and one texture for the whole session. Allocating them per
   // open would upload a fresh 1024x1280 texture and drop the old one while the
@@ -1194,12 +1196,10 @@ export function Experience() {
 
   return (
     <Canvas
-      // The entire island Canvas is hidden beneath the opaque spacecraft in
-      // intro. Keep its real scene, shaders, lighting and preflight active but
-      // rasterize that unseen surface at 0.5 DPR (one quarter the pixels).
-      // Restore the EXACT original visible DPR on 'playing' before descent.
-      // This cuts concurrent WebGL pressure without simplifying a single
-      // UEH/HEX mesh or reducing the game's 2048px shadow map.
+      // Render the hidden island at its existing preparation DPR. After its
+      // real first frames, stop hidden animation to give warp the GPU; the
+      // original full-quality DPR is restored when the island becomes visible.
+      frameloop={phase === 'intro' && islandPrepared ? 'demand' : 'always'}
       dpr={phase === 'intro' ? 0.5 : low ? concessions.renderScale : [1, 1.6]}
       shadows="percentage"
       camera={{ fov: 72, near: 0.1, far: 9000, position: [0, 17, 88] }}
@@ -1210,7 +1210,7 @@ export function Experience() {
       <Suspense fallback={null}>
         <Sky />
         <Lights shadowEdge={concessions.shadowMapSize} />
-        <LandingGpuPreflight />
+        {!islandPrepared && <LandingGpuPreflight />}
         <Phenomena />
         <Platform />
         <Exhibits />
@@ -1222,7 +1222,7 @@ export function Experience() {
         <HexStageVideoLink />
         {officialYoutubeMode && <HexPlayerControls />}
         <Post low={low} portalOnly={postProbeOff} filmPasses={!concessions.dropFilmPasses} bloomLevels={performanceMode ? concessions.bloomLevels : undefined} />
-        <IslandFirstPaintGate />
+        <IslandFirstPaintGate onReady={() => setIslandPrepared(true)} />
       </Suspense>
     </Canvas>
   )

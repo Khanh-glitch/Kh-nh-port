@@ -1,0 +1,16 @@
+import assert from 'node:assert/strict'
+import {readFileSync} from 'node:fs'
+const app=readFileSync('assets/immersive/src/App.js','utf8')
+const html=readFileSync('assets/immersive/index.html','utf8')
+const exp=readFileSync('source/src/scene/Experience.tsx','utf8')
+const overlay=readFileSync('source/src/ui/Overlay.tsx','utf8')
+assert(app.includes("jump === 'charging' && gate && spooled"))
+assert(app.includes('flight.reduced?250:1900'))
+assert(app.includes('flight.reduced?20:520'))
+assert.match(html,/:not\(\.space-host\):not\(\.vignette\):not\(\.flash\)/)
+assert.match(exp,/frameloop=\{phase === 'intro' && islandPrepared \? 'demand' : 'always'\}/)
+assert.match(exp,/gl\.info\.render\.frame/)
+assert.match(exp,/onReady\(\)/)
+assert.match(overlay,/onWarpReveal\?\.\(\)/)
+assert.match(overlay,/orbita-handoff-fade 400ms/)
+console.log('HX9_REAL_GATE_WARP_CONTRACT_PASS')

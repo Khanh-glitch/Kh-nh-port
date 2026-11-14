@@ -6,6 +6,8 @@ const root = new URL('../', import.meta.url)
 await esbuild.build({absWorkingDir:root.pathname, entryPoints:['source/src/intro-hx9/entry.ts'], bundle:true, format:'esm', minify:true, outfile:'assets/immersive/hx9.js', plugins:[{name:'shared-three',setup(build){build.onResolve({filter:/^three$/},()=>({path:'three',external:true}))}}]})
 const path = new URL('assets/immersive/index.html', root)
 let html = readFileSync(path,'utf8')
+// The generic first-paint fade must not override the original jump flash.
+html = html.replace(/:not\(\.space-host\):not\(\.vignette\)(?!:not\(\.flash\))/g, ':not(.space-host):not(.vignette):not(.flash)')
 html = html.replace(/<script type="importmap">([\s\S]*?)<\/script>/, (_, text) => {
   const map = JSON.parse(text)
   for (const [name,file] of [['ship/App','App.js'],['ship/components/SpaceScene','SpaceScene.js'],['ship/portfolioData','portfolioData.js']])
