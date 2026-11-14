@@ -73,6 +73,20 @@ export function attachSplitFilm(video: HTMLVideoElement, parts: string[], start:
     if (!response.ok) throw new Error(`Cinema media ${response.status}: ${path}`)
     return response.arrayBuffer()
   }
+  async function* streamPart(path: string): AsyncGenerator<ArrayBuffer> {
+    const response = await fetch(path, { signal: controller.signal })
+    if (!response.ok) throw new Error(`Cinema media ${response.status}: ${path}`)
+    if (!response.body) { yield await response.arrayBuffer(); return }
+    const reader = response.body.getReader()
+    try {
+      while (true) {
+        const { value, done } = await reader.read()
+        if (done) break
+        for (let offset = 0; offset < value.byteLength; offset += 256 * 1024)
+          yield value.slice(offset, Math.min(offset + 256 * 1024, value.byteLength)).buffer as ArrayBuffer
+      }
+    } finally { reader.releaseLock() }
+  }
   const run = async () => {
     if (typeof MediaSource === 'undefined' || !MediaSource.isTypeSupported(mime)) {
       const buffers: ArrayBuffer[] = []
@@ -94,12 +108,10 @@ export function attachSplitFilm(video: HTMLVideoElement, parts: string[], start:
     const buffer = mediaSource.addSourceBuffer(mime)
     let started = false
     for (const part of parts) {
-      const bytes = await fetchPart(part)
-      // Keep appends small so the first frames can play while the rest of a
-      // large part is parsed. MP4 fragments may span arbitrary append calls.
-      for (let offset = 0; offset < bytes.byteLength; offset += 256 * 1024) {
+      // Append arriving bytes as they stream, rather than waiting to download
+      // a complete 16 MiB part before showing the first frame.
+      for await (const slice of streamPart(part)) {
         if (closed) return
-        const slice = bytes.slice(offset, Math.min(offset + 256 * 1024, bytes.byteLength))
         await new Promise<void>((resolve, reject) => {
           const cleanup = () => { buffer.removeEventListener('updateend', done); buffer.removeEventListener('error', fail); controller.signal.removeEventListener('abort', cancel) }
           const done = () => { cleanup(); resolve() }
