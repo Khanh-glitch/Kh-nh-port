@@ -13,14 +13,16 @@ import { PadRing, isFacing, mats, useWorldColliders, worldPos } from './common'
 
 const ex = EXHIBITS.cinema
 
-// Same-origin clips can autoplay and advance reliably without Drive player clicks.
-const PROJECT_FILMS: { id: string; label: string; src?: string; projectRole?: string }[] = [
+// Segments are byte ranges of one fragmented MP4 (video/audio copied losslessly).
+// Keeping each below the Pages limit avoids degrading the source web quality.
+const socialParts = (name: string) => [0, 1, 2].map(i => `./portfolio/films/${name}/part-0${i}`)
+const PROJECT_FILMS: { id: string; label: string; src?: string; parts?: string[]; projectRole?: string }[] = [
   { id: '1fkUo-py1nE_pqeGVYvpnJCJCs1IlWAKe', label: 'THE FOOT BETRAYS YOU', src: './portfolio/films/the-foot-betrays-you.mp4' },
   { id: '1RfgyAe0LeKlENlNUTLRYanoFpslrKDz3', label: 'UNHEARD · MUSIC DISCOVERY', src: './portfolio/films/unheard-music-discovery.mp4' },
   { id: '13TybcMrggmZG2K5MpHREdY54WGSyWRh3', label: 'CORAVAMARIS · VIDEO PROJECT 3', src: './portfolio/films/coravamaris.mp4', projectRole: 'Dự án: Audio · Pitch · Level Design' },
-  { id: '1Q8fq-i-Of1jMqeuFCPNCpLhZTatq4j4h', label: 'SOCIAL MEDIA · 92da', src: './portfolio/films/social-2.mp4' },
-  { id: '1sR4CaGBWVUNnmaIQK-gWbmYP_0W4KDko', label: 'THANH ÂM CỦA HÒA BÌNH', src: './portfolio/films/social-1.mp4', projectRole: 'Biên soạn mở đầu · Chỉnh sửa hậu kỳ' },
-  { id: '1O5hcaN86PB4KGd9Sb476Mdahqgv6W-bY', label: 'SOCIAL MEDIA · ea07', src: './portfolio/films/social-3.mp4', projectRole: 'Hậu kỳ · Thuyết minh' },
+  { id: '1Q8fq-i-Of1jMqeuFCPNCpLhZTatq4j4h', label: 'SOCIAL MEDIA · 92da', src: './portfolio/films/social-2.mp4', parts: socialParts('social-2') },
+  { id: '1sR4CaGBWVUNnmaIQK-gWbmYP_0W4KDko', label: 'THANH ÂM CỦA HÒA BÌNH', src: './portfolio/films/social-1.mp4', parts: socialParts('social-1'), projectRole: 'Biên soạn mở đầu · Chỉnh sửa hậu kỳ' },
+  { id: '1O5hcaN86PB4KGd9Sb476Mdahqgv6W-bY', label: 'SOCIAL MEDIA · ea07', src: './portfolio/films/social-3.mp4', parts: socialParts('social-3'), projectRole: 'Hậu kỳ · Thuyết minh' },
 ]
 
 function cinemaHomography(src: number[][], dst: number[][]): number[] | null {
@@ -58,6 +60,67 @@ function cinemaHomography(src: number[][], dst: number[][]): number[] | null {
   return [h[0], h[3], 0, h[6], h[1], h[4], 0, h[7], 0, 0, 1, 0, h[2], h[5], 0, 1]
 }
 
+// Stream the original-quality fMP4 through MediaSource without concatenating
+// the full film in memory. Browsers without MSE get a complete Blob fallback.
+// Each fetch is same-origin; cleanup aborts pending work and revokes its URL.
+export function attachSplitFilm(video: HTMLVideoElement, parts: string[], start: () => void) {
+  const controller = new AbortController()
+  let url: string | null = null
+  let closed = false
+  const mime = 'video/mp4; codecs="avc1.64001f, mp4a.40.2"'
+  const fetchPart = async (path: string) => {
+    const response = await fetch(path, { signal: controller.signal })
+    if (!response.ok) throw new Error(`Cinema media ${response.status}: ${path}`)
+    return response.arrayBuffer()
+  }
+  const run = async () => {
+    if (typeof MediaSource === 'undefined' || !MediaSource.isTypeSupported(mime)) {
+      const buffers: ArrayBuffer[] = []
+      for (const part of parts) buffers.push(await fetchPart(part))
+      if (closed) return
+      url = URL.createObjectURL(new Blob(buffers, { type: 'video/mp4' }))
+      video.src = url
+      start()
+      return
+    }
+    const mediaSource = new MediaSource()
+    url = URL.createObjectURL(mediaSource)
+    video.src = url
+    await new Promise<void>((resolve, reject) => {
+      mediaSource.addEventListener('sourceopen', () => resolve(), { once: true })
+      controller.signal.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')), { once: true })
+    })
+    if (closed) return
+    const buffer = mediaSource.addSourceBuffer(mime)
+    let started = false
+    for (const part of parts) {
+      const bytes = await fetchPart(part)
+      // Keep appends small so the first frames can play while the rest of a
+      // large part is parsed. MP4 fragments may span arbitrary append calls.
+      for (let offset = 0; offset < bytes.byteLength; offset += 256 * 1024) {
+        if (closed) return
+        const slice = bytes.slice(offset, Math.min(offset + 256 * 1024, bytes.byteLength))
+        await new Promise<void>((resolve, reject) => {
+          const cleanup = () => { buffer.removeEventListener('updateend', done); buffer.removeEventListener('error', fail); controller.signal.removeEventListener('abort', cancel) }
+          const done = () => { cleanup(); resolve() }
+          const fail = () => { cleanup(); reject(new Error('Cinema video buffer error')) }
+          const cancel = () => { cleanup(); reject(new DOMException('Aborted', 'AbortError')) }
+          buffer.addEventListener('updateend', done, { once: true })
+          buffer.addEventListener('error', fail, { once: true })
+          controller.signal.addEventListener('abort', cancel, { once: true })
+          try { buffer.appendBuffer(slice) } catch (e) { cleanup(); reject(e) }
+        })
+        if (!started) { started = true; start() }
+      }
+    }
+    if (!closed && mediaSource.readyState === 'open') mediaSource.endOfStream()
+  }
+  void run().catch(error => {
+    if (!closed) { console.error('[Cinema media]', error); toast('Không thể tải phim; có thể mở bản gốc từ bảng thông tin', 4000) }
+  })
+  return () => { closed = true; controller.abort(); if (url) URL.revokeObjectURL(url) }
+}
+
 // Same-origin films are real WebGL textures, so the screen is depth-tested
 // pixel-for-pixel against the cinema, furniture and moving objects. The media
 // element enters the existing HRTF/reverb bus rather than playing in 2D.
@@ -80,10 +143,12 @@ function LocalCinemaFilm({ index, onNext }: { index: number | null; onNext: () =
     const bus = audio.createBus('cinema-film', worldPos(ex, 0, 2.95, -5.8), { ref: 4, rolloff: 1.4, maxDist: 75, reverb: 0.45, gain: 0.9 })
     const source = sourceRef.current ?? (sourceRef.current = audio.ctx.createMediaElementSource(media.video))
     source.connect(bus.input)
-    media.video.src = film.src
     media.video.muted = false // global mute is applied by the shared master bus
     media.video.onended = onNext
-    void media.video.play().catch(() => { toast('Bấm để cho phép phim phát có tiếng') })
+    const play = () => { void media.video.play().catch(() => { toast('Bấm để cho phép phim phát có tiếng') }) }
+    let releaseMedia: (() => void) | undefined
+    if (film.parts) releaseMedia = attachSplitFilm(media.video, film.parts, play)
+    else { media.video.src = film.src; play() }
     const resume = () => {
       if (!media.video.paused) return
       if (audio.ctx.state === 'suspended') void audio.ctx.resume()
@@ -95,6 +160,7 @@ function LocalCinemaFilm({ index, onNext }: { index: number | null; onNext: () =
       window.removeEventListener('pointerdown', resume)
       window.removeEventListener('keydown', resume)
       media.video.onended = null
+      releaseMedia?.()
       media.video.pause()
       media.video.removeAttribute('src')
       media.video.load()

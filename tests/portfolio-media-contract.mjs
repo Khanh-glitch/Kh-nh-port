@@ -40,10 +40,19 @@ assert.match(music, /this\.demo && this\.elapsed >= this\.dur/)
 assert.match(music, /addEventListener\('ended'/)
 assert.match(cinema, /frame\.remove\(\); layer\.remove\(\)/)
 assert.match(cinema, /frame\.pause\(\); frame\.removeAttribute\('src'\); frame\.load\(\)/)
-for (const file of ['the-foot-betrays-you.mp4', 'unheard-music-discovery.mp4', 'coravamaris.mp4', 'social-1.mp4', 'social-2.mp4', 'social-3.mp4']) {
+for (const file of ['the-foot-betrays-you.mp4', 'unheard-music-discovery.mp4', 'coravamaris.mp4']) {
   assert.ok(cinema.includes(file))
   assert.ok(statSync('source/public/portfolio/films/' + file).size > 100000)
 }
+for (const film of ['social-1', 'social-2', 'social-3']) {
+  assert.ok(cinema.includes(`socialParts('${film}')`))
+  for (const part of ['00', '01', '02']) {
+    const bytes = statSync(`source/public/portfolio/films/${film}/part-${part}`).size
+    assert.ok(bytes > 0 && bytes <= 25 * 1024 * 1024)
+  }
+}
+assert.match(cinema, /MediaSource\.isTypeSupported/)
+assert.match(cinema, /controller\.abort\(\)/)
 assert.match(cinema, /realityPhase !== 'idle'\) setProjectFilm\(null\)/)
 assert.match(cinema, /<CinemaTeaser \/>/)
 assert.match(cinema, /new THREE\.VideoTexture\(video\)/)

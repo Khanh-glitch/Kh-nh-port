@@ -265,11 +265,12 @@ signal in the graph, not speakers or every device's autoplay policy.
 
 ### Cloudflare Pages per-file limit
 
-Cloudflare Pages limits each deployed asset to 25 MiB. The three SOCIAL MEDIA
-films are now two-pass H.264 yuv420p, 640×360, with 48 kbps AAC audio and
-`faststart`; their complete runtimes are unchanged. Sizes are 22,634,129,
-23,051,397 and 22,731,164 bytes respectively, below the limit. This reduces
-resolution and bitrate from the previous web copies to permit deployment.
-A full FFmpeg decode found no errors, and Chromium fetched, sought and played
-all three via HTTP Range. The Pages build checks every output file against the
-25 MiB limit before deployment.
+Cloudflare Pages limits each deployed asset to 25 MiB. The earlier 640×360 re-encode has been **reverted** because it reduced visual
+and audio quality. The prior 854×480 H.264/AAC web copies were remuxed with
+`-c copy` to fragmented MP4 and split into three parts of at most 16 MiB each.
+FFmpeg stream SHA-256 for both video and audio matched the prior copy for all
+three films: no video or audio re-encoding was performed. MediaSource appends
+small chunks and starts playback before the full file arrives; a Blob fallback
+is used where MediaSource is unsupported. Chromium tests played all three,
+sought to their ends and observed `ended`, and also exercised the Blob fallback.
+The Pages build checks each output asset against the 25 MiB limit.
