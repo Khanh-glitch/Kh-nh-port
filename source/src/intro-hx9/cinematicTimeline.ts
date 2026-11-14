@@ -6,16 +6,16 @@ export type Cue = { name: AssemblyName; start: number; duration: number; offset:
 // Successive scans overlap to make one continuous inside-out build.
 export const ASSEMBLY_CUES: readonly Cue[] = [
   { name: 'seat', start: .7, duration: 2.6, offset: [0, 0, 0], rotation: [0, 0, 0] },
-  { name: 'dashboard', start: 2.5, duration: 2.6, offset: [0, 0, 0], rotation: [0, 0, 0] },
-  { name: 'controls', start: 4.3, duration: 2.4, offset: [0, 0, 0], rotation: [0, 0, 0] },
-  { name: 'structure', start: 6, duration: 2.7, offset: [0, 0, 0], rotation: [0, 0, 0] },
-  { name: 'shell', start: 7.9, duration: 2.5, offset: [0, 0, 0], rotation: [0, 0, 0] },
-  { name: 'glass', start: 9.6, duration: 2.3, offset: [0, 0, 0], rotation: [0, 0, 0] },
+  { name: 'dashboard', start: 1.8, duration: 2.6, offset: [0, 0, 0], rotation: [0, 0, 0] },
+  { name: 'controls', start: 2.9, duration: 2.4, offset: [0, 0, 0], rotation: [0, 0, 0] },
+  { name: 'structure', start: 4, duration: 2.7, offset: [0, 0, 0], rotation: [0, 0, 0] },
+  { name: 'shell', start: 5.2, duration: 2.5, offset: [0, 0, 0], rotation: [0, 0, 0] },
+  { name: 'glass', start: 6.3, duration: 2.3, offset: [0, 0, 0], rotation: [0, 0, 0] },
 ]
-export const CAMERA_DOCK_START = 11.9
-export const CAMERA_DOCK_END = 17.8
-export const POWER_START = 15.3
-export const CINEMATIC_END = 19.8
+export const CAMERA_DOCK_START = 8.6
+export const CAMERA_DOCK_END = 14.5
+export const POWER_START = 12
+export const CINEMATIC_END = 16.5
 const clamp = (v: number) => Math.max(0, Math.min(1, v))
 /** Monotonic fifth-order ease has zero velocity and acceleration at both ends. */
 export const smootherstep = (v: number) => { const t = clamp(v); return t*t*t*(t*(t*6-15)+10) }

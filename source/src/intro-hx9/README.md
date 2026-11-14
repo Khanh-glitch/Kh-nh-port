@@ -87,3 +87,12 @@ than skipping its reveal. The sequence and camera move are shorter; full
 detail is retained.
 The initial preparation can still take time and native GPU stalls previously
 measured above are not automatically solved by this scheduling change.
+
+## Warp handoff
+
+On entry the original warp acceleration remains visible while the real island
+loads behind it. The flash begins only after the island has actually painted
+and the acceleration lead has elapsed, then the ready island is revealed.
+This deliberately keeps both WebGL contexts alive during island preparation;
+it restores the requested transition but can increase GPU contention.
+The inside-out scans now overlap by at least one second.

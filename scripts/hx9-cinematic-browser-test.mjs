@@ -18,7 +18,7 @@ try{
  await page.waitForSelector('iframe[title*="spaceship cockpit"]',{timeout:90000})
  const frame=await (await page.$('iframe[title*="spaceship cockpit"]')).contentFrame()
  await frame.evaluate(()=>{window.__hx9Frames=[];let last=0;function loop(t){if(last)window.__hx9Frames.push(t-last);last=t;requestAnimationFrame(loop)}requestAnimationFrame(loop)})
- for(const [name,time] of [['seat',1.5],['dashboard',3.2],['controls',5],['structure',6.8],['shell',8.6],['glass',10.4],['pilot',19.6]]){
+ for(const [name,time] of [['seat',1.2],['dashboard',2.1],['controls',3.2],['structure',4.4],['shell',5.6],['glass',6.7],['pilot',16.3]]){
   await frame.waitForFunction(t=>window.__orbitaHx9?.time>=t,time,{timeout:90000})
   const stats=await frame.evaluate(()=>({hx:window.__orbitaHx9,frames:window.__hx9Frames.length,maxGap:Math.round(Math.max(0,...window.__hx9Frames))}))
   data.phases.push({name,...stats})
