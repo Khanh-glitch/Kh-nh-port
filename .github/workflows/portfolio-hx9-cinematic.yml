@@ -1,4 +1,4 @@
-name: HX-9 native cinematic and handoff validation
+name: HX-9 cinematic batching native validation
 on:
   push:
     branches: [arena/1e2ad83c-kh-nh-port]
