@@ -2,7 +2,7 @@ name: HX-9 warp baseline frame measurement
 on:
   push:
     branches: [arena/1e2ad83c-kh-nh-port]
-    paths: ['.github/workflows/portfolio-warp-native.yml']
+    paths: ['.github/workflows/portfolio-warp-native.yml', 'scripts/hx9-warp-browser-test.mjs']
   workflow_dispatch:
 permissions:
   contents: read
