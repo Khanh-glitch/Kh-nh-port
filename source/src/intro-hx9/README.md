@@ -39,3 +39,11 @@ out before the pilot viewpoint; it did not establish smoothness. A later local
 software-rendered accelerated test confirmed the completed ship, explicit
 entry, renderer release, actual island-ready gate and handoff without page
 errors, but it is not a native performance measurement.
+
+Native Metal run `43554216066` rejected the static batching candidate: it
+reached the camera transition but observed a 12.983-second rAF gap and then
+timed out before the pilot view. It did not demonstrate the requested smooth
+experience. That candidate was reverted; the unbatched cinematic remains on
+the branch and also has not passed native performance validation (earlier run
+`43553008332` reached controls and timed out, with a 3.75-second observed gap).
+Do not describe either result as a successful no-stall release.
