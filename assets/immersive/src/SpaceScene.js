@@ -654,7 +654,6 @@ export default function SpaceScene() {
         let rendererFailed = false;
         let cancelled = false;
         let cockpitEnvironment = null;
-        let warmTarget = null;
         let modelReady = false;
         let startModel = false;
         let hx = null;
@@ -688,57 +687,6 @@ export default function SpaceScene() {
                 cockpitRoot.add(key.target);
                 cockpitRoot.userData.fill = fillCabin;
                 camera.layers.enable(1);
-                // Exercise the original material/geometry on an invisible target,
-                // one draw per healthy frame. This spreads texture uploads and
-                // shader first-use over time without changing visible detail.
-                warmTarget = new THREE.WebGLRenderTarget(4, 4, {depthBuffer:true, stencilBuffer:false});
-                warmTarget.texture.colorSpace = THREE.SRGBColorSpace;
-                const warmScene = new THREE.Scene();
-                const warmCamera = new THREE.PerspectiveCamera(65, 1, .01, 100);
-                warmCamera.layers.set(1); warmCamera.position.set(0,0,3); warmCamera.lookAt(0,0,0);
-                const wk = key.clone(), wf = fillCabin.clone(), wa = ambientCabin.clone();
-                wk.layers.set(1); wf.layers.set(1); wa.layers.set(1);
-                wk.target = new THREE.Object3D(); wk.target.position.copy(key.target.position);
-                warmScene.add(wk,wk.target,wf,wa);
-                const warmedMaterials = new WeakSet();
-                async function warmPart(part) {
-                    const meshes=[];
-                    part.traverse(o => { if (o.isMesh && o.geometry && o.material) meshes.push(o); });
-                    for (const mesh of meshes) {
-                        if (cancelled || rendererFailed) return;
-                        await nextPaint();
-                        const proxy=mesh.clone(false);
-                        proxy.geometry=mesh.geometry; proxy.material=mesh.material;
-                        if (mesh.isInstancedMesh) { proxy.instanceMatrix=mesh.instanceMatrix; proxy.instanceColor=mesh.instanceColor; }
-                        proxy.layers.set(1); proxy.frustumCulled=false;
-                        if (!proxy.geometry.boundingSphere) proxy.geometry.computeBoundingSphere();
-                        if (proxy.geometry.boundingSphere) proxy.position.copy(proxy.geometry.boundingSphere.center).multiplyScalar(-1);
-                        warmScene.add(proxy);
-                        const previous = renderer.getRenderTarget();
-                        const viewport = renderer.getViewport(new THREE.Vector4()).clone();
-                        const scissor = renderer.getScissor(new THREE.Vector4()).clone();
-                        const scissorTest = renderer.getScissorTest();
-                        const autoClear = renderer.autoClear;
-                        try {
-                            renderer.setRenderTarget(warmTarget); renderer.setViewport(0,0,4,4); renderer.setScissorTest(false);
-                            const materials = Array.isArray(proxy.material) ? proxy.material : [proxy.material];
-                            if (materials.some(m => !warmedMaterials.has(m))) {
-                                for (const mat of materials) warmedMaterials.add(mat);
-                                // Submit compilation while the correct output target is bound.
-                                const pending = renderer.compileAsync(proxy, warmCamera, warmScene);
-                                renderer.setRenderTarget(previous); renderer.setViewport(viewport); renderer.setScissor(scissor); renderer.setScissorTest(scissorTest);
-                                await pending;
-                                if (cancelled || rendererFailed) return;
-                                renderer.setRenderTarget(warmTarget); renderer.setViewport(0,0,4,4); renderer.setScissorTest(false);
-                            }
-                            renderer.autoClear=true;
-                            renderer.render(warmScene,warmCamera);
-                        } finally {
-                            warmScene.remove(proxy);
-                            renderer.setRenderTarget(previous); renderer.setViewport(viewport); renderer.setScissor(scissor); renderer.setScissorTest(scissorTest); renderer.autoClear=autoClear;
-                        }
-                    }
-                }
                 const loader = new hx.GLTFLoader();
                 const names = ['structure', 'shell', 'seat', 'dashboard', 'controls', 'glass'];
                 for (const name of names) {
@@ -757,12 +705,7 @@ export default function SpaceScene() {
                             o.material.color.setRGB(0,0,0);
                         }
                     });
-                    cockpitRoot.add(part);
-                    const prepLabels = { structure:'Chuẩn bị khung kết cấu…', shell:'Chuẩn bị vỏ tàu…', seat:'Chuẩn bị ghế phi công…', dashboard:'Chuẩn bị bảng điều khiển…', controls:'Chuẩn bị thiết bị điều khiển…', glass:'Chuẩn bị kính cockpit…' };
-                    progress(prepLabels[name]);
-                    await warmPart(part);
-                    if (cancelled || rendererFailed) return;
-                    parts.set(name, part);
+                    cockpitRoot.add(part); parts.set(name, part);
                     await nextPaint();
                 }
             } catch (error) { if (!cancelled) reportFailure('cockpit-load: ' + String(error)); }
@@ -931,7 +874,6 @@ export default function SpaceScene() {
                 for (const mat of mats) { for (const value of Object.values(mat)) if (value?.isTexture) value.dispose(); mat.dispose(); }
             });
             cockpitEnvironment?.dispose();
-            warmTarget?.dispose();
             off();
             renderer.domElement.removeEventListener('webglcontextlost', onContextLost);
             window.removeEventListener('resize', resize);
