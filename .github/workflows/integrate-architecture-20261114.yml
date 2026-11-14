@@ -27,6 +27,18 @@ jobs:
           mkdir -p "$RUNNER_TEMP/architecture-kit"
           {
             unzip -q integration-input/architecture-integration-kit.zip -d "$RUNNER_TEMP/architecture-kit"
+          # The source Beacon is intentionally replaced by the user's architecture (1).
+          # Preserve all other overlay collision fences.
+          python3 - "$RUNNER_TEMP/architecture-kit/integrate_latest.py" <<'PY'
+          from pathlib import Path
+          import sys
+          path=Path(sys.argv[1])
+          s=path.read_text()
+          old="and 'Station.tsx' not in str(dest)"
+          new="and not any(str(dest).endswith('/'+n) for n in ('Station.tsx','Beacon.tsx'))"
+          assert s.count(old)==1, "Unexpected integration kit version"
+          path.write_text(s.replace(old,new,1))
+          PY
             python3 "$RUNNER_TEMP/architecture-kit/integrate_latest.py" . --dry-run
           } > .integration-prepare-diagnostic.log 2>&1
           rc=$?
