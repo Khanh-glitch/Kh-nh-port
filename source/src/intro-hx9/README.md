@@ -6,10 +6,7 @@ properties originate from `Khanh-glitch/hauek`, main branch, archive
 the original procedural model and exports its real geometry into six GLB
 assemblies: structure, pressure shell, glass, seat, dashboard and controls.
 The exporter combines certain roughness/metalness texture channels as required
-by glTF; no geometry decimation or texture downscaling is requested. Static
-opaque single-material meshes are baked into shared-coordinate batches only
-when their vertex layouts match; transparent pieces, hardware instances and
-screens remain independent. All original vertex counts are enforced by tests. The
+by glTF; no geometry decimation or texture downscaling is requested. The
 exports are under Cloudflare Pages' 25 MiB individual-file limit.
 
 The existing immersive space renderer and environment remain in use. Once its
@@ -42,8 +39,3 @@ out before the pilot viewpoint; it did not establish smoothness. A later local
 software-rendered accelerated test confirmed the completed ship, explicit
 entry, renderer release, actual island-ready gate and handoff without page
 errors, but it is not a native performance measurement.
-
-Native Metal run `43553555729` rejected per-mesh private-target warmup: it
-reached only the shell and timed out while preparing the seat; worst observed
-gap was 2.833 seconds. That warmup was removed. Static mesh batching is a
-separate candidate and requires its own native timing and visual verification.
