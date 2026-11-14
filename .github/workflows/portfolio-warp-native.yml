@@ -2,7 +2,7 @@ name: HX-9 warp baseline frame measurement
 on:
   push:
     branches: [arena/1e2ad83c-kh-nh-port]
-    paths: ['.github/workflows/portfolio-warp-native.yml', 'scripts/hx9-warp-browser-test.mjs']
+    paths: ['.github/workflows/portfolio-warp-native.yml', 'scripts/hx9-warp-browser-test.mjs', 'scripts/hx9-gpu-info.mjs']
   workflow_dispatch:
 permissions:
   contents: read
@@ -17,6 +17,8 @@ jobs:
           node-version: '22'
       - run: npm ci --prefix source && npm install --prefix source --no-save --package-lock=false playwright@1.56.1 && (cd source && npx playwright install chromium)
       - run: node scripts/build-pages.mjs
+      - name: Report renderer
+        run: node scripts/hx9-gpu-info.mjs
       - name: Measure real warp handoff
         run: |
           python3 -m http.server 4173 --bind 127.0.0.1 --directory dist-pages >/tmp/hx9-server.log 2>&1 &
