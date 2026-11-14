@@ -17,19 +17,20 @@ try{
  await page.goto('http://127.0.0.1:4173/',{waitUntil:'domcontentloaded',timeout:120000})
  await page.waitForSelector('iframe[title*="spaceship cockpit"]',{timeout:90000})
  const frame=await (await page.$('iframe[title*="spaceship cockpit"]')).contentFrame()
+ await frame.evaluate(()=>{window.__hx9Frames=[];let last=0;function loop(t){if(last)window.__hx9Frames.push(t-last);last=t;requestAnimationFrame(loop)}requestAnimationFrame(loop)})
  for(const [name,time] of [['structure',3],['shell',6],['seat',9],['dashboard',12],['glass',17],['pilot',30.5]]){
-  await frame.waitForFunction(t=>window.__orbitaHx9?.time>=t,time,{timeout:240000})
+  await frame.waitForFunction(t=>window.__orbitaHx9?.time>=t,time,{timeout:90000})
   const stats=await frame.evaluate(()=>({hx:window.__orbitaHx9,frames:window.__hx9Frames.length,maxGap:Math.round(Math.max(0,...window.__hx9Frames))}))
   data.phases.push({name,...stats})
   await page.screenshot({path:`hx9-evidence/${name}.png`,timeout:120000})
  }
+ data.gaps=await frame.evaluate(()=>{const a=window.__hx9Frames.slice().sort((x,y)=>x-y);return {max:Math.max(...a),p95:a[Math.floor(a.length*.95)],frames:a.length}})
+ await page.frameLocator('iframe[title*="spaceship cockpit"]').locator('.hx9-enter').click({timeout:90000})
  await page.waitForFunction(()=>window.__orbitaEntryGate?.ready===true,null,{timeout:240000})
  data.gate=await page.evaluate(()=>({gate:window.__orbitaEntryGate,order:window.__hx9Order}))
- data.gaps=await frame.evaluate(()=>{const a=window.__hx9Frames.slice().sort((x,y)=>x-y);return {max:Math.max(...a),p95:a[Math.floor(a.length*.95)],frames:a.length}})
  if(!data.gate.order.ship||data.gate.order.island<data.gate.order.ship)throw Error('Orbita mounted before completed cinematic')
- await page.frameLocator('iframe[title*="spaceship cockpit"]').locator('.hx9-enter').click({timeout:90000})
  await page.waitForSelector('[data-orbita-space-entry="true"]',{state:'detached',timeout:120000})
  data.entered=true
  if(data.errors.length||data.failed.length)throw Error('Browser error or model request failed')
  console.log('HX9_CINEMATIC_PASS '+JSON.stringify(data))
-}catch(e){data.error=String(e);console.error('HX9_CINEMATIC_FAILED '+JSON.stringify(data));process.exitCode=1}finally{writeFileSync('hx9-evidence/result.json',JSON.stringify(data,null,2));await browser.close()}
+}catch(e){try{const f=page.frames().find(f=>f.url().includes('immersive'));data.diagnostic=f?await f.evaluate(()=>({hx:window.__orbitaHx9,painted:window.__orbitaSpacePainted,text:document.body.innerText,frames:window.__hx9Frames?.length})):null}catch{}data.error=String(e);console.error('HX9_CINEMATIC_FAILED '+JSON.stringify(data));process.exitCode=1}finally{writeFileSync('hx9-evidence/result.json',JSON.stringify(data,null,2));await browser.close()}

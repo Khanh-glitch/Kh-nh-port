@@ -772,7 +772,7 @@ export default function SpaceScene() {
                 if (cinematicTime >= hx.CINEMATIC_END - 1.5) addIdentity();
                 if (cinematicTime >= hx.CINEMATIC_END && !introCompleted && parts.size === 6) {
                     introCompleted = true;
-                    progress('Phi thuyền sẵn sàng · đang mở không gian Orbita…');
+                    progress('Phi thuyền sẵn sàng · mời bạn khởi hành.');
                     modelReady = true;
                 }
             } else {
@@ -849,7 +849,7 @@ export default function SpaceScene() {
                 firstPaintAcknowledged = true;
                 requestAnimationFrame(() => {
                     if (cancelled || rendererFailed) return;
-                    progress('Phi thuyền đã sẵn sàng · đang mở không gian Orbita…');
+                    progress('Phi thuyền sẵn sàng · mời bạn khởi hành.');
                     window.__orbitaSpacePainted = true;
                     window.dispatchEvent(new Event('ORBITA_SPACE_LOCAL_PAINTED'));
                     window.parent.postMessage({ type: 'ORBITA_SPACE_FRAME_READY', renderedFrames: realRenderedFrames, programCount: renderer.info.programs?.length ?? 0 }, window.location.origin);
@@ -864,8 +864,10 @@ export default function SpaceScene() {
             f.targetR = (PLANET_R / dist) * camera.projectionMatrix.elements[5] * size.h * 0.5;
             f.targetVisible = tmp.z < 1;
         });
-        return () => {
+        const release = () => {
+            if (cancelled) return;
             cancelled = true;
+            window.removeEventListener('ORBITA_SPACE_RELEASE', release);
             cockpitRoot.traverse(o => {
                 if (o.geometry) o.geometry.dispose();
                 const mats = Array.isArray(o.material) ? o.material : o.material ? [o.material] : [];
@@ -878,8 +880,11 @@ export default function SpaceScene() {
             disposables.forEach((d) => d.dispose());
             rocks.dispose();
             renderer.dispose();
+            renderer.forceContextLoss();
             renderer.domElement.remove();
         };
+        window.addEventListener('ORBITA_SPACE_RELEASE', release);
+        return release;
     }, []);
     return _jsx("div", { ref: hostRef, className: "space-host", "aria-hidden": "true" });
 }

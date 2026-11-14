@@ -21,10 +21,11 @@ type SpaceEntryCallbacks = {
 }
 
 function Intro({ onSpacePresented, onSpaceUnavailable }: SpaceEntryCallbacks) {
-  const islandReady = useStore((s) => s.ready)
+  const [islandReady, setIslandReady] = useState(false)
   const frame = useRef<HTMLIFrameElement>(null)
   const warpStarted = useRef(false)
   const engaged = useRef(false)
+  const islandRequestedAt = useRef(0)
   const spacePainted = useRef(false)
   const fallbackReported = useRef(false)
   const entry = useRef({ ready: false })
@@ -56,13 +57,14 @@ function Intro({ onSpacePresented, onSpaceUnavailable }: SpaceEntryCallbacks) {
         if (spacePainted.current || fallbackReported.current) return
         spacePainted.current = true
         setFailure(null)
-        onSpacePresented()
       }
       if (data?.type === 'ORBITA_SPACE_RENDERER_FAILED')
         failSpace('Không khởi tạo được WebGL của phi thuyền.')
-      if (data?.type === 'ORBITA_SPACE_ENGAGE' && entry.current.ready) {
+      if (data?.type === 'ORBITA_SPACE_ENGAGE' && spacePainted.current && !engaged.current && !fallbackReported.current) {
         engaged.current = true
+        islandRequestedAt.current = performance.now()
         void audio.start()
+        onSpacePresented()
       }
       if (data?.type === 'ORBITA_SPACE_WARP_COMPLETE' &&
           engaged.current && entry.current.ready && !warpStarted.current) {
@@ -77,9 +79,11 @@ function Intro({ onSpacePresented, onSpaceUnavailable }: SpaceEntryCallbacks) {
     // resolves and the spacecraft must have painted real WebGL content.
     const update = () => {
       const now = performance.now()
-      const current = useStore.getState()
       const shipRendered = spacePainted.current
-      const ready = current.ready && shipRendered && !failureRef.current
+      const islandRendered = (window as unknown as {__orbitaIslandFirstPaint?:{status?:string}})
+        .__orbitaIslandFirstPaint?.status === 'ready'
+      if (islandRendered) setIslandReady(true)
+      const ready = islandRendered && shipRendered && !failureRef.current
       entry.current.ready = ready
       const status = failureRef.current ? 'ship-failed'
         : ready ? 'ready'
@@ -87,7 +91,7 @@ function Intro({ onSpacePresented, onSpaceUnavailable }: SpaceEntryCallbacks) {
       const progress = ready ? 100 : 0
       ;(window as unknown as { __orbitaEntryGate?: unknown }).__orbitaEntryGate = {
         ready, progress, status,
-        shipRendered, islandReady: current.ready,
+        shipRendered, islandReady: islandRendered,
         loadingIsMeasured: true,
         shader: (window as unknown as {__orbitaHexShaderPrep?:{status?:string}})
           .__orbitaHexShaderPrep?.status ?? 'not-started',
@@ -98,13 +102,13 @@ function Intro({ onSpacePresented, onSpaceUnavailable }: SpaceEntryCallbacks) {
         ready, progress, status,
       }, origin)
 
-      if (!shipRendered && !fallbackReported.current && now-started>120000)
+      if (!shipRendered && !fallbackReported.current && now-started>240000)
         failSpace('Phi thuyền chưa dựng được khung hình đầu.')
       // If island loading fails, offer an actual retry, never a false 100%
       // or silently bypass the readiness gate.
-      if ((shipRendered || fallbackReported.current) && !current.ready &&
-          now-started>150000) setIslandTrouble(true)
-      if (current.ready) setIslandTrouble(false)
+      if ((shipRendered || fallbackReported.current) && !islandRendered &&
+          islandRequestedAt.current > 0 && now-islandRequestedAt.current>150000) setIslandTrouble(true)
+      if (islandRendered) setIslandTrouble(false)
     }
     const heartbeat = window.setInterval(update, 150)
     update()
@@ -117,12 +121,13 @@ function Intro({ onSpacePresented, onSpaceUnavailable }: SpaceEntryCallbacks) {
   const requestFallback = () => {
     if (!fallbackRequested) {
       setFallbackRequested(true)
+      islandRequestedAt.current = performance.now()
       // Give the error/retry UI two actual paints before allocating the
       // secondary island GPU context. This is scheduling, not fake progress.
       requestAnimationFrame(() => requestAnimationFrame(onSpaceUnavailable))
       return
     }
-    if (islandReady && useStore.getState().ready) startGame()
+    if (islandReady) startGame()
   }
 
   const retryShip = () => {
@@ -134,6 +139,7 @@ function Intro({ onSpacePresented, onSpaceUnavailable }: SpaceEntryCallbacks) {
     spacePainted.current = false
     entry.current.ready = false
     engaged.current = false
+    islandRequestedAt.current = 0
     warpStarted.current = false
     setAttempt((n) => n + 1)
   }
@@ -141,7 +147,10 @@ function Intro({ onSpacePresented, onSpaceUnavailable }: SpaceEntryCallbacks) {
   return <div data-orbita-space-entry="true"
     className="absolute inset-0 z-30 overflow-hidden bg-[#02040a] text-white">
     <iframe key={attempt} ref={frame}
-      src="assets/immersive/index.html"
+      src={(() => {
+        const speed = new URLSearchParams(window.location.search).get('hx9DiagnosticSpeed')
+        return 'assets/immersive/index.html' + (speed ? `?hx9DiagnosticSpeed=${encodeURIComponent(speed)}` : '')
+      })()}
       title="Immersive Space Shift · spaceship cockpit"
       className="absolute inset-0 h-full w-full border-0"
       allow="autoplay"

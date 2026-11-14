@@ -16,7 +16,9 @@ seating strokes; the camera travels above the canopy to the design eye point;
 instruments and cabin light power up in sequence; pilot identity is drawn on the
 actual 3D primary display. Cinematic time waits for actual assembly availability
 rather than faking a percent. The Orbita canvas mounts only after the completed
-cockpit has rendered. The existing real-island readiness gate and entry remain.
+cockpit has rendered and the visitor chooses to enter. The ship renderer is
+released before Orbita is allocated; the transition waits for Orbita's actual
+rendered frames, not audio readiness or a timer.
 
 Rebuild `assets/immersive/hx9.js` and the standalone ship import map with
 `node scripts/build-hx9-intro.mjs` after changing scene sources. Then run
@@ -31,3 +33,9 @@ interrupting rendering. GLB loading and GPU uploads can still cause frame gaps;
 measure them on native devices rather than inferring smoothness from a software
 renderer or the status message. The diagnostic `hx9DiagnosticSpeed` query is
 used only for accelerated capture and is not present in normal visitor URLs.
+
+Native GPU validation run `43552148726` reached the glass assembly but timed
+out before the pilot viewpoint; it did not establish smoothness. A later local
+software-rendered accelerated test confirmed the completed ship, explicit
+entry, renderer release, actual island-ready gate and handoff without page
+errors, but it is not a native performance measurement.
