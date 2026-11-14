@@ -5,23 +5,6 @@ mkdirSync('hx9-warp-evidence',{recursive:true})
 const browser=await chromium.launch({headless:true,args:['--enable-webgl','--ignore-gpu-blocklist','--use-angle=metal']})
 const page=await browser.newPage({viewport:{width:800,height:600},deviceScaleFactor:1})
 const report={errors:[],events:[]}
-const cdp=await page.context().newCDPSession(page)
-await cdp.send('Profiler.enable')
-let profiling=false
-async function finishProfile(){
- if(!profiling)return
- profiling=false
- const {profile}=await cdp.send('Profiler.stop')
- const nodes=new Map(profile.nodes.map(n=>[n.id,n.callFrame]))
- const totals=new Map()
- for(let i=0;i<(profile.samples?.length??0);i++){
-   const f=nodes.get(profile.samples[i]);if(!f)continue
-   const key=JSON.stringify({fn:f.functionName||'(anonymous)',url:f.url?.slice(-120),line:f.lineNumber+1})
-   totals.set(key,(totals.get(key)??0)+(profile.timeDeltas?.[i]??0))
- }
- report.cpu=Array.from(totals,([key,us])=>({...JSON.parse(key),ms:Math.round(us/1000)})).sort((a,b)=>b.ms-a.ms).slice(0,20)
-}
-
 page.on('pageerror',e=>report.errors.push(String(e)))
 await page.addInitScript(()=>{
  if(window!==window.top)return
@@ -77,11 +60,9 @@ try{
      parent.postMessage({type:'HX9_TEST_AUDIT',event:{type:state,at:performance.timeOrigin+performance.now(),ready:node.dataset.islandReady==='true',speed:flight.speed,canvas:!!document.querySelector('canvas'),shipFrameCount:frames,shipMaxGapMs:Math.round(maxGap),shipDurationMs:Math.round(last-first)}},location.origin)
    }).observe(node,{attributes:true,attributeFilter:['data-jump']})
  })
- await cdp.send('Profiler.start'); profiling=true
  await page.frameLocator('iframe[title*="spaceship cockpit"]').locator('.hx9-enter').click({timeout:90000})
- await page.waitForSelector('[data-orbita-space-entry="true"]',{state:'detached',timeout:300000})
+ await page.waitForSelector('[data-orbita-space-entry="true"]',{state:'detached',timeout:120000})
  await page.waitForTimeout(1200)
- await finishProfile()
  const result=await page.evaluate(()=>({audit:window.__warpAudit,paint:window.__orbitaIslandFirstPaint,gate:window.__orbitaEntryGate,incremental:window.__orbitaIslandIncremental,profile:window.__warpProfile}))
  report.events=result.audit.events;report.paint=result.paint;report.gate=result.gate;report.incremental=result.incremental;report.profile=result.profile
  const begin=report.events.find(e=>e.type==='ORBITA_SPACE_ENGAGE'), charging=report.events.find(e=>e.type==='charging'),flash=report.events.find(e=>e.type==='flash'),end=report.events.find(e=>e.type==='ORBITA_SPACE_WARP_COMPLETE')
@@ -96,10 +77,9 @@ try{
  console.log('HX9_WARP_PASS '+JSON.stringify(report))
 }catch(e){
  report.error=String(e)
- try{await finishProfile()}catch{}
- try{report.diagnostic=await page.evaluate(()=>({gate:window.__orbitaEntryGate,paint:window.__orbitaIslandFirstPaint,events:window.__warpAudit?.events,incremental:window.__orbitaIslandIncremental,profile:window.__warpProfile}))}catch{}
+ try{report.diagnostic=await Promise.race([page.evaluate(()=>({gate:window.__orbitaEntryGate,paint:window.__orbitaIslandFirstPaint,events:window.__warpAudit?.events,incremental:window.__orbitaIslandIncremental,profile:window.__warpProfile})),new Promise((_,reject)=>setTimeout(()=>reject(Error('diagnostic timed out')),5000))])}catch{}
  const profile=report.profile??report.diagnostic?.profile
  const summary={error:report.error,timing:report.timing,events:report.events,cpu:report.cpu,
    calls:profile?.calls,longTasks:profile?.longTasks?.sort((a,b)=>b.ms-a.ms).slice(0,15),animationFrames:profile?.animationFrames?.sort((a,b)=>b.ms-a.ms).slice(0,5)}
  console.error('HX9_WARP_FAIL '+JSON.stringify(summary));process.exitCode=1
-}finally{writeFileSync('hx9-warp-evidence/result.json',JSON.stringify(report,null,2));await browser.close()}
+}finally{writeFileSync('hx9-warp-evidence/result.json',JSON.stringify(report,null,2));await Promise.race([browser.close(),new Promise(resolve=>setTimeout(resolve,5000))])}
