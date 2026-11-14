@@ -25,10 +25,19 @@ export default function App() {
     return ()=>clearTimeout(timer);
   },[jump]);
   useEffect(()=>{
-    // A genuine island frame AND the original acceleration lead are both
-    // required before the flash. Keep rendering the ship during preparation.
-    if (jump === 'charging' && gate && spooled) setJump('flash');
-    else if (jump === 'flash' && !gate) setJump('charging');
+    // Elapsed wall time alone does not mean the flight has accelerated: the
+    // simulation clamps its time step when frames are late. Require the real
+    // animated speed as well as the genuine island frame and original lead.
+    if (jump === 'charging' && gate && spooled) {
+      let frame;
+      const waitForSpeed=()=>{
+        if (flight.reduced || flight.speed >= 9) setJump('flash');
+        else frame=requestAnimationFrame(waitForSpeed);
+      };
+      waitForSpeed();
+      return ()=>cancelAnimationFrame(frame);
+    }
+    if (jump === 'flash' && !gate) setJump('charging');
   },[jump,gate,spooled]);
   useEffect(()=>{
     if (jump !== 'flash' || !gate) return;

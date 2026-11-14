@@ -28,9 +28,6 @@ await page.addInitScript(()=>{
  // Capture *where* the browser blocks rather than attributing a frame gap to
  // the GPU solely from rAF timing. Instrumentation exists only in this test.
  window.__warpProfile={calls:{},longTasks:[],animationFrames:[]}
- const tracked=['compileShader','linkProgram','getShaderParameter','getProgramParameter',
-   'getProgramInfoLog','getShaderInfoLog','getUniformLocation','getAttribLocation','bufferData','texImage2D','texSubImage2D',
-   'drawElements','drawArrays','drawElementsInstanced','drawArraysInstanced','readPixels','flush','finish']
  for(const ctor of [window.WebGLRenderingContext,window.WebGL2RenderingContext]){
    if(!ctor)continue
    for(const name of Object.getOwnPropertyNames(ctor.prototype)){
@@ -89,6 +86,7 @@ try{
  report.events=result.audit.events;report.paint=result.paint;report.gate=result.gate;report.profile=result.profile
  const begin=report.events.find(e=>e.type==='ORBITA_SPACE_ENGAGE'), charging=report.events.find(e=>e.type==='charging'),flash=report.events.find(e=>e.type==='flash'),end=report.events.find(e=>e.type==='ORBITA_SPACE_WARP_COMPLETE')
  if(!begin||!charging||!charging.canvas||!flash||!flash.ready||!end||!end.ready)throw Error('Warp ordering or real gate failed')
+ if(flash.speed<9)throw Error('Flash started before visible warp acceleration')
  const gaps=result.audit.gaps.filter(x=>x.at>=begin.at&&x.at<=end.at+1000).map(x=>x.dt).sort((a,b)=>a-b)
  report.timing={chargeMs:Math.round(flash.at-begin.at),flashMs:Math.round(end.at-flash.at),maxGapMs:Math.round(gaps.at(-1)??0),p95Ms:Math.round(gaps[Math.floor(gaps.length*.95)]??0),frames:gaps.length,warpSpeedAtFlash:flash.speed,shipMaxGapMs:flash.shipMaxGapMs,shipFrameCount:flash.shipFrameCount,shipDurationMs:flash.shipDurationMs}
  if(report.errors.length)throw Error('Browser page errors')
