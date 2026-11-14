@@ -9,19 +9,20 @@ page.on('pageerror',e=>report.errors.push(String(e)))
 await page.addInitScript(()=>{
  if(window!==window.top)return
  window.__warpAudit={events:[],gaps:[]};let last=0
- function frame(t){if(last)window.__warpAudit.gaps.push({at:t,dt:t-last});last=t;requestAnimationFrame(frame)}requestAnimationFrame(frame)
+ function frame(t){if(last)window.__warpAudit.gaps.push({at:performance.timeOrigin+t,dt:t-last});last=t;requestAnimationFrame(frame)}requestAnimationFrame(frame)
  window.addEventListener('message',e=>{
-   if(['ORBITA_SPACE_FRAME_READY','ORBITA_SPACE_ENGAGE','ORBITA_SPACE_WARP_COMPLETE'].includes(e.data?.type))window.__warpAudit.events.push({type:e.data.type,at:performance.now(),ready:window.__orbitaEntryGate?.ready===true})
+   if(e.data?.type==='HX9_TEST_AUDIT')window.__warpAudit.events.push(e.data.event)
+   if(['ORBITA_SPACE_FRAME_READY','ORBITA_SPACE_ENGAGE','ORBITA_SPACE_WARP_COMPLETE'].includes(e.data?.type))window.__warpAudit.events.push({type:e.data.type,at:performance.timeOrigin+performance.now(),ready:window.__orbitaEntryGate?.ready===true})
  })
 })
 try{
- await page.goto('http://127.0.0.1:4173/?hx9DiagnosticSpeed=25',{waitUntil:'domcontentloaded',timeout:120000})
+ await page.goto('http://127.0.0.1:4173/?hx9DiagnosticSpeed=25&hx9Isolate=1',{waitUntil:'domcontentloaded',timeout:120000})
  await page.waitForFunction(()=>window.__orbitaEntryGate?.shipRendered===true,null,{timeout:240000})
  const frame=page.frames().find(f=>f.url().includes('immersive/index.html'))
  if(!frame)throw Error('Spaceship frame missing')
  await frame.evaluate(async()=>{
    const flight=(await import('ship/lib/flight')).flight, node=document.querySelector('.hx9-app')
-   new MutationObserver(()=>parent.__warpAudit.events.push({type:node.dataset.jump,at:parent.performance.now(),ready:parent.__orbitaEntryGate?.ready===true,speed:flight.speed,canvas:!!document.querySelector('canvas')})).observe(node,{attributes:true,attributeFilter:['data-jump']})
+   new MutationObserver(()=>parent.postMessage({type:'HX9_TEST_AUDIT',event:{type:node.dataset.jump,at:performance.timeOrigin+performance.now(),ready:node.dataset.islandReady==='true',speed:flight.speed,canvas:!!document.querySelector('canvas')}},location.origin)).observe(node,{attributes:true,attributeFilter:['data-jump']})
  })
  await page.frameLocator('iframe[title*="spaceship cockpit"]').locator('.hx9-enter').click({timeout:90000})
  await page.waitForSelector('[data-orbita-space-entry="true"]',{state:'detached',timeout:300000})

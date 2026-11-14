@@ -46,7 +46,7 @@ export default function App() {
   },[cockpitReady,jump]);
   useEffect(()=>{ window.addEventListener('orbita-hx9-enter',engage); return ()=>window.removeEventListener('orbita-hx9-enter',engage); },[engage]);
   useEffect(()=>{const open=()=>setBriefOpen(true);window.addEventListener('orbita-hx9-brief',open);return ()=>window.removeEventListener('orbita-hx9-brief',open)},[]);
-  return jsxs('div',{className:'app hx9-app','data-space-painted':painted?'true':'false','data-jump':jump,children:[
+  return jsxs('div',{className:'app hx9-app','data-space-painted':painted?'true':'false','data-jump':jump,'data-island-ready':gate?'true':'false',children:[
     h(SpaceScene,{}),
     jsxs('div',{className:'hx9-status'+(cockpitReady?' hx9-status-ready':''),role:'status','aria-live':'polite',children:[
       h('div',{className:'hx9-eyebrow',children:'ORBITA · HX-9'}),

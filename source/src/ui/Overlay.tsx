@@ -49,10 +49,11 @@ function Intro({ onSpacePresented, onSpaceUnavailable, onWarpReveal }: SpaceEntr
 
   useEffect(() => {
     const origin = window.location.origin
+    const isolated = new URLSearchParams(window.location.search).get('hx9Isolate') === '1'
     const started = performance.now()
     const onMessage = (event: MessageEvent) => {
-      if (event.origin !== origin ||
-          event.source !== frame.current?.contentWindow) return
+      if (event.source !== frame.current?.contentWindow ||
+          event.origin !== (isolated ? 'null' : origin)) return
       const data = event.data as { type?: string }
       if (data?.type === 'ORBITA_SPACE_FRAME_READY') {
         if (spacePainted.current || fallbackReported.current) return
@@ -102,7 +103,7 @@ function Intro({ onSpacePresented, onSpaceUnavailable, onWarpReveal }: SpaceEntr
       frame.current?.contentWindow?.postMessage({
         type: 'ORBITA_SPACE_READY',
         ready, progress, status,
-      }, origin)
+      }, isolated ? '*' : origin)
 
       if (!shipRendered && !fallbackReported.current && now-started>240000)
         failSpace('Phi thuyền chưa dựng được khung hình đầu.')
@@ -151,9 +152,13 @@ function Intro({ onSpacePresented, onSpaceUnavailable, onWarpReveal }: SpaceEntr
     <iframe key={attempt} ref={frame}
       src={(() => {
         const speed = new URLSearchParams(window.location.search).get('hx9DiagnosticSpeed')
-        return 'assets/immersive/index.html' + (speed ? `?hx9DiagnosticSpeed=${encodeURIComponent(speed)}` : '')
+        const params = new URLSearchParams()
+        if (speed) params.set('hx9DiagnosticSpeed', speed)
+        if (new URLSearchParams(window.location.search).get('hx9Isolate') === '1') params.set('hx9Isolate', '1')
+        return 'assets/immersive/index.html' + (params.size ? `?${params}` : '')
       })()}
       title="Immersive Space Shift · spaceship cockpit"
+      sandbox={new URLSearchParams(window.location.search).get('hx9Isolate') === '1' ? 'allow-scripts allow-popups allow-popups-to-escape-sandbox' : undefined}
       className="absolute inset-0 h-full w-full border-0"
       allow="autoplay"
       onError={() => failSpace('Không tải được buồng lái không gian.')} />
