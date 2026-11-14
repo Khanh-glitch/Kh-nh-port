@@ -1,4 +1,4 @@
-name: HX-9 laser native measurement without readback
+name: HX-9 continuous reveal native measurement
 on:
   push:
     branches: [arena/1e2ad83c-kh-nh-port]
