@@ -1278,6 +1278,20 @@ export function Experience() {
       shadows="percentage"
       camera={{ fov: 72, near: 0.1, far: 9000, position: [0, 17, 88] }}
       gl={{ antialias: false, powerPreference: 'high-performance', toneMapping: THREE.NoToneMapping, stencil: false }}
+      onCreated={({ gl }) => {
+        if (!incrementalProbe) return
+        const render = gl.render.bind(gl)
+        let count = 0
+        gl.render = (scene, camera) => {
+          const frame = ++count
+          const start = performance.now()
+          if (frame <= 12) console.info('[HX9-RENDER]', JSON.stringify({frame, status:'start'}))
+          try { return render(scene, camera) }
+          finally {
+            if (frame <= 12) console.info('[HX9-RENDER]', JSON.stringify({frame, status:'end', ms:Math.round(performance.now()-start)}))
+          }
+        }
+      }}
     >
       <HighGateMeter />
       {performanceMode && <PerfTierMeter />}
