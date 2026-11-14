@@ -66,3 +66,10 @@ Orbita with no page errors. This is a visual/lifecycle check only; native GPU
 performance and actual Cloudflare deployment need separate validation. Previous
 native cinematic runs had severe rAF stalls; the laser effect is not evidence
 that those stalls are resolved.
+
+Native Metal run `43557507508` rendered through the glass scan but timed out
+before the pilot view, with a 9.333 s observed rAF gap. Run `43558251275`
+removed intermediate screenshot readbacks, reached the controls scan, then
+timed out; the largest observed rAF gap before the timeout was 4.916 s.
+Neither run establishes a smooth or complete native experience. The visual
+and accelerated software tests above must not be mistaken for performance proof.
