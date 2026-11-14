@@ -286,7 +286,7 @@ function IslandIncrementalShaderProbe({ onComplete }: { onComplete: () => void }
   const { gl, scene, camera } = useThree()
   useEffect(() => {
     let cancelled = false
-    const info = { status: 'collecting', total: 0, done: 0, errors: 0, maxSubmitMs: 0, maxPrimeMs: 0 }
+    const info = { status: 'collecting', total: 0, done: 0, errors: 0, maxSubmitMs: 0, maxPrimeMs: 0, startedAt: Math.round(performance.now()), durationMs: 0 }
     ;(window as unknown as {__orbitaIslandIncremental: typeof info}).__orbitaIslandIncremental = info
     const nextFrame = () => new Promise<void>(resolve => requestAnimationFrame(() => resolve()))
     const run = async () => {
@@ -338,6 +338,7 @@ function IslandIncrementalShaderProbe({ onComplete }: { onComplete: () => void }
         info.done++
       }
       info.status = 'complete'
+      info.durationMs = Math.round(performance.now() - info.startedAt)
       console.info('[HX9-INCREMENTAL]', JSON.stringify(info))
       if (!cancelled) onComplete()
     }
@@ -378,6 +379,7 @@ function IslandFirstPaintGate({ onReady }: { onReady: () => void }) {
       shaderPrograms:gl.info.programs?.length??0,
     }
     useStore.getState().setReady()
+    if (new URLSearchParams(location.search).get('hx9IncrementalShaders') === '1') console.info('[HX9-PAINT]', JSON.stringify(diag.__orbitaIslandFirstPaint))
     onReady()
   })
   return null
@@ -1285,10 +1287,10 @@ export function Experience() {
         gl.render = (scene, camera) => {
           const frame = ++count
           const start = performance.now()
-          if (frame <= 12) console.info('[HX9-RENDER]', JSON.stringify({frame, status:'start'}))
+          if (frame <= 12 || frame % 30 === 0) console.info('[HX9-RENDER]', JSON.stringify({frame, status:'start'}))
           try { return render(scene, camera) }
           finally {
-            if (frame <= 12) console.info('[HX9-RENDER]', JSON.stringify({frame, status:'end', ms:Math.round(performance.now()-start)}))
+            if (frame <= 12 || frame % 30 === 0) console.info('[HX9-RENDER]', JSON.stringify({frame, status:'end', ms:Math.round(performance.now()-start)}))
           }
         }
       }}

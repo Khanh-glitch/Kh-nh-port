@@ -5,11 +5,12 @@ mkdirSync('hx9-warp-evidence',{recursive:true})
 const browser=await chromium.launch({headless:true,args:['--enable-webgl','--ignore-gpu-blocklist','--use-angle=metal']})
 const page=await browser.newPage({viewport:{width:800,height:600},deviceScaleFactor:1})
 const report={errors:[],events:[]}
-let incrementalProgress=null,renderProgress=null
+let incrementalProgress=null,renderProgress=null,paintProgress=null
 page.on('console',message=>{
  const text=message.text()
  if(text.startsWith('[HX9-INCREMENTAL] ')){try{incrementalProgress=JSON.parse(text.slice(18))}catch{}}
  if(text.startsWith('[HX9-RENDER] ')){try{renderProgress=JSON.parse(text.slice(13))}catch{}}
+ if(text.startsWith('[HX9-PAINT] ')){try{paintProgress=JSON.parse(text.slice(12))}catch{}}
 })
 page.on('pageerror',e=>report.errors.push(String(e)))
 await page.addInitScript(()=>{
@@ -85,6 +86,7 @@ try{
  report.error=String(e)
  report.lastIncrementalProgress=incrementalProgress
  report.lastRenderProgress=renderProgress
+ report.lastPaintProgress=paintProgress
  try{report.diagnostic=await Promise.race([page.evaluate(()=>({gate:window.__orbitaEntryGate,paint:window.__orbitaIslandFirstPaint,events:window.__warpAudit?.events,incremental:window.__orbitaIslandIncremental,profile:window.__warpProfile})),new Promise((_,reject)=>setTimeout(()=>reject(Error('diagnostic timed out')),5000))])}catch{}
  const profile=report.profile??report.diagnostic?.profile
  const summary={error:report.error,timing:report.timing,events:report.events,cpu:report.cpu,
