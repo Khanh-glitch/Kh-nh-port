@@ -21,6 +21,14 @@ jobs:
         run: |
           python3 -m http.server 4173 --bind 127.0.0.1 --directory dist-pages >/tmp/hx9-server.log 2>&1 &
           node scripts/hx9-cinematic-browser-test.mjs
+      - name: Report measured results
+        if: always()
+        run: |
+          if test -f hx9-evidence/result.json; then
+            python3 -c "import json; print('::notice title=HX9 measurement::'+json.dumps(json.load(open('hx9-evidence/result.json')),separators=(',',':')))"
+          else
+            echo '::notice title=HX9 measurement::No completed browser result'
+          fi
       - uses: actions/upload-artifact@v4
         if: always()
         with:
