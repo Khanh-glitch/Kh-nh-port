@@ -1,6 +1,7 @@
 import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs'
 import { dirname, extname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { oversizedPagesAssets, PAGES_MAX_ASSET_BYTES } from './pages-asset-limit.mjs'
 
 // ORBITA Cloudflare Pages: publish the integrated standalone root HTML, NOT
 // a fresh Vite build from the older source/ workspace.
@@ -35,6 +36,12 @@ for (const name of readdirSync(root)) {
   if (!statSync(path).isFile()) continue
   if (!['.png', '.jpg', '.jpeg', '.webp', '.svg', '.gif', '.ico', '.mp3', '.mp4', '.webm', '.pdf', '.glb', '.gltf'].includes(extname(name).toLowerCase())) continue
   cpSync(path, join(out, name))
+}
+
+const oversized = oversizedPagesAssets(out)
+if (oversized.length) {
+  const files = oversized.map(({ path, bytes }) => `  ${path}: ${(bytes / 1024 / 1024).toFixed(2)} MiB`).join('\n')
+  throw new Error(`Cloudflare Pages rejects assets over ${PAGES_MAX_ASSET_BYTES / 1024 / 1024} MiB. Reduce these files before deploying:\n${files}`)
 }
 
 writeFileSync(join(out, '_headers'), '/index.html\n  Cache-Control: no-cache, must-revalidate\n')

@@ -262,3 +262,14 @@ A further gesture-based Chromium test attached an analyser to the real lyric
 video's MediaElementAudioSourceNode: AudioContext was `running` and decoded
 signal RMS was 0.0828 while video advanced from 82.0s to 90.09s. This checks
 signal in the graph, not speakers or every device's autoplay policy.
+
+### Cloudflare Pages per-file limit
+
+Cloudflare Pages limits each deployed asset to 25 MiB. The three SOCIAL MEDIA
+films are now two-pass H.264 yuv420p, 640×360, with 48 kbps AAC audio and
+`faststart`; their complete runtimes are unchanged. Sizes are 22,634,129,
+23,051,397 and 22,731,164 bytes respectively, below the limit. This reduces
+resolution and bitrate from the previous web copies to permit deployment.
+A full FFmpeg decode found no errors, and Chromium fetched, sought and played
+all three via HTTP Range. The Pages build checks every output file against the
+25 MiB limit before deployment.
