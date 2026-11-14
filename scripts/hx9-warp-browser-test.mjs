@@ -74,5 +74,8 @@ try{
 }catch(e){
  report.error=String(e)
  try{report.diagnostic=await page.evaluate(()=>({gate:window.__orbitaEntryGate,paint:window.__orbitaIslandFirstPaint,events:window.__warpAudit?.events,profile:window.__warpProfile}))}catch{}
- console.error('HX9_WARP_FAIL '+JSON.stringify(report));process.exitCode=1
+ const profile=report.profile??report.diagnostic?.profile
+ const summary={error:report.error,timing:report.timing,events:report.events,
+   calls:profile?.calls,longTasks:profile?.longTasks?.sort((a,b)=>b.ms-a.ms).slice(0,15)}
+ console.error('HX9_WARP_FAIL '+JSON.stringify(summary));process.exitCode=1
 }finally{writeFileSync('hx9-warp-evidence/result.json',JSON.stringify(report,null,2));await browser.close()}
