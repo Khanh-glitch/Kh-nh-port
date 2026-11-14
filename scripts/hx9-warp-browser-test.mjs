@@ -65,7 +65,7 @@ await page.addInitScript(()=>{
  })
 })
 try{
- await page.goto('http://127.0.0.1:4173/?hx9DiagnosticSpeed=25',{waitUntil:'domcontentloaded',timeout:120000})
+ await page.goto('http://127.0.0.1:4173/?hx9DiagnosticSpeed=25&hx9AsyncCompile=1',{waitUntil:'domcontentloaded',timeout:120000})
  await page.waitForFunction(()=>window.__orbitaEntryGate?.shipRendered===true,null,{timeout:240000})
  const frame=page.frames().find(f=>f.url().includes('immersive/index.html'))
  if(!frame)throw Error('Spaceship frame missing')
@@ -85,8 +85,8 @@ try{
  await page.waitForSelector('[data-orbita-space-entry="true"]',{state:'detached',timeout:300000})
  await page.waitForTimeout(1200)
  await finishProfile()
- const result=await page.evaluate(()=>({audit:window.__warpAudit,paint:window.__orbitaIslandFirstPaint,gate:window.__orbitaEntryGate,profile:window.__warpProfile}))
- report.events=result.audit.events;report.paint=result.paint;report.gate=result.gate;report.profile=result.profile
+ const result=await page.evaluate(()=>({audit:window.__warpAudit,paint:window.__orbitaIslandFirstPaint,gate:window.__orbitaEntryGate,shaderCompile:window.__orbitaIslandShaderCompile,profile:window.__warpProfile}))
+ report.events=result.audit.events;report.paint=result.paint;report.gate=result.gate;report.shaderCompile=result.shaderCompile;report.profile=result.profile
  const begin=report.events.find(e=>e.type==='ORBITA_SPACE_ENGAGE'), charging=report.events.find(e=>e.type==='charging'),flash=report.events.find(e=>e.type==='flash'),end=report.events.find(e=>e.type==='ORBITA_SPACE_WARP_COMPLETE')
  if(!begin||!charging||!charging.canvas||!flash||!flash.ready||!end||!end.ready)throw Error('Warp ordering or real gate failed')
  const gaps=result.audit.gaps.filter(x=>x.at>=begin.at&&x.at<=end.at+1000).map(x=>x.dt).sort((a,b)=>a-b)
@@ -99,9 +99,9 @@ try{
 }catch(e){
  report.error=String(e)
  try{await finishProfile()}catch{}
- try{report.diagnostic=await page.evaluate(()=>({gate:window.__orbitaEntryGate,paint:window.__orbitaIslandFirstPaint,events:window.__warpAudit?.events,profile:window.__warpProfile}))}catch{}
+ try{report.diagnostic=await page.evaluate(()=>({gate:window.__orbitaEntryGate,paint:window.__orbitaIslandFirstPaint,events:window.__warpAudit?.events,shaderCompile:window.__orbitaIslandShaderCompile,profile:window.__warpProfile}))}catch{}
  const profile=report.profile??report.diagnostic?.profile
- const summary={error:report.error,timing:report.timing,events:report.events,cpu:report.cpu,
+ const summary={error:report.error,timing:report.timing,events:report.events,cpu:report.cpu,shaderCompile:report.shaderCompile??report.diagnostic?.shaderCompile,
    calls:profile?.calls,longTasks:profile?.longTasks?.sort((a,b)=>b.ms-a.ms).slice(0,15),animationFrames:profile?.animationFrames?.sort((a,b)=>b.ms-a.ms).slice(0,5)}
  console.error('HX9_WARP_FAIL '+JSON.stringify(summary));process.exitCode=1
 }finally{writeFileSync('hx9-warp-evidence/result.json',JSON.stringify(report,null,2));await browser.close()}
