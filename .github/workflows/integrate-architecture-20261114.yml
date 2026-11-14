@@ -43,7 +43,7 @@ jobs:
           } > .integration-prepare-diagnostic.log 2>&1
           rc=$?
           cat .integration-prepare-diagnostic.log
-          echo "error=$(head -c 230 .integration-prepare-diagnostic.log | tr '\\n' ' ' | tr -d '\\r')" >> "$GITHUB_OUTPUT"
+          echo "error=$(tail -c 1200 .integration-prepare-diagnostic.log | tr '\\n' ' ' | tr -d '\\r')" >> "$GITHUB_OUTPUT"
           exit "$rc"
       - name: Apply 3D geometry and physical FOH only
         shell: bash
