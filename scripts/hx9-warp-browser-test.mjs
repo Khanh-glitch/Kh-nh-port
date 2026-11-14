@@ -22,7 +22,14 @@ try{
  if(!frame)throw Error('Spaceship frame missing')
  await frame.evaluate(async()=>{
    const flight=(await import('ship/lib/flight')).flight, node=document.querySelector('.hx9-app')
-   new MutationObserver(()=>parent.postMessage({type:'HX9_TEST_AUDIT',event:{type:node.dataset.jump,at:performance.timeOrigin+performance.now(),ready:node.dataset.islandReady==='true',speed:flight.speed,canvas:!!document.querySelector('canvas')}},location.origin)).observe(node,{attributes:true,attributeFilter:['data-jump']})
+   let active=false,last=0,frames=0,maxGap=0,first=0
+   function tick(t){if(active){if(last)maxGap=Math.max(maxGap,t-last);else first=t;last=t;frames++}requestAnimationFrame(tick)}
+   requestAnimationFrame(tick)
+   new MutationObserver(()=>{
+     const state=node.dataset.jump
+     if(state==='charging'&&!active){active=true;last=0;frames=0;maxGap=0}
+     parent.postMessage({type:'HX9_TEST_AUDIT',event:{type:state,at:performance.timeOrigin+performance.now(),ready:node.dataset.islandReady==='true',speed:flight.speed,canvas:!!document.querySelector('canvas'),shipFrameCount:frames,shipMaxGapMs:Math.round(maxGap),shipDurationMs:Math.round(last-first)}},location.origin)
+   }).observe(node,{attributes:true,attributeFilter:['data-jump']})
  })
  await page.frameLocator('iframe[title*="spaceship cockpit"]').locator('.hx9-enter').click({timeout:90000})
  await page.waitForSelector('[data-orbita-space-entry="true"]',{state:'detached',timeout:300000})
@@ -32,10 +39,11 @@ try{
  const begin=report.events.find(e=>e.type==='ORBITA_SPACE_ENGAGE'), charging=report.events.find(e=>e.type==='charging'),flash=report.events.find(e=>e.type==='flash'),end=report.events.find(e=>e.type==='ORBITA_SPACE_WARP_COMPLETE')
  if(!begin||!charging||!charging.canvas||!flash||!flash.ready||!end||!end.ready)throw Error('Warp ordering or real gate failed')
  const gaps=result.audit.gaps.filter(x=>x.at>=begin.at&&x.at<=end.at+1000).map(x=>x.dt).sort((a,b)=>a-b)
- report.timing={chargeMs:Math.round(flash.at-begin.at),flashMs:Math.round(end.at-flash.at),maxGapMs:Math.round(gaps.at(-1)??0),p95Ms:Math.round(gaps[Math.floor(gaps.length*.95)]??0),frames:gaps.length,warpSpeedAtFlash:flash.speed}
+ report.timing={chargeMs:Math.round(flash.at-begin.at),flashMs:Math.round(end.at-flash.at),maxGapMs:Math.round(gaps.at(-1)??0),p95Ms:Math.round(gaps[Math.floor(gaps.length*.95)]??0),frames:gaps.length,warpSpeedAtFlash:flash.speed,shipMaxGapMs:flash.shipMaxGapMs,shipFrameCount:flash.shipFrameCount,shipDurationMs:flash.shipDurationMs}
  if(report.errors.length)throw Error('Browser page errors')
  // A structurally correct handoff is not a performance pass if it visibly freezes.
- if(report.timing.maxGapMs>250)throw Error('Frame gap exceeded 250ms')
+ if(report.timing.shipMaxGapMs>250 || report.timing.shipFrameCount<10)throw Error('Spaceship frame gap exceeded 250ms or insufficient frames')
+ if(report.timing.flashMs>900)throw Error('Flash to island exceeded 900ms')
  console.log('HX9_WARP_PASS '+JSON.stringify(report))
 }catch(e){
  report.error=String(e)
