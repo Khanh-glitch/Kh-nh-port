@@ -78,9 +78,12 @@ and accelerated software tests above must not be mistaken for performance proof.
 
 The laser beams, scan rings, particles and flare have been removed. The
 holographic materialization on the original meshes remains. Model downloads
-start in parallel; assemblies are decoded in order with paint opportunities
-between them, and the reveal starts after all are ready, so there is no
-network/parse wait between cues. Each cue starts exactly as the previous cue
-finishes. The sequence and camera move are shorter; full detail is retained.
+start in parallel, prioritising the seat; assemblies are decoded in order with
+paint opportunities between them. The sequence starts as soon as the seat is
+ready, without waiting for the later downloads. Each cue starts before the
+preceding cue finishes. If a later part is not yet ready, the timeline waits
+at that cue boundary (while the camera and space continue to animate) rather
+than skipping its reveal. The sequence and camera move are shorter; full
+detail is retained.
 The initial preparation can still take time and native GPU stalls previously
 measured above are not automatically solved by this scheduling change.

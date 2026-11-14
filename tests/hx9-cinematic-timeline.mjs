@@ -10,7 +10,7 @@ try {
  await esbuild.build({entryPoints:['source/src/intro-hx9/cinematicTimeline.ts'],outfile:file,bundle:true,format:'esm'})
  const {ASSEMBLY_CUES,assemblyPose,cameraDock,screenPower,CINEMATIC_END}=await import('file://'+file)
  assert.deepEqual(ASSEMBLY_CUES.map(c=>c.name),['seat','dashboard','controls','structure','shell','glass'])
- for(let i=1;i<ASSEMBLY_CUES.length;i++) assert(Math.abs(ASSEMBLY_CUES[i].start - (ASSEMBLY_CUES[i-1].start + ASSEMBLY_CUES[i-1].duration)) < 1e-9)
+ for(let i=1;i<ASSEMBLY_CUES.length;i++) assert(ASSEMBLY_CUES[i].start < ASSEMBLY_CUES[i-1].start + ASSEMBLY_CUES[i-1].duration && ASSEMBLY_CUES[i].start > ASSEMBLY_CUES[i-1].start)
  for(const cue of ASSEMBLY_CUES){
   assert.equal(assemblyPose(cue,cue.start-.01).visible,false)
   assert.equal(assemblyPose(cue,cue.start).remaining,1)

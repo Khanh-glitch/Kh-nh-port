@@ -672,10 +672,23 @@ export default function SpaceScene() {
         const nextPaint = () => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
         async function buildModel() {
             try {
-                progress('Đang chuẩn bị các bộ phận HX-9 để hình thành liên tục…');
+                progress('Đang chuẩn bị ghế phi công HX-9…');
                 await nextPaint();
                 hx = await import('ship/hx9');
                 if (cancelled) return;
+                const names = ['seat', 'dashboard', 'controls', 'structure', 'shell', 'glass'];
+                // Request all parts immediately but prioritise the first visible
+                // part. Decode in reveal order as each download becomes ready;
+                // a slow later request must not delay the first frame of the seat.
+                // Turn failures into values so later requests cannot reject before
+                // the ordered consumer reaches them.
+                const downloads = names.map((name, index) => fetch(
+                    new URL('model/' + name + '.glb', document.baseURI),
+                    { priority: index === 0 ? 'high' : 'low' }
+                ).then(response => {
+                    if (!response.ok) throw new Error(name + ': HTTP ' + response.status);
+                    return response.arrayBuffer();
+                }).then(buffer => ({ buffer }), error => ({ error })));
                 const envSource = hx.environmentTexture();
                 const pmrem = new THREE.PMREMGenerator(renderer);
                 cockpitEnvironment = pmrem.fromEquirectangular(envSource);
@@ -690,20 +703,11 @@ export default function SpaceScene() {
                 cockpitRoot.userData.fill = fillCabin;
                 camera.layers.enable(1);
                 const loader = new hx.GLTFLoader();
-                const names = ['seat', 'dashboard', 'controls', 'structure', 'shell', 'glass'];
-                // Fetch in parallel, then parse one assembly per paint. This avoids
-                // network waterfalls without decoding all six GLBs in one long task.
-                const downloads = names.map(async name => {
-                    const response = await fetch(new URL('model/' + name + '.glb', document.baseURI));
-                    if (!response.ok) throw new Error(name + ': HTTP ' + response.status);
-                    return response.arrayBuffer();
-                });
-                // Attach handlers immediately even if an early download fails.
-                const downloaded = Promise.all(downloads);
-                const buffers = await downloaded;
                 for (const [index, name] of names.entries()) {
                     if (cancelled || rendererFailed) return;
-                    const result = await loader.parseAsync(buffers[index], new URL('model/', document.baseURI).href);
+                    const download = await downloads[index];
+                    if (download.error) throw download.error;
+                    const result = await loader.parseAsync(download.buffer, new URL('model/', document.baseURI).href);
                     if (cancelled || rendererFailed) return;
                     const part = result.scene;
                     const uniforms = hx.createFabricationUniforms();
@@ -727,11 +731,9 @@ export default function SpaceScene() {
                     if (bounds.isEmpty()) throw Error('Empty fabrication bounds: ' + name);
                     fabrication.set(name, { uniforms, bounds });
                     parts.set(name, part);
+                    if (index === 0) fabricationReady = true;
                     await nextPaint();
                 }
-                // Start only once every next assembly is available: no pause at
-                // a cue boundary while another asset is being prepared.
-                fabricationReady = true;
             } catch (error) { if (!cancelled) reportFailure('cockpit-load: ' + String(error)); }
         }
         let identityAdded = false;
@@ -765,7 +767,7 @@ export default function SpaceScene() {
                 let cap = hx.CINEMATIC_END;
                 for (const cue of hx.ASSEMBLY_CUES) if (!parts.has(cue.name)) { cap = cue.start; break; }
                 if (fabricationReady) cinematicTime = Math.min(cap, cinematicTime + Math.min(dt,.05)*diagnosticSpeed);
-                const cueNow = [...hx.ASSEMBLY_CUES].reverse().find(c => cinematicTime >= c.start);
+                const cueNow = [...hx.ASSEMBLY_CUES].reverse().find(c => parts.has(c.name) && cinematicTime >= c.start);
                 if (cueNow && cueNow.name !== lastCueName) {
                     lastCueName = cueNow.name;
                     const labels = { structure:'Khung kết cấu đang hình thành…', shell:'Vỏ tàu đang hình thành…', seat:'Ghế phi công đang hình thành…', dashboard:'Bảng điều khiển đang hình thành…', controls:'Thiết bị điều khiển đang hình thành…', glass:'Kính buồng lái đang hình thành…' };

@@ -3,19 +3,19 @@ export type AssemblyName = 'structure' | 'shell' | 'glass' | 'seat' | 'dashboard
 export type Cue = { name: AssemblyName; start: number; duration: number; offset: [number, number, number]; rotation: [number, number, number] }
 
 // Whole, mechanically meaningful subassemblies, never hundreds of flying parts.
-// Small negative overshoot is a controlled seating movement, not random shake.
+// Successive scans overlap to make one continuous inside-out build.
 export const ASSEMBLY_CUES: readonly Cue[] = [
-  { name: 'seat', start: 1.2, duration: 2.4, offset: [0, 0, 0], rotation: [0, 0, 0] },
-  { name: 'dashboard', start: 3.6, duration: 2.4, offset: [0, 0, 0], rotation: [0, 0, 0] },
-  { name: 'controls', start: 6, duration: 2.2, offset: [0, 0, 0], rotation: [0, 0, 0] },
-  { name: 'structure', start: 8.2, duration: 2.5, offset: [0, 0, 0], rotation: [0, 0, 0] },
-  { name: 'shell', start: 10.7, duration: 2.3, offset: [0, 0, 0], rotation: [0, 0, 0] },
-  { name: 'glass', start: 13, duration: 2.1, offset: [0, 0, 0], rotation: [0, 0, 0] },
+  { name: 'seat', start: .7, duration: 2.6, offset: [0, 0, 0], rotation: [0, 0, 0] },
+  { name: 'dashboard', start: 2.5, duration: 2.6, offset: [0, 0, 0], rotation: [0, 0, 0] },
+  { name: 'controls', start: 4.3, duration: 2.4, offset: [0, 0, 0], rotation: [0, 0, 0] },
+  { name: 'structure', start: 6, duration: 2.7, offset: [0, 0, 0], rotation: [0, 0, 0] },
+  { name: 'shell', start: 7.9, duration: 2.5, offset: [0, 0, 0], rotation: [0, 0, 0] },
+  { name: 'glass', start: 9.6, duration: 2.3, offset: [0, 0, 0], rotation: [0, 0, 0] },
 ]
-export const CAMERA_DOCK_START = 15.1
-export const CAMERA_DOCK_END = 21
-export const POWER_START = 18.5
-export const CINEMATIC_END = 23
+export const CAMERA_DOCK_START = 11.9
+export const CAMERA_DOCK_END = 17.8
+export const POWER_START = 15.3
+export const CINEMATIC_END = 19.8
 const clamp = (v: number) => Math.max(0, Math.min(1, v))
 /** Monotonic fifth-order ease has zero velocity and acceleration at both ends. */
 export const smootherstep = (v: number) => { const t = clamp(v); return t*t*t*(t*(t*6-15)+10) }
