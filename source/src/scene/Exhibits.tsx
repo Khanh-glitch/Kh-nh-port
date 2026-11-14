@@ -7,10 +7,12 @@ import { Stage } from './Stage'
 import { Products } from './Products'
 import { Beacon } from './Beacon'
 import { VngGallery } from './VngGallery'
+import { Station } from './Station'
 
 export function Exhibits() {
   return (
     <group>
+      <Station />
       <Orb />
       <Piano />
       <Rubik />

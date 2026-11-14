@@ -13,6 +13,7 @@ import { photoAllowed, type ShowId } from '../stage/shows'
 import { useShow, showById, showElapsed, mediaFor } from '../stage/showState'
 import { LED_W, LED_H, drawShowLED } from '../stage/ledShow'
 import { ShowSelector, InfoVeil, PhotoWings, FocusViewer, LedVideo, ShowFX, ShowPreloader, useInfoTexture, videoCoverage } from '../stage/ShowSystem'
+import { FohStation } from './FohStation'
 
 const clamp01 = (x: number) => (x < 0 ? 0 : x > 1 ? 1 : x)
 
@@ -224,7 +225,7 @@ const COUNT_S = 180
 export function Stage() {
   const busRef = useRef<Bus | null>(null)
   const led = useMemo(() => canvasTex(LW, LH, () => {}), [])
-  const st = useRef({ scene: 0, beatOn: false, lastDraw: 0, press: [0, 0, 0, 0, 0, 0], fireT: 99, sparkT: 99, showLvl: 0, fallback: false, dropDone: false, lastConfetti: -1 }).current
+  const st = useRef({ scene: 0, beatOn: false, kick: 0.2, lastDraw: 0, press: [0, 0, 0, 0, 0, 0], fireT: 99, sparkT: 99, showLvl: 0, fallback: false, dropDone: false, lastConfetti: -1 }).current
   const showLed = useMemo(() => canvasTex(LED_W, LED_H, (c, w, h) => { c.fillStyle = '#000'; c.fillRect(0, 0, w, h) }), [])
   const root = useRef<THREE.Group>(null)
   const infoTex = useInfoTexture()
@@ -233,15 +234,10 @@ export function Stage() {
     [],
   )
   const beamGeo = useMemo(() => beamGeometry(38, 3.6, 0.14, 24), [])
-  const padMats = useMemo(() => SCENES.map((s) => new THREE.MeshBasicMaterial({ color: new THREE.Color(s.colors[0]), toneMapped: false })), [])
-  const playMat = useMemo(() => new THREE.MeshBasicMaterial({ color: new THREE.Color('#ff3b3b'), toneMapped: false }), [])
-  const boomMat = useMemo(() => new THREE.MeshBasicMaterial({ color: new THREE.Color('#ffd23d'), toneMapped: false }), [])
-  const padGroups = useRef<(THREE.Group | null)[]>([])
   const light = useRef<THREE.PointLight>(null)
   const light2 = useRef<THREE.PointLight>(null)
   const ledMat = useRef<THREE.MeshBasicMaterial>(null)
   const sideBars = useRef<(THREE.MeshBasicMaterial | null)[]>([])
-  const platters = useRef<(THREE.Mesh | null)[]>([])
   const haze = useRef<(THREE.Sprite | null)[]>([])
   const strobes = useRef<(THREE.MeshBasicMaterial | null)[]>([])
   const pcs = useRef<THREE.InstancedMesh>(null)
@@ -264,7 +260,9 @@ export function Stage() {
 
   useWorldColliders(ex, [
     { type: 'box', x: 0, z: -0.8, hw: 8.5, hd: 4.5 },
-    { type: 'box', x: 0, z: 12, hw: 3.3, hd: 1.0 },
+    { type: 'box', x: 0, z: 12.05, hw: 3.35, hd: 0.92 },
+    { type: 'circle', x: -3.55, z: 13.38, r: 0.42 },
+    { type: 'circle', x: 3.55, z: 13.38, r: 0.42 },
     { type: 'circle', x: -10.5, z: 1.5, r: 1.4 },
     { type: 'circle', x: 10.5, z: 1.5, r: 1.4 },
     { type: 'circle', x: -8, z: 2.6, r: 0.5 },
@@ -396,6 +394,7 @@ export function Stage() {
       for (const k of audio.kicks) if (k <= now && k > last) last = k
       kick = last > 0 ? Math.exp(-(now - last) * 6) : 0
     } else kick = 0.2 + 0.12 * Math.sin(t * 2)
+    st.kick = kick
     const energy = st.beatOn ? 1 : 0.45
     const strobeScene = st.scene === 2
 
@@ -584,22 +583,7 @@ export function Stage() {
       s.position.y = 1.8
     })
     }
-    platters.current.forEach((p, i) => {
-      if (p) p.rotation.y += dt * (st.beatOn ? 3.2 : 0.4) * (i ? -1 : 1)
-    })
-
-    // nút bấm
-    padMats.forEach((m, i) => {
-      const active = st.scene === i
-      m.color.set(SCENES[i].colors[0]).multiplyScalar(active ? 2.8 + kick * 1.2 : 0.55)
-    })
-    playMat.color.set('#ff3b3b').multiplyScalar(st.beatOn ? 2.6 : 0.8)
-    boomMat.color.set('#ffd23d').multiplyScalar(1 + st.press[5] * 2.2)
-    for (let i = 0; i < 6; i++) {
-      st.press[i] = Math.max(0, st.press[i] - dt * 4)
-      const g = padGroups.current[i]
-      if (g) g.position.y = -0.045 * st.press[i]
-    }
+    // Physical faders, cue pads & deck feedback now update in FohStation.
 
     // hạt
     const m = pcs.current
@@ -642,7 +626,6 @@ export function Stage() {
     }
   })
 
-  const padX = [-1.05, -0.35, 0.35, 1.05]
   return (
     <>
     <FocusViewer />
@@ -767,58 +750,14 @@ export function Stage() {
         <meshBasicMaterial side={THREE.DoubleSide} toneMapped={false} />
       </instancedMesh>
 
-      {/* bàn FOH */}
-      <group position={[0, 0, 12]}>
-        <mesh position={[0, 0.45, 0]} geometry={rbox(6.4, 0.9, 1.8, 0.1)} material={mats.darkMetal} castShadow receiveShadow />
-        <group position={[0, 0.96, 0]} rotation={[0.2, 0, 0]}>
-          <mesh geometry={rbox(6.2, 0.1, 1.7, 0.04)} material={mats.lacquer} />
-          {/* CDJ */}
-          {[-1.9, 1.9].map((x, i) => (
-            <group key={x} position={[x, 0.09, -0.22]}>
-              <mesh geometry={rbox(1.35, 0.1, 1.15, 0.05)} material={mats.darkMetal} />
-              <mesh ref={(r) => { platters.current[i] = r }} position={[0, 0.07, 0.05]}>
-                <cylinderGeometry args={[0.42, 0.42, 0.04, 32]} />
-                <meshStandardMaterial color="#1a1c26" metalness={0.9} roughness={0.3} emissive={i ? '#ff2bd6' : '#2bd9ff'} emissiveIntensity={0.9} />
-              </mesh>
-              <mesh position={[0, 0.095, 0.05]} rotation={[-Math.PI / 2, 0, 0]}>
-                <ringGeometry args={[0.36, 0.4, 32]} />
-                <meshBasicMaterial color={new THREE.Color(i ? '#ff2bd6' : '#2bd9ff').multiplyScalar(3)} toneMapped={false} />
-              </mesh>
-            </group>
-          ))}
-          {/* mixer */}
-          <mesh position={[0, 0.1, -0.3]} geometry={rbox(1.4, 0.1, 1.0, 0.04)} material={mats.darkMetal} />
-          {[-0.45, -0.15, 0.15, 0.45].map((x) => (
-            <group key={x}>
-              <mesh position={[x, 0.17, -0.1]} material={mats.silver}>
-                <boxGeometry args={[0.06, 0.04, 0.2]} />
-              </mesh>
-              <mesh position={[x, 0.18, -0.55]} material={mats.silver}>
-                <cylinderGeometry args={[0.06, 0.06, 0.06, 12]} />
-              </mesh>
-            </group>
-          ))}
-          {/* pad cue */}
-          {SCENES.map((s, i) => (
-            <group key={s.name} ref={(r) => { padGroups.current[i] = r }} position={[padX[i], 0.08, 0.5]}>
-              <mesh geometry={rbox(0.58, 0.1, 0.52, 0.05)} material={padMats[i]} />
-              <Hit id={`stage-cue-${i}`} label={`Cue ${i + 1} · ${s.name}`} hint="Đổi cảnh + bật nhạc" maxDist={7} panel="stage" size={[0.66, 0.5, 0.6]} position={[0, 0.1, 0]} onClick={() => setScene(i)} />
-            </group>
-          ))}
-          <group ref={(r) => { padGroups.current[4] = r }} position={[-2.75, 0.1, 0.5]}>
-            <mesh material={playMat}>
-              <cylinderGeometry args={[0.32, 0.34, 0.1, 24]} />
-            </mesh>
-            <Hit id="stage-play" label="PLAY / STOP · DJ set" hint="Bật / tắt nhạc" maxDist={7} panel="stage" size={[0.8, 0.5, 0.8]} position={[0, 0.1, 0]} onClick={() => { padGroups.current[4] && (st.press[4] = 1); toggleBeat() }} />
-          </group>
-          <group ref={(r) => { padGroups.current[5] = r }} position={[2.75, 0.1, 0.5]}>
-            <mesh material={boomMat}>
-              <cylinderGeometry args={[0.32, 0.34, 0.1, 24]} />
-            </mesh>
-            <Hit id="stage-fire" label="PHÁO GIẤY & PYRO" hint="Bắn pháo!" maxDist={7} panel="stage" size={[0.8, 0.5, 0.8]} position={[0, 0.1, 0]} onClick={() => fire()} />
-          </group>
-        </group>
-      </group>
+      {/* FOH architecture only; media/show/video/event state remains owned by Stage + ShowSystem. */}
+      <FohStation
+        scenes={SCENES}
+        liveState={st}
+        onSelectScene={setScene}
+        onToggleBeat={toggleBeat}
+        onFire={fire}
+      />
       <Hit id="stage-body" label="Main Stage" hint="Đến khu FOH để chọn chương trình" maxDist={60} panel="stage" size={[16.4, 9, 8.6]} position={[0, 4.5, -0.8]} onClick={() => toast('Đến khu FOH phía trước sân khấu để gọi lại một chương trình')} />
     </group>
     </>

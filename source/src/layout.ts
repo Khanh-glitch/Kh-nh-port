@@ -5,6 +5,7 @@ export const SPAWN = { x: 0, z: 46 }
 
 export type ExhibitId =
   | 'orb'
+  | 'station'
   | 'piano'
   | 'rubik'
   | 'robot'
@@ -23,7 +24,8 @@ export interface ExhibitDef {
 }
 
 export const EXHIBITS: Record<ExhibitId, ExhibitDef> = {
-  orb: { id: 'orb', name: 'Singularity Orb', x: 0, z: 0, rotY: 0, color: '#b66bff' },
+  station: { id: 'station', name: 'Central Information Station', x: 0, z: 0, rotY: 0, color: '#7fdcff' },
+  orb: { id: 'orb', name: 'Singularity Orb', x: -47, z: -3, rotY: 0.5, color: '#b66bff' },
   robot: { id: 'robot', name: 'Colossus', x: 0, z: -41, rotY: 0, color: '#ff8a3d' },
   piano: { id: 'piano', name: 'Grand Piano', x: -26, z: 9, rotY: -0.62, color: '#ffd27a' },
   rubik: { id: 'rubik', name: 'Cube Solver', x: 27, z: 9, rotY: 0, color: '#4dd8ff' },

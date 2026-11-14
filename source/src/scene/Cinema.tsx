@@ -4,12 +4,13 @@ import * as THREE from 'three'
 import { EXHIBITS, openExternal } from '../layout'
 import { audio, type Bus } from '../audio'
 import { toast, useStore } from '../store'
-import { FONT, beamGeometry, beamMaterial, canvasTex, rbox, roundRect } from '../gfx'
+import { FONT, beamGeometry, beamMaterial, canvasTex, roundRect } from '../gfx'
 import { useReality } from '../reality/state'
 import { Hit } from './Hit'
 import { DomOcclusion } from './domOcclusion'
 import { Label } from './Label'
-import { PadRing, isFacing, mats, useWorldColliders, worldPos } from './common'
+import { PadRing, isFacing, useWorldColliders, worldPos } from './common'
+import { CinemaArchitecture } from './cinema/Architecture'
 
 const ex = EXHIBITS.cinema
 
@@ -302,9 +303,6 @@ const SW = 1024
 const SH = 450
 const TITLES = ['AFTERGLOW', 'RUN OF SHOW', 'PARTICLES', 'TUNNEL']
 const SUBS = ['Aftermovie · Festival 2025', 'Motion · Quy trình sản xuất', 'LED content · Real-time', 'Immersive · Dome 360°']
-const velvet = new THREE.MeshStandardMaterial({ color: '#8c1226', roughness: 0.92, metalness: 0 })
-const neonRed = new THREE.MeshBasicMaterial({ color: new THREE.Color('#ff3b3b').multiplyScalar(2.8), toneMapped: false })
-const warm = new THREE.MeshBasicMaterial({ color: new THREE.Color('#ffb070').multiplyScalar(2.2), toneMapped: false })
 
 const hash = (n: number) => {
   const s = Math.sin(n * 127.1) * 43758.5453
@@ -545,8 +543,8 @@ export function Cinema() {
   const st = useRef({ reel: 0, reelT: 0, flash: 0, lastDraw: 0, scoreOn: false, lastAvg: 0 }).current
   const roomLight = useRef<THREE.PointLight>(null)
   const entrance = useMemo(() => worldPos(ex, 0, 0, 6.2), [])
-  const leftDoor = useRef<THREE.Mesh>(null)
-  const rightDoor = useRef<THREE.Mesh>(null)
+  const leftDoor = useRef<THREE.Group>(null)
+  const rightDoor = useRef<THREE.Group>(null)
   const bulbs = useRef<THREE.InstancedMesh>(null)
   const dummy = useMemo(() => new THREE.Object3D(), [])
   const col = useMemo(() => new THREE.Color(), [])
@@ -563,14 +561,17 @@ export function Cinema() {
 
   useWorldColliders(ex, [
     { type: 'box', x: 0, z: -6.3, hw: 5.5, hd: 0.4 },
-    { type: 'box', x: -5.3, z: 0, hw: 0.35, hd: 6.5 },
-    { type: 'box', x: 5.3, z: 0, hw: 0.35, hd: 6.5 },
+    // tường bên dày hơn: lamen đồng nhô ra tới ~6.0 m
+    { type: 'box', x: -5.55, z: 0, hw: 0.6, hd: 6.5 },
+    { type: 'box', x: 5.55, z: 0, hw: 0.6, hd: 6.5 },
     { type: 'box', x: -3.65, z: 6.2, hw: 1.9, hd: 0.35 },
     { type: 'box', x: 3.65, z: 6.2, hw: 1.9, hd: 0.35 },
-    ...[-1.0, 1.3, 3.6].flatMap((z) => [
-      { type: 'box' as const, x: -3.1, z, hw: 1.15, hd: 0.5 },
-      { type: 'box' as const, x: 3.1, z, hw: 1.15, hd: 0.5 },
-    ]),
+    // hai khối khán đài (bậc + ghế): một hộp mỗi bên
+    { type: 'box', x: -3.5, z: 1.3, hw: 1.58, hd: 3.45 },
+    { type: 'box', x: 3.5, z: 1.3, hw: 1.58, hd: 3.45 },
+    // hai cột canopy
+    { type: 'circle', x: -4.7, z: 9.1, r: 0.3 },
+    { type: 'circle', x: 4.7, z: 9.1, r: 0.3 },
   ])
 
   useEffect(() => {
@@ -733,119 +734,21 @@ export function Cinema() {
       <PadRing radius={10.2} color={ex.color} />
       <Label title="Mini Cinema" sub="Film · Motion · Aftermovie" color={ex.color} position={[0, 9.4, 3]} scale={1.2} />
 
-      {/* sàn, tường, mái */}
-      <mesh position={[0, 0.03, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-        <planeGeometry args={[10.4, 12.4]} />
-        <meshStandardMaterial color="#2a0710" roughness={0.95} />
-      </mesh>
-      <mesh position={[0, 2.9, -6.3]} material={mats.darkMetal} castShadow receiveShadow>
-        <boxGeometry args={[10.8, 5.8, 0.5]} />
-      </mesh>
-      {[-1, 1].map((s) => (
-        <group key={s}>
-          <mesh position={[s * 5.3, 2.9, 0]} material={mats.darkMetal} castShadow receiveShadow>
-            <boxGeometry args={[0.5, 5.8, 12.8]} />
-          </mesh>
-          <mesh position={[s * 3.65, 2.9, 6.2]} material={mats.darkMetal} castShadow receiveShadow>
-            <boxGeometry args={[3.7, 5.8, 0.5]} />
-          </mesh>
-          <mesh position={[s * 1.82, 2.9, 6.48]} material={neonRed}>
-            <boxGeometry args={[0.07, 5.8, 0.06]} />
-          </mesh>
-          <mesh position={[s * 5.04, 3.2, 0]} material={inside ? mats.darkMetal : neonRed}>
-            <boxGeometry args={[0.05, 0.05, 12.2]} />
-          </mesh>
-          {[-4.2, -1.7, 0.8, 3.3].map((z) => (
-            <mesh key={z} position={[s * 5.0, 2.7, z]} material={inside ? mats.darkMetal : warm}>
-              <boxGeometry args={[0.08, 0.7, 0.16]} />
-            </mesh>
-          ))}
-        </group>
-      ))}
-      <mesh position={[0, 4.75, 6.2]} material={mats.darkMetal} castShadow>
-        <boxGeometry args={[3.7, 2.1, 0.5]} />
-      </mesh>
-      <mesh position={[0, 5.95, 0]} material={mats.darkMetal} castShadow receiveShadow>
-        <boxGeometry args={[11.2, 0.4, 13.2]} />
-      </mesh>
-      <mesh position={[0, 6.2, 6.5]} material={neonRed}>
-        <boxGeometry args={[11.2, 0.08, 0.08]} />
-      </mesh>
-
-      {/* Automatic entrance doors reopen when approached from either side. */}
-      <mesh ref={leftDoor} position={[-2.47, 1.9, 6.2]} material={velvet}><boxGeometry args={[1.6, 3.8, 0.15]} /></mesh>
-      <mesh ref={rightDoor} position={[2.47, 1.9, 6.2]} material={velvet}><boxGeometry args={[1.6, 3.8, 0.15]} /></mesh>
-      {/* màn hình + rèm */}
-      <mesh position={[0, 2.95, -5.98]}>
-        <planeGeometry args={[8.3, 3.64]} />
-        <meshBasicMaterial map={screenTex.tex} toneMapped={false} />
-      </mesh>
-      <mesh position={[0, 2.95, -6.03]} material={mats.lacquer}>
-        <boxGeometry args={[8.6, 3.9, 0.1]} />
-      </mesh>
-      {[-1, 1].map((s) =>
-        [0, 1, 2, 3].map((i) => (
-          <mesh key={s + '-' + i} position={[s * (4.55 + i * 0.22), 2.8, -5.7]} material={velvet} scale={[1, 1, 0.55]}>
-            <cylinderGeometry args={[0.2, 0.2, 5.2, 12]} />
-          </mesh>
-        )),
-      )}
-      <mesh position={[0, 5.3, -5.65]} material={velvet}>
-        <boxGeometry args={[10.2, 0.7, 0.6]} />
-      </mesh>
-
-      {/* máy chiếu */}
-      <mesh position={[0, 4.9, 4.9]} geometry={rbox(0.9, 0.55, 1.0, 0.1)} material={mats.darkMetal} />
-      <mesh position={[0, 4.9, 4.35]} rotation={[Math.PI / 2, 0, 0]} material={mats.silver}>
-        <cylinderGeometry args={[0.17, 0.2, 0.3, 16]} />
-      </mesh>
-      <mesh position={[0, 4.9, 4.2]} rotation={[-Math.PI / 2 - 0.19, 0, 0]} geometry={beamGeo} material={beamMat} />
-
-      {/* ghế */}
-      {[-1.0, 1.3, 3.6].map((z) =>
-        [-3.7, -2.5, 2.5, 3.7].map((x) => (
-          <group key={x + '-' + z} position={[x, 0, z]}>
-            <mesh position={[0, 0.3, 0]} geometry={rbox(0.95, 0.5, 0.95, 0.12)} material={velvet} />
-            <mesh position={[0, 0.98, 0.4]} rotation={[0.14, 0, 0]} geometry={rbox(0.95, 1.1, 0.24, 0.1)} material={velvet} />
-            {[-0.5, 0.5].map((a) => (
-              <mesh key={a} position={[a, 0.6, 0.05]} geometry={rbox(0.12, 0.3, 0.8, 0.04)} material={mats.darkMetal} />
-            ))}
-          </group>
-        )),
-      )}
-      {[-1.5, 1.5].map((x) => (
-        <mesh key={x} position={[x, 0.045, 0.6]} material={inside ? mats.darkMetal : warm}>
-          <boxGeometry args={[0.06, 0.02, 10]} />
-        </mesh>
-      ))}
-
-      {/* marquee */}
-      <group position={[0, 4.75, 6.5]}>
-        <mesh geometry={rbox(9.6, 1.8, 0.3, 0.1)} material={mats.darkMetal} />
-        <mesh position={[0, 0, 0.17]}>
-          <planeGeometry args={[8.7, 1.62]} />
-          <meshBasicMaterial map={marquee} toneMapped={false} />
-        </mesh>
-        <instancedMesh ref={bulbs} args={[undefined, undefined, bulbPos.length]} position={[0, 0, 0.24]} frustumCulled={false}>
-          <sphereGeometry args={[0.07, 10, 8]} />
-          <meshBasicMaterial toneMapped={false} />
-        </instancedMesh>
-      </group>
-
-      {/* poster */}
-      {posters.map((tex, i) => (
-        <group key={i} position={[-4.5 + i * 1.35, 2.3, 6.5]}>
-          <mesh material={mats.darkMetal}>
-            <boxGeometry args={[1.12, 1.62, 0.08]} />
-          </mesh>
-          <mesh position={[0, 0, 0.05]}>
-            <planeGeometry args={[1.0, 1.5]} />
-            <meshBasicMaterial map={tex} toneMapped={false} />
-          </mesh>
-          {i === 0 && <CinemaTeaser />}
-        </group>
-      ))}
-
+      {/* Geometry-only import from architecture (1): keep existing video components & event handlers. */}
+      <CinemaArchitecture
+        inside={inside}
+        filmActive={projectFilm !== null}
+        leftDoor={leftDoor}
+        rightDoor={rightDoor}
+        bulbs={bulbs}
+        bulbCount={bulbPos.length}
+        marquee={marquee}
+        posters={posters}
+        teaser={<CinemaTeaser />}
+        screenTex={screenTex.tex}
+        beamGeo={beamGeo}
+        beamMat={beamMat}
+      />
       <pointLight position={[0, 4.2, 0]} color="#ffb98a" intensity={projectFilm === null ? 22 : 0} distance={13} decay={2} />
       <pointLight ref={roomLight} position={[0, 2.8, -4.2]} color="#ffffff" intensity={projectFilm === null ? 55 : 0} distance={13} decay={2} />
       <pointLight position={[0, 4, 9]} color="#ff4d4d" intensity={90} distance={14} decay={2} />

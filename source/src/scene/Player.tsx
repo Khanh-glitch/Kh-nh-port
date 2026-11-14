@@ -217,7 +217,7 @@ export function Player() {
                 best = ex.id
               }
             }
-            if (best) openPanel(best as PanelId)
+            if (best) openPanel((best === 'station' ? 'about' : best) as PanelId)
           }
         } else if (e.code === 'Escape' && s.panel) closePanel(false)
       }
