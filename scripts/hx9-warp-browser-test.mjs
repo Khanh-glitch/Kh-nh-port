@@ -8,6 +8,32 @@ const report={errors:[],events:[]}
 page.on('pageerror',e=>report.errors.push(String(e)))
 await page.addInitScript(()=>{
  if(window!==window.top)return
+ // Capture *where* the browser blocks rather than attributing a frame gap to
+ // the GPU solely from rAF timing. Instrumentation exists only in this test.
+ window.__warpProfile={calls:{},longTasks:[]}
+ const tracked=['compileShader','linkProgram','getShaderParameter','getProgramParameter',
+   'getProgramInfoLog','getShaderInfoLog','getUniformLocation','getAttribLocation','bufferData','texImage2D','texSubImage2D',
+   'drawElements','drawArrays','drawElementsInstanced','drawArraysInstanced','readPixels','flush','finish']
+ for(const ctor of [window.WebGLRenderingContext,window.WebGL2RenderingContext]){
+   if(!ctor)continue
+   for(const name of tracked){
+     const original=ctor.prototype[name]
+     if(typeof original!=='function'||!Object.hasOwn(ctor.prototype,name))continue
+     ctor.prototype[name]=function(...args){
+       const started=performance.now()
+       try{return original.apply(this,args)}finally{
+         const duration=performance.now()-started
+         const calls=window.__warpProfile.calls
+         const record=calls[name] ||= {count:0,totalMs:0,maxMs:0,slow:[]}
+         record.count++;record.totalMs+=duration;record.maxMs=Math.max(record.maxMs,duration)
+         if(duration>=100&&record.slow.length<12)record.slow.push({at:Math.round(performance.timeOrigin+started),ms:Math.round(duration)})
+       }
+     }
+   }
+ }
+ try{new PerformanceObserver(list=>{for(const e of list.getEntries())
+   window.__warpProfile.longTasks.push({at:Math.round(performance.timeOrigin+e.startTime),ms:Math.round(e.duration)})
+ }).observe({type:'longtask',buffered:true})}catch{}
  window.__warpAudit={events:[],gaps:[]};let last=0
  function frame(t){if(last)window.__warpAudit.gaps.push({at:performance.timeOrigin+t,dt:t-last});last=t;requestAnimationFrame(frame)}requestAnimationFrame(frame)
  window.addEventListener('message',e=>{
@@ -34,8 +60,8 @@ try{
  await page.frameLocator('iframe[title*="spaceship cockpit"]').locator('.hx9-enter').click({timeout:90000})
  await page.waitForSelector('[data-orbita-space-entry="true"]',{state:'detached',timeout:300000})
  await page.waitForTimeout(1200)
- const result=await page.evaluate(()=>({audit:window.__warpAudit,paint:window.__orbitaIslandFirstPaint,gate:window.__orbitaEntryGate}))
- report.events=result.audit.events;report.paint=result.paint;report.gate=result.gate
+ const result=await page.evaluate(()=>({audit:window.__warpAudit,paint:window.__orbitaIslandFirstPaint,gate:window.__orbitaEntryGate,profile:window.__warpProfile}))
+ report.events=result.audit.events;report.paint=result.paint;report.gate=result.gate;report.profile=result.profile
  const begin=report.events.find(e=>e.type==='ORBITA_SPACE_ENGAGE'), charging=report.events.find(e=>e.type==='charging'),flash=report.events.find(e=>e.type==='flash'),end=report.events.find(e=>e.type==='ORBITA_SPACE_WARP_COMPLETE')
  if(!begin||!charging||!charging.canvas||!flash||!flash.ready||!end||!end.ready)throw Error('Warp ordering or real gate failed')
  const gaps=result.audit.gaps.filter(x=>x.at>=begin.at&&x.at<=end.at+1000).map(x=>x.dt).sort((a,b)=>a-b)
@@ -47,6 +73,6 @@ try{
  console.log('HX9_WARP_PASS '+JSON.stringify(report))
 }catch(e){
  report.error=String(e)
- try{report.diagnostic=await page.evaluate(()=>({gate:window.__orbitaEntryGate,paint:window.__orbitaIslandFirstPaint,events:window.__warpAudit?.events}))}catch{}
+ try{report.diagnostic=await page.evaluate(()=>({gate:window.__orbitaEntryGate,paint:window.__orbitaIslandFirstPaint,events:window.__warpAudit?.events,profile:window.__warpProfile}))}catch{}
  console.error('HX9_WARP_FAIL '+JSON.stringify(report));process.exitCode=1
 }finally{writeFileSync('hx9-warp-evidence/result.json',JSON.stringify(report,null,2));await browser.close()}
