@@ -26,7 +26,7 @@ export default function App() {
       h('div',{className:'hx9-title',children:'Hành trình đang hình thành'}),
       h('div',{className:'hx9-copy',children:gate?'Phi thuyền sẵn sàng · Không gian Orbita đã mở':status}),
       h('div',{className:'hx9-line',children:h('span',{})}),
-      h('button',{type:'button',className:'hx9-enter',disabled:!gate||jump,onClick:engage,children:jump?'ĐANG KHỞI HÀNH':gate?'BƯỚC VÀO ORBITA':'ĐANG CHUẨN BỊ'})
+      gate && h('button',{type:'button',className:'hx9-enter',disabled:jump,onClick:engage,children:jump?'ĐANG KHỞI HÀNH':'BƯỚC VÀO ORBITA'})
     ]})
   ]});
 }

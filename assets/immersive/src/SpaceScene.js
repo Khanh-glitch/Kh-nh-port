@@ -653,56 +653,131 @@ export default function SpaceScene() {
         let firstPaintAcknowledged = false;
         let rendererFailed = false;
         let cancelled = false;
-        let cockpit = null;
         let cockpitEnvironment = null;
         let modelReady = false;
         let startModel = false;
+        let hx = null;
+        let cinematicTime = 0;
+        let lastCueName = '';
+        const diagnosticSpeed = Math.max(1, Math.min(30, Number(new URLSearchParams(location.search).get('hx9DiagnosticSpeed')) || 1));
+        let introCompleted = false;
+        const parts = new Map();
+        const screens = [];
+        const cockpitRoot = new THREE.Group();
+        cockpitRoot.position.set(0, 0, -5);
+        scene.add(cockpitRoot);
         const progress = text => window.dispatchEvent(new CustomEvent('orbita-hx9-progress', {detail:text}));
         const nextPaint = () => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
         async function buildModel() {
             try {
-                progress('Đang chuẩn bị vật liệu và chi tiết buồng lái…');
+                progress('Không gian đã mở · chuẩn bị cấu trúc HX-9…');
                 await nextPaint();
-                const {createStagedCockpit, environmentTexture} = await import('ship/hx9');
+                hx = await import('ship/hx9');
                 if (cancelled) return;
-                cockpit = createStagedCockpit();
-                cockpit.group.position.set(0, -0.135, -0.42);
-                camera.add(cockpit.group);
-                progress('Đang tạo ánh sáng phản chiếu cho buồng lái…');
-                await nextPaint();
-                if (cancelled || rendererFailed) return;
-                const envSource = environmentTexture();
+                const envSource = hx.environmentTexture();
                 const pmrem = new THREE.PMREMGenerator(renderer);
                 cockpitEnvironment = pmrem.fromEquirectangular(envSource);
-                envSource.dispose();
-                pmrem.dispose();
+                envSource.dispose(); pmrem.dispose();
                 const key = new THREE.DirectionalLight(0xffe1c4, 2.65);
-                key.position.set(2.8, 4.4, 1.9);
-                key.target.position.set(0, -0.28, -0.35);
-                camera.add(key.target);
-                const fillCabin = new THREE.PointLight(0x84e2ff, 3.6, 6.5, 2);
-                fillCabin.position.set(-0.38, 0.28, -0.18);
+                key.position.set(2.8, 4.4, 1.9); key.target.position.set(0, -.28, -.35);
+                const fillCabin = new THREE.PointLight(0x84e2ff, 0, 6.5, 2);
+                fillCabin.position.set(-.38, .28, -.18);
                 const ambientCabin = new THREE.HemisphereLight(0x88a4b0, 0x263136, 1.45);
-                for (const light of [key, fillCabin, ambientCabin]) { light.layers.set(1); camera.add(light); }
+                for (const light of [key, fillCabin, ambientCabin]) { light.layers.set(1); cockpitRoot.add(light); }
+                cockpitRoot.add(key.target);
+                cockpitRoot.userData.fill = fillCabin;
                 camera.layers.enable(1);
-                const names = ['Đang tạo kết cấu thân và vòm phi thuyền…', 'Đang lắp bảng điều khiển và màn hình…', 'Đang lắp bộ điều khiển và cần lái…', 'Đang hoàn thiện ghế và khoang lái…'];
+                const loader = new hx.GLTFLoader();
+                const names = ['structure', 'shell', 'seat', 'dashboard', 'controls', 'glass'];
                 for (const name of names) {
-                    progress(name);
-                    await nextPaint();
                     if (cancelled || rendererFailed) return;
-                    cockpit.buildNext();
-                    cockpit.group.traverse(o => {
+                    const result = await loader.loadAsync(new URL('model/' + name + '.glb', document.baseURI).href);
+                    if (cancelled || rendererFailed) return;
+                    const part = result.scene;
+                    part.visible = false;
+                    part.traverse(o => {
                         o.layers.set(1);
                         const mats = Array.isArray(o.material) ? o.material : o.material ? [o.material] : [];
                         for (const mat of mats) if ('envMap' in mat && !mat.envMap) mat.envMap = cockpitEnvironment.texture;
+                        if (o.userData.hx9Screen !== undefined && o.isMesh && o.material && !Array.isArray(o.material)) {
+                            o.material = o.material.clone();
+                            screens.push({ mesh:o, index:Number(o.userData.hx9Screen), base:o.material.color.clone() });
+                            o.material.color.setRGB(0,0,0);
+                        }
                     });
+                    cockpitRoot.add(part); parts.set(name, part);
                     await nextPaint();
                 }
-                progress('Đang hoàn thiện ánh sáng và khung hình phi thuyền…');
-                await nextPaint();
-                if (cancelled || rendererFailed) return;
-                modelReady = true;
-            } catch (error) { if (!cancelled) reportFailure('cockpit-build: ' + String(error)); }
+            } catch (error) { if (!cancelled) reportFailure('cockpit-load: ' + String(error)); }
+        }
+        let identityAdded = false;
+        function addIdentity() {
+            if (identityAdded) return;
+            const primary = screens.find(s => s.index === 0);
+            if (!primary) return;
+            identityAdded = true;
+            const canvas = document.createElement('canvas'); canvas.width = 1024; canvas.height = 256;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = 'rgba(2,15,24,.90)'; ctx.fillRect(0,0,1024,256);
+            ctx.strokeStyle = '#65d9f1'; ctx.lineWidth=4; ctx.strokeRect(3,3,1018,250);
+            ctx.font = '500 35px sans-serif'; ctx.fillStyle = '#88cbdc'; ctx.fillText('PILOT PROFILE  /  ORBITA',42,65);
+            ctx.font = '700 78px sans-serif'; ctx.fillStyle = '#e5fbff'; ctx.fillText('LÊ QUỐC KHÁNH',42,165);
+            const tex = new THREE.CanvasTexture(canvas); tex.colorSpace=THREE.SRGBColorSpace;
+            const material = new THREE.MeshBasicMaterial({map:tex, transparent:true, toneMapped:false, depthWrite:false});
+            const overlay = new THREE.Mesh(new THREE.PlaneGeometry(.39,.097),material);
+            overlay.position.set(0,-.04,.004); overlay.layers.set(1);
+            primary.mesh.add(overlay);
+            cockpitRoot.userData.identity = {tex,material,geometry:overlay.geometry};
+        }
+        const orbitPosition = new THREE.Vector3();
+        const dockPosition = new THREE.Vector3(0, .135, -4.58);
+        const orbitLook = new THREE.Vector3(0, -.1, -5);
+        const dockLook = new THREE.Vector3(0, -.085, -5.72);
+        const lookTarget = new THREE.Vector3();
+        function animateCockpit(t, dt) {
+            const angle = -.95 + Math.sin(t*.075)*.12;
+            orbitPosition.set(Math.sin(angle)*3.5, 1.55+Math.sin(t*.12)*.10, -5+Math.cos(angle)*3.5);
+            if (hx) {
+                let cap = hx.CINEMATIC_END;
+                for (const cue of hx.ASSEMBLY_CUES) if (!parts.has(cue.name)) { cap = cue.start; break; }
+                cinematicTime = Math.min(cap, cinematicTime + Math.min(dt,.05)*diagnosticSpeed);
+                const cueNow = [...hx.ASSEMBLY_CUES].reverse().find(c => cinematicTime >= c.start);
+                if (cueNow && cueNow.name !== lastCueName) {
+                    lastCueName = cueNow.name;
+                    const labels = { structure:'Định hình khung kết cấu…', shell:'Đưa vỏ tàu vào khớp…', seat:'Cố định ghế phi công…', dashboard:'Gắn bảng điều khiển…', controls:'Lắp các thiết bị điều khiển…', glass:'Đóng kính buồng lái…' };
+                    progress(labels[lastCueName]);
+                }
+                window.__orbitaHx9 = {time:cinematicTime, cue:lastCueName, loaded:parts.size, complete:introCompleted};
+                for (const cue of hx.ASSEMBLY_CUES) {
+                    const part = parts.get(cue.name); if (!part) continue;
+                    const pose = hx.assemblyPose(cue, cinematicTime);
+                    part.visible = pose.visible;
+                    part.position.set(cue.offset[0]*pose.remaining,cue.offset[1]*pose.remaining,cue.offset[2]*pose.remaining);
+                    part.rotation.set(cue.rotation[0]*pose.remaining,cue.rotation[1]*pose.remaining,cue.rotation[2]*pose.remaining);
+                }
+                const dock = hx.cameraDock(cinematicTime);
+                // Cross above the canopy before settling into the pilot eye,
+                // avoiding the solid aft bulkhead during the camera transition.
+                const top = new THREE.Vector3(0, 1.35, -4.58);
+                if (dock < .55) camera.position.copy(orbitPosition).lerp(top, dock / .55);
+                else camera.position.copy(top).lerp(dockPosition, (dock - .55) / .45);
+                lookTarget.copy(orbitLook).lerp(dockLook,dock);
+                // First see the unchanged distant planet, then reveal the work bay.
+                const reveal = THREE.MathUtils.smoothstep(cinematicTime, .4, 3.4);
+                camera.position.lerp(new THREE.Vector3(0,0,0), 1-reveal);
+                lookTarget.lerp(new THREE.Vector3(.53,.63,-5), 1-reveal);
+                camera.lookAt(lookTarget);
+                for (const screen of screens) screen.mesh.material.color.copy(screen.base).multiplyScalar(hx.screenPower(cinematicTime,screen.index));
+                if (cockpitRoot.userData.fill) cockpitRoot.userData.fill.intensity=3.6*hx.screenPower(cinematicTime,0);
+                if (cinematicTime >= hx.CINEMATIC_END - 1.5) addIdentity();
+                if (cinematicTime >= hx.CINEMATIC_END && !introCompleted && parts.size === 6) {
+                    introCompleted = true;
+                    progress('Phi thuyền sẵn sàng · đang mở không gian Orbita…');
+                    modelReady = true;
+                }
+            } else {
+                camera.position.set(0,0,0); camera.lookAt(.53,.63,-5);
+            }
         }
         const onContextLost = (e) => {
             e.preventDefault();
@@ -717,7 +792,12 @@ export default function SpaceScene() {
             const rush = smooth(1.3, 9, f.speed);
             sky.rotation.set(f.pitch, f.yaw, 0);
             const shake = f.reduced ? 0 : Math.max(0, f.speed - 1.5) * 0.0007;
-            camera.rotation.set(-f.lookY * 0.028 + Math.sin(t * 47.3) * shake, -f.lookX * 0.05 + Math.sin(t * 59.1 + 1.7) * shake, -f.bank);
+            animateCockpit(t, dt);
+            if (introCompleted) {
+                camera.rotation.x += -f.lookY * .028 + Math.sin(t * 47.3) * shake;
+                camera.rotation.y += -f.lookX * .05 + Math.sin(t * 59.1 + 1.7) * shake;
+                camera.rotation.z -= f.bank;
+            }
             const fov = 58 + rush * 24;
             if (Math.abs(fov - camera.fov) > 0.01) {
                 camera.fov = fov;
@@ -786,7 +866,11 @@ export default function SpaceScene() {
         });
         return () => {
             cancelled = true;
-            cockpit?.dispose();
+            cockpitRoot.traverse(o => {
+                if (o.geometry) o.geometry.dispose();
+                const mats = Array.isArray(o.material) ? o.material : o.material ? [o.material] : [];
+                for (const mat of mats) { for (const value of Object.values(mat)) if (value?.isTexture) value.dispose(); mat.dispose(); }
+            });
             cockpitEnvironment?.dispose();
             off();
             renderer.domElement.removeEventListener('webglcontextlost', onContextLost);

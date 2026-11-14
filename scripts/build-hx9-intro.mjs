@@ -1,7 +1,9 @@
 import {readFileSync, writeFileSync} from 'node:fs'
-import {execFileSync} from 'node:child_process'
+import {createRequire} from 'node:module'
+const require = createRequire(new URL('../source/package.json', import.meta.url))
+const esbuild = require('esbuild')
 const root = new URL('../', import.meta.url)
-execFileSync('source/node_modules/.bin/esbuild', ['source/src/intro-hx9/entry.ts','--bundle','--format=esm','--external:three','--minify','--outfile=assets/immersive/hx9.js'], {cwd:root,stdio:'inherit'})
+await esbuild.build({absWorkingDir:root.pathname, entryPoints:['source/src/intro-hx9/entry.ts'], bundle:true, format:'esm', minify:true, outfile:'assets/immersive/hx9.js', plugins:[{name:'shared-three',setup(build){build.onResolve({filter:/^three$/},()=>({path:'three',external:true}))}}]})
 const path = new URL('assets/immersive/index.html', root)
 let html = readFileSync(path,'utf8')
 html = html.replace(/<script type="importmap">([\s\S]*?)<\/script>/, (_, text) => {
