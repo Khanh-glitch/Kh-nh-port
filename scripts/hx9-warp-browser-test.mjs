@@ -5,12 +5,13 @@ mkdirSync('hx9-warp-evidence',{recursive:true})
 const browser=await chromium.launch({headless:true,args:['--enable-webgl','--ignore-gpu-blocklist','--use-angle=metal']})
 const page=await browser.newPage({viewport:{width:800,height:600},deviceScaleFactor:1})
 const report={errors:[],events:[]}
-let incrementalProgress=null,renderProgress=null,paintProgress=null
+let incrementalProgress=null,renderProgress=null,paintProgress=null,shipProgress=null
 page.on('console',message=>{
  const text=message.text()
  if(text.startsWith('[HX9-INCREMENTAL] ')){try{incrementalProgress=JSON.parse(text.slice(18))}catch{}}
  if(text.startsWith('[HX9-RENDER] ')){try{renderProgress=JSON.parse(text.slice(13))}catch{}}
  if(text.startsWith('[HX9-PAINT] ')){try{paintProgress=JSON.parse(text.slice(12))}catch{}}
+ if(text.startsWith('[HX9-SHIP] ')){try{shipProgress=JSON.parse(text.slice(11))}catch{}}
 })
 page.on('pageerror',e=>report.errors.push(String(e)))
 await page.addInitScript(()=>{
@@ -59,7 +60,7 @@ try{
  await frame.evaluate(async()=>{
    const flight=(await import('ship/lib/flight')).flight, node=document.querySelector('.hx9-app')
    let active=false,last=0,frames=0,maxGap=0,first=0
-   function tick(t){if(active){if(last)maxGap=Math.max(maxGap,t-last);else first=t;last=t;frames++}requestAnimationFrame(tick)}
+   function tick(t){if(active){if(last)maxGap=Math.max(maxGap,t-last);else first=t;last=t;frames++;if(frames%20===0)console.info('[HX9-SHIP]',JSON.stringify({frames,maxGap:Math.round(maxGap),speed:flight.speed,jump:node.dataset.jump,ready:node.dataset.islandReady}))}requestAnimationFrame(tick)}
    requestAnimationFrame(tick)
    new MutationObserver(()=>{
      const state=node.dataset.jump
@@ -87,6 +88,7 @@ try{
  report.lastIncrementalProgress=incrementalProgress
  report.lastRenderProgress=renderProgress
  report.lastPaintProgress=paintProgress
+ report.lastShipProgress=shipProgress
  try{report.diagnostic=await Promise.race([page.evaluate(()=>({gate:window.__orbitaEntryGate,paint:window.__orbitaIslandFirstPaint,events:window.__warpAudit?.events,incremental:window.__orbitaIslandIncremental,profile:window.__warpProfile})),new Promise((_,reject)=>setTimeout(()=>reject(Error('diagnostic timed out')),5000))])}catch{}
  const profile=report.profile??report.diagnostic?.profile
  const summary={error:report.error,timing:report.timing,events:report.events,cpu:report.cpu,
