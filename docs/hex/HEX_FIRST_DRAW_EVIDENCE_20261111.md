@@ -202,3 +202,11 @@ idle stall is rejection, not a green success. Initial software-rendering scene
 smoke created the eight-item queue with no page errors; it does not establish
 performance or visual parity. Await native results and compare real nine-stage
 HIGH visual captures before considering any default change.
+
+Native Metal run `43535918781` rejected the original-material experiment in
+both orders: its very first private render blocked the main thread for 567ms
+and 479ms and created idle rAF gaps of 617ms and 550ms. Only one of eight
+meshes completed in each run, so no valid first-trigger improvement can be
+claimed. The opt-in implementation and workflow were removed rather than
+shipping a warmup that merely moves a visible hitch to idle. Original visual
+quality remains unchanged.
